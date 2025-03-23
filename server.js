@@ -6,9 +6,9 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configurar CORS corretamente
+// Configuração de CORS: Atualize o valor de 'origin' com a URL do seu frontend correto
 const corsOptions = {
-  origin: 'https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app', // Permitir apenas o frontend específico
+  origin: 'https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app', // Certifique-se de que essa URL seja a do seu frontend em produção
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
