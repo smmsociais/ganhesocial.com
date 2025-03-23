@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ações na Conta</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        .select-box {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .action-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .action-button:hover {
+            background-color: #45a049;
+        }
+        .link-container {
+            margin-top: 20px;
+        }
+        .link-container a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .link-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Ações na Conta</h2>
+
+        <label for="accountSelect">Selecione uma conta:</label>
+        <select id="accountSelect" class="select-box">
+            <option value="">Selecione uma conta</option>
+            <!-- As opções serão preenchidas dinamicamente -->
+        </select>
+
+        <button class="action-button" onclick="performAction()">Realizar Ação</button>
+
+        <div class="link-container">
+            <a href="gerenciar_contas.html">Gerenciar Contas</a>
+        </div>
+    </div>
+
+    <script>
+        function loadAccounts() {
+            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+            const accountSelect = document.getElementById('accountSelect');
+
+            // Adiciona as contas como opções no select
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account;
+                option.textContent = account;
+                accountSelect.appendChild(option);
+            });
+        }
+
+        function performAction() {
+            const selectedAccount = document.getElementById('accountSelect').value;
+
+            if (!selectedAccount) {
+                alert("Por favor, selecione uma conta antes de continuar.");
+                return;
+            }
+
+            alert(`Ação realizada na conta: ${selectedAccount}`);
+        }
+
+        // Carrega as contas quando a página abrir
+        window.onload = loadAccounts;
+    </script>
+</body>
+</html>

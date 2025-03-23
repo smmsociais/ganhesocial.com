@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Conta</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: var(--container-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .add-button, .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .add-button {
+            background-color: #007BFF;
+        }
+
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+
+        .back-button {
+            background-color: #d9534f;
+        }
+
+        .back-button:hover {
+            background-color: #c9302c;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .input-box {
+                background: var(--container-dark);
+                border: 1px solid var(--border-dark);
+                color: var(--text-dark);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Adicionar Conta</h2>
+
+        <input type="text" id="accountName" class="input-box" placeholder="Nome da Conta">
+        <button class="add-button" onclick="addAccount()">Adicionar</button>
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+    <script>
+        function addAccount() {
+            const accountName = document.getElementById('accountName').value.trim();
+            if (!accountName) {
+                alert("Por favor, insira um nome para a conta.");
+                return;
+            }
+
+            let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+            accounts.push({ name: accountName, status: "Pendente" });
+
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            alert(`Conta "${accountName}" adicionada como pendente!`);
+            window.location.href = "gerenciar_contas.html";
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

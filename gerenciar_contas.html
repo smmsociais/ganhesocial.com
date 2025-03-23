@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Contas</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .account-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .account-item {
+            padding: 10px;
+            background: var(--container-light);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .status {
+            font-size: 14px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .approved {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .approve-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .approve-button:hover {
+            background-color: #218838;
+        }
+
+        .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background-color: #c9302c;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container, .account-item {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid #30363d;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Gerenciar Contas</h2>
+
+        <ul id="accountList" class="account-list"></ul>
+
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+    <script>
+        function loadAccounts() {
+            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+            const accountList = document.getElementById('accountList');
+
+            accountList.innerHTML = "";
+
+            accounts.forEach((account, index) => {
+                const li = document.createElement('li');
+                li.className = "account-item";
+                li.innerHTML = `
+                    ${account.name}
+                    <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
+                        ${account.status}
+                    </span>
+                    ${account.status === "Pendente" ? `<button class="approve-button" onclick="approveAccount(${index})">Aprovar</button>` : ""}
+                `;
+                accountList.appendChild(li);
+            });
+        }
+
+        function approveAccount(index) {
+            let accounts = JSON.parse(localStorage.getItem('accounts'));
+            accounts[index].status = "Aprovado";
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            loadAccounts();
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+        window.onload = loadAccounts;
+    </script>
+</body>
+</html>

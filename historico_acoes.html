@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Ações</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            transition: background 0.3s;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .history-item {
+            background: #eef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 5px solid #007BFF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .history-item {
+                background: var(--container-dark);
+                border-left: 5px solid #1f6feb;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Histórico de Ações</h2>
+        <ul class="history-list" id="historyList">
+            <!-- Os itens serão adicionados dinamicamente aqui -->
+        </ul>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const historyData = JSON.parse(localStorage.getItem("actionHistory")) || [];
+            const historyList = document.getElementById("historyList");
+            
+            if (historyData.length === 0) {
+                historyList.innerHTML = "<li>Nenhuma ação registrada.</li>";
+            } else {
+                historyData.forEach(action => {
+                    const listItem = document.createElement("li");
+                    listItem.classList.add("history-item");
+                    listItem.innerHTML = `
+                        <strong>${action.tipo}</strong> - ${action.usuario} (${action.pontos} pontos)<br>
+                        <small>Status: ${action.status}</small><br>
+                        <small>Data: ${action.data}</small>
+                    `;
+                    historyList.appendChild(listItem);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

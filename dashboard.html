@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saldo Disponível</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+            --button-light: #0366d6;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --button-dark: #58a6ff;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .saldo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d8f2d;
+        }
+
+        .button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .action-button { background-color: #4CAF50; }
+        .action-button:hover { background-color: #45a049; }
+
+        .add-button { background-color: #007BFF; }
+        .add-button:hover { background-color: #0056b3; }
+
+        .manage-button { background-color: #FFA500; }
+        .manage-button:hover { background-color: #cc8400; }
+
+        .history-button { background-color: #6c757d; }
+        .history-button:hover { background-color: #5a6268; }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Saldo Disponível</h2>
+        <p class="saldo" id="saldoDisponivel">R$ 0,00</p>
+
+        <button class="button action-button" onclick="goToSelectAccount()">Realizar Ação</button>
+        <button class="button add-button" onclick="goToAddAccount()">Adicionar Conta</button>
+        <button class="button manage-button" onclick="goToManageAccounts()">Gerenciar Contas</button>
+        <button class="button history-button" onclick="goToHistory()">Histórico de Ações</button>
+    </div>
+
+    <script>
+        // Carregar o saldo disponível ao abrir a página
+        function carregarSaldo() {
+            const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+            document.getElementById("saldoDisponivel").textContent = `R$ ${saldo.toFixed(3)}`;
+        }
+
+        function goToSelectAccount() {
+            window.location.href = "selecionar_conta.html";
+        }
+
+        function goToAddAccount() {
+            window.location.href = "adicionar_conta.html";
+        }
+
+        function goToManageAccounts() {
+            window.location.href = "gerenciar_contas.html";
+        }
+
+        function goToHistory() {
+            window.location.href = "historico_acoes.html";
+        }
+
+        // Carregar o saldo ao carregar a página
+        window.onload = carregarSaldo;
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ganhe Social - Engajamento</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+            --button-light: #0366d6;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --button-dark: #58a6ff;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            transition: background 0.3s;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .start-button { background-color: #4CAF50; }
+        .start-button:hover { background-color: #45a049; }
+
+        .login-button { background-color: #007BFF; }
+        .login-button:hover { background-color: #0056b3; }
+
+        .info-button { background-color: #FFA500; }
+        .info-button:hover { background-color: #cc8400; }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bem-vindo ao Ganhe Social</h1>
+        <p class="subtitle">Ganhe recompensas por seu engajamento online!</p>
+        <button class="button start-button" onclick="startEarning()">Comece a Ganhar</button>
+        <button class="button login-button" onclick="goToLogin()">Entrar</button>
+        <button class="button info-button" onclick="goToInfo()">Saiba Mais</button>
+    </div>
+
+    <script>
+        function startEarning() {
+            window.location.href = "cadastro.html";
+        }
+
+        function goToLogin() {
+            window.location.href = "login.html";
+        }
+
+        function goToInfo() {
+            window.location.href = "sobre.html";
+        }
+    </script>
+</body>
+</html>

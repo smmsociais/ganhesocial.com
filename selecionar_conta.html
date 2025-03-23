@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selecionar Conta</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .status-message {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        .action-box {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #eef;
+        }
+
+        .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background-color: #c9302c;
+        }
+
+        .confirm-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .confirm-button:hover {
+            background-color: #4cae4c;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Selecionar Conta</h2>
+        <select id="accountSelect" onchange="bindAccount()">
+            <option value="">Selecione uma conta</option>
+        </select>
+        <p id="statusMessage" class="status-message">Aguardando seleção...</p>
+
+        <div id="actionBox" class="action-box">
+            <p><strong>Ação:</strong> <span id="actionType"></span></p>
+            <p><strong>Usuário:</strong> <span id="username"></span></p>
+            <p><strong>Pontos:</strong> <span id="points"></span></p>
+            <p><a id="actionUrl" href="#" target="_blank" onclick="showConfirmButton()">Abrir ação</a></p>
+            <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+        </div>
+
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+    <script>
+        let currentActionData = null;
+
+        async function bindAccount() {
+            const selectedAccount = document.getElementById("accountSelect").value;
+            if (!selectedAccount) return;
+
+            document.getElementById("statusMessage").textContent = "Vinculando conta...";
+
+            try {
+                const response = await fetch(`https://cors-anywhere.herokuapp.com/http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${selectedAccount}`);
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    localStorage.setItem("id_conta", data.id_conta);
+                    document.getElementById("statusMessage").textContent = "Conta vinculada!";
+                    fetchAction();
+                } else {
+                    document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
+                }
+            } catch (error) {
+                document.getElementById("statusMessage").textContent = "Erro na requisição.";
+            }
+        }
+
+        async function fetchAction() {
+            const id_conta = localStorage.getItem("id_conta");
+            if (!id_conta) return;
+
+            document.getElementById("statusMessage").textContent = "Buscando ações...";
+
+            try {
+                const response = await fetch(`https://cors-anywhere.herokuapp.com/https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`);
+                const data = await response.json();
+
+                if (data.status === "ENCONTRADA") {
+                    document.getElementById("statusMessage").textContent = "Ação encontrada!";
+                    document.getElementById("actionType").textContent = data.tipo_acao;
+                    document.getElementById("username").textContent = data.nome_usuario;
+                    document.getElementById("actionUrl").href = data.url;
+
+                    // Ajuste para exibir o valor em reais (pontos * 0,001) e subtrair 0,001
+                    const pontos = parseFloat(data.quantidade_pontos);
+                    const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3); // Subtrai 0,001 e formata para 3 casas decimais
+                    document.getElementById("points").textContent = `R$ ${valorEmReais}`;
+
+                    document.getElementById("actionBox").style.display = "block";
+                    currentActionData = data;
+                } else {
+                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível.";
+                    document.getElementById("actionBox").style.display = "none";
+                }
+            } catch (error) {
+                document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
+            }
+        }
+
+        function showConfirmButton() {
+            document.getElementById("confirmButton").style.display = "block";
+        }
+
+async function confirmAction() {
+    const id_conta = localStorage.getItem("id_conta");
+    const id_pedido = currentActionData.id_pedido;
+
+    if (!id_conta || !id_pedido) {
+        alert("Erro ao confirmar ação. Dados insuficientes.");
+        return;
+    }
+
+    document.getElementById("statusMessage").textContent = "Confirmando ação...";
+
+    try {
+        // Passo 1: Obter o ID do perfil selecionado (renisson042)
+        const selectedAccount = document.getElementById("accountSelect").value;
+        const userInfoUrl = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount}`;
+        const userInfoOptions = {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+            }
+        };
+
+        const userInfoResponse = await fetch(userInfoUrl, userInfoOptions);
+        const userInfoData = await userInfoResponse.json();
+
+        // Verificar se a resposta da API é válida e contém o ID do usuário
+        if (userInfoData && userInfoData.code === 0 && userInfoData.data && userInfoData.data.user && userInfoData.data.user.id) {
+            const userId = userInfoData.data.user.id;
+
+            // Passo 2: Obter a lista de "seguindo" do perfil selecionado
+            const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
+            const userFollowingOptions = {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                    'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+                }
+            };
+
+            const userFollowingResponse = await fetch(userFollowingUrl, userFollowingOptions);
+            const userFollowingData = await userFollowingResponse.json();
+
+            // Verificar se a resposta da API de "seguindo" é válida
+            if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data && userFollowingData.data.followings) {
+                // Passo 3: Verificar se o perfil da ação (mamica.celor.3) está na lista de "seguindo"
+                const followings = userFollowingData.data.followings;
+                const actionUsername = currentActionData.nome_usuario; // Nome de usuário da ação (mamica.celor.3)
+
+                const accountFound = followings.some(following => following.unique_id === actionUsername);
+
+                if (accountFound) {
+                    // Passo 4: Validar a ação no histórico e atualizar o saldo
+                    const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+                    const newAction = {
+                        tipo: currentActionData.tipo_acao,
+                        usuario: currentActionData.nome_usuario,
+                        pontos: currentActionData.quantidade_pontos,
+                        status: "validada", // Status da ação
+                        data: new Date().toLocaleString() // Data da ação
+                    };
+                    actionHistory.push(newAction);
+                    localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+
+                    // Atualizar o saldo disponível
+                    const pontos = parseFloat(currentActionData.quantidade_pontos);
+                    const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3); // Subtrai 0,001 e formata para 3 casas decimais
+                    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+                    const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
+                    localStorage.setItem("saldoDisponivel", novoSaldo);
+
+                    document.getElementById("statusMessage").textContent = "Ação confirmada e validada com sucesso!";
+                } else {
+                    document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
+                }
+            } else {
+                document.getElementById("statusMessage").textContent = "Erro ao buscar lista de seguindo.";
+            }
+        } else {
+            document.getElementById("statusMessage").textContent = "Erro ao obter informações do usuário.";
+        }
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        document.getElementById("statusMessage").textContent = "Erro na requisição.";
+    }
+}
+
+        function loadAccounts() {
+            const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+            const accountSelect = document.getElementById("accountSelect");
+            
+            accounts.forEach(account => {
+                if (account.status === "Aprovado") {
+                    const option = document.createElement("option");
+                    option.value = account.name;
+                    option.textContent = account.name;
+                    accountSelect.appendChild(option);
+                }
+            });
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+        window.onload = loadAccounts;
+    </script>
+</body>
+</html>
