@@ -60,15 +60,23 @@ const User = mongoose.model('User', UserSchema);
 // Rota para cadastro
 app.post('/api/cadastrar', async (req, res) => {
   try {
+    console.log("📩 Recebendo dados:", req.body);
+
     const { nome, email, senha } = req.body;
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
+    }
+
     const novoUsuario = new User({ nome, email, senha });
     await novoUsuario.save();
+    
     res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
   } catch (error) {
-    console.error('Erro ao cadastrar usuário:', error);
-    res.status(500).json({ error: 'Erro ao cadastrar usuário' });
+    console.error("❌ Erro ao cadastrar usuário:", error);
+    res.status(500).json({ error: error.message || "Erro ao cadastrar usuário" });
   }
 });
+
 
 // Em vez de iniciar o servidor com app.listen, exporte o app para que o Vercel o invoque como uma função serverless:
 module.exports = app;
