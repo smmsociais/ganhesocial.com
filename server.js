@@ -13,13 +13,14 @@ app.use((req, res, next) => {
 });
 
 // Configuração de CORS usando regex opcional para a parte extra
-app.use(cors({
-  origin: '*',
+const corsOptions = {
+  origin: /https:\/\/backend-cadastro(-[a-z0-9]+)?-renissons-projects\.vercel\.app/,
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
-  optionsSuccessStatus: 200
-}));
+  optionsSuccessStatus: 200,
+};
+
 
 
 app.use(cors(corsOptions));
