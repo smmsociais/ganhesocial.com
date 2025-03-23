@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/cadastrar",
+      "methods": ["POST", "OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      },
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ]
+}
