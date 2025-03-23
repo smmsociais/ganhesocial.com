@@ -6,7 +6,12 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.ganhesocial.com'];
+const allowedOrigins = [
+  process.env.FRONTEND_URL,  // Domínio principal do frontend
+  'https://www.ganhesocial.com',
+  'https://ganhesocial.com',
+  'https://backend-cadastro-3svjfjbzc-renissons-projects.vercel.app', // Teste para ver se resolve
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
