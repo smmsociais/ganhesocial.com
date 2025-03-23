@@ -107,7 +107,7 @@
             const email = document.getElementById("email").value;
             const senha = document.getElementById("senha").value;
 
-            const response = await fetch("https://backend-cadastro-mocldw4h9-renissons-projects.vercel.app/api/cadastrar", {
+            const response = await fetch("https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ nome, email, senha })
