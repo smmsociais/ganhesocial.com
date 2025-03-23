@@ -6,10 +6,9 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configuração de CORS usando regex para permitir origens que seguem o padrão
 const corsOptions = {
-  origin: /https:\/\/backend-cadastro-[a-z0-9]+-renissons-projects\.vercel\.app/,
-  methods: 'GET,POST,PUT,DELETE,OPTIONS',
+  origin: process.env.FRONTEND_URL,  // Utilizando a variável do vercel.json
+  methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
   optionsSuccessStatus: 200,
