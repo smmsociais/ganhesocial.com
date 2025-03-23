@@ -5,10 +5,17 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-app.use(cors());
+
+// Configurar CORS corretamente
+app.use(cors({
+  origin: "https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app", // Permitir apenas o frontend específico
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type"
+}));
+
 app.use(bodyParser.json());
 
-// Conectar ao MongoDB (use a URL do seu MongoDB Atlas ou local)
+// Conectar ao MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("🔥 Conectado ao MongoDB!"))
   .catch(err => console.error("Erro ao conectar:", err));
@@ -22,7 +29,7 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 // Rota para cadastro
-app.post('/api/cadastrar', async (req, res) => {  // Corrigido aqui
+app.post('/api/cadastrar', async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
     const novoUsuario = new User({ nome, email, senha });
