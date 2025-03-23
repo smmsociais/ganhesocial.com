@@ -12,17 +12,14 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
+  origin: ["https://ganhesocial.com"], // Permitindo seu domínio
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type",
+  preflightContinue: false,
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
-
 
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
