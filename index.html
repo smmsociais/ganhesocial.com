@@ -112,16 +112,12 @@ fetch('https://backend-cadastro-renissons-projects.vercel.app/api/cadastrar', {
   headers: {
     'Content-Type': 'application/json'
   },
-  body: JSON.stringify({ nome, email, senha }) 
+  body: JSON.stringify({ nome, email, senha })
 })
-.then(response => {
-  if (!response.ok) {
-    throw new Error(`Erro: ${response.status}`);
-  }
-  return response.json();
-})
+.then(response => response.json())
 .then(data => console.log(data))
 .catch(error => console.error('Erro na requisição:', error));
+
 
 
         });
