@@ -6,14 +6,23 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
+const allowedOrigins = [
+  'https://ganhesocial.com',
+  'https://api.ganhesocial.com'
+];
+
 const corsOptions = {
-  origin: 'https://ganhesocial.com',  // Agora é a URL fixa
-  methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: 'Content-Type',
-  optionsSuccessStatus: 200,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 };
 
 app.use(cors(corsOptions));
+
 
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
