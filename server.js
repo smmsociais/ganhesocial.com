@@ -6,8 +6,16 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
+const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.ganhesocial.com'];
+
 const corsOptions = {
-  origin: [process.env.FRONTEND_URL, 'https://www.ganhesocial.com'],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
