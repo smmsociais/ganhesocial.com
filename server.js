@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,  // Utilizando a variável do vercel.json
+  origin: [process.env.FRONTEND_URL, 'https://www.ganhesocial.com'],
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
