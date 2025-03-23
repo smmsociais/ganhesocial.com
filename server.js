@@ -6,22 +6,19 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configuração de CORS: Permitir origens que seguem o padrão "backend-cadastro-<qualquer_sufixo>-renissons-projects.vercel.app"
+// Configuração de CORS usando regex para permitir origens que seguem o padrão
 const corsOptions = {
   origin: /https:\/\/backend-cadastro-[a-z0-9]+-renissons-projects\.vercel\.app/,
-  methods: 'GET,POST,PUT,DELETE',
+  methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
-  optionsSuccessStatus: 200, // Para algumas versões antigas do navegador
+  optionsSuccessStatus: 200,
 };
 
-// Middleware de CORS
-app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
-
-// Resposta explícita para requisições OPTIONS (Preflight)
+app.use(cors(corsOptions));
 app.options('*', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');  // Ou especifique sua origem
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.status(200).end();
 });
@@ -49,10 +46,10 @@ app.post('/api/cadastrar', async (req, res) => {
     await novoUsuario.save();
     res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
   } catch (error) {
+    console.error('Erro ao cadastrar usuário:', error);
     res.status(500).json({ error: 'Erro ao cadastrar usuário' });
   }
 });
 
-// Iniciar servidor
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+// Em vez de iniciar o servidor com app.listen, exporte o app para que o Vercel o invoque como uma função serverless:
+module.exports = app;
