@@ -13,6 +13,16 @@ app.use(cors({
   allowedHeaders: "Content-Type"
 }));
 
+const corsOptions = {
+  origin: '*', // Permite qualquer origem (para testes)
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type',
+  preflightContinue: false,
+  optionsSuccessStatus: 200 // Para algumas versões antigas do navegador
+};
+
+app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
+
 app.use(bodyParser.json());
 
 // Conectar ao MongoDB
