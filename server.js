@@ -6,13 +6,16 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configuração de CORS: Atualize o valor de 'origin' com a URL do seu frontend correto
-const corsOptions = {
-  origin: 'https://backend-cadastro-b5h48f4gg-renissons-projects.vercel.app/', // Certifique-se de que essa URL seja a do seu frontend em produção
-  methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: 'Content-Type',
-  preflightContinue: false,
-  optionsSuccessStatus: 200 // Para algumas versões antigas do navegador
+// Configuração de CORS com origem dinâmica
+const corsOptions = (req, callback) => {
+  const allowedOrigin = req.headers.origin;  // Pegando a origem da requisição
+
+  // A configuração de CORS permite qualquer origem que envie a requisição, ou você pode adicionar restrições específicas
+  if (allowedOrigin) {
+    callback(null, { origin: allowedOrigin });
+  } else {
+    callback(new Error('CORS Error'), { origin: false });
+  }
 };
 
 app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
