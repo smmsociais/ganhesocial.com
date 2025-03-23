@@ -3,8 +3,18 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const express = require('express');
+const path = require('path');
 
 const app = express();
+
+// Servir arquivos estáticos da pasta 'frontend'
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Rota para servir o index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
 
 const allowedOrigins = [
   'https://ganhesocial.com',
