@@ -6,19 +6,17 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configuração de CORS com origem dinâmica
-const corsOptions = (req, callback) => {
-  const allowedOrigin = req.headers.origin;  // Pegando a origem da requisição
-
-  // A configuração de CORS permite qualquer origem que envie a requisição, ou você pode adicionar restrições específicas
-  if (allowedOrigin) {
-    callback(null, { origin: allowedOrigin });
-  } else {
-    callback(new Error('CORS Error'), { origin: false });
-  }
+// Configuração de CORS com origem dinâmica e métodos preflight
+const corsOptions = {
+  origin: '*', // Aceitar qualquer origem
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Permitir métodos
+  allowedHeaders: ['Content-Type'], // Permitir cabeçalhos
+  preflightContinue: false,
+  optionsSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
+// Aplica a configuração de CORS a todas as rotas
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 
