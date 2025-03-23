@@ -1,10 +1,9 @@
 {
-  {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
-  ]
+  ],
   "redirects": [
-    { "source": "https://backend-cadastro-*.vercel.app", "destination": "https://ganhesocial.com", "permanent": true }
+    { "source": "/(.*)", "destination": "https://ganhesocial.com/$1", "permanent": true }
   ]
 }
 
