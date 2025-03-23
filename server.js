@@ -6,16 +6,22 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configuração de CORS: Permitir origens que seguem o padrão "backend-cadastro-<qualquer_sufixo>-renissons-projects.vercel.app"
+// Middleware para logar a origem da requisição (temporário)
+app.use((req, res, next) => {
+  console.log('Origin:', req.headers.origin);
+  next();
+});
+
+// Configuração de CORS usando regex opcional para a parte extra
 const corsOptions = {
-  origin: /https:\/\/backend-cadastro-[a-z0-9]+-renissons-projects\.vercel\.app/,
+  origin: /https:\/\/backend-cadastro(-[a-z0-9]+)?-renissons-projects\.vercel\.app/,
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
-  optionsSuccessStatus: 200, // Para algumas versões antigas do navegador
+  optionsSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 
@@ -40,6 +46,7 @@ app.post('/api/cadastrar', async (req, res) => {
     await novoUsuario.save();
     res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
   } catch (error) {
+    console.error('Erro ao cadastrar:', error);
     res.status(500).json({ error: 'Erro ao cadastrar usuário' });
   }
 });
