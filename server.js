@@ -22,8 +22,7 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 // Rota para cadastro
-app.post('https://backend-cadastro.vercel.app/api/cadastrar
-', async (req, res) => {
+app.post('/api/cadastrar', async (req, res) => {  // Corrigido aqui
   try {
     const { nome, email, senha } = req.body;
     const novoUsuario = new User({ nome, email, senha });
