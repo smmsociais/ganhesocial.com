@@ -6,8 +6,16 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Permitir qualquer origem
-app.use(cors()); // Desabilita CORS e permite qualquer origem
+// Configuração de CORS: Permitir origens que seguem o padrão "backend-cadastro-<qualquer_sufixo>-renissons-projects.vercel.app"
+const corsOptions = {
+  origin: /https:\/\/backend-cadastro-[a-z0-9]+-renissons-projects\.vercel\.app/,
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type',
+  preflightContinue: false,
+  optionsSuccessStatus: 200, // Para algumas versões antigas do navegador
+};
+
+app.use(cors(corsOptions)); // Aplica a configuração de CORS a todas as rotas
 
 app.use(bodyParser.json());
 
