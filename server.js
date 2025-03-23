@@ -7,14 +7,8 @@ const bodyParser = require('body-parser');
 const app = express();
 
 // Configurar CORS corretamente
-app.use(cors({
-  origin: "https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app", // Permitir apenas o frontend específico
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type"
-}));
-
 const corsOptions = {
-  origin: '*', // Permite qualquer origem (para testes)
+  origin: 'https://frontend-cadastro-k793bvt3u-renissons-projects.vercel.app', // Permitir apenas o frontend específico
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type',
   preflightContinue: false,
