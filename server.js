@@ -6,8 +6,8 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
-// Configurar CORS de forma simples
-app.use(cors()); // Permitir qualquer origem (útil para testes)
+// Permitir qualquer origem
+app.use(cors()); // Desabilita CORS e permite qualquer origem
 
 app.use(bodyParser.json());
 
