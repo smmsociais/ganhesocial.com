@@ -1,6 +1,11 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/signup", "destination": "/signup.html" }
-  ]
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ],
+  "routes": [
+    { "src": "/signup", "dest": "/signup.html" }
+  ],
+  "static": {
+    "directory": "./"
+  }
 }
