@@ -7,19 +7,6 @@
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/renissontk/ganhesocial.com.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/renissontk/ganhesocial.com/issues"
-  },
-  "homepage": "https://github.com/renissontk/ganhesocial.com#readme",
-  "description": "",
   "dependencies": {
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
@@ -27,7 +14,7 @@
     "express": "^4.21.2",
     "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.15.0",
-    "mongoose": "^8.13.0"
+    "mongoose": "^8.13.0",
+    "mongodb": "^6.15.0"
   }
 }
