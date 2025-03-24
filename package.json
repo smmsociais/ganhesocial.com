@@ -1,5 +1,5 @@
 {
-  "name": "backend-cadastro",
+  "name": "ganhesocial.com",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -9,16 +9,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/renissontk/backend-cadastro.git"
+    "url": "git+https://github.com/renissontk/ganhesocial.com.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/renissontk/backend-cadastro/issues"
+    "url": "https://github.com/renissontk/ganhesocial.com/issues"
   },
-  "homepage": "https://github.com/renissontk/backend-cadastro#readme",
+  "homepage": "https://github.com/renissontk/ganhesocial.com#readme",
   "description": "",
   "dependencies": {
     "body-parser": "^1.20.3",
