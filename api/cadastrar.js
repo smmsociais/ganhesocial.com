@@ -1,32 +1,31 @@
-// api/cadastrar.js
-require('dotenv').config();
-const mongoose = require('mongoose');
-
-// Conectar ao MongoDB (use a URL do seu MongoDB Atlas ou local)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("🔥 Conectado ao MongoDB!"))
-  .catch(err => console.error("Erro ao conectar:", err));
-
-// Criar um modelo para usuários
-const UserSchema = new mongoose.Schema({
-  nome: String,
-  email: String,
-  senha: String
-});
-const User = mongoose.model('User', UserSchema);
+const connectDB = require("../utils/db");
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
 module.exports = async (req, res) => {
-  // Rota para cadastro
-  if (req.method === 'POST') {
-    try {
-      const { nome, email, senha } = req.body;
-      const novoUsuario = new User({ nome, email, senha });
-      await novoUsuario.save();
-      return res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
-    } catch (error) {
-      return res.status(500).json({ error: 'Erro ao cadastrar usuário' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
+
+  await connectDB();
+
+  const { nome, email, senha } = req.body;
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
+  }
+
+  try {
+    const usuarioExistente = await User.findOne({ email });
+    if (usuarioExistente) {
+      return res.status(400).json({ error: "E-mail já cadastrado!" });
     }
-  } else {
-    return res.status(405).json({ error: 'Método não permitido' });
+
+    const senhaHash = await bcrypt.hash(senha, 10);
+    const novoUsuario = new User({ nome, email, senha: senhaHash });
+    await novoUsuario.save();
+
+    res.status(201).json({ message: "Usuário cadastrado com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao cadastrar usuário" });
   }
 };
