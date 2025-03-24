@@ -112,6 +112,16 @@
     <button class="logout-button" onclick="logout()">Sair</button>
 
     <script>
+        // Verificar se o usuário está autenticado
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                // Se não houver token, redireciona para a página de login
+                window.location.href = "login.html";
+            }
+        });
+
         // Carregar o saldo disponível ao abrir a página
         function carregarSaldo() {
             const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
@@ -135,9 +145,8 @@
         }
 
         function logout() {
-            // Adicione aqui a lógica para sair (limpar sessão, etc.)
-            // Por exemplo, redirecionar para a página de login:
-            window.location.href = "login.html";
+            localStorage.removeItem("authToken"); // Remove o token de autenticação
+            window.location.href = "login.html"; // Redireciona para login
         }
 
         // Carregar o saldo ao carregar a página
