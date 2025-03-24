@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const express = require('express');
 const path = require('path');
 
 const app = express();
@@ -20,8 +21,16 @@ const allowedOrigins = [
   'https://api.ganhesocial.com'
 ];
 
-// Configuração do CORS
 const corsOptions = {
+  origin: ["https://ganhesocial.com"], // Permitindo seu domínio
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type",
+  preflightContinue: false,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -36,6 +45,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(200).end();
+});
+
 app.use(bodyParser.json());
 
 // Conectar ao MongoDB
@@ -71,10 +87,6 @@ app.post('/api/cadastrar', async (req, res) => {
   }
 });
 
-// Exportar para Vercel como função serverless (se for o caso)
-module.exports = app;
 
-// Caso não esteja usando Vercel e queira rodar localmente, adicione o seguinte:
-// app.listen(3000, () => {
-//   console.log('Server running on port 3000');
-// });
+// Em vez de iniciar o servidor com app.listen, exporte o app para que o Vercel o invoque como uma função serverless:
+module.exports = app;
