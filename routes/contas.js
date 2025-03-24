@@ -1,4 +1,3 @@
-console.log("Arquivos no diretório:", require("fs").readdirSync("../middlewares"));
 const express = require("express");
 const Conta = require("../models/Conta"); // Importa o modelo de Conta
 const authMiddleware = require("../middleware/auth");
