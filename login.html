@@ -101,7 +101,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
             if (token) {
-                window.location.href = "/dashboard.html"; // Redireciona para o dashboard
+                window.location.href = "/dashboard"; // Redireciona para o dashboard
             }
         });
 
@@ -126,7 +126,7 @@
                     localStorage.setItem("authToken", data.token); // Salva o token JWT no localStorage
 
                     // Redireciona para o dashboard
-                    window.location.href = "/dashboard.html"; // Aqui você coloca o caminho do seu dashboard
+                    window.location.href = "/dashboard"; // Aqui você coloca o caminho do seu dashboard
                 } else {
                     // Caso de erro, mostrar a mensagem de erro
                     alert(data.error || "Erro desconhecido");
