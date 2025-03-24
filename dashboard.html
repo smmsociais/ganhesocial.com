@@ -27,6 +27,7 @@
             height: 100vh;
             margin: 0;
             transition: background-color 0.3s, color 0.3s;
+            position: relative;
         }
 
         .container {
@@ -68,6 +69,22 @@
         .history-button { background-color: #6c757d; }
         .history-button:hover { background-color: #5a6268; }
 
+        .logout-button {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -92,6 +109,8 @@
         <button class="button history-button" onclick="goToHistory()">Histórico de Ações</button>
     </div>
 
+    <button class="logout-button" onclick="logout()">Sair</button>
+
     <script>
         // Carregar o saldo disponível ao abrir a página
         function carregarSaldo() {
@@ -113,6 +132,12 @@
 
         function goToHistory() {
             window.location.href = "historico_acoes.html";
+        }
+
+        function logout() {
+            // Adicione aqui a lógica para sair (limpar sessão, etc.)
+            // Por exemplo, redirecionar para a página de login:
+            window.location.href = "login.html";
         }
 
         // Carregar o saldo ao carregar a página
