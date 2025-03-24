@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 
-const UserSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  senha: { type: String, required: true },
+const ContaSchema = new mongoose.Schema({
+    userId: { type: String, required: true }, // ID do usuário que criou a conta
+    nomeConta: { type: String, required: true }, // Nome da conta
+    saldo: { type: Number, required: true, default: 0 }, // Saldo inicial
+    historico: { type: Array, default: [] } // Histórico de transações
 });
 
-module.exports = mongoose.models.User || mongoose.model("User", UserSchema);
+const Conta = mongoose.model("Conta", ContaSchema);
+module.exports = Conta;
+
