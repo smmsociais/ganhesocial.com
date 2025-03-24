@@ -76,6 +76,19 @@
             gap: 10px;
         }
 
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .logo span {
+            display: block;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -90,6 +103,11 @@
     </style>
 </head>
 <body>
+    <div class="logo">
+        <span>Ganhe</span>
+        <span>Social</span>
+    </div>
+
     <div class="button-container">
         <button class="button login-button" onclick="goToLogin()">Login</button>
         <button class="button start-button" onclick="startEarning()">Cadastrar</button>
