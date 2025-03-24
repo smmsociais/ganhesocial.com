@@ -1,6 +1,6 @@
 const express = require("express");
 const Conta = require("../models/Conta"); // Importa o modelo de Conta
-const authMiddleware = require("./middlewares/auth");
+const authMiddleware = require("../middlewares/auth");
 
 const router = express.Router();
 
