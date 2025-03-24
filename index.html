@@ -79,16 +79,17 @@
         .logo {
             position: absolute;
             top: 10px;
-            left: 20px;
+            left: 30px; /* Afastando um pouco mais do canto */
             font-family: 'Poppins', sans-serif;
-            font-size: 28px; /* Menor tamanho */
+            font-size: 24px; /* Tamanho um pouco menor */
             font-weight: 600;
             color: #333;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             display: flex;
-            flex-direction: column; /* Coloca os nomes um embaixo do outro */
-            gap: 0; /* Elimina o espaço entre os nomes */
+            flex-direction: column;
+            justify-content: center; /* Centraliza o texto verticalmente */
+            gap: -5px; /* Reduz o espaço entre as palavras */
         }
 
         .logo span {
