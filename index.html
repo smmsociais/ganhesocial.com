@@ -78,8 +78,29 @@
 
         .logo {
             position: absolute;
-            top: 20px;
+            top: 30px;
             left: 20px;
+            font-family: 'Georgia', serif;
+            font-size: 40px;
+            font-weight: bold;
+            color: #333;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo span {
+            display: block;
+        }
+
+        .logo span:first-child {
+            font-size: 38px;
+            color: #007BFF;
+        }
+
+        .logo span:last-child {
+            font-size: 30px;
+            color: #4CAF50;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -92,28 +113,26 @@
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             }
+
+            .logo {
+                color: #fff;
+                text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.2);
+            }
+
+            .logo span:first-child {
+                color: #58a6ff;
+            }
+
+            .logo span:last-child {
+                color: #4CAF50;
+            }
         }
     </style>
 </head>
 <body>
     <div class="logo">
-        <svg width="150" height="50" viewBox="0 0 150 50" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#9C27B0;stop-opacity:1" />
-                </linearGradient>
-                <filter id="shadow">
-                    <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.3)"/>
-                </filter>
-            </defs>
-            <rect width="150" height="50" rx="10" fill="url(#gradient)" />
-            <text x="75" y="30" font-family="Arial Black, sans-serif" font-size="20" 
-                  fill="white" text-anchor="middle" filter="url(#shadow)">
-                GANHE <tspan fill="#4CAF50">$</tspan>OCIAL
-            </text>
-            <rect width="150" height="50" rx="10" fill="none" stroke="white" stroke-width="2"/>
-        </svg>
+        <span>Ganhe</span>
+        <span>Social</span>
     </div>
 
     <div class="button-container">
