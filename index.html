@@ -79,17 +79,16 @@
         .logo {
             position: absolute;
             top: 10px;
-            left: 30px; /* Afastando um pouco mais do canto */
+            left: 40px; /* Afastado mais do canto */
             font-family: 'Poppins', sans-serif;
-            font-size: 24px; /* Tamanho um pouco menor */
+            font-size: 22px; /* Tamanho menor */
             font-weight: 600;
             color: #333;
-            letter-spacing: 0.5px;
+            letter-spacing: -1px; /* Reduzido para diminuir ainda mais o espaço entre as palavras */
             text-transform: uppercase;
             display: flex;
-            flex-direction: column;
-            justify-content: center; /* Centraliza o texto verticalmente */
-            gap: -5px; /* Reduz o espaço entre as palavras */
+            flex-direction: row; /* Alinha as palavras horizontalmente */
+            gap: 0; /* Elimina o espaço entre as palavras */
         }
 
         .logo span {
