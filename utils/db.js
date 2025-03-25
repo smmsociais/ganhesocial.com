@@ -12,7 +12,7 @@ async function connectDB() {
     });
     
     isConnected = true;
-    console.log("🔥 Conectado ao MongoDB!");
+    console.log("🔥 Conectado ao MongoDB");
   } catch (error) {
     console.error("❌ Erro ao conectar ao MongoDB:", error);
     throw new Error("Erro ao conectar ao MongoDB");
