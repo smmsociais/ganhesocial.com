@@ -71,19 +71,6 @@
             color: white;
         }
 
-        .approve-button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .approve-button:hover {
-            background-color: #218838;
-        }
-
         .back-button {
             width: 100%;
             padding: 10px;
@@ -123,53 +110,36 @@
     </div>
 
     <script>
-        async function loadAccounts() {
-            const token = localStorage.getItem('authToken');
-            
-            if (!token) {
-                alert('Você precisa estar logado para visualizar suas contas.');
-                window.location.href = 'login.html'; // Redireciona para a página de login
+        function loadAccounts() {
+            // Carregar contas do localStorage
+            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+
+            if (accounts.length === 0) {
+                alert('Nenhuma conta encontrada.');
                 return;
             }
 
-            try {
-                const response = await fetch('http://localhost:5000/api/contas', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+            const accountList = document.getElementById('accountList');
+            accountList.innerHTML = ""; // Limpa a lista antes de adicionar as contas
 
-                if (response.ok) {
-                    const contas = await response.json();
-                    const accountList = document.getElementById('accountList');
-                    accountList.innerHTML = "";
-
-                    contas.forEach((account) => {
-                        const li = document.createElement('li');
-                        li.className = "account-item";
-                        li.innerHTML = `
-                            ${account.nomeConta}
-                            <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
-                                ${account.status}
-                            </span>
-                        `;
-                        accountList.appendChild(li);
-                    });
-                } else {
-                    alert('Erro ao carregar contas.');
-                }
-            } catch (error) {
-                console.error('Erro ao carregar contas:', error);
-                alert('Erro ao carregar as contas.');
-            }
+            accounts.forEach((account) => {
+                const li = document.createElement('li');
+                li.className = "account-item";
+                li.innerHTML = `
+                    ${account.name}
+                    <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
+                        ${account.status}
+                    </span>
+                `;
+                accountList.appendChild(li);
+            });
         }
 
         function goBack() {
-            window.location.href = "index.html";
+            window.location.href = "index"; // Ajuste para o caminho correto
         }
 
-        window.onload = loadAccounts;
+        window.onload = loadAccounts; // Chama a função assim que a página carrega
     </script>
 </body>
 </html>
