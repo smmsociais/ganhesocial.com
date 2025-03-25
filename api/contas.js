@@ -1,31 +1,55 @@
 const express = require("express");
-const Conta = require("../models/Conta"); // Importa o modelo de Conta
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Configurações
+app.use(express.json());
+app.use(cors());
+
+// Conexão com o MongoDB
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Conectado ao MongoDB"))
+    .catch((err) => console.log("Erro ao conectar ao MongoDB", err));
+
+// Modelo de Conta
+const ContaSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    nomeConta: { type: String, required: true },
+    saldo: { type: Number, required: true, default: 0 },
+    historico: { type: Array, default: [] }
+});
+const Conta = mongoose.model("Conta", ContaSchema);
+
+// Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
-
     if (!token) {
         return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
     try {
-        const tokenSemBearer = token.split(" ")[1]; // Remover "Bearer "
+        const tokenSemBearer = token.split(" ")[1];
         const decoded = jwt.verify(tokenSemBearer, process.env.JWT_SECRET);
-        req.user = decoded; // Adiciona as informações do usuário na requisição
+        req.user = decoded; // Adiciona as informações do usuário à requisição
         next();
     } catch (error) {
         return res.status(400).json({ error: "Token inválido." });
     }
 };
 
-// Criar uma nova conta
-router.post("/", authMiddleware, async (req, res) => {
+// Rotas para as Contas
+app.post("/api/contas", authMiddleware, async (req, res) => {
     try {
         const { nomeConta } = req.body;
         const userId = req.user.id; // Obtém o ID do usuário autenticado
 
-        // Criar e salvar a conta no banco de dados
         const novaConta = new Conta({ userId, nomeConta, saldo: 0, historico: [] });
         await novaConta.save();
 
@@ -36,8 +60,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 });
 
-// Listar todas as contas do usuário autenticado
-router.get("/", authMiddleware, async (req, res) => {
+app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
         const contas = await Conta.find({ userId: req.user.id });
         res.json(contas);
@@ -47,8 +70,7 @@ router.get("/", authMiddleware, async (req, res) => {
     }
 });
 
-// Buscar uma conta específica do usuário
-router.get("/:id", authMiddleware, async (req, res) => {
+app.get("/api/contas/:id", authMiddleware, async (req, res) => {
     try {
         const conta = await Conta.findOne({ _id: req.params.id, userId: req.user.id });
 
@@ -63,8 +85,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// Atualizar saldo de uma conta
-router.put("/:id/saldo", authMiddleware, async (req, res) => {
+app.put("/api/contas/:id/saldo", authMiddleware, async (req, res) => {
     try {
         const { saldo } = req.body;
 
@@ -85,8 +106,7 @@ router.put("/:id/saldo", authMiddleware, async (req, res) => {
     }
 });
 
-// Excluir uma conta
-router.delete("/:id", authMiddleware, async (req, res) => {
+app.delete("/api/contas/:id", authMiddleware, async (req, res) => {
     try {
         const conta = await Conta.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
 
@@ -101,4 +121,19 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+// Rota para login e geração de token JWT
+app.post("/api/login", async (req, res) => {
+    const { email, password } = req.body;
+    // Aqui você deve verificar o usuário na base de dados
+    // Para o exemplo, vamos considerar que o usuário existe
+    if (email === "usuario@exemplo.com" && password === "senha") {
+        const token = jwt.sign({ id: "123456" }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return res.json({ token });
+    }
+    res.status(400).json({ error: "Usuário ou senha inválidos." });
+});
+
+// Iniciar o servidor
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
