@@ -126,7 +126,7 @@ async function bindAccount() {
     document.getElementById("statusMessage").textContent = "Vinculando conta...";
 
     try {
-        const response = await fetch("/api/vincular_conta", {
+        const response = await fetch("https://ganhesocial.com/api/contas/vincular_conta", { ... });
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
