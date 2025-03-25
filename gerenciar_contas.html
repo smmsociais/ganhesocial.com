@@ -124,8 +124,8 @@
 
     <script>
         async function loadAccounts() {
-            const token = localStorage.getItem('token');  // Supondo que o token JWT esteja armazenado no localStorage
-
+            const token = localStorage.getItem('authToken');
+            
             if (!token) {
                 alert('Você precisa estar logado para visualizar suas contas.');
                 window.location.href = 'login.html'; // Redireciona para a página de login
