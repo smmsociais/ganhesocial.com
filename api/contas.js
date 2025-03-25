@@ -30,6 +30,7 @@ const Conta = mongoose.model("Conta", ContaSchema);
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
+
     if (!token) {
         return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
@@ -124,8 +125,6 @@ app.delete("/api/contas/:id", authMiddleware, async (req, res) => {
 // Rota para login e geração de token JWT
 app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
-    // Aqui você deve verificar o usuário na base de dados
-    // Para o exemplo, vamos considerar que o usuário existe
     if (email === "usuario@exemplo.com" && password === "senha") {
         const token = jwt.sign({ id: "123456" }, process.env.JWT_SECRET, { expiresIn: '1h' });
         return res.json({ token });
