@@ -26,8 +26,12 @@ const ContaSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    contas: [ContaSchema]  // Contas armazenadas dentro do usuário
+    password: { 
+        type: String, 
+        required: [true, "A senha é obrigatória"], 
+        select: false  // Impede que a senha seja retornada automaticamente
+    },
+    contas: [ContaSchema]
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -112,8 +116,12 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
         }
 
         // Adiciona a nova conta ao usuário
-        user.contas.push({ nomeConta, status: "Pendente" });
-        await user.save();
+// Adiciona a nova conta ao usuário
+user.contas.push({ nomeConta, status: "Pendente" });
+
+// Salva ignorando validações globais (como a de senha)
+await user.save({ validateBeforeSave: false });
+
 
         res.status(201).json({ message: "Conta adicionada com sucesso!" });
 
