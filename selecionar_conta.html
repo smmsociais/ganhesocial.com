@@ -266,8 +266,12 @@ async function confirmAction() {
 
     async function loadAccounts() {
         try {
-            // Faça uma requisição para a rota da API que retorna todas as contas
-            const response = await fetch("https://ganhesocial.com/api/contas");
+        const response = await fetch("https://ganhesocial.com/api/contas", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
             if (!response.ok) {
                 throw new Error("Erro ao carregar contas");
             }
