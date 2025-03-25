@@ -86,24 +86,36 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Criar Conta dentro do Usuário
-app.post("/api/contas", authMiddleware, async (req, res) => {
+app.post("/api/contas", async (req, res) => {
     try {
         const { nomeConta } = req.body;
-        if (!nomeConta) return res.status(400).json({ error: "O nome da conta é obrigatório." });
+        const userId = req.user.id; // Pegando o ID do usuário autenticado
 
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+        if (!nomeConta) {
+            return res.status(400).json({ error: "O nome da conta é obrigatório." });
+        }
 
-        const novaConta = { nomeConta, status: "Pendente" };
-        user.contas.push(novaConta);
+        // Verifica se a conta já existe no banco de dados
+        const contaExistente = await db.collection("contas").findOne({ nomeConta });
 
-        // 🔥 Corrigindo erro de validação do password
-        await user.save({ validateBeforeSave: false });
+        if (contaExistente) {
+            return res.status(400).json({ error: "Esta conta já foi adicionada por outro usuário." });
+        }
 
-        res.status(201).json({ message: "Conta adicionada!", contas: user.contas });
+        // Adiciona a nova conta
+        const novaConta = {
+            nomeConta,
+            userId, // Armazena qual usuário criou a conta
+            status: "Pendente"
+        };
+
+        await db.collection("contas").insertOne(novaConta);
+
+        res.status(201).json({ message: "Conta adicionada com sucesso!" });
+
     } catch (error) {
-        console.error("Erro ao criar conta:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
+        console.error("Erro ao adicionar conta:", error);
+        res.status(500).json({ error: "Erro interno do servidor." });
     }
 });
 
