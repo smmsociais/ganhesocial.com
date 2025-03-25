@@ -123,7 +123,7 @@
                 if (response.ok) {
                     // Se o login for bem-sucedido, salvar o token e redirecionar
                     alert(data.message);
-                    localStorage.setItem("authToken", data.token); // Salva o token JWT no localStorage
+                    localStorage.setItem("authToken", data.token);
 
                     // Redireciona para o dashboard
                     window.location.href = "/dashboard"; // Aqui você coloca o caminho do seu dashboard
