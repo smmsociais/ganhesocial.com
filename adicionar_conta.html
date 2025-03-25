@@ -113,10 +113,10 @@
                 return;
             }
 
-            const token = localStorage.getItem('token'); // Pegando o token do usuário logado
+            const token = localStorage.getItem('authToken'); // Pegando o token do usuário logado
             if (!token) {
                 alert("Você precisa estar logado para adicionar uma conta.");
-                window.location.href = "login.html"; // Redireciona para login se não tiver token
+                window.location.href = "login"; // Redireciona para login se não tiver token
                 return;
             }
 
