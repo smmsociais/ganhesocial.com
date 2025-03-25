@@ -18,21 +18,19 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
     .then(() => console.log("Conectado ao MongoDB"))
     .catch((err) => console.log("Erro ao conectar ao MongoDB", err));
 
-// Modelo de Usuário
+// Modelo de Usuário com Contas Embutidas
+const ContaSchema = new mongoose.Schema({
+    nomeConta: { type: String, required: true },
+    status: { type: String, enum: ["Pendente", "Aprovada"], default: "Pendente" }
+});
+
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    contas: [ContaSchema]  // Contas armazenadas dentro do usuário
 });
-const User = mongoose.model("User", UserSchema);
 
-// Modelo de Conta
-const ContaSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    nomeConta: { type: String, required: true },
-    saldo: { type: Number, default: 0 },
-    historico: { type: Array, default: [] }
-});
-const Conta = mongoose.model("Conta", ContaSchema);
+const User = mongoose.model("User", UserSchema);
 
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
@@ -59,7 +57,7 @@ app.post("/api/register", async (req, res) => {
         if (userExists) return res.status(400).json({ error: "E-mail já cadastrado." });
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ email, password: hashedPassword });
+        const newUser = new User({ email, password: hashedPassword, contas: [] });
         await newUser.save();
 
         res.status(201).json({ message: "Usuário registrado com sucesso!" });
@@ -87,16 +85,20 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-// Criar Conta Bancária
+// Criar Conta dentro do Usuário
 app.post("/api/contas", authMiddleware, async (req, res) => {
     try {
         const { nomeConta } = req.body;
         if (!nomeConta) return res.status(400).json({ error: "O nome da conta é obrigatório." });
 
-        const novaConta = new Conta({ userId: req.user.id, nomeConta });
-        await novaConta.save();
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
-        res.status(201).json({ message: "Conta criada com sucesso!", conta: novaConta });
+        const novaConta = { nomeConta, status: "Pendente" };
+        user.contas.push(novaConta);
+
+        await user.save();
+        res.status(201).json({ message: "Conta adicionada!", contas: user.contas });
     } catch (error) {
         console.error("Erro ao criar conta:", error);
         res.status(500).json({ error: "Erro interno no servidor." });
@@ -106,54 +108,50 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 // Listar Contas do Usuário
 app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
-        const contas = await Conta.find({ userId: req.user.id });
-        res.json(contas);
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+
+        res.json(user.contas);
     } catch (error) {
         console.error("Erro ao listar contas:", error);
         res.status(500).json({ error: "Erro interno no servidor." });
     }
 });
 
-// Buscar Conta Específica
-app.get("/api/contas/:id", authMiddleware, async (req, res) => {
+// Atualizar Status da Conta
+app.put("/api/contas/:contaId", authMiddleware, async (req, res) => {
     try {
-        const conta = await Conta.findOne({ _id: req.params.id, userId: req.user.id });
+        const { status } = req.body;
+        if (!["Pendente", "Aprovada"].includes(status)) {
+            return res.status(400).json({ error: "Status inválido." });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+
+        const conta = user.contas.id(req.params.contaId);
         if (!conta) return res.status(404).json({ error: "Conta não encontrada." });
 
-        res.json(conta);
+        conta.status = status;
+        await user.save();
+
+        res.json({ message: "Status atualizado!", contas: user.contas });
     } catch (error) {
-        console.error("Erro ao buscar conta:", error);
+        console.error("Erro ao atualizar conta:", error);
         res.status(500).json({ error: "Erro interno no servidor." });
     }
 });
 
-// Atualizar Saldo da Conta (Depósito ou Saque)
-app.put("/api/contas/:id/saldo", authMiddleware, async (req, res) => {
+// Excluir Conta do Usuário
+app.delete("/api/contas/:contaId", authMiddleware, async (req, res) => {
     try {
-        const { valor } = req.body;
-        if (typeof valor !== "number") return res.status(400).json({ error: "O valor deve ser um número." });
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
-        const conta = await Conta.findOne({ _id: req.params.id, userId: req.user.id });
-        if (!conta) return res.status(404).json({ error: "Conta não encontrada." });
+        user.contas = user.contas.filter(conta => conta._id.toString() !== req.params.contaId);
+        await user.save();
 
-        conta.saldo += valor; // Atualiza o saldo
-        conta.historico.push({ tipo: valor > 0 ? "Depósito" : "Saque", valor, data: new Date() });
-        await conta.save();
-
-        res.json({ message: "Saldo atualizado!", conta });
-    } catch (error) {
-        console.error("Erro ao atualizar saldo:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
-    }
-});
-
-// Excluir Conta Bancária
-app.delete("/api/contas/:id", authMiddleware, async (req, res) => {
-    try {
-        const conta = await Conta.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
-        if (!conta) return res.status(404).json({ error: "Conta não encontrada." });
-
-        res.json({ message: "Conta excluída com sucesso!" });
+        res.json({ message: "Conta removida!", contas: user.contas });
     } catch (error) {
         console.error("Erro ao excluir conta:", error);
         res.status(500).json({ error: "Erro interno no servidor." });
