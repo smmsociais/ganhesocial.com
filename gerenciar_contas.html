@@ -110,36 +110,51 @@
     </div>
 
     <script>
-        function loadAccounts() {
-            // Carregar contas do localStorage
-            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+async function loadAccounts() {
+    const token = localStorage.getItem('authToken'); // Pega o token de autenticação
+    if (!token) {
+        alert("Você precisa estar logado.");
+        window.location.href = "login";
+        return;
+    }
 
-            if (accounts.length === 0) {
-                alert('Nenhuma conta encontrada.');
-                return;
+    try {
+        const response = await fetch("https://ganhesocial.com/api/contas", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
             }
+        });
 
-            const accountList = document.getElementById('accountList');
-            accountList.innerHTML = ""; // Limpa a lista antes de adicionar as contas
+        const accounts = await response.json();
 
-            accounts.forEach((account) => {
-                const li = document.createElement('li');
-                li.className = "account-item";
-                li.innerHTML = `
-                    ${account.name}
-                    <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
-                        ${account.status}
-                    </span>
-                `;
-                accountList.appendChild(li);
-            });
+        if (!response.ok) {
+            throw new Error(accounts.error || "Erro ao carregar contas");
         }
 
-        function goBack() {
-            window.location.href = "index"; // Ajuste para o caminho correto
-        }
+        const accountList = document.getElementById('accountList');
+        accountList.innerHTML = ""; // Limpa a lista antes de adicionar as contas
 
-        window.onload = loadAccounts; // Chama a função assim que a página carrega
+        accounts.forEach((account) => {
+            const li = document.createElement('li');
+            li.className = "account-item";
+            li.innerHTML = `
+                ${account.nomeConta}
+                <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
+                    ${account.status}
+                </span>
+            `;
+            accountList.appendChild(li);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar contas:", error);
+        alert("Erro ao carregar contas. Tente novamente.");
+    }
+}
+
+window.onload = loadAccounts;
+
     </script>
 </body>
 </html>
