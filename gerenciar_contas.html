@@ -123,31 +123,46 @@
     </div>
 
     <script>
-        function loadAccounts() {
-            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
-            const accountList = document.getElementById('accountList');
+        async function loadAccounts() {
+            const token = localStorage.getItem('token');  // Supondo que o token JWT esteja armazenado no localStorage
 
-            accountList.innerHTML = "";
+            if (!token) {
+                alert('Você precisa estar logado para visualizar suas contas.');
+                window.location.href = 'login.html'; // Redireciona para a página de login
+                return;
+            }
 
-            accounts.forEach((account, index) => {
-                const li = document.createElement('li');
-                li.className = "account-item";
-                li.innerHTML = `
-                    ${account.name}
-                    <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
-                        ${account.status}
-                    </span>
-                    ${account.status === "Pendente" ? `<button class="approve-button" onclick="approveAccount(${index})">Aprovar</button>` : ""}
-                `;
-                accountList.appendChild(li);
-            });
-        }
+            try {
+                const response = await fetch('http://localhost:5000/api/contas', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
 
-        function approveAccount(index) {
-            let accounts = JSON.parse(localStorage.getItem('accounts'));
-            accounts[index].status = "Aprovado";
-            localStorage.setItem('accounts', JSON.stringify(accounts));
-            loadAccounts();
+                if (response.ok) {
+                    const contas = await response.json();
+                    const accountList = document.getElementById('accountList');
+                    accountList.innerHTML = "";
+
+                    contas.forEach((account) => {
+                        const li = document.createElement('li');
+                        li.className = "account-item";
+                        li.innerHTML = `
+                            ${account.nomeConta}
+                            <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
+                                ${account.status}
+                            </span>
+                        `;
+                        accountList.appendChild(li);
+                    });
+                } else {
+                    alert('Erro ao carregar contas.');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar contas:', error);
+                alert('Erro ao carregar as contas.');
+            }
         }
 
         function goBack() {
