@@ -86,30 +86,34 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Criar Conta dentro do Usuário
-app.post("/api/contas", async (req, res) => {
+app.post("/api/contas", authMiddleware, async (req, res) => {
     try {
         const { nomeConta } = req.body;
-        const userId = req.user.id; // Pegando o ID do usuário autenticado
+        const userId = req.user.id;
 
         if (!nomeConta) {
             return res.status(400).json({ error: "O nome da conta é obrigatório." });
         }
 
-        // Verifica se a conta já existe no banco de dados
-        const contaExistente = await db.collection("contas").findOne({ nomeConta });
-
+        // Verifica se a conta já existe no sistema
+        const contaExistente = await User.findOne({ "contas.nomeConta": nomeConta });
         if (contaExistente) {
             return res.status(400).json({ error: "Esta conta já foi adicionada por outro usuário." });
         }
 
-        // Adiciona a nova conta
-        const novaConta = {
-            nomeConta,
-            userId, // Armazena qual usuário criou a conta
-            status: "Pendente"
-        };
+        // Busca o usuário autenticado
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
-        await db.collection("contas").insertOne(novaConta);
+        // Verifica se o usuário já tem essa conta
+        const contaJaCadastrada = user.contas.find(conta => conta.nomeConta === nomeConta);
+        if (contaJaCadastrada) {
+            return res.status(400).json({ error: "Você já adicionou esta conta." });
+        }
+
+        // Adiciona a nova conta ao usuário
+        user.contas.push({ nomeConta, status: "Pendente" });
+        await user.save();
 
         res.status(201).json({ message: "Conta adicionada com sucesso!" });
 
