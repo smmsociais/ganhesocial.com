@@ -264,19 +264,17 @@ async function confirmAction() {
     }
 }
 
-        function loadAccounts() {
-            const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-            const accountSelect = document.getElementById("accountSelect");
-            
-            accounts.forEach(account => {
-                if (account.status === "Aprovado") {
-                    const option = document.createElement("option");
-                    option.value = account.name;
-                    option.textContent = account.name;
-                    accountSelect.appendChild(option);
-                }
-            });
-        }
+function loadAccounts() {
+    const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+    const accountSelect = document.getElementById("accountSelect");
+
+    accounts.forEach(account => {
+        const option = document.createElement("option");
+        option.value = account.name;
+        option.textContent = account.name;
+        accountSelect.appendChild(option);
+    });
+}
 
         function goBack() {
             window.location.href = "index.html";
