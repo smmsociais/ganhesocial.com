@@ -118,7 +118,7 @@
 
             if (!token) {
                 // Se não houver token, redireciona para a página de login
-                window.location.href = "login.html";
+                window.location.href = "login";
             }
         });
 
@@ -129,24 +129,24 @@
         }
 
         function goToSelectAccount() {
-            window.location.href = "selecionar_conta.html";
+            window.location.href = "selecionar_conta";
         }
 
         function goToAddAccount() {
-            window.location.href = "adicionar_conta.html";
+            window.location.href = "adicionar_conta";
         }
 
         function goToManageAccounts() {
-            window.location.href = "gerenciar_contas.html";
+            window.location.href = "gerenciar_contas";
         }
 
         function goToHistory() {
-            window.location.href = "historico_acoes.html";
+            window.location.href = "historico_acoes";
         }
 
         function logout() {
-            localStorage.removeItem("authToken"); // Remove o token de autenticação
-            window.location.href = "index"; // Redireciona para login
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
         }
 
         // Carregar o saldo ao carregar a página
