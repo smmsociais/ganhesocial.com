@@ -184,6 +184,19 @@ app.delete("/api/contas/:contaId", authMiddleware, async (req, res) => {
     }
 });
 
+// Rota para listar todas as contas de todos os usuários
+app.get("/api/todas-contas", async (req, res) => {
+    try {
+        const usuarios = await User.find({}, "contas"); // Busca apenas o campo "contas" de todos os usuários
+        const todasAsContas = usuarios.flatMap(user => user.contas); // Une todas as contas em um único array
+
+        res.json(todasAsContas);
+    } catch (error) {
+        console.error("Erro ao listar todas as contas:", error);
+        res.status(500).json({ error: "Erro interno no servidor." });
+    }
+});
+
 // Iniciar o Servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
