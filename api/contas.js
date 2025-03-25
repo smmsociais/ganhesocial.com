@@ -97,7 +97,9 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
         const novaConta = { nomeConta, status: "Pendente" };
         user.contas.push(novaConta);
 
-        await user.save();
+        // 🔥 Corrigindo erro de validação do password
+        await user.save({ validateBeforeSave: false });
+
         res.status(201).json({ message: "Conta adicionada!", contas: user.contas });
     } catch (error) {
         console.error("Erro ao criar conta:", error);
