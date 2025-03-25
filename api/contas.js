@@ -1,8 +1,26 @@
 const express = require("express");
 const Conta = require("../models/Conta"); // Importa o modelo de Conta
-const authMiddleware = require("../middlewares/auth"); // Middleware para autenticação
+const jwt = require("jsonwebtoken"); // Usando a lib jose ou jsonwebtoken
 
 const router = express.Router();
+
+// Função de autenticação direta
+const authMiddleware = (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if (!token) {
+        return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    }
+
+    try {
+        const tokenSemBearer = token.split(" ")[1]; // Remove "Bearer " se presente
+        const decoded = jwt.verify(tokenSemBearer, process.env.JWT_SECRET);
+        req.user = decoded; // Adiciona as informações do usuário na requisição
+        next();
+    } catch (error) {
+        return res.status(400).json({ error: "Token inválido." });
+    }
+};
 
 // Criar uma nova conta
 router.post("/", authMiddleware, async (req, res) => {
