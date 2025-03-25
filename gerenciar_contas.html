@@ -138,12 +138,7 @@ async function loadAccounts() {
         accounts.forEach((account) => {
             const li = document.createElement('li');
             li.className = "account-item";
-            li.innerHTML = `
-                ${account.nomeConta}
-                <span class="status ${account.status === 'Pendente' ? 'pending' : 'approved'}">
-                    ${account.status}
-                </span>
-            `;
+            li.textContent = account.nomeConta; // Apenas o nome da conta
             accountList.appendChild(li);
         });
 
