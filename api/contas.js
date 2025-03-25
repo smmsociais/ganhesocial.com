@@ -1,10 +1,7 @@
 const express = require("express");
 const Conta = require("../models/Conta"); // Importa o modelo de Conta
-const jwt = require("jsonwebtoken"); // Usando a lib jose ou jsonwebtoken
+const jwt = require("jsonwebtoken");
 
-const router = express.Router();
-
-// Função de autenticação direta
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
 
@@ -13,7 +10,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const tokenSemBearer = token.split(" ")[1]; // Remove "Bearer " se presente
+        const tokenSemBearer = token.split(" ")[1]; // Remover "Bearer "
         const decoded = jwt.verify(tokenSemBearer, process.env.JWT_SECRET);
         req.user = decoded; // Adiciona as informações do usuário na requisição
         next();
