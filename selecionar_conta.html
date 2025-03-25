@@ -268,6 +268,10 @@ function loadAccounts() {
     const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
     const accountSelect = document.getElementById("accountSelect");
 
+    // Limpa as opções antigas, mantendo apenas a padrão
+    accountSelect.innerHTML = '<option value="">Selecione uma conta</option>';
+
+    // Adiciona as contas salvas
     accounts.forEach(account => {
         const option = document.createElement("option");
         option.value = account.name;
@@ -275,9 +279,8 @@ function loadAccounts() {
         accountSelect.appendChild(option);
     });
 }
-
         function goBack() {
-            window.location.href = "index.html";
+            window.location.href = "/dashboard";
         }
 
         window.onload = loadAccounts;
