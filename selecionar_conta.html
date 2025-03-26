@@ -192,6 +192,11 @@ async function confirmAction() {
     const selectedAccount = document.getElementById("accountSelect").value;
     if (!selectedAccount) return;
 
+    if (!currentActionData) {
+        document.getElementById("statusMessage").textContent = "Erro: Nenhuma ação carregada.";
+        return;
+    }
+
     document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
 
     try {
@@ -199,27 +204,36 @@ async function confirmAction() {
         const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
         const userInfoData = await response.json();
 
-        if (userInfoData && userInfoData.code === 0 && userInfoData.data && userInfoData.data.user) {
-            const userId = userInfoData.data.user.id;
-            console.log("ID do usuário TikTok:", userId);
-            document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
+        if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
+            throw new Error("Erro ao obter informações do usuário.");
+        }
 
-            // Passo 2: Obter a lista de "seguindo" do perfil selecionado
-            const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
-            const userFollowingData = await responseFollowing.json();
+        const userId = userInfoData.data.user.id;
+        console.log("ID do usuário TikTok:", userId);
+        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
 
-            if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data) {
-                const followings = userFollowingData.data.followings;
-                const actionUsername = currentActionData.nome_usuario;
+        // Passo 2: Obter a lista de "seguindo" do perfil selecionado
+        const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
+        const userFollowingData = await responseFollowing.json();
 
-                const accountFound = followings.some(following => following.unique_id === actionUsername);
+        if (!userFollowingData || userFollowingData.code !== 0 || !userFollowingData.data) {
+            throw new Error("Erro ao buscar lista de seguindo.");
+        }
 
-                if (accountFound) {
-                    // Passo 3: Confirmar ação no backend
-    document.getElementById("statusMessage").textContent = "Confirmando ação...";
+        const followings = userFollowingData.data.followings;
+        const actionUsername = currentActionData.nome_usuario;
 
-    try {
-        const response = await fetch("/api/confirmar_acao", {
+        const accountFound = followings.some(following => following.unique_id === actionUsername);
+
+        if (!accountFound) {
+            document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
+            return;
+        }
+
+        // Passo 3: Confirmar ação no backend
+        document.getElementById("statusMessage").textContent = "Confirmando ação...";
+
+        const confirmResponse = await fetch("/api/confirmar_acao", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -231,43 +245,36 @@ async function confirmAction() {
             })
         });
 
-        const data = await response.json();
+        const confirmData = await confirmResponse.json();
 
-        if (data.status === "CONFIRMADA") {
-            document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
-                        
-                        // Passo 4: Atualizar histórico local e saldo
-                        const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-                        const newAction = {
-                            tipo: currentActionData.tipo_acao,
-                            usuario: currentActionData.nome_usuario,
-                            pontos: currentActionData.quantidade_pontos,
-                            status: "confirmada",
-                            data: new Date().toLocaleString() 
-                        };
-                        actionHistory.push(newAction);
-                        localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
-
-                        const pontos = parseFloat(currentActionData.quantidade_pontos);
-                        const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3);
-                        const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-                        const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
-                        localStorage.setItem("saldoDisponivel", novoSaldo);
-                    } else {
-                        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
-                    }
-                } else {
-                    document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
-                }
-            } else {
-                document.getElementById("statusMessage").textContent = "Erro ao buscar lista de seguindo.";
-            }
-        } else {
-            document.getElementById("statusMessage").textContent = "Erro ao obter informações do usuário.";
+        if (confirmData.status !== "CONFIRMADA") {
+            throw new Error("Erro ao confirmar ação.");
         }
+
+        document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
+
+        // Passo 4: Atualizar histórico local e saldo
+        const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+        const newAction = {
+            tipo: currentActionData.tipo_acao,
+            usuario: currentActionData.nome_usuario,
+            pontos: currentActionData.quantidade_pontos,
+            status: "confirmada",
+            data: new Date().toLocaleString()
+        };
+        actionHistory.push(newAction);
+        localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+
+        const pontos = parseFloat(currentActionData.quantidade_pontos);
+        const valorEmReais = Math.max(0, (pontos * 0.001 - 0.001)).toFixed(3); // Garante que não fique negativo
+
+        const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+        const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
+        localStorage.setItem("saldoDisponivel", novoSaldo);
+
     } catch (error) {
-        console.error("Erro na requisição:", error);
-        document.getElementById("statusMessage").textContent = "Erro na requisição.";
+        console.error("Erro:", error);
+        document.getElementById("statusMessage").textContent = error.message || "Erro na requisição.";
     }
 }
 
