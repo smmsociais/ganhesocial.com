@@ -120,12 +120,8 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
         }
 
         // Adiciona a nova conta ao usuário
-// Adiciona a nova conta ao usuário
-user.contas.push({ nomeConta, status: "Pendente" });
-
-// Salva ignorando validações globais (como a de senha)
-await user.save({ validateBeforeSave: false });
-
+        user.contas.push({ nomeConta, status: "Pendente" });
+        await user.save({ validateBeforeSave: false });
 
         res.status(201).json({ message: "Conta adicionada com sucesso!" });
 
@@ -148,67 +144,12 @@ app.get("/api/contas", authMiddleware, async (req, res) => {
     }
 });
 
-// Atualizar Status da Conta
-app.put("/api/contas/:contaId", authMiddleware, async (req, res) => {
-    try {
-        const { status } = req.body;
-        if (!["Pendente", "Aprovada"].includes(status)) {
-            return res.status(400).json({ error: "Status inválido." });
-        }
-
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
-
-        const conta = user.contas.id(req.params.contaId);
-        if (!conta) return res.status(404).json({ error: "Conta não encontrada." });
-
-        conta.status = status;
-        await user.save();
-
-        res.json({ message: "Status atualizado!", contas: user.contas });
-    } catch (error) {
-        console.error("Erro ao atualizar conta:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
-    }
-});
-
-// Excluir Conta do Usuário
-app.delete("/api/contas/:contaId", authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
-
-        user.contas = user.contas.filter(conta => conta._id.toString() !== req.params.contaId);
-        await user.save();
-
-        res.json({ message: "Conta removida!", contas: user.contas });
-    } catch (error) {
-        console.error("Erro ao excluir conta:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
-    }
-});
-
-// Rota para listar todas as contas de todos os usuários
-app.get("/api/todas-contas", async (req, res) => {
-    try {
-        const usuarios = await User.find({}, "contas"); // Busca apenas o campo "contas" de todos os usuários
-        const todasAsContas = usuarios.flatMap(user => user.contas); // Une todas as contas em um único array
-
-        res.json(todasAsContas);
-    } catch (error) {
-        console.error("Erro ao listar todas as contas:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
-    }
-});
-
 // Nova Rota para Listar Contas do Usuário
 app.get("/api/accounts", authMiddleware, async (req, res) => {
     try {
-        // Buscando o usuário com base no ID decodificado do token
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
-        // Respondendo com as contas do usuário
         res.json(user.contas);
     } catch (error) {
         console.error("Erro ao listar contas:", error);
