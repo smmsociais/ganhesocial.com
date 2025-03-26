@@ -27,26 +27,18 @@ export default async function handler(req, res) {
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
-        // Se a resposta indicar sucesso, retorna o ID da conta
+        // Se a resposta indicar sucesso, retorna a mensagem de sucesso
         if (bindData.status === "success") {
-            return res.status(200).json({ 
-                message: "Conta vinculada com sucesso!", 
-                id_conta: bindData.id_conta,
-                detalhes: bindData
-            });
+            return res.status(200).json({ message: "Conta vinculada com sucesso!" });
         }
 
-        // Se a resposta for 'WRONG_USER', retorna a mensagem de sucesso mesmo sem id_conta válido
+        // Se a resposta for 'WRONG_USER', retorna a mensagem de sucesso sem detalhes extras
         if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-            return res.status(200).json({ 
-                message: "Conta vinculada com sucesso!", 
-                id_conta: "000000", // ID fictício para evitar falhas na integração
-                detalhes: bindData
-            });
+            return res.status(200).json({ message: "Conta vinculada com sucesso!" });
         }
 
         // Se houver outro erro, retorna a resposta original
-        return res.status(400).json({ error: "Erro ao vincular conta.", detalhes: bindData });
+        return res.status(400).json({ error: "Erro ao vincular conta." });
 
     } catch (error) {
         console.error("Erro ao processar requisição:", error);
