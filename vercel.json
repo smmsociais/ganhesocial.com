@@ -8,5 +8,6 @@
     { "source": "/adicionar_conta", "destination": "/adicionar_conta.html" },
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
     { "source": "/historico_acoes", "destination": "/historico_acoes.html" }
+    { "source": "/settings", "destination": "/settings.html" }   
   ]
 }
