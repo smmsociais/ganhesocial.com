@@ -158,7 +158,7 @@ async function fetchAction() {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
             method: 'GET',
             headers: {
-                'Authorization': Bearer ${localStorage.getItem('authToken')}
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
 
