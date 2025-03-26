@@ -195,6 +195,7 @@ async function confirmAction() {
     document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
 
     try {
+        // Passo 1: Obter ID do usuário no TikTok
         const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
         const userInfoData = await response.json();
 
@@ -203,37 +204,52 @@ async function confirmAction() {
             console.log("ID do usuário TikTok:", userId);
             document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
 
-                   // Passo 2: Obter a lista de "seguindo" do perfil selecionado
-                    const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
-                    const userFollowingData = await responseFollowing.json();
+            // Passo 2: Obter a lista de "seguindo" do perfil selecionado
+            const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
+            const userFollowingData = await responseFollowing.json();
 
-                    if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data) {
-                        const followings = userFollowingData.data.followings;
-                        const actionUsername = currentActionData.nome_usuario; // Nome de usuário da ação (mamica.celor.3)
+            if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data) {
+                const followings = userFollowingData.data.followings;
+                const actionUsername = currentActionData.nome_usuario;
 
-                        const accountFound = followings.some(following => following.unique_id === actionUsername);
+                const accountFound = followings.some(following => following.unique_id === actionUsername);
 
                 if (accountFound) {
-                    // Passo 4: Validar a ação no histórico e atualizar o saldo
-                    const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-                    const newAction = {
-                        tipo: currentActionData.tipo_acao,
-                        usuario: currentActionData.nome_usuario,
-                        pontos: currentActionData.quantidade_pontos,
-                        status: "validada", // Status da ação
-                        data: new Date().toLocaleString() // Data da ação
-                    };
-                    actionHistory.push(newAction);
-                    localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+                    // Passo 3: Confirmar ação no backend
+                    document.getElementById("statusMessage").textContent = "Confirmando ação...";
 
-                    // Atualizar o saldo disponível
-                    const pontos = parseFloat(currentActionData.quantidade_pontos);
-                    const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3); // Subtrai 0,001 e formata para 3 casas decimais
-                    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-                    const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
-                    localStorage.setItem("saldoDisponivel", novoSaldo);
+                    const confirmResponse = await fetch(`/api/confirmar_acao?id_conta=${localStorage.getItem("id_conta")}&id_pedido=${currentActionData.id_pedido}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
 
-                    document.getElementById("statusMessage").textContent = "Ação confirmada e validada com sucesso!";
+                    const confirmData = await confirmResponse.json();
+
+                    if (confirmData.status === "CONFIRMADA") {
+                        document.getElementById("statusMessage").textContent = "Ação confirmada e validada com sucesso!";
+                        
+                        // Passo 4: Atualizar histórico local e saldo
+                        const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+                        const newAction = {
+                            tipo: currentActionData.tipo_acao,
+                            usuario: currentActionData.nome_usuario,
+                            pontos: currentActionData.quantidade_pontos,
+                            status: "confirmada",
+                            data: new Date().toLocaleString() 
+                        };
+                        actionHistory.push(newAction);
+                        localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+
+                        const pontos = parseFloat(currentActionData.quantidade_pontos);
+                        const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3);
+                        const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+                        const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
+                        localStorage.setItem("saldoDisponivel", novoSaldo);
+                    } else {
+                        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
+                    }
                 } else {
                     document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
                 }
