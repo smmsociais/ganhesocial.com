@@ -203,26 +203,15 @@ async function confirmAction() {
             console.log("ID do usuário TikTok:", userId);
             document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
 
-            // Passo 2: Obter a lista de "seguindo" do perfil selecionado
-            const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
-            const userFollowingOptions = {
-                method: 'GET',
-                headers: {
-                    'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-                    'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-                }
-            };
+                   // Passo 2: Obter a lista de "seguindo" do perfil selecionado
+                    const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
+                    const userFollowingData = await responseFollowing.json();
 
-            const userFollowingResponse = await fetch(userFollowingUrl, userFollowingOptions);
-            const userFollowingData = await userFollowingResponse.json();
+                    if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data) {
+                        const followings = userFollowingData.data.followings;
+                        const actionUsername = currentActionData.nome_usuario; // Nome de usuário da ação (mamica.celor.3)
 
-            // Verificar se a resposta da API de "seguindo" é válida
-            if (userFollowingData && userFollowingData.code === 0 && userFollowingData.data && userFollowingData.data.followings) {
-                // Passo 3: Verificar se o perfil da ação (mamica.celor.3) está na lista de "seguindo"
-                const followings = userFollowingData.data.followings;
-                const actionUsername = currentActionData.nome_usuario; // Nome de usuário da ação (mamica.celor.3)
-
-                const accountFound = followings.some(following => following.unique_id === actionUsername);
+                        const accountFound = followings.some(following => following.unique_id === actionUsername);
 
                 if (accountFound) {
                     // Passo 4: Validar a ação no histórico e atualizar o saldo
