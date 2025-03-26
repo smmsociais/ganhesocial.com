@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import bodyParser from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -13,16 +12,8 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-// Servir arquivos estáticos da pasta 'frontend'
-app.use(express.static(path.join(__dirname, "frontend")));
-
-// Rota para servir o index.html
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "index.html"));
-});
-
+// Middleware para CORS
 const allowedOrigins = ["https://ganhesocial.com", "https://api.ganhesocial.com"];
-
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -36,17 +27,18 @@ const corsOptions = {
   preflightContinue: false,
   optionsSuccessStatus: 200,
 };
-
 app.use(cors(corsOptions));
 
-app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.status(200).end();
-});
+// Middleware para permitir o envio de dados JSON
+app.use(express.json()); // Substituindo body-parser
 
-app.use(express.json()); // Substituindo bodyParser.json()
+// Servir arquivos estáticos da pasta 'frontend'
+app.use(express.static(path.join(__dirname, "frontend")));
+
+// Rota para servir o index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
 
 // Conectar ao MongoDB
 mongoose
@@ -66,7 +58,6 @@ const User = mongoose.model("User", UserSchema);
 app.post("/api/cadastrar", async (req, res) => {
   try {
     console.log("📩 Recebendo dados:", req.body);
-
     const { nome, email, senha } = req.body;
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
