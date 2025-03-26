@@ -1,10 +1,10 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const bcrypt = require("bcryptjs");
-const axios = require("axios");
+import express from "express";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import bcrypt from "bcryptjs";
+import axios from "axios";
 
 dotenv.config();
 
