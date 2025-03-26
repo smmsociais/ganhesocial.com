@@ -1,9 +1,9 @@
-const connectDB = require("../utils/db");
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import connectDB from "./db.js";
+import User from "./User.js";
+import bcrypt from "bcryptjs"; 
+import jwt from "jsonwebtoken"; 
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
@@ -37,3 +37,5 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Erro ao realizar login" });
   }
 };
+
+export default handler;

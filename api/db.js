@@ -1,19 +1,19 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-let isConnected = false; // Evita múltiplas conexões
+let isConnected = false;
 
 async function connectDB() {
   if (isConnected) return;
-  
+
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000, // Aumenta tempo limite para evitar falhas
-      bufferCommands: false, // Evita enfileirar consultas antes da conexão
+      serverSelectionTimeoutMS: 30000,
+      bufferCommands: false,
     });
 
-    isConnected = db.connections[0].readyState === 1; // Verifica se está conectado
+    isConnected = db.connections[0].readyState === 1;
     console.log("🔥 Conectado ao MongoDB!");
   } catch (error) {
     console.error("❌ Erro ao conectar ao MongoDB:", error);
@@ -21,4 +21,4 @@ async function connectDB() {
   }
 }
 
-module.exports = connectDB;
+export default connectDB;  // Verifique se o export está correto!
