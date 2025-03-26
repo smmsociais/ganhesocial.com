@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const express = require('express');
 const path = require('path');
 
 const app = express();
@@ -22,13 +21,19 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: ["https://ganhesocial.com"], // Permitindo seu domínio
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type",
+  origin: function (origin, callback) {
+    const allowedOrigins = ['https://ganhesocial.com', 'https://api.ganhesocial.com'];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET,POST,PUT,DELETE',
+  allowedHeaders: 'Content-Type',
   preflightContinue: false,
   optionsSuccessStatus: 200,
 };
-
 app.use(cors(corsOptions));
 
   origin: function (origin, callback) {
@@ -87,6 +92,8 @@ app.post('/api/cadastrar', async (req, res) => {
   }
 });
 
+const buscarAcaoRouter = require("./api/buscar_acao.js");
 
-// Em vez de iniciar o servidor com app.listen, exporte o app para que o Vercel o invoque como uma função serverless:
+app.use("/api", buscarAcaoRouter);
+
 module.exports = app;
