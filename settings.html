@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: var(--container-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .input-box[readonly] {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .save-button, .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .save-button {
+            background-color: #28a745;
+        }
+
+        .save-button:hover {
+            background-color: #218838;
+        }
+
+        .back-button {
+            background-color: #d9534f;
+        }
+
+        .back-button:hover {
+            background-color: #c9302c;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .input-box {
+                background: var(--container-dark);
+                border: 1px solid var(--border-dark);
+                color: var(--text-dark);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Perfil</h2>
+
+        <input type="text" id="name" class="input-box" placeholder="Nome">
+        <input type="email" id="email" class="input-box" placeholder="E-mail">
+        <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
+
+        <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+    <script>
+        async function loadProfile() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert("Você precisa estar logado para acessar esta página.");
+                window.location.href = "/login";
+                return;
+            }
+
+            document.getElementById('authToken').value = token;
+
+            try {
+                const response = await fetch("https://ganhesocial.com/api/perfil", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao carregar perfil");
+                }
+
+                document.getElementById('name').value = data.nome || "";
+                document.getElementById('email').value = data.email || "";
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const token = localStorage.getItem('authToken');
+
+            if (!name || !email) {
+                alert("Nome e e-mail são obrigatórios.");
+                return;
+            }
+
+            try {
+                const response = await fetch("https://ganhesocial.com/api/perfil", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ nome: name, email: email })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao salvar perfil");
+                }
+
+                alert("Perfil atualizado com sucesso!");
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function goBack() {
+            window.location.href = "/dashboard";
+        }
+
+        // Carregar perfil ao abrir a página
+        window.onload = loadProfile;
+    </script>
+</body>
+</html>
