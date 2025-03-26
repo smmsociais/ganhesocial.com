@@ -172,7 +172,7 @@ async function fetchAction() {
 
             const pontos = parseFloat(data.quantidade_pontos);
             const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3);
-            document.getElementById("points").textContent = R$ ${valorEmReais};
+            document.getElementById("points").textContent = `R$ ${valorEmReais}`;
 
             document.getElementById("actionBox").style.display = "block";
             currentActionData = data;
