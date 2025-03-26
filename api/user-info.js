@@ -28,5 +28,3 @@ router.get("/user-info", async (req, res) => {
         res.status(500).json({ error: "Erro ao buscar dados do TikTok" });
     }
 });
-
-export default router;
