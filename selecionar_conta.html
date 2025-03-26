@@ -140,7 +140,8 @@ async function bindAccount() {
         if (data.id_conta) {
             localStorage.setItem("id_conta", data.id_conta);
             document.getElementById("statusMessage").textContent = "Conta vinculada!";
-            fetchAction();
+            // Depois de vincular a conta, buscar a ação
+            await fetchAction(); // Agora busca a ação diretamente
         } else {
             document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
         }
@@ -148,6 +149,7 @@ async function bindAccount() {
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
     }
 }
+
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     if (!id_conta) return;
