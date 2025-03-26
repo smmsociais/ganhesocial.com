@@ -1,11 +1,10 @@
 import express from "express";
 import axios from "axios";
-import authMiddleware from "../middlewares/authMiddleware.js"; // Verifique o caminho correto
 
 const router = express.Router();
 
 // Rota para buscar ação
-router.get("/buscar_acao", authMiddleware, async (req, res) => {
+router.get("/buscar_acao", async (req, res) => {
     const { id_conta } = req.query; // Recebe o id_conta a partir da query
 
     if (!id_conta) {
