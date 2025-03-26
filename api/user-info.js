@@ -1,12 +1,10 @@
 import express from "express";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
 
-dotenv.config(); // Carrega variáveis de ambiente
+dotenv.config();
 
 const router = express.Router();
 
-// Rota para obter informações do usuário no TikTok
 router.get("/user-info", async (req, res) => {
     const { unique_id } = req.query;
 
