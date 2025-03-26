@@ -202,7 +202,7 @@ async function confirmAction() {
     try {
         // Passo 1: Obter o ID do perfil selecionado (renisson042)
         const selectedAccount = document.getElementById("accountSelect").value;
-        const userInfoUrl = https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount};
+        const userInfoUrl = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount}`;
         const userInfoOptions = {
             method: 'GET',
             headers: {
@@ -219,7 +219,7 @@ async function confirmAction() {
             const userId = userInfoData.data.user.id;
 
             // Passo 2: Obter a lista de "seguindo" do perfil selecionado
-            const userFollowingUrl = https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0;
+            const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
             const userFollowingOptions = {
                 method: 'GET',
                 headers: {
