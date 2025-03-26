@@ -285,7 +285,7 @@ async function loadAccounts() {
         const response = await fetch("https://ganhesocial.com/api/contas", {
             method: "GET",
             headers: {
-                "Authorization": Bearer ${token}
+                "Authorization": `Bearer ${token}`
             }
         });
 
