@@ -189,35 +189,27 @@ async function fetchAction() {
         }
 
 async function confirmAction() {
-    const id_conta = localStorage.getItem("id_conta");
-    const id_pedido = currentActionData.id_pedido;
+    const selectedAccount = document.getElementById("accountSelect").value;
+    if (!selectedAccount) return;
 
-    if (!id_conta || !id_pedido) {
-        alert("Erro ao confirmar ação. Dados insuficientes.");
-        return;
-    }
-
-    document.getElementById("statusMessage").textContent = "Confirmando ação...";
+    document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
 
     try {
-        // Passo 1: Obter o ID do perfil selecionado (renisson042)
-        const selectedAccount = document.getElementById("accountSelect").value;
-        const userInfoUrl = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount}`;
-        const userInfoOptions = {
-            method: 'GET',
-            headers: {
-                'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-                'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-            }
-        };
+        const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
+        const userInfoData = await response.json();
 
-        const userInfoResponse = await fetch(userInfoUrl, userInfoOptions);
-        const userInfoData = await userInfoResponse.json();
-
-        // Verificar se a resposta da API é válida e contém o ID do usuário
-        if (userInfoData && userInfoData.code === 0 && userInfoData.data && userInfoData.data.user && userInfoData.data.user.id) {
+        if (userInfoData && userInfoData.code === 0 && userInfoData.data && userInfoData.data.user) {
             const userId = userInfoData.data.user.id;
-
+            console.log("ID do usuário TikTok:", userId);
+            document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
+        } else {
+            document.getElementById("statusMessage").textContent = "Erro ao obter dados do TikTok.";
+        }
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        document.getElementById("statusMessage").textContent = "Erro na requisição.";
+    }
+}
             // Passo 2: Obter a lista de "seguindo" do perfil selecionado
             const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
             const userFollowingOptions = {
