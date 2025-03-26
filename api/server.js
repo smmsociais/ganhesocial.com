@@ -46,7 +46,7 @@ app.options("*", (req, res) => {
   res.status(200).end();
 });
 
-app.use(bodyParser.json());
+app.use(express.json()); // Substituindo bodyParser.json()
 
 // Conectar ao MongoDB
 mongoose
