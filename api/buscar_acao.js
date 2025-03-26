@@ -27,4 +27,4 @@ router.get("/buscar_acao", async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
