@@ -202,14 +202,7 @@ async function confirmAction() {
             const userId = userInfoData.data.user.id;
             console.log("ID do usuário TikTok:", userId);
             document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
-        } else {
-            document.getElementById("statusMessage").textContent = "Erro ao obter dados do TikTok.";
-        }
-    } catch (error) {
-        console.error("Erro na requisição:", error);
-        document.getElementById("statusMessage").textContent = "Erro na requisição.";
-    }
-}
+
             // Passo 2: Obter a lista de "seguindo" do perfil selecionado
             const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
             const userFollowingOptions = {
