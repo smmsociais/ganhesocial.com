@@ -219,7 +219,7 @@ async function confirmAction() {
                     document.getElementById("statusMessage").textContent = "Confirmando ação...";
 
                     const confirmResponse = await fetch(`/api/confirmar_acao?id_conta=${localStorage.getItem("id_conta")}&id_pedido=${currentActionData.id_pedido}`, {
-                        method: 'GET',
+                        method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                         }
