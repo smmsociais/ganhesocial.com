@@ -155,7 +155,7 @@ async function fetchAction() {
     document.getElementById("statusMessage").textContent = "Buscando ações...";
 
     try {
-        const response = await fetch(/api/buscar_acao?id_conta=${id_conta}, {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
             method: 'GET',
             headers: {
                 'Authorization': Bearer ${localStorage.getItem('authToken')}
