@@ -216,19 +216,25 @@ async function confirmAction() {
 
                 if (accountFound) {
                     // Passo 3: Confirmar ação no backend
-                    document.getElementById("statusMessage").textContent = "Confirmando ação...";
+    document.getElementById("statusMessage").textContent = "Confirmando ação...";
 
-                    const confirmResponse = await fetch(`/api/confirmar_acao?id_conta=${localStorage.getItem("id_conta")}&id_pedido=${currentActionData.id_pedido}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        }
-                    });
+    try {
+        const response = await fetch("/api/confirmar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                id_conta: localStorage.getItem("id_conta"),
+                id_pedido: currentActionData.id_pedido
+            })
+        });
 
-                    const confirmData = await confirmResponse.json();
+        const data = await response.json();
 
-                    if (confirmData.status === "CONFIRMADA") {
-                        document.getElementById("statusMessage").textContent = "Ação confirmada e validada com sucesso!";
+        if (data.status === "CONFIRMADA") {
+            document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
                         
                         // Passo 4: Atualizar histórico local e saldo
                         const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
