@@ -201,6 +201,21 @@ app.get("/api/todas-contas", async (req, res) => {
     }
 });
 
+// Nova Rota para Listar Contas do Usuário
+app.get("/api/accounts", authMiddleware, async (req, res) => {
+    try {
+        // Buscando o usuário com base no ID decodificado do token
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+
+        // Respondendo com as contas do usuário
+        res.json(user.contas);
+    } catch (error) {
+        console.error("Erro ao listar contas:", error);
+        res.status(500).json({ error: "Erro interno no servidor." });
+    }
+});
+
 // Iniciar o Servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
