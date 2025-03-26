@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import axios from "axios";
-import buscarAcaoRouter from "./api/buscar_acao.js";
+import buscarAcaoRouter from "./buscar_acao.js"; 
 
 dotenv.config();
 
