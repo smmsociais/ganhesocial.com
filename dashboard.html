@@ -69,6 +69,9 @@
         .history-button { background-color: #6c757d; }
         .history-button:hover { background-color: #5a6268; }
 
+        .account-button { background-color: #17a2b8; }
+        .account-button:hover { background-color: #138496; }
+
         .logout-button {
             position: fixed;
             left: 20px;
@@ -107,22 +110,20 @@
         <button class="button add-button" onclick="goToAddAccount()">Adicionar Conta</button>
         <button class="button manage-button" onclick="goToManageAccounts()">Gerenciar Contas</button>
         <button class="button history-button" onclick="goToHistory()">Histórico de Ações</button>
+        <button class="button account-button" onclick="goToAccount()">Minha Conta</button>
     </div>
 
     <button class="logout-button" onclick="logout()">Sair</button>
 
     <script>
-        // Verificar se o usuário está autenticado
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                // Se não houver token, redireciona para a página de login
                 window.location.href = "login";
             }
         });
 
-        // Carregar o saldo disponível ao abrir a página
         function carregarSaldo() {
             const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
             document.getElementById("saldoDisponivel").textContent = `R$ ${saldo.toFixed(3)}`;
@@ -144,12 +145,15 @@
             window.location.href = "historico_acoes";
         }
 
+        function goToAccount() {
+            window.location.href = "settings";
+        }
+
         function logout() {
             localStorage.removeItem("authToken");
             window.location.href = "https://ganhesocial.com";
         }
 
-        // Carregar o saldo ao carregar a página
         window.onload = carregarSaldo;
     </script>
 </body>
