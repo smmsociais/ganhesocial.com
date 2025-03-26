@@ -188,7 +188,7 @@ async function fetchAction() {
             document.getElementById("confirmButton").style.display = "block";
         }
 
-async function confirmAction() {
+ async function confirmAction() {
     const selectedAccount = document.getElementById("accountSelect").value;
     if (!selectedAccount) return;
 
@@ -247,7 +247,8 @@ async function confirmAction() {
 
         const confirmData = await confirmResponse.json();
 
-        if (confirmData.status !== "CONFIRMOU_SUCESSO") {
+        // Verifica se a resposta da API indica sucesso
+        if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
             throw new Error("Erro ao confirmar ação.");
         }
 
@@ -265,11 +266,10 @@ async function confirmAction() {
         actionHistory.push(newAction);
         localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
 
-        const pontos = parseFloat(currentActionData.quantidade_pontos);
-        const valorEmReais = Math.max(0, (pontos * 0.001 - 0.001)).toFixed(3); // Garante que não fique negativo
-
+        // Atualiza saldo com o valor retornado pela API
+        const valorEmReais = parseFloat(confirmData.valor); // Usando o valor exato da API
         const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-        const novoSaldo = (saldoAtual + parseFloat(valorEmReais)).toFixed(3);
+        const novoSaldo = (saldoAtual + valorEmReais).toFixed(3);
         localStorage.setItem("saldoDisponivel", novoSaldo);
 
     } catch (error) {
