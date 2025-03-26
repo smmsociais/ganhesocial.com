@@ -1,9 +1,10 @@
-import express from "express";
 import axios from "axios";
 
-const router = express.Router();
+export default async function handler(req, res) {
+    if (req.method !== "GET") {
+        return res.status(405).json({ error: "Método não permitido." });
+    }
 
-router.get("/buscar_acao", async (req, res) => {
     const { id_conta } = req.query;
 
     if (!id_conta) {
@@ -25,6 +26,4 @@ router.get("/buscar_acao", async (req, res) => {
         console.error("Erro ao buscar ação:", error);
         res.status(500).json({ error: "Erro ao buscar ação." });
     }
-});
-
-export default router;
+}
