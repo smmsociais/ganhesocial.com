@@ -1,11 +1,10 @@
-import express from "express";
-import axios from "axios";
+const express = require("express");
+const axios = require("axios");
 
 const router = express.Router();
 
-// Rota para buscar ação
 router.get("/buscar_acao", async (req, res) => {
-    const { id_conta } = req.query; // Recebe o id_conta a partir da query
+    const { id_conta } = req.query;
 
     if (!id_conta) {
         return res.status(400).json({ error: "ID da conta é obrigatório." });
@@ -28,4 +27,4 @@ router.get("/buscar_acao", async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;
