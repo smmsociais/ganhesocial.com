@@ -6,7 +6,7 @@ import bodyParser from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import buscarAcaoRouter from "./api/buscar_acao.js"; // Importando corretamente o router
+import buscarAcaoRouter from "./buscar_acao.js"; // Importando corretamente o router
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
