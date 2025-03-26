@@ -130,7 +130,7 @@ async function bindAccount() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': Bearer ${localStorage.getItem('authToken')}
             },
             body: JSON.stringify({ nomeUsuario: selectedAccount })
         });
@@ -140,8 +140,7 @@ async function bindAccount() {
         if (data.id_conta) {
             localStorage.setItem("id_conta", data.id_conta);
             document.getElementById("statusMessage").textContent = "Conta vinculada!";
-            // Depois de vincular a conta, buscar a ação
-            await fetchAction(); // Agora busca a ação diretamente
+            fetchAction();
         } else {
             document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
         }
@@ -149,7 +148,6 @@ async function bindAccount() {
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
     }
 }
-
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     if (!id_conta) return;
@@ -157,10 +155,10 @@ async function fetchAction() {
     document.getElementById("statusMessage").textContent = "Buscando ações...";
 
     try {
-        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
+        const response = await fetch(/api/buscar_acao?id_conta=${id_conta}, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': Bearer ${localStorage.getItem('authToken')}
             }
         });
 
@@ -174,7 +172,7 @@ async function fetchAction() {
 
             const pontos = parseFloat(data.quantidade_pontos);
             const valorEmReais = (pontos * 0.001 - 0.001).toFixed(3);
-            document.getElementById("points").textContent = `R$ ${valorEmReais}`;
+            document.getElementById("points").textContent = R$ ${valorEmReais};
 
             document.getElementById("actionBox").style.display = "block";
             currentActionData = data;
@@ -204,7 +202,7 @@ async function confirmAction() {
     try {
         // Passo 1: Obter o ID do perfil selecionado (renisson042)
         const selectedAccount = document.getElementById("accountSelect").value;
-        const userInfoUrl = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount}`;
+        const userInfoUrl = https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${selectedAccount};
         const userInfoOptions = {
             method: 'GET',
             headers: {
@@ -221,7 +219,7 @@ async function confirmAction() {
             const userId = userInfoData.data.user.id;
 
             // Passo 2: Obter a lista de "seguindo" do perfil selecionado
-            const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
+            const userFollowingUrl = https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0;
             const userFollowingOptions = {
                 method: 'GET',
                 headers: {
@@ -287,7 +285,7 @@ async function loadAccounts() {
         const response = await fetch("https://ganhesocial.com/api/contas", {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${token}`
+                "Authorization": Bearer ${token}
             }
         });
 
