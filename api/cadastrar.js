@@ -1,14 +1,16 @@
 import pkg from 'mongodb';
 import crypto from "crypto";
 
+const { MongoClient } = pkg;
+
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Método não permitido." });
     }
 
-    const { nome_usuario, senha } = req.body;
+    const { nomeUsuario, senha } = req.body; // 🔹 Corrigido: agora corresponde ao frontend
 
-    if (!nome_usuario || !senha) {
+    if (!nomeUsuario || !senha) {
         return res.status(400).json({ error: "Nome de usuário e senha são obrigatórios." });
     }
 
@@ -17,7 +19,7 @@ export default async function handler(req, res) {
     const db = client.db("ganhesocial");
 
     // Verificar se o usuário já existe
-    const userExists = await db.collection("usuarios").findOne({ nome_usuario });
+    const userExists = await db.collection("usuarios").findOne({ nomeUsuario });
     if (userExists) {
         client.close();
         return res.status(400).json({ error: "Usuário já registrado." });
@@ -28,8 +30,8 @@ export default async function handler(req, res) {
 
     // Criar novo usuário com o token
     await db.collection("usuarios").insertOne({
-        nome_usuario,
-        senha, // (Aqui seria ideal criptografar a senha com bcrypt)
+        nomeUsuario, // 🔹 Corrigido: agora corresponde ao frontend
+        senha, // 🔹 (Ideal criptografar com bcrypt)
         token
     });
 
