@@ -1,31 +1,39 @@
-const connectDB = require("../utils/db");
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
+import { MongoClient } from "mongodb";
+import crypto from "crypto";
 
-module.exports = async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido" });
-  }
-
-  await connectDB();
-
-  const { nome, email, senha } = req.body;
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
-  }
-
-  try {
-    const usuarioExistente = await User.findOne({ email });
-    if (usuarioExistente) {
-      return res.status(400).json({ error: "E-mail já cadastrado!" });
+export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
     }
 
-    const senhaHash = await bcrypt.hash(senha, 10);
-    const novoUsuario = new User({ nome, email, senha: senhaHash });
-    await novoUsuario.save();
+    const { nome_usuario, senha } = req.body;
 
-    res.status(201).json({ message: "Usuário cadastrado com sucesso!" });
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao cadastrar usuário" });
-  }
-};
+    if (!nome_usuario || !senha) {
+        return res.status(400).json({ error: "Nome de usuário e senha são obrigatórios." });
+    }
+
+    // Conectar ao banco de dados
+    const client = await MongoClient.connect(process.env.MONGODB_URI);
+    const db = client.db("ganhesocial");
+
+    // Verificar se o usuário já existe
+    const userExists = await db.collection("usuarios").findOne({ nome_usuario });
+    if (userExists) {
+        client.close();
+        return res.status(400).json({ error: "Usuário já registrado." });
+    }
+
+    // Gerar um token único para o usuário
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // Criar novo usuário com o token
+    await db.collection("usuarios").insertOne({
+        nome_usuario,
+        senha, // (Aqui seria ideal criptografar a senha com bcrypt)
+        token
+    });
+
+    client.close();
+
+    res.status(201).json({ message: "Usuário registrado com sucesso!", token });
+}
