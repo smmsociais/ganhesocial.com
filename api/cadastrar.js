@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import pkg from 'mongodb';
 import crypto from "crypto";
 
 export default async function handler(req, res) {
