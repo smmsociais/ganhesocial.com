@@ -113,79 +113,69 @@
         <button class="back-button" onclick="goBack()">Voltar</button>
     </div>
 
-    <script>
-        async function loadProfile() {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                alert("Você precisa estar logado para acessar esta página.");
-                window.location.href = "/login";
-                return;
-            }
-
-            // Exibe o token no campo de texto 'authToken'
-            document.getElementById('authToken').value = token;
-
-            try {
-                const response = await fetch("https://ganhesocial.com/api/perfil", {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao carregar perfil");
+<script>
+    async function loadProfile() {
+        try {
+            const response = await fetch("https://ganhesocial.com/api/perfil", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer FIXO_DO_BANCO`
                 }
+            });
 
-                // Preenche os campos de nome e email com os dados recebidos
-                document.getElementById('name').value = data.nome_usuario || "";
-                document.getElementById('email').value = data.email || "";
+            const data = await response.json();
 
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-
-        async function saveProfile() {
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const token = localStorage.getItem('authToken');
-
-            if (!name || !email) {
-                alert("Nome e e-mail são obrigatórios.");
-                return;
+            if (!response.ok) {
+                throw new Error(data.error || "Erro ao carregar perfil");
             }
 
-            try {
-                const response = await fetch("https://ganhesocial.com/api/perfil", {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ nome: name, email: email })
-                });
+            document.getElementById('name').value = data.nome_usuario || "";
+            document.getElementById('email').value = data.email || "";
+            document.getElementById('authToken').value = data.token; // Exibe o token fixo no input
 
-                const data = await response.json();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
 
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao salvar perfil");
-                }
+    async function saveProfile() {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
 
-                alert("Perfil atualizado com sucesso!");
-            } catch (error) {
-                alert(error.message);
+        if (!name || !email) {
+            alert("Nome e e-mail são obrigatórios.");
+            return;
+        }
+
+        try {
+            const response = await fetch("https://ganhesocial.com/api/perfil", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer FIXO_DO_BANCO`
+                },
+                body: JSON.stringify({ nome: name, email: email })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Erro ao salvar perfil");
             }
-        }
 
-        function goBack() {
-            window.location.href = "/dashboard";
+            alert("Perfil atualizado com sucesso!");
+        } catch (error) {
+            alert(error.message);
         }
+    }
 
-        // Carregar perfil ao abrir a página
-        window.onload = loadProfile;
+    function goBack() {
+        window.location.href = "/dashboard";
+    }
+
+    window.onload = loadProfile;
+</script>
+
     </script>
 </body>
 </html>
