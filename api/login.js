@@ -1,6 +1,5 @@
 import connectDB from "./db.js";
 import User from "./User.js";
-import bcrypt from "bcryptjs"; 
 import jwt from "jsonwebtoken"; 
 
 const handler = async (req, res) => {
@@ -21,8 +20,8 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Usuário não encontrado!" });
     }
 
-    const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
-    if (!senhaCorreta) {
+    // Comparar senha diretamente sem hashing
+    if (senha !== usuario.senha) {
       return res.status(400).json({ error: "Senha incorreta!" });
     }
 
