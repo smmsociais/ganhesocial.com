@@ -34,7 +34,7 @@ res.json({
     } else if (req.method === "PUT") {
         await connectDB();
 
-        const { nome, email } = req.body;
+        const { nome_usuario, email } = req.body;
 
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -45,11 +45,11 @@ res.json({
 
         try {
             // Atualiza os dados do usuário com base no token fixo
-            const usuario = await User.findOneAndUpdate(
-                { token },
-                { nome, email },
-                { new: true }
-            );
+const usuario = await User.findOneAndUpdate(
+    { token },
+    { nome_usuario, email },
+    { new: true }
+);
 
             if (!usuario) {
                 return res.status(404).json({ error: "Usuário não encontrado" });
