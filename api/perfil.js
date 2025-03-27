@@ -1,5 +1,6 @@
 import connectDB from "./db.js";
 import User from "./User.js";
+import jwt from "jsonwebtoken"; // Importação do pacote jsonwebtoken
 
 const handler = async (req, res) => {
     if (req.method !== "GET") {
@@ -14,6 +15,7 @@ const handler = async (req, res) => {
     const token = authorization.split(" ")[1];
 
     try {
+        // Verificação do token JWT
         const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verifica o token JWT
         const userId = decoded.id;
 
