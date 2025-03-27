@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import connectDB from "./db.js";
 import User from "./User.js";
 
@@ -9,24 +8,24 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1]; // Pega o token enviado no cabeçalho
 
     if (!token) {
         return res.status(401).json({ error: "Token não fornecido" });
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const usuario = await User.findById(decoded.id);
+        console.log("🔍 Buscando usuário pelo token fixo...");
+        const usuario = await User.findOne({ token });
 
         if (!usuario) {
             return res.status(404).json({ error: "Usuário não encontrado" });
         }
 
-        res.json({ nome: usuario.nome_usuario, email: usuario.email });
+        res.json({ nome: usuario.nome_usuario, email: usuario.email, token: usuario.token });
     } catch (error) {
         console.error("❌ Erro ao buscar dados do usuário:", error);
-        res.status(401).json({ error: "Token inválido" });
+        res.status(500).json({ error: "Erro interno no servidor" });
     }
 };
 
