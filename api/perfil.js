@@ -22,11 +22,11 @@ const handler = async (req, res) => {
                 return res.status(404).json({ error: "Usuário não encontrado" });
             }
 
-            res.json({
-                nome_usuario: usuario.nome,
-                email: usuario.email,
-                token: usuario.token, // Retorna o token fixo do banco
-            });
+res.json({
+    nome_usuario: usuario.nome_usuario,
+    email: usuario.email,
+    token: usuario.token,
+});
         } catch (error) {
             console.error("Erro ao carregar perfil:", error);
             res.status(500).json({ error: "Erro ao carregar perfil" });
