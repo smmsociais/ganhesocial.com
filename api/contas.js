@@ -132,9 +132,10 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 // Listar Contas do Usuário
 app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
-const user = await User.findById(userId);
-console.log("User found:", user); // Adiciona para depuração
-if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+        // Use req.user.id para pegar o ID do usuário autenticado
+        const user = await User.findById(req.user.id); 
+        console.log("User found:", user); // Verifique se o usuário foi encontrado corretamente
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
         res.json(user.contas);
     } catch (error) {
