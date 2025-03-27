@@ -1,16 +1,15 @@
 import mongoose from 'mongoose';
 
 const ContaSchema = new mongoose.Schema({
-    nomeConta: { type: String, required: true },
-    status: { type: String, enum: ["Pendente", "Aprovada"], default: "Pendente" }
+    nomeConta: { type: String, required: true }
 });
 
 const UserSchema = new mongoose.Schema({
+    nome_usuario: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { 
-        type: String, 
-        required: [true, "A senha é obrigatória"], 
-        select: false  // Impede que a senha seja retornada automaticamente
-    },
-    contas: [ContaSchema]  // Array de contas
-});
+    senha: { type: String, required: true },
+    token: { type: String, required: true },
+    contas: [ContaSchema]  // Array de contas sem o campo "status"
+}, { collection: 'usuarios' });
+
+export default mongoose.models.User || mongoose.model('User', UserSchema);
