@@ -1,31 +1,67 @@
 import connectDB from "./db.js";
 import User from "./User.js";
+import jwt from "jsonwebtoken";
 
 const handler = async (req, res) => {
-    if (req.method !== "GET") {
-        return res.status(405).json({ error: "Método não permitido" });
-    }
+    if (req.method === "GET") {
+        await connectDB();
 
-    await connectDB();
-
-    const token = req.headers.authorization?.split(" ")[1]; // Pega o token enviado no cabeçalho
-
-    if (!token) {
-        return res.status(401).json({ error: "Token não fornecido" });
-    }
-
-    try {
-        console.log("🔍 Buscando usuário pelo token fixo...");
-        const usuario = await User.findOne({ token });
-
-        if (!usuario) {
-            return res.status(404).json({ error: "Usuário não encontrado" });
+        // Captura o token do cabeçalho da requisição
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "Não autorizado" });
         }
 
-        res.json({ nome: usuario.nome_usuario, email: usuario.email, token: usuario.token });
-    } catch (error) {
-        console.error("❌ Erro ao buscar dados do usuário:", error);
-        res.status(500).json({ error: "Erro interno no servidor" });
+        const token = authHeader.split(" ")[1];
+
+        try {
+            // Procura o usuário no banco usando o token fixo
+            const usuario = await User.findOne({ token });
+
+            if (!usuario) {
+                return res.status(404).json({ error: "Usuário não encontrado" });
+            }
+
+            res.json({
+                nome_usuario: usuario.nome,
+                email: usuario.email,
+                token: usuario.token, // Retorna o token fixo do banco
+            });
+        } catch (error) {
+            console.error("Erro ao carregar perfil:", error);
+            res.status(500).json({ error: "Erro ao carregar perfil" });
+        }
+    } else if (req.method === "PUT") {
+        await connectDB();
+
+        const { nome, email } = req.body;
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ error: "Não autorizado" });
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        try {
+            // Atualiza os dados do usuário com base no token fixo
+            const usuario = await User.findOneAndUpdate(
+                { token },
+                { nome, email },
+                { new: true }
+            );
+
+            if (!usuario) {
+                return res.status(404).json({ error: "Usuário não encontrado" });
+            }
+
+            res.json({ message: "Perfil atualizado com sucesso!" });
+        } catch (error) {
+            console.error("Erro ao salvar perfil:", error);
+            res.status(500).json({ error: "Erro ao salvar perfil" });
+        }
+    } else {
+        res.status(405).json({ error: "Método não permitido" });
     }
 };
 
