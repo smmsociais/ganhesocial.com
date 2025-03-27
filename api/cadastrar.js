@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
 
     // Conectar ao banco de dados
-    const client = await MongoClient.connect(process.env.MONGODB_URI);
+    const client = await MongoClient.connect(process.env.MONGO_URI);
     const db = client.db("ganhesocial");
 
     // Verificar se o usuário já existe
