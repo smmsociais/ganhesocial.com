@@ -8,10 +8,10 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Método não permitido.' });
     }
 
-    const { nome_usuario, senha } = req.body;
+    const { nome_usuario, email, senha } = req.body;
 
-    if (!nome_usuario || !senha) {
-        return res.status(400).json({ error: 'Nome de usuário e senha são obrigatórios.' });
+    if (!nome_usuario || !email || !senha) {
+        return res.status(400).json({ error: 'Nome de usuário, e-mail e senha são obrigatórios.' });
     }
 
     try {
@@ -21,19 +21,20 @@ export default async function handler(req, res) {
 
         const db = client.db('ganhesocial');
 
-        // Verificar se o usuário já existe
-        const userExists = await db.collection('usuarios').findOne({ nome_usuario });
+        // Verificar se o e-mail ou nome de usuário já existem
+        const userExists = await db.collection('usuarios').findOne({ $or: [{ nome_usuario }, { email }] });
         if (userExists) {
             client.close();
-            return res.status(400).json({ error: 'Usuário já registrado.' });
+            return res.status(400).json({ error: 'Usuário ou e-mail já registrado.' });
         }
 
         // Gerar um token único para o usuário
         const token = crypto.randomBytes(32).toString('hex');
 
-        // Criar novo usuário com o token
+        // Criar novo usuário com o nome, e-mail, senha e token
         const resultado = await db.collection('usuarios').insertOne({
             nome_usuario,
+            email, // Adicionando o email ao banco
             senha, // ⚠️ Senha deve ser criptografada com bcrypt
             token
         });
