@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 const ContaSchema = new mongoose.Schema({
     nomeConta: { type: String, required: true },
     status: { type: String, enum: ["Pendente", "Aprovada"], default: "Pendente" }
