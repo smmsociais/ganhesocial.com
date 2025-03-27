@@ -1,6 +1,7 @@
 import connectDB from "./db.js";
 import User from "./User.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -17,24 +18,31 @@ const handler = async (req, res) => {
 
   try {
     console.log("🔍 Buscando usuário no banco de dados...");
-    const usuario = await User.findOne({ email });
+    const usuario = await User.findOne({ email }).select("+senha"); // Pegamos a senha, pois está oculta no esquema
 
     if (!usuario) {
       console.log("🔴 Usuário não encontrado!");
       return res.status(400).json({ error: "Usuário não encontrado!" });
     }
 
-    if (senha !== usuario.senha) {
+    // Comparar senha fornecida com a senha criptografada no banco
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaValida) {
       console.log("🔴 Senha incorreta!");
       return res.status(400).json({ error: "Senha incorreta!" });
     }
 
-    // Agora, em vez de gerar um novo token, usamos o que já está salvo no banco
-    const tokenFixo = usuario.token;
+    // Gerar um novo token JWT
+    const novoToken = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ message: "Login bem-sucedido!", token: tokenFixo });
+    // (Opcional) Salvar o novo token no banco, caso queira manter sessões ativas
+    usuario.token = novoToken;
+    await usuario.save({ validateBeforeSave: false });
+
+    res.json({ message: "Login bem-sucedido!", token: novoToken });
+
   } catch (error) {
-    console.error('❌ Erro ao realizar login:', error);
+    console.error("❌ Erro ao realizar login:", error);
     res.status(500).json({ error: "Erro ao realizar login" });
   }
 };
