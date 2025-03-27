@@ -40,12 +40,13 @@ const User = mongoose.model("User", UserSchema);
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
+    console.log("Token recebido:", token);  // Verifique o token no log
     if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
 
     try {
         const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-        console.log("Decoded token:", decoded); // Adiciona para depuração
         req.user = decoded;
+        console.log("Usuário decodificado:", req.user);  // Verifique o usuário decodificado
         next();
     } catch (error) {
         return res.status(400).json({ error: "Token inválido." });
