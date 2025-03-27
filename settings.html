@@ -122,7 +122,8 @@
                 return;
             }
 
-            document.getElementById('authToken').value = token; // Exibe o token no campo de input
+            // Exibe o token no campo de texto 'authToken'
+            document.getElementById('authToken').value = token;
 
             try {
                 const response = await fetch("https://ganhesocial.com/api/perfil", {
@@ -138,6 +139,7 @@
                     throw new Error(data.error || "Erro ao carregar perfil");
                 }
 
+                // Preenche os campos de nome e email com os dados recebidos
                 document.getElementById('name').value = data.nome || "";
                 document.getElementById('email').value = data.email || "";
 
