@@ -35,18 +35,20 @@ export default async function handler(req, res) {
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
-        // Se a resposta indicar sucesso, processar a conta
-        if (bindData.status === "success" || bindData.status === "fail") {
-            // Verificar se a conta já foi adicionada ao usuário
-            const contaExistente = usuario.contas.find(conta => conta.id_conta === bindData.id_conta);
-            if (contaExistente) {
-                return res.status(400).json({ error: "Esta conta já está vinculada." });
-            }
+        // Verifique se a conta já está vinculada no banco de dados
+        const contaExistente = usuario.contas.find(conta => conta.id_conta === bindData.id_conta);
+        console.log("Verificando conta existente:", contaExistente);
 
-            // Adicionar a conta ao usuário mesmo que o status seja "fail"
+        if (contaExistente) {
+            return res.status(400).json({ error: "Esta conta já está vinculada." });
+        }
+
+        // Se a resposta indicar sucesso ou falha, continue
+        if (bindData.status === "success" || bindData.status === "fail") {
+            // Adicionar a conta ao usuário
             usuario.contas.push({
                 nomeConta: nome_usuario,
-                status: bindData.status === "fail" ? "Pendente" : "Aprovada", // Status "Pendente" caso falhe
+                status: bindData.status === "fail" ? "Pendente" : "Aprovada", // Se falhar, marca como pendente
                 id_conta: bindData.id_conta,
                 id_tiktok: bindData.id_tiktok || bindData.id_conta,
                 s: bindData.s || "3"
