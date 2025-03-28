@@ -36,17 +36,17 @@ export default async function handler(req, res) {
         const bindData = bindResponse.data;
 
         // Se a resposta indicar sucesso, processar a conta
-        if (bindData.status === "success") {
+        if (bindData.status === "success" || bindData.status === "fail") {
             // Verificar se a conta já foi adicionada ao usuário
             const contaExistente = usuario.contas.find(conta => conta.id_conta === bindData.id_conta);
             if (contaExistente) {
                 return res.status(400).json({ error: "Esta conta já está vinculada." });
             }
 
-            // Adicionar a conta ao usuário
+            // Adicionar a conta ao usuário mesmo que o status seja "fail"
             usuario.contas.push({
                 nomeConta: nome_usuario,
-                status: "Pendente",
+                status: bindData.status === "fail" ? "Pendente" : "Aprovada", // Status "Pendente" caso falhe
                 id_conta: bindData.id_conta,
                 id_tiktok: bindData.id_tiktok || bindData.id_conta,
                 s: bindData.s || "3"
@@ -56,7 +56,9 @@ export default async function handler(req, res) {
             await usuario.save({ validateBeforeSave: false });
 
             return res.status(200).json({
-                message: "Conta vinculada com sucesso!",
+                message: bindData.status === "fail" 
+                    ? "Conta vinculada com falha, mas registrada como pendente." 
+                    : "Conta vinculada com sucesso!",
                 id_conta: bindData.id_conta,
                 detalhes: {
                     status: bindData.status,
@@ -65,11 +67,6 @@ export default async function handler(req, res) {
                     s: bindData.s || "3"
                 }
             });
-        }
-
-        // Se a resposta for 'WRONG_USER', retorna uma mensagem genérica
-        if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-            return res.status(200).json({ message: "Conta vinculada com sucesso!" });
         }
 
         return res.status(400).json({ error: "Erro ao vincular conta." });
