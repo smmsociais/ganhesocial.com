@@ -44,44 +44,49 @@ export default async function handler(req, res) {
       return res.status(200).json(bindData);
     }
 
-    // Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
-    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-      // Verifica se a conta já existe no banco de dados do usuário
-      const contaExistente = usuario.contas.find(
-        (conta) => conta.nomeConta === nome_usuario
-      );
+// Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
+if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+  console.log("WRONG_USER: Tentando adicionar conta ao banco.");
 
-      // Se não existir, adiciona a nova conta ao banco
-      if (!contaExistente) {
-        // Adiciona a conta ao banco com status "Pendente"
-        usuario.contas.push({
-          nomeConta: nome_usuario,
+  // Verifica se a conta já existe no banco de dados do usuário
+  const contaExistente = usuario.contas.find(
+    (conta) => conta.nomeConta === nome_usuario
+  );
+
+  // Se não existir, adiciona a nova conta ao banco
+  if (!contaExistente) {
+    try {
+      console.log("Conta não encontrada, adicionando...");
+
+      // Adiciona a conta ao banco com status "Pendente"
+      usuario.contas.push({
+        nomeConta: nome_usuario,
+        id_conta: bindData.id_conta,
+        id_tiktok: bindData.id_tiktok,
+        s: bindData.s,
+        status: "Pendente",
+      });
+      
+      // Salva o usuário com a nova conta
+      await usuario.save();
+
+      console.log("Conta adicionada com sucesso!");
+
+      return res.status(200).json({
+        message: "Conta adicionada com sucesso!",
+        id_conta: bindData.id_conta,
+        detalhes: {
+          status: "Pendente",
           id_conta: bindData.id_conta,
           id_tiktok: bindData.id_tiktok,
           s: bindData.s,
-          status: "Pendente",
-        });
-        await usuario.save();
-
-        return res.status(200).json({
-          message: "Conta adicionada com sucesso!",
-          id_conta: bindData.id_conta,
-          detalhes: {
-            status: "Pendente",
-            id_conta: bindData.id_conta,
-            id_tiktok: bindData.id_tiktok,
-            s: bindData.s,
-          },
-        });
-      } else {
-        return res.status(400).json({ error: "Conta já existe no banco de dados." });
-      }
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao salvar a conta:", error);
+      return res.status(500).json({ error: "Erro interno ao salvar a conta." });
     }
-
-    // Caso contrário, retorna erro
-    return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
-  } catch (error) {
-    console.error("Erro ao processar requisição:", error);
-    return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  } else {
+    return res.status(400).json({ error: "Conta já existe no banco de dados." });
   }
 }
