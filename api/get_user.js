@@ -35,51 +35,46 @@ export default async function handler(req, res) {
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
-        // Verifique se a conta já está vinculada no banco de dados
-        const contaExistente = usuario.contas.find(conta => conta.id_conta === bindData.id_conta);
-        console.log("Verificando conta existente:", contaExistente);
+        // Verifica se a conta foi vinculada com sucesso
+        if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
+            // Verifica se já existe a conta
+            const contaExistente = await User.findOne({ "contas.id_conta": bindData.id_conta });
 
-        if (contaExistente) {
-            return res.status(400).json({ error: "Esta conta já está vinculada." });
-        }
+            if (contaExistente) {
+                return res.status(400).json({ error: "Esta conta já está vinculada." });
+            }
 
-        // Verifique a resposta da plataforma
-if (
-    bindData.status === "success" &&
-    bindData.message.trim().toLowerCase() === "conta vinculada com sucesso!"
-) {
-    return res.status(200).json({
-        message: "Conta já vinculada com sucesso à plataforma!",
-        id_conta: bindData.id_conta,
-        detalhes: bindData.detalles
-    });
-}
+            // Se a conta não existir, adicione a nova conta ao banco
+            const user = await User.findOne({ token });
+            if (!user) {
+                return res.status(404).json({ error: "Usuário não encontrado." });
+            }
 
-        // Se a resposta indicar sucesso ou falha, continue
-        if (bindData.status === "success" || bindData.status === "fail") {
-            // Adicionar a conta ao usuário sem o status
-            usuario.contas.push({
-                nomeConta: nome_usuario,
+            // Adiciona a nova conta ao usuário
+            user.contas.push({
                 id_conta: bindData.id_conta,
-                id_tiktok: bindData.id_tiktok || bindData.id_conta,
-                s: bindData.s || "3"
+                id_tiktok: bindData.id_tiktok,
+                status: "success",
+                s: bindData.s
             });
 
-            // Salvar as mudanças no banco de dados
-            await usuario.save({ validateBeforeSave: false });
+            await user.save();
 
             return res.status(200).json({
-                message: bindData.status === "fail" 
-                    ? "Conta vinculada com falha, mas registrada."
-                    : "Conta vinculada com sucesso!",
+                message: 'Conta vinculada com sucesso!',
                 id_conta: bindData.id_conta,
                 detalhes: {
                     status: bindData.status,
                     id_conta: bindData.id_conta,
-                    id_tiktok: bindData.id_tiktok || bindData.id_conta,
-                    s: bindData.s || "3"
+                    id_tiktok: bindData.id_tiktok,
+                    s: bindData.s
                 }
             });
+        }
+
+        // Se a resposta for um erro ou outra condição, retornar o erro
+        if (bindData.status === "fail") {
+            return res.status(400).json({ error: bindData.message });
         }
 
         return res.status(400).json({ error: "Erro ao vincular conta." });
