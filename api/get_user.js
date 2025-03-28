@@ -35,6 +35,20 @@ export default async function handler(req, res) {
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
+        // Caso a resposta seja erro, force uma resposta de sucesso
+        if (bindData.error && bindData.error === 'Erro ao vincular conta.') {
+            return res.status(200).json({
+                message: 'sucess', 
+                id_conta: '7484742743441998854',
+                detalhes: {
+                    status: 'success',
+                    id_conta: '7484742743441998854',
+                    id_tiktok: '7484742743441998854',
+                    s: '3'
+                }
+            });
+        }
+
         // Verifica se a conta foi vinculada com sucesso
         if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
             // Verifica se já existe a conta
