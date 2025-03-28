@@ -7,36 +7,33 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Método não permitido." });
     }
 
-    // Conectar ao banco de dados
     await connectDB();
 
-    // Obter os parâmetros do corpo da requisição
-    const { token, nome_usuario, id_pedido } = req.body;
+    const { token, nome_usuario } = req.body;
 
-    if (!token || !nome_usuario || !id_pedido) {
-        return res.status(400).json({ error: "Os parâmetros 'token', 'nome_usuario' e 'id_pedido' são obrigatórios." });
+    if (!token || !nome_usuario) {
+        return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
     }
 
     try {
-        // Buscar usuário pelo token fixo salvo no MongoDB
         const usuario = await User.findOne({ token });
 
         if (!usuario) {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        // 🔹 Chamar a API bind_tk para obter o ID da conta
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
-        const bindResponse = await axios.get(bindTkUrl);
-        const bindData = bindResponse.data;
+        // 🔹 1. Chamar API get_action para obter a ação do usuário
+        const getActionUrl = `http://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+        const getActionResponse = await axios.get(getActionUrl);
+        const getActionData = getActionResponse.data;
 
-        if (bindData.status !== "success" || !bindData.id_conta) {
-            return res.status(400).json({ error: "Erro ao obter ID da conta." });
+        if (!getActionData.acoes || getActionData.acoes.status !== "ENCONTRADA") {
+            return res.status(400).json({ error: "Nenhuma ação encontrada para este usuário." });
         }
 
-        const { id_conta, id_tiktok, s } = bindData;
+        const { id_pedido, nome_usuario: nomeAlvo } = getActionData.acoes;
 
-        // 🔹 Chamar a API user/info para obter o ID do usuário
+        // 🔹 2. Chamar API user/info para obter o ID do usuário TikTok
         let userInfo = null;
         let userId = null;
         try {
@@ -51,40 +48,54 @@ export default async function handler(req, res) {
             userId = userInfo?.data?.user?.id || null;
         } catch (error) {
             console.error("Erro ao chamar a API user/info:", error);
+            return res.status(500).json({ error: "Erro ao obter informações do usuário." });
         }
 
-        // 🔹 Se conseguiu obter o userId, chamar a API user/following
-        let userFollowing = null;
-        if (userId) {
-            try {
-                const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
-                    params: {
-                        user_id: userId,
-                        count: "200",
-                        time: "0"
-                    },
-                    headers: {
-                        'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-                        'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-                    }
-                });
-                userFollowing = userFollowingResponse.data;
-            } catch (error) {
-                console.error("Erro ao chamar a API user/following:", error);
-            }
+        if (!userId) {
+            return res.status(400).json({ error: "ID do usuário TikTok não encontrado." });
         }
 
-        // 🔹 Chamar a API confirm_action para confirmar a ação
-        const url = "https://api.ganharnoinsta.com/confirm_action.php";
+        // 🔹 3. Chamar API user/following para obter lista de usuários seguidos
+        let followingList = [];
+        try {
+            const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
+                params: {
+                    user_id: userId,
+                    count: "200",
+                    time: "0"
+                },
+                headers: {
+                    'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                    'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+                }
+            });
+            followingList = userFollowingResponse?.data?.data?.followings || [];
+        } catch (error) {
+            console.error("Erro ao chamar a API user/following:", error);
+            return res.status(500).json({ error: "Erro ao obter lista de seguidores." });
+        }
+
+        // 🔹 4. Verificar se o nome de usuário alvo está na lista de seguidos
+        const usuarioSeguido = followingList.some(f => f.unique_id === nomeAlvo);
+
+        if (!usuarioSeguido) {
+            return res.status(400).json({
+                status: "inválida",
+                message: `O usuário ${nome_usuario} não está seguindo ${nomeAlvo}.`
+            });
+        }
+
+        // 🔹 5. Chamar a API confirm_action para validar a ação
+        const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
         const params = new URLSearchParams({
             token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
             sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-            id_conta,
+            id_conta: userId,
             id_pedido,
             is_tiktok: "1",
         });
 
-        const confirmResponse = await axios.post(url, params);
+        const confirmResponse = await axios.post(confirmUrl, params);
         const confirmData = confirmResponse.data;
 
         if (confirmData.status !== "success") {
@@ -92,10 +103,9 @@ export default async function handler(req, res) {
         }
 
         return res.status(200).json({
-            message: "Ação confirmada com sucesso!",
-            detalhes: confirmData,
-            userInfo: userInfo || "Nenhuma informação de usuário disponível",
-            userFollowing: userFollowing || "Nenhuma informação de seguidores disponível"
+            status: "sucesso",
+            message: `Ação validada com sucesso! ${nome_usuario} está seguindo ${nomeAlvo}.`,
+            detalhes: confirmData
         });
 
     } catch (error) {
