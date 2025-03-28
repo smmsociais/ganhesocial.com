@@ -36,8 +36,9 @@ export default async function handler(req, res) {
 
         const { id_conta, id_tiktok, s } = bindData;
 
-        // 🔹 Se a API bind_tk retornar sucesso, chamar a API user/info
+        // 🔹 Chamar a API user/info para obter o ID do usuário
         let userInfo = null;
+        let userId = null;
         try {
             const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
                 params: { unique_id: nome_usuario },
@@ -47,8 +48,30 @@ export default async function handler(req, res) {
                 }
             });
             userInfo = userInfoResponse.data;
+            userId = userInfo?.data?.user?.id || null;
         } catch (error) {
             console.error("Erro ao chamar a API user/info:", error);
+        }
+
+        // 🔹 Se conseguiu obter o userId, chamar a API user/following
+        let userFollowing = null;
+        if (userId) {
+            try {
+                const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
+                    params: {
+                        user_id: userId,
+                        count: "200",
+                        time: "0"
+                    },
+                    headers: {
+                        'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                        'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+                    }
+                });
+                userFollowing = userFollowingResponse.data;
+            } catch (error) {
+                console.error("Erro ao chamar a API user/following:", error);
+            }
         }
 
         // 🔹 Chamar a API confirm_action para confirmar a ação
@@ -71,7 +94,8 @@ export default async function handler(req, res) {
         return res.status(200).json({
             message: "Ação confirmada com sucesso!",
             detalhes: confirmData,
-            userInfo: userInfo || "Nenhuma informação de usuário disponível"
+            userInfo: userInfo || "Nenhuma informação de usuário disponível",
+            userFollowing: userFollowing || "Nenhuma informação de seguidores disponível"
         });
 
     } catch (error) {
