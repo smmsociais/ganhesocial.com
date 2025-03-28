@@ -44,40 +44,43 @@ export default async function handler(req, res) {
       return res.status(200).json(bindData);
     }
 
-// Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
-if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-  // Verifica se a conta já existe no banco de dados do usuário
-  const contaExistente = usuario.contas.find(
-    (conta) => conta.nomeConta === nome_usuario
-  );
+    // Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
+    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+      console.log(`Erro ao vincular conta: ${bindData.message}`);
 
-  // Se não existir, adiciona a nova conta ao banco
-  if (!contaExistente) {
-    // Adiciona a conta com campos ausentes, apenas nomeConta e status
-    const novaConta = {
-      nomeConta: nome_usuario,
-      id_conta: null,  // Não está presente, então fica null
-      id_tiktok: null, // Não está presente, então fica null
-      s: null,         // Não está presente, então fica null
-      status: "Pendente",  // Status padrão como "Pendente"
-    };
+      // Verifica se a conta já existe no banco de dados do usuário
+      const contaExistente = usuario.contas.find(
+        (conta) => conta.nomeConta === nome_usuario
+      );
 
-    // Adiciona a conta ao banco de dados
-    usuario.contas.push(novaConta);
-    await usuario.save();
+      // Se não existir, adiciona a nova conta ao banco
+      if (!contaExistente) {
+        // Adiciona a conta com campos ausentes, apenas nomeConta e status
+        const novaConta = {
+          nomeConta: nome_usuario,
+          id_conta: null,  // Não está presente, então fica null
+          id_tiktok: null, // Não está presente, então fica null
+          s: null,         // Não está presente, então fica null
+          status: "Pendente",  // Status padrão como "Pendente"
+        };
 
-    return res.status(200).json({
-      message: "Conta adicionada com sucesso, mas faltam informações.",
-      id_conta: novaConta.id_conta,
-      detalhes: novaConta,
-    });
-  } else {
-    return res.status(400).json({ error: "Conta já existe no banco de dados." });
-  }
-}
+        // Adiciona a conta ao banco de dados
+        usuario.contas.push(novaConta);
+        await usuario.save();
+
+        return res.status(200).json({
+          message: "Conta adicionada com sucesso, mas faltam informações.",
+          id_conta: novaConta.id_conta,
+          detalhes: novaConta,
+        });
+      } else {
+        return res.status(400).json({ error: "Conta já existe no banco de dados." });
+      }
+    }
 
     // Caso contrário, retorna erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
+
   } catch (error) {
     console.error("Erro ao processar requisição:", error);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
