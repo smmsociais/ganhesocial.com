@@ -62,8 +62,16 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
       status: "Pendente",  // Status padrão como "Pendente"
     };
 
-    // Verifica se todos os campos necessários estão presentes
+    // Depuração para garantir que os campos não estão ausentes
+    console.log("novaConta:", novaConta);
+
+    // Verifica se todos os campos necessários estão presentes e não são vazios
     if (!novaConta.id_conta || !novaConta.id_tiktok || !novaConta.s) {
+      console.log("Campos faltando:", {
+        id_conta: novaConta.id_conta,
+        id_tiktok: novaConta.id_tiktok,
+        s: novaConta.s
+      });
       return res.status(400).json({ error: "Campos obrigatórios estão faltando." });
     }
 
@@ -80,6 +88,7 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
     return res.status(400).json({ error: "Conta já existe no banco de dados." });
   }
 }
+
     // Caso contrário, retorna erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
   } catch (error) {
