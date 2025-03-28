@@ -46,13 +46,6 @@ export default async function handler(req, res) {
 
 // Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
 if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-  console.log(`Erro ao vincular conta: ${bindData.message}`);
-
-  // Verifica se os campos necessários existem antes de tentar usá-los
-  if (!bindData.id_conta || !bindData.id_tiktok || !bindData.s) {
-    return res.status(400).json({ error: "Campos obrigatórios não retornados pela API." });
-  }
-
   // Verifica se a conta já existe no banco de dados do usuário
   const contaExistente = usuario.contas.find(
     (conta) => conta.nomeConta === nome_usuario
@@ -60,11 +53,12 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
 
   // Se não existir, adiciona a nova conta ao banco
   if (!contaExistente) {
+    // Adiciona a conta com campos ausentes, apenas nomeConta e status
     const novaConta = {
       nomeConta: nome_usuario,
-      id_conta: bindData.id_conta,
-      id_tiktok: bindData.id_tiktok,
-      s: bindData.s,
+      id_conta: null,  // Não está presente, então fica null
+      id_tiktok: null, // Não está presente, então fica null
+      s: null,         // Não está presente, então fica null
       status: "Pendente",  // Status padrão como "Pendente"
     };
 
@@ -73,7 +67,7 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
     await usuario.save();
 
     return res.status(200).json({
-      message: "Conta adicionada com sucesso!",
+      message: "Conta adicionada com sucesso, mas faltam informações.",
       id_conta: novaConta.id_conta,
       detalhes: novaConta,
     });
@@ -81,7 +75,6 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
     return res.status(400).json({ error: "Conta já existe no banco de dados." });
   }
 }
-
 
     // Caso contrário, retorna erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
