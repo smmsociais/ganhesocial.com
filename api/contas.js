@@ -1,8 +1,9 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "./User.js";  // Importe o modelo User corretamente
+import User from "./User.js";  // Apenas importe o modelo User, sem redefinir
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import bcrypt from "bcryptjs";  // Adicionando bcryptjs para o hash de senha
 
 dotenv.config();
 
@@ -15,24 +16,6 @@ app.use(express.json());
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("Conectado ao MongoDB"))
     .catch((err) => console.log("Erro ao conectar ao MongoDB", err));
-
-// Modelo de Usuário com Contas Embutidas
-const ContaSchema = new mongoose.Schema({
-    nomeConta: { type: String, required: true },
-    status: { type: String, enum: ["Pendente", "Aprovada"], default: "Pendente" }
-});
-
-const UserSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
-    password: { 
-        type: String, 
-        required: [true, "A senha é obrigatória"], 
-        select: false  // Impede que a senha seja retornada automaticamente
-    },
-    contas: [ContaSchema]
-});
-
-const User = mongoose.model("User", UserSchema);
 
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
@@ -47,6 +30,7 @@ const authMiddleware = (req, res, next) => {
         return res.status(400).json({ error: "Token inválido." });
     }
 };
+
 // Rota de Registro de Usuário
 app.post("/api/register", async (req, res) => {
     try {
@@ -125,7 +109,7 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 });
 
 // Listar Contas do Usuário
-pp.get("/api/contas", authMiddleware, async (req, res) => {
+app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
