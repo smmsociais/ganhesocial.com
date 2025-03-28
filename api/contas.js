@@ -134,17 +134,22 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 // Listar Contas do Usuário
 app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
-        // Use req.user.id para pegar o ID do usuário autenticado
-        const user = await User.findById(new mongoose.Types.ObjectId(req.user.id)); 
-        console.log("User found:", user); // Verifique se o usuário foi encontrado corretamente
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+        const user = await User.findById(req.user.id);
+        console.log("Usuário encontrado no banco:", user);
 
+        if (!user) {
+            console.log("Usuário não existe!");
+            return res.status(404).json({ error: "Usuário não encontrado." });
+        }
+
+        console.log("Contas do usuário:", user.contas);
         res.json(user.contas);
     } catch (error) {
         console.error("Erro ao listar contas:", error);
         res.status(500).json({ error: "Erro interno no servidor." });
     }
 });
+
 
 // Iniciar o Servidor
 app.listen(PORT, () => {
