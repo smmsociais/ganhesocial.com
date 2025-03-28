@@ -43,9 +43,19 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Esta conta já está vinculada." });
         }
 
+        // Verifique a resposta da plataforma
+        if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
+            // Se a conta foi vinculada com sucesso, não a adicione ao banco
+            return res.status(200).json({
+                message: "Conta já vinculada com sucesso à plataforma!",
+                id_conta: bindData.id_conta,
+                detalhes: bindData.detalles
+            });
+        }
+
         // Se a resposta indicar sucesso ou falha, continue
         if (bindData.status === "success" || bindData.status === "fail") {
-            // Adicionar a conta ao usuário
+            // Adicionar a conta ao usuário se não foi vinculada com sucesso
             usuario.contas.push({
                 nomeConta: nome_usuario,
                 status: bindData.status === "fail" ? "Pendente" : "Aprovada", // Se falhar, marca como pendente
