@@ -1,5 +1,5 @@
 import connectDB from "./db.js";
-import User from "./User.js";  // Apenas importe, não defina novamente
+import User from "./User.js";  // Apenas importe o modelo User corretamente
 import jwt from "jsonwebtoken";
 
 const handler = async (req, res) => {
