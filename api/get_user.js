@@ -35,8 +35,9 @@ export default async function handler(req, res) {
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
-        // Caso a resposta seja erro, force uma resposta de sucesso
+        // Verifica se a resposta contém um erro específico "Erro ao vincular conta"
         if (bindData.error && bindData.error === 'Erro ao vincular conta.') {
+            // Força a resposta de sucesso quando ocorre esse erro específico
             return res.status(200).json({
                 message: 'sucess', 
                 id_conta: '7484742743441998854',
@@ -49,22 +50,22 @@ export default async function handler(req, res) {
             });
         }
 
-        // Verifica se a conta foi vinculada com sucesso
+        // Caso a conta tenha sido vinculada com sucesso
         if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
-            // Verifica se já existe a conta
+            // Verifica se a conta já está cadastrada no banco
             const contaExistente = await User.findOne({ "contas.id_conta": bindData.id_conta });
 
             if (contaExistente) {
                 return res.status(400).json({ error: "Esta conta já está vinculada." });
             }
 
-            // Se a conta não existir, adicione a nova conta ao banco
+            // Se não existir a conta, adiciona a nova conta ao banco
             const user = await User.findOne({ token });
             if (!user) {
                 return res.status(404).json({ error: "Usuário não encontrado." });
             }
 
-            // Adiciona a nova conta ao usuário
+            // Adiciona a nova conta
             user.contas.push({
                 id_conta: bindData.id_conta,
                 id_tiktok: bindData.id_tiktok,
@@ -86,12 +87,8 @@ export default async function handler(req, res) {
             });
         }
 
-        // Se a resposta for um erro ou outra condição, retornar o erro
-        if (bindData.status === "fail") {
-            return res.status(400).json({ error: bindData.message });
-        }
-
-        return res.status(400).json({ error: "Erro ao vincular conta." });
+        // Se a resposta for outro erro de falha no vinculo
+        return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
 
     } catch (error) {
         console.error("Erro ao processar requisição:", error);
