@@ -12,4 +12,7 @@ const UserSchema = new mongoose.Schema({
     contas: [ContaSchema]  // Array de contas sem o campo "status"
 }, { collection: 'usuarios' });
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+
+export default User;
+
