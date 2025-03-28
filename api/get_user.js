@@ -30,22 +30,17 @@ export default async function handler(req, res) {
         }
 
         // Chamar a API bind_tk para obter o ID da conta
-       // Chamar a API bind_tk para obter o ID da conta
         const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
 
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
-        // Verifica se a resposta é no formato que você espera
+        // Exibe a resposta da API no console
+        console.log("Resposta da API bind_tk recebida:", bindData);
+
+        // Verifica se a resposta é no formato esperado
         if (bindData.message === "sucess" && bindData.id_conta && bindData.detalhes) {
-            // Exibe a resposta no console, como solicitado
-            console.log("Resposta da API bind_tk recebida:", bindData);
-        }
-
-
-        // Caso a conta tenha sido vinculada com sucesso
-        if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
-            // Verifica se a conta já está cadastrada no banco
+            // Caso a conta tenha sido vinculada com sucesso
             const contaExistente = await User.findOne({ "contas.id_conta": bindData.id_conta });
 
             if (contaExistente) {
@@ -80,7 +75,7 @@ export default async function handler(req, res) {
             });
         }
 
-        // Se a resposta for outro erro de falha no vinculo
+        // Se a resposta for outro erro de falha no vínculo
         return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
 
     } catch (error) {
