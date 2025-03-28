@@ -32,6 +32,7 @@ const handler = async (req, res) => {
 
     // Gerar um novo token JWT
     const novoToken = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
     // (Opcional) Salvar o novo token no banco
     usuario.token = novoToken;
