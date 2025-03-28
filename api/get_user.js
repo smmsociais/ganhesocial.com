@@ -46,6 +46,13 @@ export default async function handler(req, res) {
 
 // Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
 if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+  console.log(`Erro ao vincular conta: ${bindData.message}`);
+
+  // Verifica se os campos necessários existem antes de tentar usá-los
+  if (!bindData.id_conta || !bindData.id_tiktok || !bindData.s) {
+    return res.status(400).json({ error: "Campos obrigatórios não retornados pela API." });
+  }
+
   // Verifica se a conta já existe no banco de dados do usuário
   const contaExistente = usuario.contas.find(
     (conta) => conta.nomeConta === nome_usuario
@@ -53,27 +60,13 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
 
   // Se não existir, adiciona a nova conta ao banco
   if (!contaExistente) {
-    // Certifica-se de que os valores obrigatórios (como id_conta) estão sendo atribuídos
     const novaConta = {
       nomeConta: nome_usuario,
-      id_conta: bindData.id_conta,  // Verifica se bindData.id_conta existe e é válido
+      id_conta: bindData.id_conta,
       id_tiktok: bindData.id_tiktok,
       s: bindData.s,
       status: "Pendente",  // Status padrão como "Pendente"
     };
-
-    // Depuração para garantir que os campos não estão ausentes
-    console.log("novaConta:", novaConta);
-
-    // Verifica se todos os campos necessários estão presentes e não são vazios
-    if (!novaConta.id_conta || !novaConta.id_tiktok || !novaConta.s) {
-      console.log("Campos faltando:", {
-        id_conta: novaConta.id_conta,
-        id_tiktok: novaConta.id_tiktok,
-        s: novaConta.s
-      });
-      return res.status(400).json({ error: "Campos obrigatórios estão faltando." });
-    }
 
     // Adiciona a conta ao banco de dados
     usuario.contas.push(novaConta);
@@ -88,6 +81,7 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
     return res.status(400).json({ error: "Conta já existe no banco de dados." });
   }
 }
+
 
     // Caso contrário, retorna erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
