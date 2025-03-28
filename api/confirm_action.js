@@ -96,21 +96,13 @@ export default async function handler(req, res) {
         });
 
 try {
-    console.log("Enviando requisição para confirm_action com os seguintes parâmetros:", {
-        id_conta: userId, 
-        id_pedido,        
-        is_tiktok: "1"
-    });
-
     const confirmResponse = await axios.post(confirmUrl, params);
-    
     console.log("Resposta da API confirm_action:", confirmResponse.data);
 
     const confirmData = confirmResponse.data;
 
     if (confirmData.status !== "success") {
-        console.error("Erro: API confirm_action retornou erro.", confirmData);
-        return res.status(400).json({ error: "Erro ao confirmar ação.", detalhes: confirmData });
+        return res.status(400).json({ error: "Erro ao confirmar ação." });
     }
 
     return res.status(200).json({
@@ -120,7 +112,6 @@ try {
     });
 
 } catch (error) {
-    console.error("Erro ao processar requisição:", error.response?.data || error.message);
-    return res.status(500).json({ error: "Erro interno ao processar requisição.", detalhes: error.response?.data || error.message });
+    console.error("Erro ao processar requisição:", error);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
 }
-
