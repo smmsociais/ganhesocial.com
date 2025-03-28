@@ -36,12 +36,12 @@ export default async function handler(req, res) {
     // Exibir a resposta da API bind_tk para depuração
     console.log("Resposta da API bind_tk recebida:", bindData);
 
-    // Se a API retornar WRONG_USER, não adiciona a conta
+    // Se a API bind_tk retornar WRONG_USER, retorne o erro correspondente
     if (bindData.message && bindData.message.trim() === "WRONG_USER") {
       return res.status(400).json({ error: "WRONG_USER" });
     }
 
-    // Se a resposta indicar sucesso (considerando o formato esperado)
+    // Se a resposta indicar sucesso (status "success") e possuir os campos necessários
     if (
       typeof bindData.status === "string" &&
       bindData.status.trim().toLowerCase() === "success" &&
@@ -53,11 +53,11 @@ export default async function handler(req, res) {
 
       // Verificar se a conta já existe no array de contas do usuário
       const contaExistente = usuario.contas.find(
-        (conta) => conta.id_conta === bindData.id_conta
+        (conta) => String(conta.id_conta) === String(bindData.id_conta)
       );
 
       if (contaExistente) {
-        // Se já existe, retorne a mensagem de conta já vinculada (não adiciona novamente)
+        // Se a conta já existe, retorna a resposta da API bind_tk
         return res.status(200).json({
           message: "Conta já vinculada com sucesso!",
           id_conta: bindData.id_conta,
@@ -69,13 +69,15 @@ export default async function handler(req, res) {
           },
         });
       } else {
-        // Se não existe, adiciona a conta ao usuário e salva no banco
+        // Se a conta não existe, adiciona-a ao usuário
         usuario.contas.push({
           nomeConta: nome_usuario,
           id_conta: bindData.id_conta,
           id_tiktok: idTiktok,
           s: bindData.s,
+          status: "Pendente" // ou remova se não precisar desse campo
         });
+
         await usuario.save();
 
         return res.status(200).json({
@@ -91,7 +93,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Se o formato não corresponder ou ocorrer outro erro, retorne-o
+    // Se o formato da resposta não corresponder ao esperado, retorne o erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
   } catch (error) {
     console.error("Erro ao processar requisição:", error);
