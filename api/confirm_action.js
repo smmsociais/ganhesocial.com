@@ -95,23 +95,28 @@ export default async function handler(req, res) {
             is_tiktok: "1",
         });
 
-try {
-    const confirmResponse = await axios.post(confirmUrl, params);
-    console.log("Resposta da API confirm_action:", confirmResponse.data);
+        try {
+            const confirmResponse = await axios.post(confirmUrl, params);
+            console.log("Resposta da API confirm_action:", confirmResponse.data);
 
-    const confirmData = confirmResponse.data;
+            const confirmData = confirmResponse.data;
 
-    if (confirmData.status !== "success") {
-        return res.status(400).json({ error: "Erro ao confirmar ação." });
+            if (confirmData.status !== "success") {
+                return res.status(400).json({ error: "Erro ao confirmar ação." });
+            }
+
+            return res.status(200).json({
+                status: "sucesso",
+                message: `Ação validada com sucesso! ${nome_usuario} está seguindo ${nomeAlvo}.`,
+                detalhes: confirmData
+            });
+
+        } catch (error) {
+            console.error("Erro ao processar requisição:", error);
+            return res.status(500).json({ error: "Erro interno ao processar requisição." });
+        }
+    } catch (error) {
+        console.error("Erro ao processar requisição:", error);
+        return res.status(500).json({ error: "Erro interno ao processar requisição." });
     }
-
-    return res.status(200).json({
-        status: "sucesso",
-        message: `Ação validada com sucesso! ${nome_usuario} está seguindo ${nomeAlvo}.`,
-        detalhes: confirmData
-    });
-
-} catch (error) {
-    console.error("Erro ao processar requisição:", error);
-    return res.status(500).json({ error: "Erro interno ao processar requisição." });
-}
+} // 🔥 Faltava essa chave para fechar a função handler!
