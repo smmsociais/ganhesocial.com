@@ -1,19 +1,21 @@
 import mongoose from 'mongoose';
 
+// Definição do schema para contas
 const ContaSchema = new mongoose.Schema({
-    nomeConta: { type: String, required: true },
-    id_conta: { type: String, required: true },
+    nomeConta: { type: String, required: true, unique: true },  // Se quiser garantir que cada nomeConta seja único
+    id_conta: { type: String, required: false },  // Tornando id_conta opcional
     id_tiktok: { type: String },
     s: { type: String },
-    status: { type: String, default: "Pendente" },  // Incluindo o status
+    status: { type: String, default: "Pendente" },  // Valor padrão para status
 });
 
+// Definição do schema para o usuário
 const UserSchema = new mongoose.Schema({
     nome_usuario: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },  // Email único
     senha: { type: String, required: true },
     token: { type: String, required: true },
-    contas: [ContaSchema],  // Agora com os campos adicionais para contas
+    contas: [ContaSchema],  // Subdocumento de contas
 }, { collection: 'usuarios' });
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
