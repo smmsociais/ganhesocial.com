@@ -55,10 +55,9 @@ export default async function handler(req, res) {
 
         // Se a resposta indicar sucesso ou falha, continue
         if (bindData.status === "success" || bindData.status === "fail") {
-            // Adicionar a conta ao usuário se não foi vinculada com sucesso
+            // Adicionar a conta ao usuário sem o status
             usuario.contas.push({
                 nomeConta: nome_usuario,
-                status: bindData.status === "fail" ? "Pendente" : "Aprovada", // Se falhar, marca como pendente
                 id_conta: bindData.id_conta,
                 id_tiktok: bindData.id_tiktok || bindData.id_conta,
                 s: bindData.s || "3"
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
 
             return res.status(200).json({
                 message: bindData.status === "fail" 
-                    ? "Conta vinculada com falha, mas registrada como pendente." 
+                    ? "Conta vinculada com falha, mas registrada."
                     : "Conta vinculada com sucesso!",
                 id_conta: bindData.id_conta,
                 detalhes: {
