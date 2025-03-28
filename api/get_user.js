@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     // Exibe a resposta da API bind_tk para depuração
     console.log("Resposta da API bind_tk:", bindData);
 
-    // Se a resposta da API bind_tk tiver a estrutura desejada, retorne-a
+    // Se a resposta for "success", retorna ela para o cliente
     if (
       bindData.status === "success" &&
       bindData.id_conta &&
@@ -44,7 +44,41 @@ export default async function handler(req, res) {
       return res.status(200).json(bindData);
     }
 
-    // Caso contrário, retorna o erro padrão
+    // Se a resposta for "fail" e a mensagem for "WRONG_USER", adiciona a conta no banco
+    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+      // Verifica se a conta já existe no banco de dados do usuário
+      const contaExistente = usuario.contas.find(
+        (conta) => conta.nomeConta === nome_usuario
+      );
+
+      // Se não existir, adiciona a nova conta ao banco
+      if (!contaExistente) {
+        // Adiciona a conta ao banco com status "Pendente"
+        usuario.contas.push({
+          nomeConta: nome_usuario,
+          id_conta: bindData.id_conta,
+          id_tiktok: bindData.id_tiktok,
+          s: bindData.s,
+          status: "Pendente",
+        });
+        await usuario.save();
+
+        return res.status(200).json({
+          message: "Conta adicionada com sucesso!",
+          id_conta: bindData.id_conta,
+          detalhes: {
+            status: "Pendente",
+            id_conta: bindData.id_conta,
+            id_tiktok: bindData.id_tiktok,
+            s: bindData.s,
+          },
+        });
+      } else {
+        return res.status(400).json({ error: "Conta já existe no banco de dados." });
+      }
+    }
+
+    // Caso contrário, retorna erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
   } catch (error) {
     console.error("Erro ao processar requisição:", error);
