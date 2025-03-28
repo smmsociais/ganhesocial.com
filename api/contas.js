@@ -50,6 +50,7 @@ const authMiddleware = (req, res, next) => {
         console.log("Usuário decodificado:", req.user);  // Verifique o usuário decodificado
         next();
     } catch (error) {
+        console.log("Erro ao decodificar token:", error);
         return res.status(400).json({ error: "Token inválido." });
     }
 };
@@ -134,7 +135,8 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 // Listar Contas do Usuário
 app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        console.log("ID do usuário no req.user:", req.user.id);
+        const user = await User.findById(new mongoose.Types.ObjectId(req.user.id));  // Garanta que o ID seja ObjectId
         console.log("Usuário encontrado no banco:", user);
 
         if (!user) {
@@ -149,7 +151,6 @@ app.get("/api/contas", authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Erro interno no servidor." });
     }
 });
-
 
 // Iniciar o Servidor
 app.listen(PORT, () => {
