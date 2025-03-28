@@ -34,7 +34,22 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Erro ao obter ID da conta." });
         }
 
-        const id_conta = bindData.id_conta;
+        const { id_conta, id_tiktok, s } = bindData;
+
+        // 🔹 Se a API bind_tk retornar sucesso, chamar a API user/info
+        let userInfo = null;
+        try {
+            const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
+                params: { unique_id: nome_usuario },
+                headers: {
+                    'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                    'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+                }
+            });
+            userInfo = userInfoResponse.data;
+        } catch (error) {
+            console.error("Erro ao chamar a API user/info:", error);
+        }
 
         // 🔹 Chamar a API confirm_action para confirmar a ação
         const url = "https://api.ganharnoinsta.com/confirm_action.php";
@@ -56,6 +71,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
             message: "Ação confirmada com sucesso!",
             detalhes: confirmData,
+            userInfo: userInfo || "Nenhuma informação de usuário disponível"
         });
 
     } catch (error) {
