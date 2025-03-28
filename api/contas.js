@@ -1,11 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import User from "./User.js";  // Importe o modelo User corretamente
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import cors from "cors";
-import bcrypt from "bcryptjs";
-import axios from "axios";
-import User from "./User.js";  // Importa o mesmo modelo
 
 dotenv.config();
 
@@ -13,7 +10,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(cors());
 
 // Conexão com o MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -41,17 +37,13 @@ const User = mongoose.model("User", UserSchema);
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization;
-    console.log("Token recebido:", token);  // Verifique o token no log
     if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
 
     try {
         const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-        console.log("JWT_SECRET:", process.env.JWT_SECRET);
         req.user = decoded;
-        console.log("Usuário decodificado:", req.user);  // Verifique o usuário decodificado
         next();
     } catch (error) {
-        console.log("Erro ao decodificar token:", error);
         return res.status(400).json({ error: "Token inválido." });
     }
 };
@@ -133,21 +125,16 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 });
 
 // Listar Contas do Usuário
-app.get("/api/contas", authMiddleware, async (req, res) => {
+pp.get("/api/contas", authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        console.log("Usuário encontrado no banco:", user);
-
         if (!user) {
-            console.log("Usuário não existe!");
             return res.status(404).json({ error: "Usuário não encontrado." });
         }
 
-        console.log("Contas do usuário:", user.contas);
         res.json(user.contas);
     } catch (error) {
-        console.error("Erro ao listar contas:", error);
-        res.status(500).json({ error: "Erro interno no servidor." });
+        res.status(500).json({ error: "Erro ao carregar contas." });
     }
 });
 
