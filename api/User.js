@@ -1,11 +1,7 @@
 import mongoose from 'mongoose';
 
 const ContaSchema = new mongoose.Schema({
-    nomeConta: { type: String, required: true },
-    id_conta: { type: String, required: true },
-    id_tiktok: { type: String },
-    s: { type: String },
-    status: { type: String, default: "Pendente" },  // Incluindo o status
+    nomeConta: { type: String, required: true }
 });
 
 const UserSchema = new mongoose.Schema({
@@ -13,7 +9,7 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
     token: { type: String, required: true },
-    contas: [ContaSchema],  // Agora com os campos adicionais para contas
+    contas: [ContaSchema]  // Array de contas sem o campo "status"
 }, { collection: 'usuarios' });
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
