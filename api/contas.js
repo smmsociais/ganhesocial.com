@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import axios from "axios";
+import User from "./User.js";  // Importa o mesmo modelo
 
 dotenv.config();
 
@@ -54,7 +55,6 @@ const authMiddleware = (req, res, next) => {
         return res.status(400).json({ error: "Token inválido." });
     }
 };
-
 // Rota de Registro de Usuário
 app.post("/api/register", async (req, res) => {
     try {
@@ -135,8 +135,7 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
 // Listar Contas do Usuário
 app.get("/api/contas", authMiddleware, async (req, res) => {
     try {
-        console.log("ID do usuário no req.user:", req.user.id);
-        const user = await User.findById(new mongoose.Types.ObjectId(req.user.id));  // Garanta que o ID seja ObjectId
+        const user = await User.findById(req.user.id);
         console.log("Usuário encontrado no banco:", user);
 
         if (!user) {
@@ -152,7 +151,6 @@ app.get("/api/contas", authMiddleware, async (req, res) => {
     }
 });
 
-// Iniciar o Servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
