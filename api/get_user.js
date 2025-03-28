@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   // Conectar ao banco de dados
   await connectDB();
 
-  // Obter o token e o nome_usuario da query string
+  // Obter o token e nome_usuario da query string
   const { token, nome_usuario } = req.query;
 
   if (!token) {
@@ -33,26 +33,28 @@ export default async function handler(req, res) {
     const bindResponse = await axios.get(bindTkUrl);
     const bindData = bindResponse.data;
 
-    // Exibe a resposta da API bind_tk no console para depuração
     console.log("Resposta da API bind_tk recebida:", bindData);
 
-    // Verifica se a resposta possui status "success" (caso-insensitivo) e os campos obrigatórios
+    // Verifica se a resposta é do tipo sucesso (relaxando a condição)
     if (
       typeof bindData.status === "string" &&
       bindData.status.trim().toLowerCase() === "success" &&
       bindData.id_conta &&
       bindData.s
     ) {
-      // Verifica se a conta já está vinculada no banco
+      const idTiktok = bindData.id_tiktok || bindData.id_conta;
+
+      // Verificar se a conta já existe no array de contas do usuário
       const contaExistente = usuario.contas.find(
         (conta) => conta.id_conta === bindData.id_conta
       );
 
       if (!contaExistente) {
-        // Se a conta não foi encontrada, adiciona-a ao usuário
+        // Se a conta não foi encontrada, adiciona-a ao banco
         usuario.contas.push({
+          nomeConta: nome_usuario,
           id_conta: bindData.id_conta,
-          id_tiktok: bindData.id_tiktok || bindData.id_conta,
+          id_tiktok: idTiktok,
           s: bindData.s,
         });
 
@@ -64,17 +66,26 @@ export default async function handler(req, res) {
           detalhes: {
             status: bindData.status,
             id_conta: bindData.id_conta,
-            id_tiktok: bindData.id_tiktok || bindData.id_conta,
+            id_tiktok: idTiktok,
             s: bindData.s,
           },
         });
       } else {
         // Se a conta já existe, informa que já está vinculada
-        return res.status(400).json({ error: "Esta conta já está vinculada." });
+        return res.status(200).json({
+          message: "Conta já vinculada com sucesso!",
+          id_conta: bindData.id_conta,
+          detalhes: {
+            status: bindData.status,
+            id_conta: bindData.id_conta,
+            id_tiktok: idTiktok,
+            s: bindData.s,
+          },
+        });
       }
     }
 
-    // Se a resposta da API bind_tk não estiver no formato esperado, retorna o erro da própria API
+    // Caso a resposta da API bind_tk não seja sucesso, retorna o erro
     return res.status(400).json({ error: bindData.message || "Erro ao vincular conta." });
   } catch (error) {
     console.error("Erro ao processar requisição:", error);
