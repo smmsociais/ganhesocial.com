@@ -44,14 +44,16 @@ export default async function handler(req, res) {
         }
 
         // Verifique a resposta da plataforma
-        if (bindData.status === "success" && bindData.message === "Conta vinculada com sucesso!") {
-            // Se a conta foi vinculada com sucesso, não a adicione ao banco
-            return res.status(200).json({
-                message: "Conta já vinculada com sucesso à plataforma!",
-                id_conta: bindData.id_conta,
-                detalhes: bindData.detalles
-            });
-        }
+if (
+    bindData.status === "success" &&
+    bindData.message.trim().toLowerCase() === "conta vinculada com sucesso!"
+) {
+    return res.status(200).json({
+        message: "Conta já vinculada com sucesso à plataforma!",
+        id_conta: bindData.id_conta,
+        detalhes: bindData.detalles
+    });
+}
 
         // Se a resposta indicar sucesso ou falha, continue
         if (bindData.status === "success" || bindData.status === "fail") {
