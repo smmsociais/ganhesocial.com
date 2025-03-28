@@ -95,7 +95,16 @@ export default async function handler(req, res) {
             is_tiktok: "1",
         });
 
-        const confirmResponse = await axios.post(confirmUrl, params);
+console.log("Enviando requisição para confirm_action com os seguintes parâmetros:");
+console.log({
+    id_conta: userId, // Deve ser 7484742743441998854
+    id_pedido,        // Deve ser 141254867
+    is_tiktok: "1"
+});
+
+const confirmResponse = await axios.post(confirmUrl, params);
+console.log("Resposta da API confirm_action:", confirmResponse.data);
+
         const confirmData = confirmResponse.data;
 
         if (confirmData.status !== "success") {
