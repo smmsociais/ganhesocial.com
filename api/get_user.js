@@ -1,6 +1,6 @@
 import axios from "axios";
 import connectDB from "./db.js";
-import User from "./User.js";
+import { User } from "./User.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
