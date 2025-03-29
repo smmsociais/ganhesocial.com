@@ -19,7 +19,14 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Acesso negado." });
         }
 
-        res.status(200).json({ saldo: usuario.saldo.toFixed(2) });
+        // Verificar se saldo é válido
+        let saldo = usuario.saldo;
+
+        if (typeof saldo !== "number" || isNaN(saldo)) {
+            saldo = 0;  // Definir saldo como 0 se não for um número válido
+        }
+
+        res.status(200).json({ saldo: saldo.toFixed(2) });
     } catch (error) {
         console.error("Erro ao obter saldo:", error);
         res.status(500).json({ error: "Erro ao buscar saldo." });
