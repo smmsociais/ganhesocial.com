@@ -23,19 +23,14 @@ const handler = async (req, res) => {
       // Se o usuário possui histórico de ações, buscamos o mais recente
       let actionHistory;
       if (usuario.historico_acoes && usuario.historico_acoes.length > 0) {
-        // Buscar o ActionHistory mais recente
         actionHistory = await ActionHistory.findOne({ _id: { $in: usuario.historico_acoes } }).sort({ data: -1 });
       }
 
-      if (!actionHistory) {
-        return res.status(404).json({ error: "Histórico de ação não encontrado." });
-      }
-
-      // Retornar os dados do perfil com o nome correto do UserSchema
+      // Retornar os dados do perfil com o token correto do UserSchema
       res.json({
-        nome_usuario: usuario.nome_usuario, // Nome correto do usuário do UserSchema
+        nome_usuario: usuario.nome_usuario,  // Nome correto do UserSchema
         email: usuario.email,
-        token: actionHistory.token  // Token salvo no histórico (ActionHistorySchema)
+        token: usuario.token // ✅ Agora retornando o token do UserSchema
       });
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
