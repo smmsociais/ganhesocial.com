@@ -115,7 +115,7 @@
 
     <button class="logout-button" onclick="logout()">Sair</button>
 
-    <script>
+   <script>
     document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("authToken");
 
@@ -139,32 +139,30 @@
             .catch(error => console.error("Erro ao carregar saldo:", error));
     }
 
-        function goToSelectAccount() {
-            window.location.href = "selecionar_conta";
-        }
+    function goToSelectAccount() {
+        window.location.href = "selecionar_conta";
+    }
 
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
+    function goToAddAccount() {
+        window.location.href = "adicionar_conta";
+    }
 
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
+    function goToManageAccounts() {
+        window.location.href = "gerenciar_contas";
+    }
 
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
+    function goToHistory() {
+        window.location.href = "historico_acoes";
+    }
 
-        function goToAccount() {
-            window.location.href = "settings";
-        }
+    function goToAccount() {
+        window.location.href = "settings";
+    }
 
-        function logout() {
-            localStorage.removeItem("authToken");
-            window.location.href = "https://ganhesocial.com";
-        }
-
-        window.onload = carregarSaldo;
+    function logout() {
+        localStorage.removeItem("authToken");
+        window.location.href = "https://ganhesocial.com";
+    }
     </script>
 </body>
 </html>
