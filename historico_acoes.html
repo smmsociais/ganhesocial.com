@@ -87,7 +87,7 @@
 
         try {
             // 🔹 Buscar dados da API
-            const response = await fetch("/api/get_historico_acoes");
+            const response = await fetch("/api/historico_acoes");
             const historyData = await response.json();
 
             if (historyData.length === 0) {
