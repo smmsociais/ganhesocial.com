@@ -43,57 +43,61 @@ export default async function handler(req, res) {
       userId = userInfoResponse.data?.data?.user?.id || null;
     } catch (error) {
       console.error("Erro ao chamar user/info:", error.response?.data || error.message);
-      return res.status(500).json({ error: "Erro ao obter informações do usuário." });
     }
 
-    if (!userId) {
-      return res.status(400).json({ error: "ID do usuário TikTok não encontrado." });
-    }
+    let acaoValida = false;
 
-    // 🔹 Chamar API user/following para verificar se segue o perfil alvo
-    let followingList = [];
-    try {
-      const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
-        params: { user_id: userId, count: "200", time: "0" },
-        headers: {
-          'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-          'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-        }
-      });
-      followingList = userFollowingResponse.data?.data?.followings || [];
-    } catch (error) {
-      console.error("Erro ao chamar user/following:", error.response?.data || error.message);
-      return res.status(500).json({ error: "Erro ao obter lista de seguidores." });
-    }
-
-    // 🔹 Verificar se segue o perfil alvo
-    const acaoValida = followingList.some(following => following.unique_id.toLowerCase() === extractedUsername.toLowerCase());
-
-    if (acaoValida) {
-      console.log(`✅ Ação válida! ${nome_usuario} está seguindo ${extractedUsername}.`);
-
-      // 🔹 Confirmar ação na API externa
-      const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
-      const payload = {
-        token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
-        sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-        id_conta: id_conta,
-        id_pedido: id_pedido,
-        is_tiktok: "1"
-      };
-
+    if (userId) {
+      // 🔹 Chamar API user/following para verificar se segue o perfil alvo
       try {
-        const confirmResponse = await axios.post(confirmUrl, payload);
-        console.log("Resposta da API confirmar ação:", confirmResponse.data);
-        return res.status(200).json({ status: "sucesso", message: "Ação confirmada!", dados: confirmResponse.data });
+        const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
+          params: { user_id: userId, count: "200", time: "0" },
+          headers: {
+            'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+            'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
+          }
+        });
+
+        const followingList = userFollowingResponse.data?.data?.followings || [];
+        acaoValida = followingList.some(following => following.unique_id.toLowerCase() === extractedUsername.toLowerCase());
+
+        if (acaoValida) {
+          console.log(`✅ Ação válida! ${nome_usuario} está seguindo ${extractedUsername}.`);
+        } else {
+          console.log(`❌ Ação inválida! ${nome_usuario} NÃO está seguindo ${extractedUsername}.`);
+        }
       } catch (error) {
-        console.error("Erro ao confirmar ação:", error.response?.data || error.message);
-        return res.status(500).json({ error: "Erro ao confirmar a ação." });
+        console.error("Erro ao chamar user/following:", error.response?.data || error.message);
       }
-    } else {
-      console.log(`❌ Ação inválida! ${nome_usuario} NÃO está seguindo ${extractedUsername}.`);
-      return res.status(400).json({ status: "falha", message: "Ação inválida! Usuário não segue o perfil alvo." });
     }
+
+    // 🔹 Confirmar ação na API externa independente da validação
+    const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
+    const payload = {
+      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+      sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+      id_conta: id_conta,
+      id_pedido: id_pedido,
+      is_tiktok: "1"
+    };
+
+    let confirmData;
+    try {
+      const confirmResponse = await axios.post(confirmUrl, payload);
+      confirmData = confirmResponse.data;
+      console.log("Resposta da API confirmar ação:", confirmData);
+    } catch (error) {
+      console.error("Erro ao confirmar ação:", error.response?.data || error.message);
+      confirmData = { error: "Erro ao confirmar a ação." };
+    }
+
+    return res.status(200).json({
+      status: "sucesso",
+      message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
+      acaoValida: acaoValida,
+      dados: confirmData
+    });
+
   } catch (error) {
     console.error("Erro ao processar requisição:", error.response?.data || error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
