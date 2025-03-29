@@ -139,7 +139,7 @@
 
             document.getElementById("name").value = data.nome_usuario || "";
             document.getElementById("email").value = data.email || "";
-            document.getElementById("authToken").value = data.token || "Token indisponível"; // Pega o token do banco
+            document.getElementById("authToken").value = data.token; // O token do banco
 
         } catch (error) {
             alert(error.message);
