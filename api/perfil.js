@@ -10,10 +10,11 @@ const handler = async (req, res) => {
             return res.status(401).json({ error: "Não autorizado" });
         }
 
-        const token = authHeader.split(" ")[1];
+        const token = authHeader.split(" ")[1].trim();
+        console.log("Token recebido:", token); // Debug
 
         try {
-            // Procura o usuário no banco usando o token armazenado
+            // Busca o usuário no banco com base no token armazenado
             const usuario = await User.findOne({ token });
 
             if (!usuario) {
@@ -21,16 +22,15 @@ const handler = async (req, res) => {
             }
 
             res.json({
-                nome_usuario: usuario.nome_usuario || usuario.nome, // Verifica o nome correto
+                nome_usuario: usuario.nome_usuario || usuario.nome,
                 email: usuario.email,
-                token: usuario.token,
+                token: usuario.token, // Retornando o token salvo no banco
             });
         } catch (error) {
             console.error("Erro ao carregar perfil:", error);
             res.status(500).json({ error: "Erro ao carregar perfil" });
         }
     } 
-    
     else if (req.method === "PUT") {
         const { nome_usuario, email } = req.body;
 
@@ -39,14 +39,14 @@ const handler = async (req, res) => {
             return res.status(401).json({ error: "Não autorizado" });
         }
 
-        const token = authHeader.split(" ")[1];
+        const token = authHeader.split(" ")[1].trim();
+        console.log("Token recebido para atualização:", token); // Debug
 
         try {
-            // Atualiza os dados do usuário com base no token fixo
             const usuario = await User.findOneAndUpdate(
                 { token },
                 { nome_usuario, email },
-                { new: true } // Retorna os dados atualizados
+                { new: true }
             );
 
             if (!usuario) {
@@ -63,7 +63,6 @@ const handler = async (req, res) => {
             res.status(500).json({ error: "Erro ao salvar perfil" });
         }
     } 
-    
     else {
         res.status(405).json({ error: "Método não permitido" });
     }
