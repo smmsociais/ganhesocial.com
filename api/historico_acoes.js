@@ -9,13 +9,14 @@ export default async function handler(req, res) {
     await connectDB();
 
     try {
-        // Buscar todas as ações e popular o usuário associado
+        // Buscar todas as ações e popular o nome do usuário associado
         const historico = await ActionHistory.find().populate("user", "nome_usuario");
 
         // Enviar apenas os campos necessários
         const formattedData = historico.map(action => ({
-            nome_usuario: action.nome_usuario,  // Nome do usuário da ação
+            nome_usuario: action.user?.nome_usuario || "Desconhecido", // Nome do usuário da ação
             acao_validada: action.acao_validada,  // Status da ação
+            valor_confirmacao: action.valor_confirmacao, // 🔹 Adicionar o valor confirmado
             data: action.data  // Data da ação
         }));
 
