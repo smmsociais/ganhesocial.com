@@ -22,7 +22,7 @@
             color: var(--text-light);
             font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* Mudado para coluna para imagem ficar em cima */
             align-items: center;
             height: 100vh;
             margin: 0;
@@ -79,15 +79,15 @@
         .logo {
             position: absolute;
             top: 10px;
-            left: 40px; /* Afastado mais do canto */
+            left: 40px;
             font-family: 'Poppins', sans-serif;
-            font-size: 22px; /* Tamanho menor */
+            font-size: 22px;
             font-weight: 600;
             color: #333;
             word-spacing: 5px;
             text-transform: uppercase;
             display: flex;
-            flex-direction: row; /* Mantém as palavras na horizontal */
+            flex-direction: row;
         }
 
         .logo span {
@@ -100,6 +100,13 @@
 
         .logo span:last-child {
             color: #4CAF50;
+        }
+
+        .image-top {
+            width: 100%;
+            max-width: 100%; /* Ajusta a imagem ao tamanho da tela */
+            height: auto;
+            margin-bottom: 20px; /* Dá um espaço abaixo da imagem */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -130,6 +137,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Imagem do topo -->
+    <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743289760657.png" alt="Logo Ganhe Social">
+
     <div class="logo">
         <span>Ganhe</span>
         <span>$ocial</span>
