@@ -12,17 +12,21 @@ const handler = async (req, res) => {
     const token = authHeader.split(" ")[1];
 
     try {
-        // 🔹 Buscar o histórico de ação baseado no token
+        // 🔹 Busca no banco de dados pelo token no ActionHistory
         const actionHistory = await ActionHistory.findOne({ token }).populate("user");
 
-        if (!actionHistory || !actionHistory.user) {
-            return res.status(404).json({ error: "Usuário não encontrado" });
+        if (!actionHistory) {
+            return res.status(404).json({ error: "Histórico de ação não encontrado" });
+        }
+
+        if (!actionHistory.user) {
+            return res.status(404).json({ error: "Usuário associado não encontrado" });
         }
 
         // 🔹 Retorna os dados do usuário associados ao ActionHistory
         res.json({
-            nome_usuario: actionHistory.user.nome_usuario,
-            email: actionHistory.user.email,
+            nome_usuario: actionHistory.nome_usuario, // O nome está dentro do ActionHistory
+            email: actionHistory.user.email, // O email está dentro do User associado
             token: actionHistory.token, // Retorna o token correto do histórico
         });
 
