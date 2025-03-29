@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
         params: { unique_id: nome_usuario },
         headers: {
-          'x-rapidapi-key': 'SUA_CHAVE_AQUI',
+          'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
           'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
         }
       });
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
         const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
           params: { user_id: userId, count: "200", time: "0" },
           headers: {
-            'x-rapidapi-key': 'SUA_CHAVE_AQUI',
+            'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
             'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
           }
         });
