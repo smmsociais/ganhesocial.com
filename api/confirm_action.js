@@ -1,6 +1,7 @@
 import axios from "axios";
 import connectDB from "./db.js";
 import User from "./User.js";
+import ActionHistory from "./ActionHistory.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -9,7 +10,6 @@ export default async function handler(req, res) {
 
   await connectDB();
 
-  // 🔹 Recebendo os dados do frontend
   const { token, nome_usuario, id_pedido, id_conta, url_dir } = req.body;
 
   if (!token || !nome_usuario || !id_pedido || !id_conta || !url_dir) {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // 🔹 Extrair unique_id da URL (ex: "https://www.tiktok.com/@wilson_c3" → "wilson_c3")
+    // 🔹 Extrair unique_id da URL
     let extractedUsername = url_dir.split("/").pop();
     if (extractedUsername.startsWith("@")) {
       extractedUsername = extractedUsername.slice(1);
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 🔹 Confirmar ação na API externa independente da validação
+    // 🔹 Confirmar ação na API externa
     const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
@@ -89,6 +89,40 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error("Erro ao confirmar ação:", error.response?.data || error.message);
       confirmData = { error: "Erro ao confirmar a ação." };
+    }
+
+    // 🔹 Salvar ação no MongoDB
+    try {
+      const newAction = new ActionHistory({
+        token,
+        nome_usuario,
+        id_pedido,
+        id_conta,
+        url_dir,
+        unique_id_verificado: extractedUsername,
+        acao_validada: acaoValida,
+      });
+      await newAction.save();
+      console.log("Histórico de ação salvo no MongoDB!");
+    } catch (error) {
+      console.error("Erro ao salvar no MongoDB:", error.message);
+    }
+
+    // 🔹 Enviar histórico para a API do GanheSocial
+    try {
+      const storeActionResponse = await axios.post("https://ganhesocial.com/api/store_action_history", {
+        token,
+        nome_usuario,
+        id_pedido,
+        id_conta,
+        url_dir,
+        unique_id_verificado: extractedUsername,
+        acao_validada: acaoValida,
+        data: new Date(),
+      });
+      console.log("Histórico enviado para ganhesocial.com:", storeActionResponse.data);
+    } catch (error) {
+      console.error("Erro ao enviar histórico para ganhesocial.com:", error.message);
     }
 
     return res.status(200).json({
