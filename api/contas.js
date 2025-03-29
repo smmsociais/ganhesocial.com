@@ -1,9 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "./User.js";  // Apenas importe o modelo User, sem redefinir
+import { User } from "./User.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs";  // Adicionando bcryptjs para o hash de senha
 
 dotenv.config();
 
