@@ -31,9 +31,9 @@ const handler = async (req, res) => {
         return res.status(404).json({ error: "Histórico de ação não encontrado." });
       }
 
-      // Retornar os dados do perfil usando os dados do ActionHistory
+      // Retornar os dados do perfil com o nome correto do UserSchema
       res.json({
-        nome_usuario: actionHistory.nome_usuario, // Token de ação, ou nome definido no ActionHistory
+        nome_usuario: usuario.nome_usuario, // Nome correto do usuário do UserSchema
         email: usuario.email,
         token: actionHistory.token  // Token salvo no histórico (ActionHistorySchema)
       });
