@@ -65,31 +65,35 @@ export default async function handler(req, res) {
     }
 
     // 🔹 Confirmar ação na API externa
-    const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
-    const payload = {
-      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
-      sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-      id_conta: id_conta,
-      id_pedido: id_pedido,
-      is_tiktok: "1"
-    };
+// 🔹 Confirmar ação na API externa
+const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
+const payload = {
+  token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+  sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+  id_conta: id_conta,
+  id_pedido: id_pedido,
+  is_tiktok: "1"
+};
 
-    let confirmData;
-    try {
-      const confirmResponse = await axios.post(confirmUrl, payload);
-      confirmData = confirmResponse.data;
-    } catch (error) {
-      console.error("Erro ao confirmar ação:", error.message);
-      confirmData = { error: "Erro ao confirmar a ação." };
-    }
+let confirmData;
+try {
+  const confirmResponse = await axios.post(confirmUrl, payload);
+  confirmData = confirmResponse.data;
+  console.log("Resposta da API confirmar ação:", confirmData);
+} catch (error) {
+  console.error("Erro ao confirmar ação:", error.response?.data || error.message);
+  confirmData = { error: "Erro ao confirmar a ação." };
+}
 
-    // 🔹 Criar e salvar histórico da ação
+// 🔹 Criar e salvar histórico da ação
+import { ActionHistory } from "./User.js"; // Certifique-se de importar ActionHistory
+
 try {
   const newAction = new ActionHistory({
     user: usuario._id,
     token,
     nome_usuario,
-    id_pedido: String(id_pedido), // Garantir que seja string
+    id_pedido: String(id_pedido),
     id_conta,
     url_dir,
     unique_id_verificado: extractedUsername,
@@ -104,12 +108,13 @@ try {
 } catch (error) {
   console.error("Erro ao salvar no MongoDB:", error.message);
 }
-    return res.status(200).json({
-      status: "sucesso",
-      message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
-      acaoValida: acaoValida,
-      dados: confirmData
-    });
+
+return res.status(200).json({
+  status: "sucesso",
+  message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
+  acaoValida: acaoValida,
+  dados: confirmData
+});
 
   } catch (error) {
     console.error("Erro ao processar requisição:", error.message);
