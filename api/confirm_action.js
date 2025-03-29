@@ -80,10 +80,11 @@ try {
   confirmData = confirmResponse.data;
   console.log("Resposta da API confirmar ação:", confirmData);
   // Garantir que o valor seja numérico e subtrair 0.001
-  if (confirmData && confirmData.valor) {
-    let valorAtual = parseFloat(confirmData.valor);
-    confirmData.valor = (valorAtual - 0.001).toFixed(3); // Arredonda para 3 casas decimais
-  }
+  let valorConfirmacao = 0; // Valor padrão caso não exista
+if (confirmData && confirmData.valor) {
+  let valorAtual = parseFloat(confirmData.valor);
+  valorConfirmacao = (valorAtual - 0.001).toFixed(3); // Subtrai 0.001 e mantém 3 casas decimais
+}
 } catch (error) {
   console.error("Erro ao confirmar ação:", error.response?.data || error.message);
   confirmData = { error: "Erro ao confirmar a ação." };
@@ -99,6 +100,7 @@ try {
     url_dir,
     unique_id_verificado: extractedUsername,
     acao_validada: acaoValida,
+    valor_confirmacao: valorConfirmacao,
   });
 
   const savedAction = await newAction.save();
