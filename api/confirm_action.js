@@ -1,6 +1,7 @@
 import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
+import { ActionHistory } from "./User.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -83,27 +84,26 @@ export default async function handler(req, res) {
     }
 
     // 🔹 Criar e salvar histórico da ação
-    try {
-      const newAction = new User({
-        user: usuario._id,
-        token,
-        nome_usuario,
-        id_pedido,
-        id_conta,
-        url_dir,
-        unique_id_verificado: extractedUsername,
-        acao_validada: acaoValida,
-      });
+try {
+  const newAction = new ActionHistory({
+    user: usuario._id,
+    token,
+    nome_usuario,
+    id_pedido: String(id_pedido), // Garantir que seja string
+    id_conta,
+    url_dir,
+    unique_id_verificado: extractedUsername,
+    acao_validada: acaoValida,
+  });
 
-      const savedAction = await newAction.save();
-      usuario.historico_acoes.push(savedAction._id);
-      await usuario.save();
+  const savedAction = await newAction.save();
+  usuario.historico_acoes.push(savedAction._id);
+  await usuario.save();
 
-      console.log("Histórico de ação salvo no MongoDB!");
-    } catch (error) {
-      console.error("Erro ao salvar no MongoDB:", error.message);
-    }
-
+  console.log("Histórico de ação salvo no MongoDB!");
+} catch (error) {
+  console.error("Erro ao salvar no MongoDB:", error.message);
+}
     return res.status(200).json({
       status: "sucesso",
       message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
