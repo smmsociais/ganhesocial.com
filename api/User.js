@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-// Definição do schema para contas
+// 🔹 Schema para Contas
 const ContaSchema = new mongoose.Schema({
     nomeConta: { type: String, required: true, unique: true },
     id_conta: { type: String, required: false },
@@ -9,7 +9,20 @@ const ContaSchema = new mongoose.Schema({
     status: { type: String, default: "Pendente" },
 });
 
-// Definição do schema para o usuário
+// 🔹 Schema para Histórico de Ações
+const ActionHistorySchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },  // Relacionamento com User
+    token: { type: String, required: true },
+    nome_usuario: { type: String, required: true },
+    id_pedido: { type: String, required: true },
+    id_conta: { type: String, required: true },
+    url_dir: { type: String, required: true },
+    unique_id_verificado: { type: String, required: true },
+    acao_validada: { type: Boolean, required: true },
+    data: { type: Date, default: Date.now }
+});
+
+// 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
     nome_usuario: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -19,6 +32,8 @@ const UserSchema = new mongoose.Schema({
     historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]  // Relacionamento com ActionHistory
 }, { collection: 'usuarios' });
 
-const User = mongoose.models.User || mongoose.model('User', UserSchema);
+// 🔹 Exportação dos modelos
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
+const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
 
-export default User;
+export { User, ActionHistory };
