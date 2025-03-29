@@ -28,7 +28,6 @@ const UserSchema = new mongoose.Schema({
     nome_usuario: { type: String, required: true },  // Agora 'nome' em vez de 'nome_usuario'
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
-    token: { type: String, required: true },
     contas: [ContaSchema],  // Subdocumento de contas
     historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]  // Relacionamento com ActionHistory
 }, { collection: 'usuarios' });
