@@ -30,15 +30,20 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Senha incorreta!" });
     }
 
-    // Gerar um novo token JWT
-    const novoToken = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+    // Se o usuário já tem um token salvo, reutiliza o mesmo
+    let token = usuario.token;
+    
+    if (!token) {
+      // Se não tiver token salvo, gera um novo e mantém no banco
+      token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+      usuario.token = token;
+      await usuario.save({ validateBeforeSave: false });
+      console.log("🟢 Novo token gerado e salvo.");
+    } else {
+      console.log("🟢 Token já existente mantido.");
+    }
 
-    // (Opcional) Salvar o novo token no banco
-    usuario.token = novoToken;
-    await usuario.save({ validateBeforeSave: false });
-
-    res.json({ message: "Login bem-sucedido!", token: novoToken });
+    res.json({ message: "Login bem-sucedido!", token });
 
   } catch (error) {
     console.error("❌ Erro ao realizar login:", error);
