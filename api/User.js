@@ -19,6 +19,7 @@ const ActionHistorySchema = new mongoose.Schema({
     url_dir: { type: String, required: true },
     unique_id_verificado: { type: String, required: true },
     acao_validada: { type: Boolean, required: true },
+    valor_confirmacao: { type: Number, required: true, default: 0 }, // 🔹 Novo campo
     data: { type: Date, default: Date.now }
 });
 
