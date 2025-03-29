@@ -116,18 +116,28 @@
     <button class="logout-button" onclick="logout()">Sair</button>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
+    document.addEventListener("DOMContentLoaded", function () {
+        const token = localStorage.getItem("authToken");
 
-            if (!token) {
-                window.location.href = "login";
-            }
-        });
-
-        function carregarSaldo() {
-            const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-            document.getElementById("saldoDisponivel").textContent = `R$ ${saldo.toFixed(3)}`;
+        if (!token) {
+            window.location.href = "login";
+        } else {
+            carregarSaldo(token);
         }
+    });
+
+    function carregarSaldo(token) {
+        fetch(`/api/get_saldo?token=${token}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.saldo !== undefined) {
+                    document.getElementById("saldoDisponivel").textContent = `R$ ${parseFloat(data.saldo).toFixed(2)}`;
+                } else {
+                    console.error("Erro ao obter saldo:", data.error);
+                }
+            })
+            .catch(error => console.error("Erro ao carregar saldo:", error));
+    }
 
         function goToSelectAccount() {
             window.location.href = "selecionar_conta";
