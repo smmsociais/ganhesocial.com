@@ -22,7 +22,7 @@
             color: var(--text-light);
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column; /* Mudado para coluna para imagem ficar em cima */
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             margin: 0;
@@ -102,11 +102,24 @@
             color: #4CAF50;
         }
 
+        /* Animação suave para a imagem */
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .image-top {
             width: 100%;
-            max-width: 100%; /* Ajusta a imagem ao tamanho da tela */
+            max-width: 100%;
             height: auto;
-            margin-bottom: 20px; /* Dá um espaço abaixo da imagem */
+            margin-bottom: 20px;
+            animation: fadeInUp 1.5s ease-out; /* Animação de fade in com movimento para cima */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -137,7 +150,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Imagem do topo -->
+    <!-- Imagem com animação -->
     <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743289760657.png" alt="Logo Ganhe Social">
 
     <div class="logo">
