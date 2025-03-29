@@ -64,60 +64,65 @@ export default async function handler(req, res) {
       }
     }
 
-// 🔹 Confirmar ação na API externa
-const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
-const payload = {
-  token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
-  sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-  id_conta: id_conta,
-  id_pedido: id_pedido,
-  is_tiktok: "1"
-};
+    // 🔹 Confirmar ação na API externa
+    const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
+    const payload = {
+      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+      sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+      id_conta: id_conta,
+      id_pedido: id_pedido,
+      is_tiktok: "1"
+    };
 
-let confirmData;
-try {
-  const confirmResponse = await axios.post(confirmUrl, payload);
-  confirmData = confirmResponse.data;
-  console.log("Resposta da API confirmar ação:", confirmData);
-  // Garantir que o valor seja numérico e subtrair 0.001
-  let valorConfirmacao = 0; // Valor padrão caso não exista
-if (confirmData && confirmData.valor) {
-  let valorAtual = parseFloat(confirmData.valor);
-  valorConfirmacao = (valorAtual - 0.001).toFixed(3); // Subtrai 0.001 e mantém 3 casas decimais
-}
-} catch (error) {
-  console.error("Erro ao confirmar ação:", error.response?.data || error.message);
-  confirmData = { error: "Erro ao confirmar a ação." };
-}
+    let confirmData = { valor: "0.000" }; // 🔹 Definir um valor padrão
+    let valorConfirmacao = 0;
 
-try {
-  const newAction = new ActionHistory({
-    user: usuario._id,
-    token,
-    nome_usuario,
-    id_pedido: String(id_pedido),
-    id_conta,
-    url_dir,
-    unique_id_verificado: extractedUsername,
-    acao_validada: acaoValida,
-    valor_confirmacao: valorConfirmacao,
-  });
+    try {
+      const confirmResponse = await axios.post(confirmUrl, payload);
+      confirmData = confirmResponse.data || {};
+      console.log("Resposta da API confirmar ação:", confirmData);
+    } catch (error) {
+      console.error("Erro ao confirmar ação:", error.response?.data || error.message);
+    }
 
-  const savedAction = await newAction.save();
-  usuario.historico_acoes.push(savedAction._id);
-  await usuario.save();
+    // 🔹 Ajustar o valor da confirmação (subtrair 0.001)
+    if (confirmData.valor) {
+      let valorAtual = parseFloat(confirmData.valor);
+      if (!isNaN(valorAtual)) {
+        valorConfirmacao = (valorAtual - 0.001).toFixed(3); // Mantém 3 casas decimais
+      }
+    }
 
-  console.log("Histórico de ação salvo no MongoDB!");
-} catch (error) {
-  console.error("Erro ao salvar no MongoDB:", error.message);
-}
+    // 🔹 Salvar ação no MongoDB
+    try {
+      const newAction = new ActionHistory({
+        user: usuario._id,
+        token,
+        nome_usuario,
+        id_pedido: String(id_pedido),
+        id_conta,
+        url_dir,
+        unique_id_verificado: extractedUsername,
+        acao_validada: acaoValida,
+        valor_confirmacao: valorConfirmacao, // 🔹 Agora com o valor ajustado
+      });
 
-return res.status(200).json({
-  status: "sucesso",
-  message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
-  acaoValida: acaoValida,
-  dados: confirmData
-});
+      const savedAction = await newAction.save();
+      usuario.historico_acoes.push(savedAction._id);
+      await usuario.save();
+
+      console.log("Histórico de ação salvo no MongoDB!");
+    } catch (error) {
+      console.error("Erro ao salvar no MongoDB:", error.message);
+    }
+
+    return res.status(200).json({
+      status: "sucesso",
+      message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
+      acaoValida: acaoValida,
+      valorConfirmacao, // 🔹 Agora o frontend pode ver o valor ajustado
+      dados: confirmData
+    });
 
   } catch (error) {
     console.error("Erro ao processar requisição:", error.message);
