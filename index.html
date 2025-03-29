@@ -9,12 +9,10 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
-            --button-light: #0366d6;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
-            --button-dark: #58a6ff;
         }
 
         body {
@@ -26,6 +24,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -50,25 +49,6 @@
             font-size: 16px;
             margin-bottom: 20px;
         }
-
-        .button {
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-            font-size: 16px;
-            transition: 0.3s;
-        }
-
-        .start-button { background-color: #4CAF50; }
-        .start-button:hover { background-color: #45a049; }
-
-        .login-button { background-color: #007BFF; }
-        .login-button:hover { background-color: #0056b3; }
-
-        .info-button { background-color: #FFA500; }
-        .info-button:hover { background-color: #cc8400; }
 
         .button-container {
             position: absolute;
@@ -99,61 +79,17 @@
             body { background-color: var(--bg-dark); color: var(--text-dark); }
             .container { background: var(--container-dark); }
             .logo { color: #fff; }
-            .logo span:first-child { color: #58a6ff; }
-            .logo span:last-child { color: #4CAF50; }
         }
 
-        /* Estilizando a área do celular */
-        .animation-area {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            margin-top: 20px;
-        }
-
-        .phone {
+        /* Ícones de engajamento */
+        .engagement-icon {
             position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 120px;
-            height: 200px;
-            background: #333;
-            border-radius: 20px;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-            overflow: hidden;
-        }
-
-        .screen {
-            width: 90%;
-            height: 90%;
-            background: #fff;
-            border-radius: 15px;
-            margin: 10px auto;
-            text-align: center;
-            font-size: 14px;
-            padding-top: 20px;
-            color: #333;
-        }
-
-        /* Ícones de curtidas */
-        .like-icon {
-            position: absolute;
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             background: url('https://cdn-icons-png.flaticon.com/512/2107/2107952.png') no-repeat center/contain;
             opacity: 0;
         }
 
-        /* Moedas */
-        .coin {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: url('https://cdn-icons-png.flaticon.com/512/2907/2907439.png') no-repeat center/contain;
-            opacity: 0;
-        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
 </head>
@@ -173,17 +109,8 @@
         <h1>Bem-vindo ao Ganhe Social</h1>
         <p class="subtitle">Ganhe recompensas por seu engajamento online!</p>
 
-        <div class="animation-area">
-            <div class="phone">
-                <div class="screen">Feed</div>
-            </div>
-
-            <div class="like-icon"></div>
-            <div class="like-icon"></div>
-            <div class="like-icon"></div>
-            <div class="coin"></div>
-            <div class="coin"></div>
-        </div>
+        <!-- Ícones de engajamento serão criados via JS -->
+        <div id="icons-container"></div>
     </div>
 
     <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
@@ -196,30 +123,30 @@
             window.location.href = "login";
         }
 
-        const likeIcons = document.querySelectorAll('.like-icon');
-        const coins = document.querySelectorAll('.coin');
+        function createEngagementIcon() {
+            const container = document.getElementById('icons-container');
+            const icon = document.createElement('div');
+            icon.classList.add('engagement-icon');
+            container.appendChild(icon);
 
-        gsap.to(likeIcons, {
-            duration: 1,
-            y: -80,
-            opacity: 1,
-            stagger: 0.2,
-            repeat: -1,
-            yoyo: true,
-            ease: "power1.inOut"
-        });
+            const startX = Math.random() * window.innerWidth;
+            const startY = window.innerHeight + 50;
+            const endY = -50;
+            const rotation = Math.random() * 360;
 
-        coins.forEach((coin, index) => {
-            gsap.to(coin, {
-                duration: 3,
-                x: (index % 2 === 0 ? 50 : -50),
-                y: (index % 2 === 0 ? 50 : -50),
-                opacity: 1,
-                repeat: -1,
+            gsap.set(icon, { x: startX, y: startY, opacity: 1, rotate: 0 });
+
+            gsap.to(icon, {
+                duration: 3 + Math.random() * 2,
+                y: endY,
+                opacity: 0,
+                rotate: rotation,
                 ease: "power1.inOut",
-                delay: index * 0.5
+                onComplete: () => { icon.remove(); }
             });
-        });
+        }
+
+        setInterval(createEngagementIcon, 600);
     </script>
 
 </body>
