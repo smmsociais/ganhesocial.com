@@ -146,37 +146,37 @@
         }
     }
 
-    async function saveProfile() {
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const token = document.getElementById('authToken').value.trim(); // Token correto do banco
+async function saveProfile() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const token = document.getElementById('authToken').value.trim(); // Token do ActionHistory
 
-        if (!name || !email) {
-            alert("Nome e e-mail são obrigatórios.");
-            return;
-        }
-
-        try {
-            const response = await fetch("https://ganhesocial.com/api/profile", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ nome: name, email: email })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "Erro ao salvar perfil");
-            }
-
-            alert("Perfil atualizado com sucesso!");
-        } catch (error) {
-            alert(error.message);
-        }
+    if (!name || !email) {
+        alert("Nome e e-mail são obrigatórios.");
+        return;
     }
+
+    try {
+        const response = await fetch("https://ganhesocial.com/api/profile", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ nome_usuario: name, email: email })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao salvar perfil");
+        }
+
+        alert("Perfil atualizado com sucesso!");
+    } catch (error) {
+        alert(error.message);
+    }
+}
 
     function goBack() {
         window.location.href = "/dashboard";
