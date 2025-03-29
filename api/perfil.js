@@ -1,5 +1,5 @@
 import connectDB from "./db.js";
-import User from "./User.js";
+import { User } from "./User.js";
 import jwt from "jsonwebtoken";
 
 const handler = async (req, res) => {
