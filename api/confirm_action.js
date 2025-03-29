@@ -7,12 +7,28 @@ export default async function handler(req, res) {
 
     const { token, nome_usuario, id_pedido, id_conta } = req.body;
 
-    if (!id_conta || !id_pedido) {
-        console.error("Erro: id_conta ou id_pedido está indefinido!", { id_conta, id_pedido });
-        return res.status(400).json({ error: "Dados inválidos. ID da conta ou ID do pedido ausente." });
+    if (!token || !nome_usuario || !id_pedido || !id_conta) {
+        return res.status(400).json({ error: "Dados inválidos. Todos os campos são obrigatórios." });
     }
 
     try {
+        // 🔹 1. Chamar API user/info para obter detalhes do usuário no TikTok
+        const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
+            params: { unique_id: nome_usuario },
+            headers: {
+                "x-rapidapi-key": "f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319",
+                "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
+            }
+        });
+
+        console.log("Resposta da API user/info:", userInfoResponse.data);
+
+        // 🔹 2. Verificar se a resposta da API user/info é válida
+        if (!userInfoResponse.data || !userInfoResponse.data.success) {
+            return res.status(400).json({ error: "Usuário TikTok não encontrado." });
+        }
+
+        // 🔹 3. Chamar API externa para confirmar ação
         const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
         const payload = {
             token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
@@ -22,17 +38,13 @@ export default async function handler(req, res) {
             is_tiktok: "1"
         };
 
-        console.log("Enviando requisição para API externa:", payload);
+        const confirmResponse = await axios.post(confirmUrl, payload);
 
-        const response = await axios.post(confirmUrl, payload, {
-            headers: { "Content-Type": "application/json" }
-        });
+        console.log("Resposta da API confirmar ação:", confirmResponse.data);
 
-        console.log("Resposta da API externa:", response.data);
-
-        return res.status(200).json(response.data);
+        return res.status(200).json(confirmResponse.data);
     } catch (error) {
-        console.error("Erro ao confirmar ação:", error.response?.data || error.message);
-        return res.status(500).json({ error: "Erro ao confirmar ação." });
+        console.error("Erro ao processar a confirmação:", error);
+        return res.status(500).json({ error: "Erro ao processar a solicitação." });
     }
 }
