@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const ActionHistorySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },  // Relacionamento com User
   token: { type: String, required: true },
   nome_usuario: { type: String, required: true },
   id_pedido: { type: String, required: true },
