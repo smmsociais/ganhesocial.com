@@ -82,33 +82,35 @@
     </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function() {
-        const historyList = document.getElementById("historyList");
+document.addEventListener("DOMContentLoaded", async function() {
+    const historyList = document.getElementById("historyList");
 
-        try {
-            // 🔹 Buscar dados da API
-            const response = await fetch("/api/historico_acoes");
-            const historyData = await response.json();
+    try {
+        // 🔹 Buscar dados da API
+        const response = await fetch("/api/historico_acoes");
+        const historyData = await response.json();
 
-            if (historyData.length === 0) {
-                historyList.innerHTML = "<li>Nenhuma ação registrada.</li>";
-            } else {
-                historyData.forEach(action => {
-                    const listItem = document.createElement("li");
-                    listItem.classList.add("history-item");
-                    listItem.innerHTML = `
-                        <strong>Usuário:</strong> ${action.nome_usuario} <br>
-                        <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : "❌ Não Validada"}<br>
-                        <small>Data: ${new Date(action.data).toLocaleString()}</small>
-                    `;
-                    historyList.appendChild(listItem);
-                });
-            }
-        } catch (error) {
-            console.error("Erro ao carregar histórico:", error);
-            historyList.innerHTML = "<li>Erro ao carregar histórico de ações.</li>";
+        if (historyData.length === 0) {
+            historyList.innerHTML = "<li>Nenhuma ação registrada.</li>";
+        } else {
+            historyData.forEach(action => {
+                const listItem = document.createElement("li");
+                listItem.classList.add("history-item");
+                listItem.innerHTML = `
+                    <strong>Usuário:</strong> ${action.nome_usuario} <br>
+                    <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : "❌ Não Validada"}<br>
+                    <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
+                    <small>Data: ${new Date(action.data).toLocaleString()}</small>
+                `;
+                historyList.appendChild(listItem);
+            });
         }
-    });
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+        historyList.innerHTML = "<li>Erro ao carregar histórico de ações.</li>";
+    }
+});
+
 </script>
 
 </body>
