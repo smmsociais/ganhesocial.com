@@ -28,7 +28,8 @@ export default async function handler(req, res) {
     if (extractedUsername.startsWith("@")) {
       extractedUsername = extractedUsername.slice(1);
     }
-    console.log("Username extraído do url_dir:", extractedUsername);
+
+    let acaoValida = false;
 
     // 🔹 Chamar API user/info para obter ID do usuário TikTok
     let userId;
@@ -36,16 +37,14 @@ export default async function handler(req, res) {
       const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
         params: { unique_id: nome_usuario },
         headers: {
-          'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+          'x-rapidapi-key': 'SUA_CHAVE_AQUI',
           'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
         }
       });
       userId = userInfoResponse.data?.data?.user?.id || null;
     } catch (error) {
-      console.error("Erro ao chamar user/info:", error.response?.data || error.message);
+      console.error("Erro ao chamar user/info:", error.message);
     }
-
-    let acaoValida = false;
 
     if (userId) {
       // 🔹 Chamar API user/following para verificar se segue o perfil alvo
@@ -53,21 +52,15 @@ export default async function handler(req, res) {
         const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
           params: { user_id: userId, count: "200", time: "0" },
           headers: {
-            'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+            'x-rapidapi-key': 'SUA_CHAVE_AQUI',
             'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
           }
         });
 
         const followingList = userFollowingResponse.data?.data?.followings || [];
         acaoValida = followingList.some(following => following.unique_id.toLowerCase() === extractedUsername.toLowerCase());
-
-        if (acaoValida) {
-          console.log(`✅ Ação válida! ${nome_usuario} está seguindo ${extractedUsername}.`);
-        } else {
-          console.log(`❌ Ação inválida! ${nome_usuario} NÃO está seguindo ${extractedUsername}.`);
-        }
       } catch (error) {
-        console.error("Erro ao chamar user/following:", error.response?.data || error.message);
+        console.error("Erro ao chamar user/following:", error.message);
       }
     }
 
@@ -85,15 +78,15 @@ export default async function handler(req, res) {
     try {
       const confirmResponse = await axios.post(confirmUrl, payload);
       confirmData = confirmResponse.data;
-      console.log("Resposta da API confirmar ação:", confirmData);
     } catch (error) {
-      console.error("Erro ao confirmar ação:", error.response?.data || error.message);
+      console.error("Erro ao confirmar ação:", error.message);
       confirmData = { error: "Erro ao confirmar a ação." };
     }
 
-    // 🔹 Salvar ação no MongoDB
+    // 🔹 Criar e salvar histórico da ação
     try {
       const newAction = new ActionHistory({
+        user: usuario._id,
         token,
         nome_usuario,
         id_pedido,
@@ -102,27 +95,14 @@ export default async function handler(req, res) {
         unique_id_verificado: extractedUsername,
         acao_validada: acaoValida,
       });
-      await newAction.save();
+
+      const savedAction = await newAction.save();
+      usuario.historico_acoes.push(savedAction._id);
+      await usuario.save();
+
       console.log("Histórico de ação salvo no MongoDB!");
     } catch (error) {
       console.error("Erro ao salvar no MongoDB:", error.message);
-    }
-
-    // 🔹 Enviar histórico para a API do GanheSocial
-    try {
-      const storeActionResponse = await axios.post("https://ganhesocial.com/api/store_action_history", {
-        token,
-        nome_usuario,
-        id_pedido,
-        id_conta,
-        url_dir,
-        unique_id_verificado: extractedUsername,
-        acao_validada: acaoValida,
-        data: new Date(),
-      });
-      console.log("Histórico enviado para ganhesocial.com:", storeActionResponse.data);
-    } catch (error) {
-      console.error("Erro ao enviar histórico para ganhesocial.com:", error.message);
     }
 
     return res.status(200).json({
@@ -133,7 +113,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Erro ao processar requisição:", error.response?.data || error.message);
+    console.error("Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
 }
