@@ -1,48 +1,38 @@
 import axios from "axios";
-import connectDB from "./db.js";
-import User from "./User.js";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido." });
-  }
-
-  await connectDB();
-
-  const { token, nome_usuario } = req.body;
-  if (!token || !nome_usuario) {
-    return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
-  }
-
-  try {
-    const usuario = await User.findOne({ token });
-
-    if (!usuario || !usuario.id_conta) {
-      return res.status(400).json({ error: "ID da conta não encontrado. Chame primeiro a API get_user." });
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
     }
 
-    const id_conta = usuario.id_conta;
+    const { token, nome_usuario, id_pedido, id_conta } = req.body;
 
-    // 🔹 Chamar API get_action
-    const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
-    const getActionResponse = await axios.get(getActionUrl);
-    const getActionData = getActionResponse.data;
-
-    if (!getActionData.acoes || getActionData.acoes.status !== "ENCONTRADA") {
-      return res.status(400).json({ error: "Nenhuma ação encontrada para este usuário." });
+    if (!id_conta || !id_pedido) {
+        console.error("Erro: id_conta ou id_pedido está indefinido!", { id_conta, id_pedido });
+        return res.status(400).json({ error: "Dados inválidos. ID da conta ou ID do pedido ausente." });
     }
 
-    const { id_pedido, nome_usuario: nomeAlvo } = getActionData.acoes;
+    try {
+        const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
+        const payload = {
+            token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+            sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+            id_conta: id_conta,
+            id_pedido: id_pedido,
+            is_tiktok: "1"
+        };
 
-    return res.status(200).json({
-      status: "sucesso",
-      message: `Ação encontrada para ${nome_usuario}.`,
-      id_pedido,
-      nomeAlvo
-    });
+        console.log("Enviando requisição para API externa:", payload);
 
-  } catch (error) {
-    console.error("Erro ao processar requisição:", error.response?.data || error.message);
-    return res.status(500).json({ error: "Erro interno ao processar requisição." });
-  }
+        const response = await axios.post(confirmUrl, payload, {
+            headers: { "Content-Type": "application/json" }
+        });
+
+        console.log("Resposta da API externa:", response.data);
+
+        return res.status(200).json(response.data);
+    } catch (error) {
+        console.error("Erro ao confirmar ação:", error.response?.data || error.message);
+        return res.status(500).json({ error: "Erro ao confirmar ação." });
+    }
 }
