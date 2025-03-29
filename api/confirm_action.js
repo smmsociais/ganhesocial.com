@@ -24,11 +24,28 @@ export default async function handler(req, res) {
         console.log("Resposta da API user/info:", userInfoResponse.data);
 
         // 🔹 2. Verificar se a resposta da API user/info é válida
-        if (!userInfoResponse.data || !userInfoResponse.data.success) {
+        if (!userInfoResponse.data || userInfoResponse.data.code !== 0 || !userInfoResponse.data.data?.user?.id) {
             return res.status(400).json({ error: "Usuário TikTok não encontrado." });
         }
 
-        // 🔹 3. Chamar API externa para confirmar ação
+        const userId = userInfoResponse.data.data.user.id;
+
+        // 🔹 3. Chamar API user/following para obter a lista de seguidores
+        const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
+            params: {
+                user_id: userId,
+                count: "200",
+                time: "0"
+            },
+            headers: {
+                "x-rapidapi-key": "f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319",
+                "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
+            }
+        });
+
+        console.log("Resposta da API user/following:", userFollowingResponse.data);
+
+        // 🔹 4. Chamar API externa para confirmar ação
         const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
         const payload = {
             token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
