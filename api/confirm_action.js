@@ -43,7 +43,7 @@ export default async function handler(req, res) {
             }
         });
 
-        console.log("Resposta da API user/following:", userFollowingResponse.data);
+        console.log("Resposta da API user/following:", JSON.stringify(userFollowingResponse.data, null, 2));
 
         // 🔹 4. Chamar API externa para confirmar ação
         const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
