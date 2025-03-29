@@ -1,5 +1,5 @@
 import connectDB from "./db.js";
-import User from "./User.js";
+import { User } from "./User.js"
 import crypto from "crypto";
 
 const handler = async (req, res) => {
