@@ -64,7 +64,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // 🔹 Confirmar ação na API externa
 // 🔹 Confirmar ação na API externa
 const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
 const payload = {
@@ -84,9 +83,6 @@ try {
   console.error("Erro ao confirmar ação:", error.response?.data || error.message);
   confirmData = { error: "Erro ao confirmar a ação." };
 }
-
-// 🔹 Criar e salvar histórico da ação
-import { ActionHistory } from "./User.js"; // Certifique-se de importar ActionHistory
 
 try {
   const newAction = new ActionHistory({
