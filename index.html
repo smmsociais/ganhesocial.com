@@ -118,7 +118,10 @@
         .image-top {
             width: 50%; /* Reduzindo o tamanho da imagem para 50% */
             height: auto;
-            margin-top: 20px; /* Coloca a imagem abaixo dos botões */
+            position: absolute;
+            top: 50%; /* Ajusta a imagem para ficar centralizada verticalmente */
+            right: 0; /* Move a imagem para o lado direito */
+            transform: translateY(-50%); /* Centraliza a imagem verticalmente */
             animation: moveUpDown 2s ease-in-out infinite; /* Animação contínua */
         }
 
@@ -166,7 +169,7 @@
         <p class="subtitle">Ganhe recompensas por seu engajamento online!</p>
     </div>
 
-    <!-- Imagem com animação contínua abaixo do campo de login e cadastro -->
+    <!-- Imagem com animação contínua, agora no canto direito -->
     <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png" alt="Logo Ganhe Social">
 
     <script>
