@@ -97,28 +97,33 @@
 
         .logo {
             position: absolute;
-            top: 30px;
-            left: 40px;
-            font-family: 'Arial', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: #333;
-            text-transform: uppercase;
-            display: flex;
-            flex-direction: row;
-            letter-spacing: 1px;
+            top: -30px;
+            left: 100px;
+            height: 260px;
+            /* Altura fixa para a logo */
+            width: auto;
+            /* Mantém a proporção */
+            z-index: 10;
         }
 
-        .logo span {
-            display: block;
+        /* Tablet */
+        @media (max-width: 768px) {
+            .logo {
+                height: 70px;
+                /* Aumentado para tablet */
+                left: 20px;
+            }
         }
 
-        .logo span:first-child {
-            color: #007BFF;
-        }
-
-        .logo span:last-child {
-            color: #4CAF50;
+        /* Celular */
+        @media (max-width: 480px) {
+            .logo {
+                height: 250px;
+                /* Tamanho maior para mobile */
+                top: -20px;
+                left: -10px;
+                /* Mais próximo da borda em mobile */
+            }
         }
 
         /* Animação contínua para a imagem */
@@ -325,10 +330,8 @@
 
 <body>
 
-    <div class="logo">
-        <span>Ganhe</span>
-        <span>$ocial</span>
-    </div>
+    <img class="logo" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743462911050.png"
+        alt="Ganhe Social">
 
     <!-- Menu Hambúrguer -->
     <div class="hamburger-menu" id="hamburgerMenu">
