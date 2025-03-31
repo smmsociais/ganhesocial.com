@@ -29,7 +29,7 @@
 
         .text-content {
             position: absolute;
-            top: 30%;
+            top: 20%;
             left: 10%;
             max-width: 500px;
             z-index: 10;
@@ -37,7 +37,7 @@
 
         h1 {
             font-size: 3rem;
-            font-family: 'Playfair Display', serif;
+            font-family: 'Arial', sans-serif;
             font-weight: 700;
             color: var(--text-light);
             margin: 0;
@@ -89,19 +89,17 @@
             transform: translateY(-2px);
         }
 
-        .button-container {
-            position: absolute;
-            top: 50px;
-            right: 40px;
+        .buttons-below {
             display: flex;
-            gap: 10px;
+            margin-top: 40px;
+            flex-wrap: wrap;
         }
 
         .logo {
             position: absolute;
             top: 30px;
             left: 40px;
-            font-family: 'Playfair Display', serif;
+            font-family: 'Arial', sans-serif;
             font-size: 28px;
             font-weight: 700;
             color: #333;
@@ -149,531 +147,135 @@
             filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
         }
 
+        /* Nova seção "Como funciona" */
         .how-it-works {
             position: absolute;
-            bottom: -80%;
+            top: 90%;
             width: 100%;
             text-align: center;
+            padding: 100px 0;
         }
 
         .how-it-works h2 {
             font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
+            font-family: 'Arial', sans-serif;
             font-weight: 700;
             color: var(--text-light);
-            margin: 0;
-            padding: 0 0 30px 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
 
-        .how-it-works-image {
-            width: 80%;
-            max-width: 60px;
-            margin: 0 auto;
-            display: block;
+        /* Estilos para o menu hamburguer */
+        .hamburger-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .hamburger-icon {
+            width: 30px;
+            height: 3px;
+            background-color: var(--text-light);
+            margin: 6px 0;
+            transition: 0.4s;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background-color: var(--bg-light);
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            z-index: 99;
+            flex-direction: column;
+            gap: 15px;
+            width: 200px;
         }
 
-        .how-it-works-text {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+        .mobile-menu.open {
+            display: flex;
         }
 
-        .how-it-works-image-2 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                display: block;
+            }
 
-        .how-it-works-text-2 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+            .text-content {
+                top: 15%;
+                left: 5%;
+                max-width: 90%;
+            }
 
-        .how-it-works-image-3 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
+            h1 {
+                font-size: 2rem;
+            }
 
-        .how-it-works-text-3 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+            .subtitle {
+                font-size: 1.2rem;
+            }
 
-        .benefits-section {
-            position: absolute;
-            bottom: -160%;
-            width: 100%;
-            text-align: center;
-            margin-top: -80px;
-            /* Espaço grande acima do novo título */
-        }
+            .image-top {
+                width: 100%;
+                top: 70%;
+                right: -5%;
+                animation: none;
+            }
 
-        .benefits-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 800px 0 0 0;
-            /* Espaçamento maior acima do título */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-        }
+            .how-it-works {
+                top: 9%;
+                /* Posição ajustada */
+                padding: 90px 20px;
+            }
 
-        @media (prefers-color-scheme: dark) {
-            .benefits-title {
-                color: var(--text-dark);
+            .how-it-works h2 {
+                font-size: 2rem;
+            }
+
+            .buttons-below {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .login-button {
+                margin-right: 10px;
+                padding: 12px 20px;
+            }
+
+            .start-button {
+                padding: 12px 20px;
             }
         }
 
-        .benefits-image {
-            width: 80%;
-            max-width: 60px;
-            margin: 30px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .benefits-image-2 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text-2 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .benefits-image-3 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text-3 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .faq-section {
-            position: absolute;
-            bottom: -180%;
-            /* Ajustado para espaço maior */
-            width: 100%;
-            margin-top: 100px;
-            /* Espaço grande acima do novo título */
-        }
-
-        .faq-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 80px 0 0 10%;
-            /* Margem esquerda de 10% para alinhar à esquerda */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-            /* Alinhado à esquerda */
-        }
-
-        .earn-section {
-            position: absolute;
-            bottom: -170%;
-            /* Adjusted for proper spacing */
-            width: 100%;
-        }
-
-        .earn-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 60px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-            /* Left alignment */
-        }
-
-        .earn-section {
-            position: absolute;
-            bottom: -30%;
-            width: 100%;
-        }
-
-        .earn-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 60px 0 20px 10%;
-            /* Added bottom margin */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .earn-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 0 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            /* Slightly wider for better readability */
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .pricing-section {
-            position: absolute;
-            bottom: -60%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .pricing-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .pricing-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-section {
-            position: absolute;
-            bottom: -50%;
-            /* Ajuste para espaço maior */
-            width: 100%;
-        }
-
-        .withdrawal-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Alinhado à esquerda com 10% de margem */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-method-section {
-            position: absolute;
-            bottom: -70%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .withdrawal-method-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-method-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-time-section {
-            position: absolute;
-            bottom: -60%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .withdrawal-time-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-time-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .trust-section {
-            position: absolute;
-            bottom: -60%;
-            /* Espaço maior após o último conteúdo */
-            width: 100%;
-        }
-
-        .trust-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 120px 0 0 10%;
-            /* Margem superior maior e alinhado à esquerda */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .trust-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Alinhado à esquerda com 10% de margem */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .issue-section {
-            position: absolute;
-            bottom: -80%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .issue-title {
-            font-size: 2.5rem;
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 120px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .issue-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .issue-description {
-                color: var(--text-dark);
+        @media (max-width: 480px) {
+            .buttons-below {
+                flex-direction: row;
+                gap: 8px;
             }
-        }
 
-        @media (prefers-color-scheme: dark) {
-            .issue-title {
-                color: var(--text-dark);
+            .button {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+                margin-top: 20px;
             }
-        }
 
-        @media (prefers-color-scheme: dark) {
-            .trust-description {
-                color: var(--text-dark);
+            .login-button {
+                margin-right: 8px;
             }
-        }
 
-        @media (prefers-color-scheme: dark) {
-            .trust-title {
-                color: var(--text-dark);
+            .how-it-works {
+                top: 80%;
+                padding: 30px 20px;
             }
-        }
 
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-time-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-time-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-method-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-method-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .pricing-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .pricing-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-
-            .earn-title,
-            .earn-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .earn-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .faq-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-text-3 {
-                color: var(--text-dark);
+            .how-it-works h2 {
+                font-size: 1.8rem;
             }
         }
 
@@ -681,41 +283,7 @@
             .benefits-image-3 {
                 box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
             }
-        }
 
-        @media (prefers-color-scheme: dark) {
-            .benefits-text-2 {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image-2 {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-text {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-
-            /* [Manter todos os estilos dark mode anteriores] */
-            .how-it-works-text-3 {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
@@ -739,15 +307,13 @@
                 color: var(--text-dark);
             }
 
-            .how-it-works-image,
-            .how-it-works-image-2,
-            .how-it-works-image-3 {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+            .hamburger-icon {
+                background-color: var(--text-dark);
             }
 
-            .how-it-works-text,
-            .how-it-works-text-2 {
-                color: var(--text-dark);
+            .mobile-menu {
+                background-color: var(--bg-dark);
+                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
             }
         }
     </style>
@@ -762,7 +328,15 @@
         <span>$ocial</span>
     </div>
 
-    <div class="button-container">
+    <!-- Menu Hambúrguer -->
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <div class="hamburger-icon"></div>
+        <div class="hamburger-icon"></div>
+        <div class="hamburger-icon"></div>
+    </div>
+
+    <!-- Menu Mobile -->
+    <div class="mobile-menu" id="mobileMenu">
         <button class="button login-button" onclick="goToLogin()">Login</button>
         <button class="button start-button" onclick="startEarning()">Cadastrar</button>
     </div>
@@ -770,96 +344,22 @@
     <div class="text-content">
         <h1>Ganhe Dinheiro Online Usando Suas Redes Sociais!</h1>
         <p class="subtitle">Ganhe uma renda extra com suas redes sociais para seguir e curtir perfis e publicações.</p>
+
+        <!-- Botões abaixo da descrição -->
+        <div class="buttons-below">
+            <button class="button login-button" onclick="goToLogin()">Login</button>
+            <button class="button start-button" onclick="startEarning()">Começar a Ganhar</button>
+        </div>
     </div>
 
     <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
         alt="Logo Ganhe Social">
 
+    <!-- Nova seção "Como funciona" -->
     <div class="how-it-works">
         <h2>Como funciona o Ganhe Social?</h2>
-        <img class="how-it-works-image"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743307155886.png"
-            alt="Explicação do Ganhe Social">
-        <p class="how-it-works-text">Depois de criar uma conta na plataforma, adicione um perfil que deseja, vá em
-            Realizar Ações e siga os perfis ou curta as publicações disponíveis.</p>
-        <img class="how-it-works-image-2"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/Point%20Blur_Mar302025_005028.png"
-            alt="Demonstração do Ganhe Social">
-        <p class="how-it-works-text-2">A cada ação que você realizar com suas redes sociais, você será recompensado com
-            um valor em R$.</p>
-        <img class="how-it-works-image-3"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743309869152.png"
-            alt="Recompensas do Ganhe Social">
-        <p class="how-it-works-text-3">Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor
-            por PIX. Os pagamentos são instantâneos!</p>
-    </div>
-    <div class="benefits-section">
-        <h2 class="benefits-title">Quais as vantagens de utilizar o Ganhe Social?</h2>
-        <img class="benefits-image"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743358293720.png"
-            alt="Vantagens do Ganhe Social">
-        <p class="benefits-text">Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e o
-            histórico de cada perfil.</p>
-        <img class="benefits-image-2"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743360125005.png"
-            alt="Histórico do Ganhe Social">
-        <p class="benefits-text-2">Não há limites de ganhos, você poderá realizar quantas ações que quiser!</p>
-        <img class="benefits-image-3"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743361279221.png"
-            alt="Ganhos ilimitados no Ganhe Social">
-        <p class="benefits-text-3">Suporte 24/7 e super rápido para atender as suas necessidades, estamos sempre
-            disponíveis!</p>
-        <div class="earn-section">
-            <h2 class="earn-title">Como posso ganhar dinheiro com o Ganhe Social?</h2>
-            <p class="earn-description">Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois que
-                realizar o cadastro na plataforma, vá até a sessão de Adicionar Conta localizada no painel, escolha a
-                rede social que deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão de Realizar Ações,
-                escolha a rede social de preferência e selecione a conta que irá realizar as ações. A cada ação que
-                realizar, você será pago por valores que estão disponíveis em nosso mercado.</p>
-            <div class="pricing-section">
-                <h2 class="pricing-title">Quanto a plataforma paga por cada ação realizada?</h2>
-                <p class="pricing-description">Pagamos R$ 0.003 á R$ 0.01 com ações de seguir, enquanto para curtir,
-                    pagamos o valor de R$ 0.001. Esses valores são variáveis, pois podem sofrer alterações a qualquer
-                    momento.</p>
-                <div class="withdrawal-section">
-                    <h2 class="withdrawal-title">Qual o valor mínimo para saque?</h2>
-                    <p class="withdrawal-description">O valor mínimo para saque é de R$ 5,00.</p>
-                    <div class="withdrawal-method-section">
-                        <h2 class="withdrawal-method-title">Como recebo meu saque?</h2>
-                        <p class="withdrawal-method-description">Você poderá receber seu pagamento através do PIX após
-                            vincular seus dados bancários corretamente.</p>
-                        <div class="withdrawal-time-section">
-                            <h2 class="withdrawal-time-title">Em quanto tempo recebo meu saque?</h2>
-                            <p class="withdrawal-time-description">Todos os nossos pagamentos são instantâneos. Caso
-                                tenha algum problema com o saque, não hesite em procurar ajuda imediatamente no nosso
-                                suporte.</p>
-                            <div class="trust-section">
-                                <h2 class="trust-title">O site é confiável?</h2>
-                                <p class="trust-description">Sim, nosso site é totalmente seguro e confiável. Não
-                                    pedimos senha de suas redes sociais. Caso tenha dúvidas, procure por referências no
-                                    YouTube por exemplo.</p>
-                                <div class="issue-section">
-                                    <h2 class="issue-title">Realizei uma ação e ela não foi contabilizada, por quê?</h2>
-                                    <p class="issue-description">Nosso sistema faz verificações automaticamente de suas
-                                        ações realizadas. Verifique se a ação está em análise e se você realizou a ação
-                                        corretamente na página 'Histórico de Ações'. Além disso, você pode acompanhar as
-                                        ações feitas por cada perfil na página de gerenciamento de contas.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-    </div>
-    </div>
     </div>
 
-    <div class="faq-section">
-        <h2 class="faq-title">Dúvidas Frequentes</h2>
-    </div>
     <script>
         function startEarning() {
             window.location.href = "signup";
@@ -868,6 +368,37 @@
         function goToLogin() {
             window.location.href = "login";
         }
+
+        // Controle do menu hambúrguer
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        hamburgerMenu.addEventListener('click', function () {
+            mobileMenu.classList.toggle('open');
+
+            // Animação para os ícones do hambúrguer
+            const icons = document.querySelectorAll('.hamburger-icon');
+            if (mobileMenu.classList.contains('open')) {
+                icons[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
+                icons[1].style.opacity = '0';
+                icons[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
+            } else {
+                icons[0].style.transform = 'none';
+                icons[1].style.opacity = '1';
+                icons[2].style.transform = 'none';
+            }
+        });
+
+        // Fechar o menu quando clicar fora
+        document.addEventListener('click', function (event) {
+            if (!hamburgerMenu.contains(event.target) && !mobileMenu.contains(event.target)) {
+                mobileMenu.classList.remove('open');
+                const icons = document.querySelectorAll('.hamburger-icon');
+                icons[0].style.transform = 'none';
+                icons[1].style.opacity = '1';
+                icons[2].style.transform = 'none';
+            }
+        });
     </script>
 </body>
 
