@@ -213,7 +213,7 @@
             }
 
             .text-content {
-                top: 10%;
+                top: 15%;
                 left: 5%;
                 max-width: 90%;
             }
@@ -224,25 +224,79 @@
 
             .subtitle {
                 font-size: 1.2rem;
-                margin: 10px 0 0 0;
             }
 
             .image-top {
                 width: 100%;
                 top: 60%;
-                right: 0;
-                transform: translateY(0);
+                right: 0%;
                 animation: none;
             }
 
             .how-it-works {
-                top: 70%;
-                padding: 20px 0;
+                top: 85%;
+                /* Posição mais baixa */
+                padding: 40px 0;
             }
 
             .how-it-works h2 {
                 font-size: 1.8rem;
                 margin-top: 20px;
+            }
+
+            .buttons-below {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .login-button {
+                margin-right: 10px;
+                padding: 12px 20px;
+            }
+
+            .start-button {
+                padding: 12px 20px;
+            }
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                display: block;
+            }
+
+            .text-content {
+                top: 15%;
+                left: 5%;
+                max-width: 90%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .image-top {
+                width: 100%;
+                top: 70%;
+                right: 0%;
+
+                animation: none;
+            }
+
+            .how-it-works {
+                top: 85%;
+                /* Posição mais baixa */
+                padding: 40px 0;
+            }
+
+            .how-it-works h2 {
+                font-size: 2rem;
+                margin-top: 160px;
+                /* Espaço extra acima */
             }
 
             .buttons-below {
