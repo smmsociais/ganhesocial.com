@@ -547,27 +547,21 @@
             /* Left alignment */
         }
 
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         .earn-section {
-            position: absolute;
-            bottom: -160%;
             width: 100%;
+            margin-top: 1vh;
+            /* Ajusta a posição conforme a altura da tela */
+            padding: -4rem;
+            text-align: center;
         }
 
-        @media (max-width: 480px) {
-            .earn-section {
-                position: absolute;
-                bottom: -200%;
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .earn-section {
-                position: absolute;
-                bottom: -200%;
-                width: 100%;
-            }}
-      
         .earn-title {
             font-size: 1.5rem;
             font-family: 'Arial', sans-serif;
