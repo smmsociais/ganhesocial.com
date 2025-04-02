@@ -3,7 +3,7 @@ import { User } from "./User.js";
 import crypto from "crypto";
 import fetch from "node-fetch";
 
-const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
 const verifyRecaptcha = async (token) => {
     try {
@@ -11,7 +11,7 @@ const verifyRecaptcha = async (token) => {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
-                secret: RECAPTCHA_SECRET_KEY,
+                secret: RECAPTCHA_SECRET,
                 response: token
             })
         });
