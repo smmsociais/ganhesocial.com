@@ -79,6 +79,7 @@
             }
         }
     </style>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body>
@@ -94,6 +95,10 @@
             <div class="input-group">
                 <input type="password" id="senha" placeholder="Senha" required>
             </div>
+            
+            <!-- reCAPTCHA -->
+            <div class="g-recaptcha" data-sitekey="6Ld3wwcrAAAAANVEqeu-UD9jer9SF5IZfn3KdWNa"></div>
+            
             <button type="submit" class="button">Cadastrar</button>
         </form>
     </div>
@@ -105,9 +110,15 @@
             const nomeUsuario = document.getElementById("nomeUsuario").value.trim();
             const email = document.getElementById("email").value.trim();
             const senha = document.getElementById("senha").value.trim();
+            const recaptchaResponse = grecaptcha.getResponse();
 
             if (!nomeUsuario || !email || !senha) {
                 alert("Preencha todos os campos!");
+                return;
+            }
+
+            if (!recaptchaResponse) {
+                alert("Por favor, verifique o reCAPTCHA!");
                 return;
             }
 
@@ -117,8 +128,12 @@
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ nome_usuario: nomeUsuario, email, senha })
-
+                    body: JSON.stringify({ 
+                        nome_usuario: nomeUsuario, 
+                        email, 
+                        senha, 
+                        recaptcha: recaptchaResponse 
+                    })
                 });
 
                 const data = await response.json();
