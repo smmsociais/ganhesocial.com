@@ -33,12 +33,6 @@ const UserSchema = new mongoose.Schema({
     historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]  // Relacionamento com ActionHistory
 }, { collection: 'usuarios' });
 
-// Antes de adicionar uma conta, verifica se já existe uma conta com o mesmo nome
-const contaJaExiste = user.contas.some(conta => conta.nomeConta === nomeConta);
-if (contaJaExiste) {
-    return res.status(400).json({ error: "Já existe uma conta com esse nome para este usuário." });
-}
-
 // 🔹 Exportação dos modelos
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
