@@ -10,13 +10,17 @@ connectDB();
 
 // Middleware de autenticação
 const authMiddleware = (req) => {
-    const token = req.headers.authorization?.split(" ")[1] || req.headers.authorization;
-    if (!token) throw new Error("Acesso negado, token não encontrado.");
+    const authHeader = req.headers.authorization;
+    if (!authHeader) throw new Error("Acesso negado, token não encontrado.");
+
+    // Extrai o token corretamente (caso tenha ou não o prefixo 'Bearer ')
+    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
 
     try {
         return jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-        throw new Error("Token inválido.");
+    } catch (error) {
+        console.error("Erro ao verificar token:", error);
+        throw new Error("Token inválido ou expirado.");
     }
 };
 
