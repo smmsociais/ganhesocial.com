@@ -80,6 +80,8 @@
             }
         }
     </style>
+    <!-- Script do Google reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body>
@@ -92,6 +94,10 @@
             <div class="input-group">
                 <input type="password" id="senha" placeholder="Senha" required>
             </div>
+
+            <!-- reCAPTCHA -->
+            <div class="g-recaptcha" data-sitekey="6Ld3wwcrAAAAANVEqeu-UD9jer9SF5IZfn3KdWNa"></div>
+
             <button type="submit" class="button">Entrar</button>
         </form>
     </div>
@@ -110,9 +116,15 @@
 
             const email = document.getElementById("email").value.trim();
             const senha = document.getElementById("senha").value.trim();
+            const captchaToken = grecaptcha.getResponse(); // Obtém o token do reCAPTCHA
 
             if (!email || !senha) {
                 alert("Preencha todos os campos!");
+                return;
+            }
+
+            if (!captchaToken) {
+                alert("Por favor, confirme que você não é um robô!");
                 return;
             }
 
@@ -120,24 +132,19 @@
                 const response = await fetch("https://ganhesocial.com/api/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, senha })
+                    body: JSON.stringify({ email, senha, recaptcha: captchaToken })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Se o login for bem-sucedido, salvar o token e redirecionar
                     alert(data.message);
                     localStorage.setItem("authToken", data.token);
-
-                    // Redireciona para o dashboard
-                    window.location.href = "/dashboard"; // Aqui você coloca o caminho do seu dashboard
+                    window.location.href = "/dashboard";
                 } else {
-                    // Caso de erro, mostrar a mensagem de erro
                     alert(data.error || "Erro desconhecido");
                 }
             } catch (error) {
-                // Em caso de erro na requisição
                 alert("Erro ao realizar a requisição: " + error.message);
             }
         });
