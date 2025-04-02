@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,23 +42,26 @@
         .network-logo {
             width: 100px;
             height: auto;
-            margin-bottom: 10px;
-        }
-
-        .confirm-button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: border 0.2s ease-in-out;
             cursor: pointer;
-            color: white;
-            font-size: 16px;
-            background-color: #007bff;
         }
 
-        .confirm-button:hover {
-            background-color: #0056b3;
+        .network-logo:active {
+            border: 3px solid white;
+            border-radius: 10px;
+        }
+
+        p {
+            margin-top: 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .subtext {
+            font-size: 12px;
+            color: gray;
+            margin-bottom: 10px;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -74,19 +78,21 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h2>Rede Social Selecionada</h2>
-        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png" alt="TikTok" class="network-logo">
+        <h2>Selecione a Rede Social</h2>
+        <p class="subtext">Selecione a rede social que você deseja adicionar a nova conta.</p>
+        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png" alt="TikTok"
+            class="network-logo" onclick="redirectToAccountSelection()">
         <p>TikTok</p>
-        <button class="confirm-button" onclick="selectNetwork()">Confirmar</button>
     </div>
 
     <script>
-        function selectNetwork() {
-            alert("Rede Social Selecionada: TikTok");
-            // Redirecionamento ou ação futura pode ser implementada aqui.
+        function redirectToAccountSelection() {
+            window.location.href = "selecionar_conta";
         }
     </script>
 </body>
+
 </html>
