@@ -38,15 +38,10 @@
             transition: background 0.3s;
         }
 
-        .select-box {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background: var(--container-light);
-            color: var(--text-light);
-            transition: background 0.3s, color 0.3s;
+        .network-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 10px;
         }
 
         .confirm-button {
@@ -76,32 +71,20 @@
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
             }
-
-            .select-box {
-                background: var(--container-dark);
-                border: 1px solid var(--border-dark);
-                color: var(--text-dark);
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Selecionar Rede Social</h2>
-        <select id="socialNetwork" class="select-box">
-            <option value="facebook">Facebook</option>
-            <option value="twitter">Twitter</option>
-            <option value="instagram">Instagram</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="tiktok">TikTok</option>
-        </select>
+        <h2>Rede Social Selecionada</h2>
+        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/tiktok.png" alt="TikTok" class="network-logo">
+        <p>TikTok</p>
         <button class="confirm-button" onclick="selectNetwork()">Confirmar</button>
     </div>
 
     <script>
         function selectNetwork() {
-            const selectedNetwork = document.getElementById("socialNetwork").value;
-            alert(`Rede Social Selecionada: ${selectedNetwork}`);
+            alert("Rede Social Selecionada: TikTok");
             // Redirecionamento ou ação futura pode ser implementada aqui.
         }
     </script>
