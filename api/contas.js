@@ -11,10 +11,14 @@ connectDB();
 // Middleware de autenticação
 const authMiddleware = (req) => {
     const authHeader = req.headers.authorization;
+    console.log("Cabeçalho de Autorização recebido:", authHeader);
+
     if (!authHeader) throw new Error("Acesso negado, token não encontrado.");
 
-    // Extrai o token corretamente (caso tenha ou não o prefixo 'Bearer ')
+    // Extrai o token
     const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+    
+    console.log("Token extraído:", token);
 
     try {
         return jwt.verify(token, process.env.JWT_SECRET);
