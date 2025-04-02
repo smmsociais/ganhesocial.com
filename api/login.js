@@ -56,7 +56,7 @@ const handler = async (req, res) => {
     
     if (!token) {
       // Se não tiver token salvo, gera um novo e mantém no banco
-      token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+      const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
       usuario.token = token;
       await usuario.save({ validateBeforeSave: false });
       console.log("🟢 Novo token gerado e salvo.");
