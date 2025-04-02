@@ -1,6 +1,28 @@
 import connectDB from "./db.js";
-import { User } from "./User.js"
+import { User } from "./User.js";
 import crypto from "crypto";
+import fetch from "node-fetch";
+
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+
+const verifyRecaptcha = async (token) => {
+    try {
+        const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                secret: RECAPTCHA_SECRET_KEY,
+                response: token
+            })
+        });
+
+        const data = await response.json();
+        return data.success; // Retorna true se o reCAPTCHA for válido
+    } catch (error) {
+        console.error("Erro ao verificar reCAPTCHA:", error);
+        return false;
+    }
+};
 
 const handler = async (req, res) => {
     if (req.method !== "POST") {
@@ -9,10 +31,16 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    const { nome_usuario, email, senha } = req.body;
+    const { nome_usuario, email, senha, recaptcha } = req.body;
 
-    if (!nome_usuario || !email || !senha) {
-        return res.status(400).json({ error: "Nome de usuário, e-mail e senha são obrigatórios." });
+    if (!nome_usuario || !email || !senha || !recaptcha) {
+        return res.status(400).json({ error: "Todos os campos são obrigatórios, incluindo o reCAPTCHA." });
+    }
+
+    // Verificar reCAPTCHA antes de continuar
+    const recaptchaValido = await verifyRecaptcha(recaptcha);
+    if (!recaptchaValido) {
+        return res.status(400).json({ error: "Falha na verificação do reCAPTCHA. Tente novamente." });
     }
 
     try {
