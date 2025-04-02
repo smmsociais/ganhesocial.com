@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,13 +22,20 @@
             background-color: var(--bg-light);
             color: var(--text-light);
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
-            transition: background-color 0.3s, color 0.3s;
+            padding: 0;
+            min-height: 100vh;
             position: relative;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .container {
@@ -36,56 +44,106 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 300px;
+            width: 90%;
+            max-width: 400px;
+            margin: 30px auto;
             transition: background 0.3s;
         }
 
         .saldo {
             font-size: 24px;
             font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .saldo-disponivel {
             color: #2d8f2d;
         }
 
-        .button {
+        .ganho-hoje {
+            color: white;
+            font-size: 10px;
+            margin: 5px 0;
+        }
+
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-            font-size: 16px;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
         }
 
-        .action-button { background-color: #4CAF50; }
-        .action-button:hover { background-color: #45a049; }
-
-        .add-button { background-color: #007BFF; }
-        .add-button:hover { background-color: #0056b3; }
-
-        .manage-button { background-color: #FFA500; }
-        .manage-button:hover { background-color: #cc8400; }
-
-        .history-button { background-color: #6c757d; }
-        .history-button:hover { background-color: #5a6268; }
-
-        .account-button { background-color: #17a2b8; }
-        .account-button:hover { background-color: #138496; }
-
-        .logout-button {
+        .menu-overlay {
             position: fixed;
-            left: 20px;
-            bottom: 20px;
-            padding: 10px 20px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
         }
-        .logout-button:hover {
-            background-color: #c82333;
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -94,75 +152,149 @@
                 color: var(--text-dark);
             }
 
+            .header,
             .container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .ganho-hoje {
+                color: var(--text-dark);
+            }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h2>Saldo Disponível</h2>
-        <p class="saldo" id="saldoDisponivel">R$ 0,00</p>
 
-        <button class="button action-button" onclick="goToSelectAccount()">Realizar Ação</button>
-        <button class="button add-button" onclick="goToAddAccount()">Adicionar Conta</button>
-        <button class="button manage-button" onclick="goToManageAccounts()">Gerenciar Contas</button>
-        <button class="button history-button" onclick="goToHistory()">Histórico de Ações</button>
-        <button class="button account-button" onclick="goToAccount()">Minha Conta</button>
+<body>
+    <div class="header">
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div style="width: 30px;"></div>
     </div>
 
-    <button class="logout-button" onclick="logout()">Sair</button>
+    <div class="container">
+        <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
+        <p class="ganho-hoje" id="ganhoHoje">Ganho Hoje: R$ 0,00</p>
+    </div>
 
-   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const token = localStorage.getItem("authToken");
+    <!-- Menu Overlay e Conteúdo -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-content" id="menuContent">
+        <a class="menu-item" onclick="goToDashboard()">Página Inicial</a>
+        <a class="menu-item" onclick="goToSelectAccount()">Realizar Ação</a>
+        <a class="menu-item" onclick="goToAddAccount()">Adicionar Conta</a>
+        <a class="menu-item" onclick="goToManageAccounts()">Gerenciar Contas</a>
+        <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
+        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
 
-        if (!token) {
-            window.location.href = "login";
-        } else {
-            carregarSaldo(token);
-        }
-    });
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
 
-    function carregarSaldo(token) {
-        fetch(`/api/get_saldo?token=${token}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.saldo !== undefined) {
-                    document.getElementById("saldoDisponivel").textContent = `R$ ${parseFloat(data.saldo).toFixed(2)}`;
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                window.location.href = "dashboard.html";
+            }
+
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
                 } else {
-                    console.error("Erro ao obter saldo:", data.error);
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
                 }
-            })
-            .catch(error => console.error("Erro ao carregar saldo:", error));
-    }
+            });
 
-    function goToSelectAccount() {
-        window.location.href = "selecionar_conta";
-    }
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
+        });
 
-    function goToAddAccount() {
-        window.location.href = "adicionar_conta";
-    }
+        function carregarSaldos() {
+            const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+            const ganhoHoje = parseFloat(localStorage.getItem("ganhoHoje")) || 0;
 
-    function goToManageAccounts() {
-        window.location.href = "gerenciar_contas";
-    }
+            document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+            document.getElementById("ganhoHoje").textContent = `Ganho Hoje: R$ ${ganhoHoje.toFixed(2)}`;
+        }
 
-    function goToHistory() {
-        window.location.href = "historico_acoes";
-    }
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
 
-    function goToAccount() {
-        window.location.href = "profile";
-    }
+        function goToSelectAccount() {
+            window.location.href = "selecionar_conta";
+        }
 
-    function logout() {
-        localStorage.removeItem("authToken");
-        window.location.href = "https://ganhesocial.com";
-    }
+        function goToAddAccount() {
+            window.location.href = "adicionar_conta";
+        }
+
+        function goToManageAccounts() {
+            window.location.href = "gerenciar_contas";
+        }
+
+        function goToHistory() {
+            window.location.href = "historico_acoes";
+        }
+
+        function goToAccount() {
+            window.location.href = "settings";
+        }
+
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
+        }
+
+        window.onload = carregarSaldos;
     </script>
 </body>
+
 </html>
