@@ -38,15 +38,26 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .container {
+        .saldo-container {
             background: var(--container-light);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 90%;
-            max-width: 400px;
-            margin: 30px auto;
+            max-width: 500px;
+            margin: 30px auto 15px auto;
+            transition: background 0.3s;
+        }
+
+        .historico-container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            margin: 15px auto 30px auto;
             transition: background 0.3s;
         }
 
@@ -64,6 +75,28 @@
             color: white;
             font-size: 10px;
             margin: 5px 0;
+        }
+
+        .historico-tabela {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .historico-tabela th,
+        .historico-tabela td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .historico-tabela th {
+            background-color: rgba(0, 0, 0, 0.05);
+            font-weight: bold;
+        }
+
+        .historico-tabela tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
         }
 
         /* Estilos do menu hamburguer */
@@ -153,7 +186,8 @@
             }
 
             .header,
-            .container {
+            .saldo-container,
+            .historico-container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             }
@@ -181,6 +215,19 @@
             .ganho-hoje {
                 color: var(--text-dark);
             }
+
+            .historico-tabela th,
+            .historico-tabela td {
+                border-bottom: 1px solid #444;
+            }
+
+            .historico-tabela th {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .historico-tabela tr:hover {
+                background-color: rgba(255, 255, 255, 0.02);
+            }
         }
     </style>
 </head>
@@ -195,9 +242,24 @@
         <div style="width: 30px;"></div>
     </div>
 
-    <div class="container">
+    <div class="saldo-container">
         <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
         <p class="ganho-hoje" id="ganhoHoje">Ganho Hoje: R$ 0,00</p>
+    </div>
+
+    <div class="historico-container">
+        <h3 style="text-align: center; margin-top: 0;">Histórico de Ganhos Diários</h3>
+        <table class="historico-tabela" id="historicoTabela">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Valor (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Os dados serão inseridos via JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <!-- Menu Overlay e Conteúdo -->
@@ -254,6 +316,10 @@
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             });
+
+            // Carrega dados iniciais
+            carregarSaldos();
+            carregarHistorico();
         });
 
         function carregarSaldos() {
@@ -262,6 +328,35 @@
 
             document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
             document.getElementById("ganhoHoje").textContent = `Ganho Hoje: R$ ${ganhoHoje.toFixed(2)}`;
+        }
+
+        function carregarHistorico() {
+            // Exemplo de dados - ordenados do mais recente para o mais antigo
+            const historico = [
+                { data: "Hoje", valor: parseFloat(localStorage.getItem("ganhoHoje")) || 0 },
+                { data: "05/06/2023", valor: 320.60 },
+                { data: "04/06/2023", valor: 95.30 },
+                { data: "03/06/2023", valor: 180.75 },
+                { data: "02/06/2023", valor: 230.00 },
+                { data: "01/06/2023", valor: 150.50 }
+            ];
+
+            const tbody = document.querySelector("#historicoTabela tbody");
+            tbody.innerHTML = "";
+
+            historico.forEach(item => {
+                const row = document.createElement("tr");
+
+                const cellData = document.createElement("td");
+                cellData.textContent = item.data;
+                row.appendChild(cellData);
+
+                const cellValor = document.createElement("td");
+                cellValor.textContent = item.valor.toFixed(2);
+                row.appendChild(cellValor);
+
+                tbody.appendChild(row);
+            });
         }
 
         function goToDashboard() {
@@ -292,8 +387,6 @@
             localStorage.removeItem("authToken");
             window.location.href = "https://ganhesocial.com";
         }
-
-        window.onload = carregarSaldos;
     </script>
 </body>
 
