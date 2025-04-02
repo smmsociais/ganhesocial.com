@@ -29,7 +29,7 @@
 
         .text-content {
             position: absolute;
-            top: -35%;
+            top: -15%;
             left: 10%;
             max-width: 500px;
             z-index: 10;
@@ -100,8 +100,21 @@
             top: -670px;
             left: 100px;
             height: 260px;
+            /* Altura fixa para a logo */
             width: auto;
+            /* Mantém a proporção */
             z-index: 10;
+        }
+
+        .image-top {
+            width: 10%;
+            height: auto;
+            position: absolute;
+            top: 0%;
+            right: 5%;
+            transform: translateY(-50%);
+            animation: moveUpDown 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
         }
 
         /* Animação contínua para a imagem */
@@ -124,8 +137,8 @@
             position: relative;
             width: 100%;
             text-align: center;
-            padding: 100px 0;
-            margin-top: 100vh;
+            padding: 200px 0;
+            margin-top: 90vh;
         }
 
         .features-section h2 {
@@ -163,7 +176,7 @@
         .hamburger-menu {
             display: none;
             position: absolute;
-            top: 40px;
+            top: -875px;
             right: 20px;
             cursor: pointer;
             z-index: 100;
@@ -180,7 +193,7 @@
         .mobile-menu {
             display: none;
             position: absolute;
-            top: 80px;
+            top: -875px;
             right: 20px;
             background-color: var(--bg-light);
             border-radius: 10px;
@@ -208,7 +221,7 @@
             }
 
             .text-content {
-                top: 15%;
+                top: -25%;
                 left: 5%;
                 max-width: 90%;
             }
@@ -223,7 +236,7 @@
 
             .features-section {
                 padding: 40px 0;
-                margin-top: 80vh;
+                margin-top: -200vh;
             }
 
             .features-section h2 {
@@ -248,7 +261,7 @@
         @media (max-width: 480px) {
             .logo {
                 height: 250px;
-                top: -20px;
+                top: -930px;
                 left: -10px;
             }
 
@@ -269,7 +282,7 @@
 
             .features-section {
                 padding: 20px 10px;
-                margin-top: 70vh;
+                margin-top: 100vh;
             }
 
             .features-section h2 {
@@ -281,7 +294,7 @@
             width: 45%;
             height: auto;
             position: absolute;
-            top: -40%;
+            top: -18%;
             right: 5%;
             transform: translateY(-50%);
             animation: moveUpDown 3s ease-in-out infinite;
@@ -290,9 +303,9 @@
 
         @media (max-width: 768px) {
             .image-top {
-                width: 100%;
-                top: 70%;
-                right: 0%;
+                width: 120%;
+                top: -8%;
+                right: -10%;
                 animation: none;
             }
         }
@@ -359,7 +372,7 @@
         /* Remove a borda do último item */
         .info-item:last-child {
             border-bottom: none;
-            margin-bottom: 0;
+            margin-bottom: -100;
             padding-bottom: 0;
         }
 
