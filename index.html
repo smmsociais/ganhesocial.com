@@ -29,7 +29,7 @@
 
         .text-content {
             position: absolute;
-            top: -15%;
+            top: -13%;
             left: 10%;
             max-width: 500px;
             z-index: 10;
@@ -97,24 +97,13 @@
 
         .logo {
             position: absolute;
-            top: -670px;
+            top: -610px;
             left: 100px;
             height: 260px;
             /* Altura fixa para a logo */
             width: auto;
             /* Mantém a proporção */
             z-index: 10;
-        }
-
-        .image-top {
-            width: 10%;
-            height: auto;
-            position: absolute;
-            top: 0%;
-            right: 5%;
-            transform: translateY(-50%);
-            animation: moveUpDown 3s ease-in-out infinite;
-            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
         }
 
         /* Animação contínua para a imagem */
@@ -176,11 +165,14 @@
         .hamburger-menu {
             display: none;
             position: absolute;
-            top: -875px;
-            right: 20px;
+            top: -95vh;
+            /* Usa vh para manter a posição proporcional à altura da tela */
+            right: 2vw;
+            /* Usa vw para manter um deslocamento proporcional */
             cursor: pointer;
             z-index: 100;
         }
+
 
         .hamburger-icon {
             width: 30px;
@@ -193,7 +185,7 @@
         .mobile-menu {
             display: none;
             position: absolute;
-            top: -875px;
+            top: -95vh;
             right: 20px;
             background-color: var(--bg-light);
             border-radius: 10px;
@@ -221,10 +213,14 @@
             }
 
             .text-content {
-                top: -25%;
-                left: 5%;
-                max-width: 90%;
+                top: -85vh;
+                /* Usa vh para manter a proporção em diferentes alturas de tela */
+                left: 5vw;
+                /* Usa vw para manter a posição relativa ao viewport */
+                max-width: min(90%, 80vw);
+                /* Evita ultrapassar os limites do contêiner e da tela */
             }
+
 
             h1 {
                 font-size: 2rem;
@@ -260,10 +256,14 @@
 
         @media (max-width: 480px) {
             .logo {
-                height: 250px;
-                top: -930px;
-                left: -10px;
+                height: 25vh;
+                /* Ajusta a altura proporcionalmente à tela */
+                top: -100vh;
+                /* Ajusta a posição superior sem valores fixos */
+                left: -2vw;
+                /* Usa vw para manter um deslocamento proporcional */
             }
+
 
             .buttons-below {
                 flex-direction: row;
@@ -294,7 +294,7 @@
             width: 45%;
             height: auto;
             position: absolute;
-            top: -18%;
+            top: -15%;
             right: 5%;
             transform: translateY(-50%);
             animation: moveUpDown 3s ease-in-out infinite;
@@ -303,12 +303,19 @@
 
         @media (max-width: 768px) {
             .image-top {
-                width: 120%;
-                top: -8%;
-                right: -10%;
-                animation: none;
+                width: min(120%, 100vw);
+                /* Garante que a largura não ultrapasse a tela */
+                top: -35vh;
+                /* Usa vh para manter a proporção em diferentes alturas de tela */
+                right: 0vw;
+                /* Usa vw para manter a posição relativa ao viewport */
+                max-width: 100%;
+                /* Impede que o elemento ultrapasse os limites do contêiner */
+                object-fit: cover;
+                /* Ajusta a exibição da imagem */
             }
         }
+
 
         @media (prefers-color-scheme: dark) {
             body {
