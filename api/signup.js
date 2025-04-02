@@ -43,23 +43,28 @@ const handler = async (req, res) => {
     }
 
     try {
-        // Verificar se o e-mail ou nome de usuário já existem
-        const userExists = await User.findOne({ $or: [{ nome_usuario }, { email }] });
-        if (userExists) {
-            return res.status(400).json({ error: "Usuário ou e-mail já registrado." });
+        // Verificar se nome de usuário ou e-mail já existem
+        const usuarioExiste = await User.findOne({ nome_usuario });
+        if (usuarioExiste) {
+            return res.status(400).json({ error: "Nome de usuário já está em uso." });
+        }
+
+        const emailExiste = await User.findOne({ email });
+        if (emailExiste) {
+            return res.status(400).json({ error: "E-mail já está cadastrado." });
         }
 
         // Gerar um token único para o usuário
         const token = crypto.randomBytes(32).toString("hex");
 
-        // Criar novo usuário com o token
+        // Criar novo usuário com a senha em texto puro (⚠️ CUIDADO: não recomendado para produção)
         const novoUsuario = new User({ nome_usuario, email, senha, token });
         await novoUsuario.save();
 
         return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
     } catch (error) {
         console.error("Erro ao cadastrar usuário:", error);
-        return res.status(500).json({ error: "Erro interno no servidor." });
+        return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
     }
 };
 
