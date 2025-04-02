@@ -100,13 +100,10 @@
             top: -610px;
             left: 100px;
             height: 260px;
-            /* Altura fixa para a logo */
             width: auto;
-            /* Mantém a proporção */
             z-index: 10;
         }
 
-        /* Animação contínua para a imagem */
         @keyframes moveUpDown {
             0% {
                 transform: translateY(0);
@@ -121,7 +118,6 @@
             }
         }
 
-        /* Nova seção unificada de features */
         .features-section {
             position: relative;
             width: 100%;
@@ -161,18 +157,14 @@
             margin-right: auto;
         }
 
-        /* Estilos para o menu hamburguer */
         .hamburger-menu {
             display: none;
             position: absolute;
             top: -95vh;
-            /* Usa vh para manter a posição proporcional à altura da tela */
             right: 2vw;
-            /* Usa vw para manter um deslocamento proporcional */
             cursor: pointer;
             z-index: 100;
         }
-
 
         .hamburger-icon {
             width: 30px;
@@ -201,7 +193,6 @@
             display: flex;
         }
 
-        /* Estilos responsivos */
         @media (max-width: 768px) {
             .hamburger-menu {
                 display: block;
@@ -214,13 +205,9 @@
 
             .text-content {
                 top: -85vh;
-                /* Usa vh para manter a proporção em diferentes alturas de tela */
                 left: 5vw;
-                /* Usa vw para manter a posição relativa ao viewport */
                 max-width: min(90%, 80vw);
-                /* Evita ultrapassar os limites do contêiner e da tela */
             }
-
 
             h1 {
                 font-size: 2rem;
@@ -257,13 +244,9 @@
         @media (max-width: 480px) {
             .logo {
                 height: 25vh;
-                /* Ajusta a altura proporcionalmente à tela */
                 top: -100vh;
-                /* Ajusta a posição superior sem valores fixos */
                 left: -2vw;
-                /* Usa vw para manter um deslocamento proporcional */
             }
-
 
             .buttons-below {
                 flex-direction: row;
@@ -304,18 +287,12 @@
         @media (max-width: 768px) {
             .image-top {
                 width: min(120%, 100vw);
-                /* Garante que a largura não ultrapasse a tela */
                 top: -35vh;
-                /* Usa vh para manter a proporção em diferentes alturas de tela */
                 right: 0vw;
-                /* Usa vw para manter a posição relativa ao viewport */
                 max-width: 100%;
-                /* Impede que o elemento ultrapasse os limites do contêiner */
                 object-fit: cover;
-                /* Ajusta a exibição da imagem */
             }
         }
-
 
         @media (prefers-color-scheme: dark) {
             body {
@@ -359,11 +336,9 @@
             }
         }
 
-        /* Seção unificada de conteúdo informativo - Alinhado à esquerda */
         .info-section {
             width: 100%;
             padding: 40px 5%;
-            /* 5% de padding nas laterais */
             text-align: left;
             box-sizing: border-box;
         }
@@ -373,13 +348,11 @@
             padding-bottom: 20px;
             border-bottom: 1px solid #e0e0e0;
             max-width: 100%;
-            /* Ocupa toda a largura disponível */
         }
 
-        /* Remove a borda do último item */
         .info-item:last-child {
             border-bottom: none;
-            margin-bottom: -100;
+            margin-bottom: 0;
             padding-bottom: 0;
         }
 
@@ -403,7 +376,6 @@
             width: 100%;
         }
 
-        /* Dark mode - ajuste para a cor da linha */
         @media (prefers-color-scheme: dark) {
             .info-item {
                 border-bottom-color: #444;
@@ -415,7 +387,6 @@
             }
         }
 
-        /* Responsividade */
         @media (max-width: 768px) {
             .info-section {
                 padding: 30px 5%;
@@ -450,24 +421,56 @@
                 padding-bottom: 10px;
             }
         }
+
+        .footer {
+            background-color: #000;
+            padding: 30px 0;
+            text-align: center;
+            color: white;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-email {
+            font-size: 1.1rem;
+            margin: 10px 0;
+            color: #fff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .footer {
+                background-color: #111;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                padding: 20px 0;
+            }
+
+            .footer-email {
+                font-size: 1rem;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
     <img class="logo" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png"
         alt="Ganhe Social">
 
-    <!-- Menu Hambúrguer -->
     <div class="hamburger-menu" id="hamburgerMenu">
         <div class="hamburger-icon"></div>
         <div class="hamburger-icon"></div>
         <div class="hamburger-icon"></div>
     </div>
 
-    <!-- Menu Mobile -->
     <div class="mobile-menu" id="mobileMenu">
         <button class="button login-button" onclick="goToLogin()">Login</button>
         <button class="button start-button" onclick="startEarning()">Cadastrar</button>
@@ -477,7 +480,6 @@
         <h1>Ganhe Dinheiro Online Usando Suas Redes Sociais!</h1>
         <p class="subtitle">Ganhe uma renda extra com suas redes sociais para seguir e curtir perfis e publicações.</p>
 
-        <!-- Botões abaixo da descrição -->
         <div class="buttons-below">
             <button class="button login-button" onclick="goToLogin()">Login</button>
             <button class="button start-button" onclick="startEarning()">Começar a Ganhar</button>
@@ -521,8 +523,7 @@
                 src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743358293720.png"
                 alt="Vantagens do Ganhe Social">
             <p class="feature-text">Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e
-                o
-                histórico de cada perfil.</p>
+                o histórico de cada perfil.</p>
         </div>
 
         <div class="feature-item">
@@ -538,100 +539,106 @@
                 alt="Ganhos ilimitados no Ganhe Social">
             <p class="feature-text">Suporte 24/7 e super rápido para atender as suas necessidades, estamos sempre
                 disponíveis!</p>
-            <div class="info-section">
-                <div class="info-item">
-                    <h2 class="info-title">Dúvidas Frequentes</h2>
-                </div>
+        </div>
+    </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Como posso ganhar dinheiro com o Ganhe Social?</h2>
-                    <p class="info-description">Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois
-                        que realizar o cadastro na plataforma, vá até a sessão de Adicionar Conta localizada no painel,
-                        escolha a rede social que deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão
-                        de Realizar Ações, escolha a rede social de preferência e selecione a conta que irá realizar as
-                        ações. A cada ação que realizar, você será pago por valores que estão disponíveis em nosso
-                        mercado.</p>
-                </div>
+    <div class="info-section">
+        <div class="info-item">
+            <h2 class="info-title">Dúvidas Frequentes</h2>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Quanto a plataforma paga por cada ação realizada?</h2>
-                    <p class="info-description">Pagamos R$ 0.003 á R$ 0.01 com ações de seguir, enquanto para curtir,
-                        pagamos o valor de R$ 0.001. Esses valores são variáveis, pois podem sofrer alterações a
-                        qualquer momento.</p>
-                </div>
+        <div class="info-item">
+            <h2 class="info-title">Como posso ganhar dinheiro com o Ganhe Social?</h2>
+            <p class="info-description">Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois
+                que realizar o cadastro na plataforma, vá até a sessão de Adicionar Conta localizada no painel,
+                escolha a rede social que deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão
+                de Realizar Ações, escolha a rede social de preferência e selecione a conta que irá realizar as
+                ações. A cada ação que realizar, você será pago por valores que estão disponíveis em nosso
+                mercado.</p>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Qual o valor mínimo para saque?</h2>
-                    <p class="info-description">O valor mínimo para saque é de R$ 5,00.</p>
-                </div>
+        <div class="info-item">
+            <h2 class="info-title">Quanto a plataforma paga por cada ação realizada?</h2>
+            <p class="info-description">Pagamos R$ 0.004 á R$ 0.01 com ações de seguir, enquanto para curtir,
+                pagamos o valor de R$ 0.001. Esses valores são variáveis, pois podem sofrer alterações a
+                qualquer momento.</p>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Como recebo meu saque?</h2>
-                    <p class="info-description">Você poderá receber seu pagamento através do PIX após vincular seus
-                        dados bancários corretamente.</p>
-                </div>
+        <div class="info-item">
+            <h2 class="info-title">Qual o valor mínimo para saque?</h2>
+            <p class="info-description">O valor mínimo para saque é de R$ 5,00.</p>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Em quanto tempo recebo meu saque?</h2>
-                    <p class="info-description">Todos os nossos pagamentos são instantâneos. Caso tenha algum problema
-                        com o saque, não hesite em procurar ajuda imediatamente no nosso suporte.</p>
-                </div>
+        <div class="info-item">
+            <h2 class="info-title">Como recebo meu saque?</h2>
+            <p class="info-description">Você poderá receber seu pagamento através do PIX após vincular seus
+                dados bancários corretamente.</p>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">O site é confiável?</h2>
-                    <p class="info-description">Sim, nosso site é totalmente seguro e confiável. Não pedimos senha de
-                        suas redes sociais. Caso tenha dúvidas, procure por referências no YouTube por exemplo.</p>
-                </div>
+        <div class="info-item">
+            <h2 class="info-title">Em quanto tempo recebo meu saque?</h2>
+            <p class="info-description">Todos os nossos pagamentos são instantâneos. Caso tenha algum problema
+                com o saque, não hesite em procurar ajuda imediatamente no nosso suporte.</p>
+        </div>
 
-                <div class="info-item">
-                    <h2 class="info-title">Realizei uma ação e ela não foi contabilizada, por quê?</h2>
-                    <p class="info-description">Nosso sistema faz verificações automaticamente de suas ações realizadas.
-                        Verifique se a ação está em análise e se você realizou a ação corretamente na página 'Histórico
-                        de Ações'. Além disso, você pode acompanhar as ações feitas por cada perfil na página de
-                        gerenciamento de contas.</p>
-                </div>
-            </div>
+        <div class="info-item">
+            <h2 class="info-title">O site é confiável?</h2>
+            <p class="info-description">Sim, nosso site é totalmente seguro e confiável. Não pedimos senha de
+                suas redes sociais. Caso tenha dúvidas, procure por referências no YouTube por exemplo.</p>
+        </div>
 
-            <script>
-                function startEarning() {
-                    window.location.href = "signup";
-                }
+        <div class="info-item">
+            <h2 class="info-title">Realizei uma ação e ela não foi contabilizada, por quê?</h2>
+            <p class="info-description">Nosso sistema faz verificações automaticamente de suas ações realizadas.
+                Verifique se a ação está em análise e se você realizou a ação corretamente na página 'Histórico
+                de Ações'. Além disso, você pode acompanhar as ações feitas por cada perfil na página de
+                gerenciamento de contas.</p>
+        </div>
+    </div>
 
-                function goToLogin() {
-                    window.location.href = "login";
-                }
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-email">Contato: contato@ganhesocial.com</p>
+        </div>
+    </footer>
 
-                // Controle do menu hambúrguer
-                const hamburgerMenu = document.getElementById('hamburgerMenu');
-                const mobileMenu = document.getElementById('mobileMenu');
+    <script>
+        function startEarning() {
+            window.location.href = "signup";
+        }
 
-                hamburgerMenu.addEventListener('click', function () {
-                    mobileMenu.classList.toggle('open');
+        function goToLogin() {
+            window.location.href = "login";
+        }
 
-                    // Animação para os ícones do hambúrguer
-                    const icons = document.querySelectorAll('.hamburger-icon');
-                    if (mobileMenu.classList.contains('open')) {
-                        icons[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
-                        icons[1].style.opacity = '0';
-                        icons[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
-                    } else {
-                        icons[0].style.transform = 'none';
-                        icons[1].style.opacity = '1';
-                        icons[2].style.transform = 'none';
-                    }
-                });
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const mobileMenu = document.getElementById('mobileMenu');
 
-                // Fechar o menu quando clicar fora
-                document.addEventListener('click', function (event) {
-                    if (!hamburgerMenu.contains(event.target) && !mobileMenu.contains(event.target)) {
-                        mobileMenu.classList.remove('open');
-                        const icons = document.querySelectorAll('.hamburger-icon');
-                        icons[0].style.transform = 'none';
-                        icons[1].style.opacity = '1';
-                        icons[2].style.transform = 'none';
-                    }
-                });
-            </script>
+        hamburgerMenu.addEventListener('click', function () {
+            mobileMenu.classList.toggle('open');
+
+            const icons = document.querySelectorAll('.hamburger-icon');
+            if (mobileMenu.classList.contains('open')) {
+                icons[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
+                icons[1].style.opacity = '0';
+                icons[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
+            } else {
+                icons[0].style.transform = 'none';
+                icons[1].style.opacity = '1';
+                icons[2].style.transform = 'none';
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!hamburgerMenu.contains(event.target) && !mobileMenu.contains(event.target)) {
+                mobileMenu.classList.remove('open');
+                const icons = document.querySelectorAll('.hamburger-icon');
+                icons[0].style.transform = 'none';
+                icons[1].style.opacity = '1';
+                icons[2].style.transform = 'none';
+            }
+        });
+    </script>
 </body>
 
 </html>
