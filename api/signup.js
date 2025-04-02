@@ -1,7 +1,6 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
 import crypto from "crypto";
-import fetch from "node-fetch";
 
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
