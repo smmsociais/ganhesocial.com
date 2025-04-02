@@ -9,14 +9,35 @@ const handler = async (req, res) => {
 
   await connectDB();
 
-  const { email, senha } = req.body;
+  const { email, senha, recaptcha } = req.body;
 
   if (!email || !senha) {
     return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
   }
 
+  if (!recaptcha) {
+    return res.status(400).json({ error: "reCAPTCHA é obrigatório!" });
+  }
+
   try {
-    console.log("🔍 Buscando usuário no banco de dados...");
+    // 🔍 Verificando o reCAPTCHA com o Google
+    const secretKey = process.env.RECAPTCHA_SECRET;
+    const recaptchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret: secretKey, response: recaptcha })
+    });
+
+    const recaptchaData = await recaptchaResponse.json();
+
+    if (!recaptchaData.success) {
+      console.log("🔴 Falha na validação do reCAPTCHA!");
+      return res.status(400).json({ error: "Falha na validação do reCAPTCHA!" });
+    }
+
+    console.log("🟢 reCAPTCHA validado com sucesso!");
+
+    // 🔍 Buscando usuário no banco de dados...
     const usuario = await User.findOne({ email });
 
     if (!usuario) {
