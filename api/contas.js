@@ -78,8 +78,12 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
         const { nomeConta, id_conta, id_tiktok, s } = req.body;
         const userId = req.user.id;
 
-        if (!nomeConta || !id_conta) {
-            return res.status(400).json({ error: "O nome da conta e o id_conta são obrigatórios." });
+        if (!nomeConta || typeof nomeConta !== "string" || nomeConta.trim() === "") {
+            return res.status(400).json({ error: "O nome da conta é obrigatório e não pode ser vazio." });
+        }
+
+        if (!id_conta) {
+            return res.status(400).json({ error: "O id_conta é obrigatório." });
         }
 
         // Busca o usuário autenticado
