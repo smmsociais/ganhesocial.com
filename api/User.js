@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 // 🔹 Schema para Contas
 const ContaSchema = new mongoose.Schema({
-    nomeConta: { type: String, required: true, unique: true },
+    nomeConta: { type: String, required: true },
     id_conta: { type: String, required: false },
     id_tiktok: { type: String },
     s: { type: String },
