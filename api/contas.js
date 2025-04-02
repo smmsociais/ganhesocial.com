@@ -82,21 +82,30 @@ app.post("/api/contas", authMiddleware, async (req, res) => {
             return res.status(400).json({ error: "O nome da conta e o id_conta são obrigatórios." });
         }
 
-        // Verifica se a conta já existe no banco de dados do usuário
-        const contaExistente = await User.findOne({ "contas.id_conta": id_conta });
-        if (contaExistente) {
-            return res.status(400).json({ error: "Esta conta já foi adicionada." });
-        }
-
         // Busca o usuário autenticado
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
-        // Verifica se a conta já foi adicionada
-        const contaJaCadastrada = user.contas.find(conta => conta.id_conta === id_conta);
+        // Verifica se já existe uma conta com esse nome dentro do usuário
+        const contaJaCadastrada = user.contas.find(conta => conta.nomeConta === nomeConta);
         if (contaJaCadastrada) {
-            return res.status(400).json({ error: "Esta conta já foi adicionada por você." });
+            return res.status(400).json({ error: "Já existe uma conta com este nome." });
         }
+
+        // Adiciona a nova conta ao usuário
+        user.contas.push({ nomeConta, id_conta, id_tiktok, s, status: "Pendente" });
+        await user.save();
+
+        res.status(201).json({
+            message: "Conta adicionada com sucesso!",
+            id_conta,
+            detalhes: { status: "Pendente", id_conta, id_tiktok, s },
+        });
+    } catch (error) {
+        console.error("Erro ao adicionar conta:", error);
+        res.status(500).json({ error: "Erro interno do servidor." });
+    }
+});
 
         // Adiciona a nova conta ao usuário
         user.contas.push({ nomeConta, id_conta, id_tiktok, s, status: "Pendente" });
