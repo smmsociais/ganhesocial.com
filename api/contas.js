@@ -18,6 +18,8 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 
 // Middleware de Autenticação
 const authMiddleware = (req, res, next) => {
+    console.log("Token recebido:", req.headers.authorization); // 👈 Adicione este log
+
     const token = req.headers.authorization;
     if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
 
@@ -26,6 +28,7 @@ const authMiddleware = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
+        console.log("Erro ao verificar token:", error); // 👈 Log do erro
         return res.status(400).json({ error: "Token inválido." });
     }
 };
