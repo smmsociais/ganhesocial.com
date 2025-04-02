@@ -100,30 +100,8 @@
             top: -30px;
             left: 100px;
             height: 260px;
-            /* Altura fixa para a logo */
             width: auto;
-            /* Mantém a proporção */
             z-index: 10;
-        }
-
-        /* Tablet */
-        @media (max-width: 768px) {
-            .logo {
-                height: 70px;
-                /* Aumentado para tablet */
-                left: 20px;
-            }
-        }
-
-        /* Celular */
-        @media (max-width: 480px) {
-            .logo {
-                height: 250px;
-                /* Tamanho maior para mobile */
-                top: -20px;
-                left: -10px;
-                /* Mais próximo da borda em mobile */
-            }
         }
 
         /* Animação contínua para a imagem */
@@ -141,23 +119,44 @@
             }
         }
 
-
-
-        /* Nova seção "Como funciona" */
-        .how-it-works {
-            position: absolute;
-            top: 90%;
+        /* Nova seção unificada de features */
+        .features-section {
+            position: relative;
             width: 100%;
             text-align: center;
             padding: 100px 0;
+            margin-top: 100vh;
         }
 
-        .how-it-works h2 {
+        .features-section h2 {
             font-size: 2.5rem;
             font-family: 'Arial', sans-serif;
             font-weight: 700;
             color: var(--text-light);
-            margin-bottom: 30px;
+            margin-bottom: 50px;
+        }
+
+        .feature-item {
+            margin-bottom: 60px;
+        }
+
+        .feature-image {
+            width: 80%;
+            max-width: 60px;
+            margin: 0 auto;
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-text {
+            font-size: 0.9rem;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-light);
+            margin-top: 15px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* Estilos para o menu hamburguer */
@@ -197,12 +196,15 @@
             display: flex;
         }
 
-
-
         /* Estilos responsivos */
         @media (max-width: 768px) {
             .hamburger-menu {
                 display: block;
+            }
+
+            .logo {
+                height: 70px;
+                left: 20px;
             }
 
             .text-content {
@@ -219,18 +221,13 @@
                 font-size: 1.2rem;
             }
 
-
-
-            .how-it-works {
-                top: 0%;
-                /* Posição mais baixa */
+            .features-section {
                 padding: 40px 0;
+                margin-top: 80vh;
             }
 
-            .how-it-works h2 {
+            .features-section h2 {
                 font-size: 2rem;
-                margin-top: 160px;
-                /* Espaço extra acima */
             }
 
             .buttons-below {
@@ -249,6 +246,12 @@
         }
 
         @media (max-width: 480px) {
+            .logo {
+                height: 250px;
+                top: -20px;
+                left: -10px;
+            }
+
             .buttons-below {
                 flex-direction: row;
                 gap: 8px;
@@ -264,51 +267,13 @@
                 margin-right: 8px;
             }
 
-            .how-it-works {
-                top: 100%;
+            .features-section {
                 padding: 20px 10px;
+                margin-top: 70vh;
             }
 
-            .how-it-works h2 {
+            .features-section h2 {
                 font-size: 1.6rem;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image-3 {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .logo {
-                color: #fff;
-            }
-
-            .logo span:first-child {
-                color: #58a6ff;
-            }
-
-            .logo span:last-child {
-                color: #4CAF50;
-            }
-
-            h1,
-            .subtitle,
-            .how-it-works h2 {
-                color: var(--text-dark);
-            }
-
-            .hamburger-icon {
-                background-color: var(--text-dark);
-            }
-
-            .mobile-menu {
-                background-color: var(--bg-dark);
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
             }
         }
 
@@ -332,619 +297,6 @@
             }
         }
 
-        .how-it-works {
-            position: absolute;
-            bottom: -60%;
-            width: 100%;
-            text-align: center;
-        }
-
-        .how-it-works h2 {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 0;
-            padding: 0 0 30px 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .how-it-works-image {
-            width: 80%;
-            max-width: 60px;
-            margin: 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .how-it-works-text {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .how-it-works-image-2 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .how-it-works-text-2 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .how-it-works-image-3 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .how-it-works-text-3 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .benefits-section {
-            position: absolute;
-            bottom: -160%;
-            width: 100%;
-            text-align: center;
-            margin-top: -80px;
-        }
-
-        @media (max-width: 480px) {
-            .benefits-section {
-                position: absolute;
-                bottom: -16%;
-                width: 100%;
-                text-align: center;
-                margin-top: -80px;
-            }
-        }
-
-
-
-        .benefits-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 800px 0 0 0;
-            /* Espaçamento maior acima do título */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        @media (max-width: 480px) {
-            .benefits-section {
-                position: absolute;
-                bottom: -100%;
-                width: 100%;
-                text-align: center;
-                margin-top: -80px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .benefits-section {
-                position: absolute;
-                bottom: -200%;
-                width: 100%;
-                text-align: center;
-                margin-top: -80px
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-title {
-                color: var(--text-dark);
-            }
-        }
-
-        .benefits-image {
-            width: 80%;
-            max-width: 60px;
-            margin: 30px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .benefits-image-2 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text-2 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .benefits-image-3 {
-            width: 80%;
-            max-width: 60px;
-            margin: 20px auto 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .benefits-text-3 {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .faq-section {
-            position: absolute;
-            bottom: -15%;
-            /* Ajustado para espaço maior */
-            width: 100%;
-            margin-top: 100px;
-            /* Espaço grande acima do novo título */
-        }
-
-        .faq-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 80px 0 0 10%;
-            /* Margem esquerda de 10% para alinhar à esquerda */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-            /* Alinhado à esquerda */
-        }
-
-        .earn-section {
-            position: absolute;
-            bottom: -170%;
-            /* Adjusted for proper spacing */
-            width: 100%;
-        }
-
-        .earn-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 60px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-            /* Left alignment */
-        }
-
-        .earn-section {
-            position: absolute;
-            bottom: -160%;
-            width: 100%;
-        }
-
-        @media (max-width: 480px) {
-            .earn-section {
-                position: absolute;
-                bottom: -200%;
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .earn-section {
-                position: absolute;
-                bottom: -200%;
-                width: 100%;
-            }
-        }
-
-        .earn-title {
-            font-size: 1.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 60px 0 20px 10%;
-            /* Added bottom margin */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .earn-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 0 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            /* Slightly wider for better readability */
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .pricing-section {
-            position: absolute;
-            bottom: -60%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .pricing-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .pricing-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-section {
-            position: absolute;
-            bottom: -50%;
-            /* Ajuste para espaço maior */
-            width: 100%;
-        }
-
-        .withdrawal-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Alinhado à esquerda com 10% de margem */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-method-section {
-            position: absolute;
-            bottom: -70%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .withdrawal-method-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-method-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .withdrawal-time-section {
-            position: absolute;
-            bottom: -60%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .withdrawal-time-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 100px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .withdrawal-time-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .trust-section {
-            position: absolute;
-            bottom: -60%;
-            /* Espaço maior após o último conteúdo */
-            width: 100%;
-        }
-
-        .trust-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 120px 0 0 10%;
-            /* Margem superior maior e alinhado à esquerda */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .trust-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Alinhado à esquerda com 10% de margem */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        .issue-section {
-            position: absolute;
-            bottom: -80%;
-            /* Increased spacing */
-            width: 100%;
-        }
-
-        .issue-title {
-            font-size: 2.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 120px 0 0 10%;
-            /* Large top margin and left aligned */
-            padding: 0;
-            line-height: 1.3;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
-            text-align: left;
-        }
-
-        .issue-description {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin: 20px 0 0 10%;
-            /* Left aligned with 10% margin */
-            padding: 0;
-            max-width: 600px;
-            line-height: 1.6;
-            text-align: left;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .issue-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .issue-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .trust-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .trust-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-time-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-time-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-method-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-method-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .withdrawal-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .pricing-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .pricing-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-
-            .earn-title,
-            .earn-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .earn-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .faq-title {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-text-3 {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image-3 {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-text-2 {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image-2 {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-text {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .benefits-image {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-
-            /* [Manter todos os estilos dark mode anteriores] */
-            .how-it-works-text-3 {
-                color: var(--text-dark);
-            }
-        }
-
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -965,18 +317,24 @@
 
             h1,
             .subtitle,
-            .how-it-works h2 {
+            .features-section h2 {
                 color: var(--text-dark);
             }
 
-            .how-it-works-image,
-            .how-it-works-image-2,
-            .how-it-works-image-3 {
+            .hamburger-icon {
+                background-color: var(--text-dark);
+            }
+
+            .mobile-menu {
+                background-color: var(--bg-dark);
                 box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
             }
 
-            .how-it-works-text,
-            .how-it-works-text-2 {
+            .feature-image {
+                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+            }
+
+            .feature-text {
                 color: var(--text-dark);
             }
         }
@@ -1017,63 +375,58 @@
     <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
         alt="Logo Ganhe Social">
 
-    <div class="how-it-works">
+    <div class="features-section">
         <h2>Como funciona o Ganhe Social?</h2>
-        <img class="how-it-works-image"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743307155886.png"
-            alt="Explicação do Ganhe Social">
-        <p class="how-it-works-text">Depois de criar uma conta na plataforma, adicione um perfil que deseja, vá em
-            Realizar Ações e siga os perfis ou curta as publicações disponíveis.</p>
-        <img class="how-it-works-image-2"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/Point%20Blur_Mar302025_005028.png"
-            alt="Demonstração do Ganhe Social">
-        <p class="how-it-works-text-2">A cada ação que você realizar com suas redes sociais, você será recompensado com
-            um valor em R$.</p>
-        <img class="how-it-works-image-3"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743309869152.png"
-            alt="Recompensas do Ganhe Social">
-        <p class="how-it-works-text-3">Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor
-            por PIX. Os pagamentos são instantâneos!</p>
-    </div>
-    <div class="benefits-section">
-        <h2 class="benefits-title">Quais as vantagens de utilizar o Ganhe Social?</h2>
-        <img class="benefits-image"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743358293720.png"
-            alt="Vantagens do Ganhe Social">
-        <p class="benefits-text">Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e o
-            histórico de cada perfil.</p>
-        <img class="benefits-image-2"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743360125005.png"
-            alt="Histórico do Ganhe Social">
-        <p class="benefits-text-2">Não há limites de ganhos, você poderá realizar quantas ações que quiser!</p>
-        <img class="benefits-image-3"
-            src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743361279221.png"
-            alt="Ganhos ilimitados no Ganhe Social">
-        <p class="benefits-text-3">Suporte 24/7 e super rápido para atender as suas necessidades, estamos sempre
-            disponíveis!</p>
-        <div class="faq-section">
-            <h2 class="faq-title">Dúvidas Frequentes</h2>
-            <div class="earn-section">
-                <h2 class="earn-title">Como posso ganhar dinheiro com o Ganhe Social?</h2>
-                <p class="earn-description">Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois que
-                    realizar o cadastro na plataforma, vá até a sessão de Adicionar Conta localizada no painel, escolha
-                    a
-                    rede social que deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão de Realizar
-                    Ações,
-                    escolha a rede social de preferência e selecione a conta que irá realizar as ações. A cada ação que
-                    realizar, você será pago por valores que estão disponíveis em nosso mercado.</p>
-            </div>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743307155886.png"
+                alt="Explicação do Ganhe Social">
+            <p class="feature-text">Depois de criar uma conta na plataforma, adicione um perfil que deseja, vá em
+                Realizar Ações e siga os perfis ou curta as publicações disponíveis.</p>
         </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/Point%20Blur_Mar302025_005028.png"
+                alt="Demonstração do Ganhe Social">
+            <p class="feature-text">A cada ação que você realizar com suas redes sociais, você será recompensado com
+                um valor em R$.</p>
+        </div>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743309869152.png"
+                alt="Recompensas do Ganhe Social">
+            <p class="feature-text">Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor
+                por PIX. Os pagamentos são instantâneos!</p>
+        </div>
+
+        <h2>Quais as vantagens de utilizar o Ganhe Social?</h2>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743358293720.png"
+                alt="Vantagens do Ganhe Social">
+            <p class="feature-text">Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e
+                o
+                histórico de cada perfil.</p>
+        </div>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743360125005.png"
+                alt="Histórico do Ganhe Social">
+            <p class="feature-text">Não há limites de ganhos, você poderá realizar quantas ações que quiser!</p>
+        </div>
+
+        <div class="feature-item">
+            <img class="feature-image"
+                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743361279221.png"
+                alt="Ganhos ilimitados no Ganhe Social">
+            <p class="feature-text">Suporte 24/7 e super rápido para atender as suas necessidades, estamos sempre
+                disponíveis!</p>
+        </div>
     </div>
 
     <script>
