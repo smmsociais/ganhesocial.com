@@ -43,11 +43,11 @@ export default async function handler(req, res) {
             return res.json(user.contas);
         }
 
-        if (req.method === "DELETE") {
-let { id } = req.query;
-if (!id) {
-    id = req.url.split("/").pop(); // Captura o ID do final da URL
-}
+if (req.method === "DELETE") {
+    let { id } = req.query;
+    if (!id) {
+        id = req.url.split("/").pop(); // Captura o ID do final da URL
+    }
 
             if (!id) {
                 return res.status(400).json({ error: "ID da conta não fornecido." });
