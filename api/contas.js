@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         }
 
         if (req.method === "DELETE") {
-const { id } = req.query;
+let { id } = req.query;
 if (!id) {
     id = req.url.split("/").pop(); // Captura o ID do final da URL
 }
