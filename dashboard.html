@@ -327,34 +327,38 @@
             document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
         }
 
-        function carregarHistorico() {
-            // Exemplo de dados - ordenados do mais recente para o mais antigo
-            const historico = [
-                { data: "Hoje", valor: parseFloat(localStorage.getItem("ganhoHoje")) || 0 },
-                { data: "05/06/2023", valor: 320.60 },
-                { data: "04/06/2023", valor: 95.30 },
-                { data: "03/06/2023", valor: 180.75 },
-                { data: "02/06/2023", valor: 230.00 },
-                { data: "01/06/2023", valor: 150.50 }
-            ];
+function carregarHistorico() {
+    const tbody = document.querySelector("#historicoTabela tbody");
+    tbody.innerHTML = "";
 
-            const tbody = document.querySelector("#historicoTabela tbody");
-            tbody.innerHTML = "";
+    const historico = [];
+    const hoje = new Date();
 
-            historico.forEach(item => {
-                const row = document.createElement("tr");
+    for (let i = 0; i < 30; i++) {
+        const data = new Date();
+        data.setDate(hoje.getDate() - i);
+        const dataFormatada = data.toLocaleDateString("pt-BR");
 
-                const cellData = document.createElement("td");
-                cellData.textContent = item.data;
-                row.appendChild(cellData);
+        // Simulando valores ou puxando do localStorage
+        const valor = parseFloat(localStorage.getItem(`ganho_${dataFormatada}`)) || (Math.random() * 100).toFixed(2);
 
-                const cellValor = document.createElement("td");
-                cellValor.textContent = item.valor.toFixed(2);
-                row.appendChild(cellValor);
+        historico.push({ data: dataFormatada, valor: parseFloat(valor) });
+    }
 
-                tbody.appendChild(row);
-            });
-        }
+    historico.forEach(item => {
+        const row = document.createElement("tr");
+
+        const cellData = document.createElement("td");
+        cellData.textContent = item.data;
+        row.appendChild(cellData);
+
+        const cellValor = document.createElement("td");
+        cellValor.textContent = item.valor.toFixed(2);
+        row.appendChild(cellValor);
+
+        tbody.appendChild(row);
+    });
+}
 
         function goToDashboard() {
             window.location.href = "dashboard.html";
