@@ -48,6 +48,26 @@ export default async function handler(req, res) {
             return res.json(user.contas);
         }
 
+if (req.method === "DELETE") {
+    const { id } = req.query;
+
+    if (!id) {
+        return res.status(400).json({ error: "ID da conta não fornecido." });
+    }
+
+    // Remover conta do array do usuário
+    const contaIndex = user.contas.findIndex(conta => conta.id_conta === id);
+
+    if (contaIndex === -1) {
+        return res.status(404).json({ error: "Conta não encontrada." });
+    }
+
+    user.contas.splice(contaIndex, 1);
+    await user.save();
+
+    return res.status(200).json({ message: "Conta desativada com sucesso." });
+}        
+
     } catch (error) {
         console.error("❌ Erro:", error);
         return res.status(500).json({ error: "Erro interno no servidor." });
