@@ -4,7 +4,7 @@
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/login", "destination": "/login.html" },
     { "source": "/signup", "destination": "/signup.html" },   
-    { "source": "realizar_acoes", "destination": "realizar_acoes.html" },
+    { "source": "realizar_acoes", "destination": "/realizar_acoes.html" },
     { "source": "/adicionar_conta", "destination": "/adicionar_conta.html" },
     { "source": "/adicionar_conta_tiktok", "destination": "/adicionar_conta_tiktok.html" },    
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
