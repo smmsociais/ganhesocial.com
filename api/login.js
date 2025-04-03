@@ -1,6 +1,6 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 const handler = async (req, res) => {
     if (req.method !== "POST") {
@@ -50,4 +50,3 @@ const handler = async (req, res) => {
 };
 
 export default handler;
-
