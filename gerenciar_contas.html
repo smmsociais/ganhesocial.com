@@ -111,7 +111,7 @@
     
 <script>
 async function loadAccounts() {
-    const token = localStorage.getItem("authToken"); // Busca o token armazenado
+    const token = localStorage.getItem("authToken");
 
     if (!token) {
         alert("Você precisa estar logado.");
@@ -135,9 +135,13 @@ async function loadAccounts() {
         }
 
         const accountList = document.getElementById("accountList");
-        accountList.innerHTML = ""; // Limpa a lista antes de adicionar as contas
+        accountList.innerHTML = ""; 
 
-        accounts.forEach((account) => {
+        if (!Array.isArray(accounts.contas)) {
+            throw new Error("Dados retornados não são uma lista de contas.");
+        }
+
+        accounts.contas.forEach((account) => { // ✅ Agora acessando corretamente a lista
             const li = document.createElement("li");
             li.className = "account-item";
             li.textContent = `${account.nomeConta}`;
