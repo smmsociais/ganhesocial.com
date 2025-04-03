@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
     throw new Error("❌ MONGO_URI não foi definida no ambiente!");
@@ -15,7 +15,7 @@ const connectDB = async () => {
     }
 
     try {
-        const db = await mongoose.connect(MONGODB_URI, {
+        const db = await mongoose.connect(MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             bufferCommands: false, // 🔹 Garante que os comandos não sejam armazenados antes da conexão
