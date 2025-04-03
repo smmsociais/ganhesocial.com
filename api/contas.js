@@ -11,17 +11,13 @@ connectDB();
 // Middleware de autenticação
 const authMiddleware = (req) => {
     const authHeader = req.headers.authorization;
-    console.log("Cabeçalho de Autorização recebido:", authHeader);
-
     if (!authHeader) throw new Error("Acesso negado, token não encontrado.");
 
-    // Extrai o token
     const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
-    
-    console.log("Token extraído:", token);
 
     try {
-        return jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        return decoded; // Retorna o usuário autenticado
     } catch (error) {
         console.error("Erro ao verificar token:", error);
         throw new Error("Token inválido ou expirado.");
