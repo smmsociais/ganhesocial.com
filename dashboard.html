@@ -321,11 +321,26 @@
             carregarHistorico();
         });
 
-        function carregarSaldos() {
-            const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-
-            document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+async function carregarSaldos() {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+        console.error("Token não encontrado.");
+        return;
+    }
+    try {
+        const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao buscar saldo.");
         }
+        const saldo = parseFloat(data.saldo);
+        // Atualiza localStorage se desejar manter o valor
+        localStorage.setItem("saldoDisponivel", saldo);
+        document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+    } catch (error) {
+        console.error("Erro ao carregar saldo:", error);
+    }
+}
 
 async function carregarHistorico() {
     const token = localStorage.getItem("authToken");
