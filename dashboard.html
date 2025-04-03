@@ -244,7 +244,6 @@
 
     <div class="saldo-container">
         <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
-        <p class="ganho-hoje" id="ganhoHoje">Ganho Hoje: R$ 0,00</p>
     </div>
 
     <div class="historico-container">
@@ -324,10 +323,8 @@
 
         function carregarSaldos() {
             const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-            const ganhoHoje = parseFloat(localStorage.getItem("ganhoHoje")) || 0;
 
             document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
-            document.getElementById("ganhoHoje").textContent = `Ganho Hoje: R$ ${ganhoHoje.toFixed(2)}`;
         }
 
         function carregarHistorico() {
