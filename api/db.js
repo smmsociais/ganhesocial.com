@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-    throw new Error("❌ MONGODB_URI não foi definida no ambiente!");
+if (!MONGO_URI) {
+    throw new Error("❌ MONGO_URI não foi definida no ambiente!");
 }
 
 let isConnected = false; // 🚀 Flag para evitar múltiplas conexões
