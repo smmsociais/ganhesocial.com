@@ -144,11 +144,10 @@ accounts.forEach((account) => {
     li.className = "account-item";
     li.innerHTML = `
         <span>${account.nomeConta}</span>
-        <button class="disable-button" onclick="disableAccount('${account.id_conta}', this)">Desativar</button>
+        <button class="disable-button" onclick="disableAccount('${account.nomeConta}', this)">Desativar</button>
     `;
     accountList.appendChild(li);
 });
-
 
     } catch (error) {
         console.error("Erro ao carregar contas:", error);
@@ -169,7 +168,10 @@ async function disableAccount(accountName, button) {
     }
 
     try {
-        const response = await fetch(`https://ganhesocial.com/api/contas/${encodeURIComponent(accountName)}`, { 
+        const url = `https://ganhesocial.com/api/contas?nomeConta=${encodeURIComponent(accountName)}`;
+        console.log("🔹 Enviando requisição DELETE para:", url);
+
+        const response = await fetch(url, { 
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -177,16 +179,20 @@ async function disableAccount(accountName, button) {
             }
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-            throw new Error("Erro ao desativar conta.");
+            throw new Error(result.error || "Erro ao desativar conta.");
         }
+
+        console.log("✅ Conta desativada:", result.message);
 
         // Remove a conta da interface
         const listItem = button.parentElement;
         listItem.remove();
         
     } catch (error) {
-        console.error("Erro ao desativar conta:", error);
+        console.error("❌ Erro ao desativar conta:", error);
         alert("Erro ao desativar conta. Tente novamente.");
     }
 }
