@@ -13,7 +13,8 @@ const authMiddleware = (req) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) throw new Error("Acesso negado, token não encontrado.");
 
-    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+ const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+ console.log("🔹 Token recebido no middleware:", token);
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
