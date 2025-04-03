@@ -329,7 +329,6 @@
 
 async function carregarHistorico() {
     const token = localStorage.getItem("authToken");
-
     if (!token) {
         console.error("Token não encontrado.");
         return;
@@ -338,7 +337,6 @@ async function carregarHistorico() {
     try {
         const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
         const data = await response.json();
-
         if (!response.ok) {
             throw new Error(data.error || "Erro ao carregar histórico.");
         }
@@ -346,33 +344,48 @@ async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Removendo a hora para evitar erros de fuso horário
+        // Define a data de hoje sem horário para padronização
+        const hojeObj = new Date();
+        hojeObj.setHours(0, 0, 0, 0);
+        const hojeISO = hojeObj.toISOString().split("T")[0];
 
-        const historicoCorrigido = data.historico
-            .map(item => {
-                let dataItem = new Date(item.data);
-                dataItem.setHours(0, 0, 0, 0); // Padronizando a data
+        // Mapeia os dados recebidos padronizando a data
+        let historico = data.historico.map(item => {
+            let dataItem = new Date(item.data);
+            dataItem.setHours(0, 0, 0, 0);
+            return {
+                data: dataItem,
+                valor: parseFloat(item.valor.toFixed(2))
+            };
+        });
 
-                return {
-                    data: dataItem,
-                    valor: parseFloat(item.valor.toFixed(2))
-                };
-            })
-            .filter(item => {
-                const umMesAtras = new Date();
-                umMesAtras.setDate(hoje.getDate() - 29); // Pega os últimos 30 dias (incluindo hoje)
-                umMesAtras.setHours(0, 0, 0, 0);
+        // Filtra para pegar apenas os registros dos últimos 30 dias
+        const limiteInferior = new Date(hojeObj);
+        limiteInferior.setDate(hojeObj.getDate() - 29);
+        historico = historico.filter(item => {
+            return item.data >= limiteInferior && item.data <= hojeObj;
+        });
 
-                return item.data >= umMesAtras && item.data <= hoje;
-            })
-            .sort((a, b) => b.data - a.data); // Ordenando do mais recente para o mais antigo
+        // Verifica se há registro para hoje; se não, insere-o
+        const temHoje = historico.some(item => item.data.toISOString().split("T")[0] === hojeISO);
+        if (!temHoje) {
+            // Obtém o ganho de hoje do localStorage ou define 0, conforme sua lógica
+            const ganhoHoje = parseFloat(localStorage.getItem("ganhoHoje")) || 0;
+            historico.push({ data: hojeObj, valor: ganhoHoje });
+        }
 
-        historicoCorrigido.forEach(item => {
+        // Ordena do mais recente (hoje) para o mais antigo
+        historico.sort((a, b) => b.data - a.data);
+
+        // Preenche a tabela
+        historico.forEach(item => {
             const row = document.createElement("tr");
 
             const cellData = document.createElement("td");
-            cellData.textContent = (item.data.getTime() === hoje.getTime()) ? "Hoje" : item.data.toLocaleDateString("pt-BR");
+            // Se a data for hoje, exibe "Hoje"
+            cellData.textContent = (item.data.toISOString().split("T")[0] === hojeISO) 
+                ? "Hoje" 
+                : item.data.toLocaleDateString("pt-BR");
             row.appendChild(cellData);
 
             const cellValor = document.createElement("td");
