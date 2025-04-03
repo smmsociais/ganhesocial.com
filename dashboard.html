@@ -346,11 +346,18 @@ async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        data.historico.forEach(item => {
+        const hoje = new Date().toISOString().split("T")[0]; // Data de hoje no formato YYYY-MM-DD
+
+        data.historico.forEach((item, index) => {
             const row = document.createElement("tr");
 
             const cellData = document.createElement("td");
-            cellData.textContent = new Date(item.data).toLocaleDateString("pt-BR");
+            if (item.data === hoje) {
+                cellData.textContent = "Hoje";
+            } else {
+                const dataFormatada = new Date(item.data).toLocaleDateString("pt-BR");
+                cellData.textContent = dataFormatada;
+            }
             row.appendChild(cellData);
 
             const cellValor = document.createElement("td");
