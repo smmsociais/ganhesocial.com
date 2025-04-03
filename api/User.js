@@ -24,13 +24,14 @@ const ActionHistorySchema = new mongoose.Schema({
 
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
-    nome_usuario: { type: String, required: true },  // Agora 'nome' em vez de 'nome_usuario'
+    nome_usuario: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
     token: { type: String, required: true },
-    contas: [ContaSchema],  // Subdocumento de contas
-    historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]  // Relacionamento com ActionHistory
-}, { collection: 'usuarios' });
+    saldo: { type: Number, default: 0 },  // ✅ Adicione isso
+    contas: [ContaSchema],
+    historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]
+});
 
 // 🔹 Exportação dos modelos
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
