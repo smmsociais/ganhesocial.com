@@ -321,7 +321,13 @@
             carregarHistorico();
         });
 
-    async function carregarHistorico() {
+        function carregarSaldos() {
+            const saldo = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+
+            document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+        }
+
+        async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
@@ -371,11 +377,6 @@
             tbody.appendChild(row);
         });
     }
-        
-    } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-    }
-}
 
         function goToDashboard() {
             window.location.href = "dashboard.html";
