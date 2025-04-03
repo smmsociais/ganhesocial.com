@@ -8,11 +8,6 @@ export default async function handler(req, res) {
     try {
         await connectDB(); // Conectar ao banco antes de qualquer lógica
 
-        if (req.method !== "POST" && req.method !== "GET") {
-            return res.status(405).json({ error: "Método não permitido." });
-        }
-
-        // ✅ Autenticação baseada no token armazenado no banco
         const authHeader = req.headers.authorization;
         if (!authHeader) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
 
@@ -48,28 +43,34 @@ export default async function handler(req, res) {
             return res.json(user.contas);
         }
 
-if (req.method === "DELETE") {
-    const { id } = req.query;
+        if (req.method === "DELETE") {
+const { id } = req.query;
+if (!id) {
+    id = req.url.split("/").pop(); // Captura o ID do final da URL
+}
 
-    if (!id) {
-        return res.status(400).json({ error: "ID da conta não fornecido." });
-    }
+            if (!id) {
+                return res.status(400).json({ error: "ID da conta não fornecido." });
+            }
 
-    // Remover conta do array do usuário
-    const contaIndex = user.contas.findIndex(conta => conta.id_conta === id);
+            // Remover conta do array do usuário
+            const contaIndex = user.contas.findIndex(conta => conta.id_conta === id);
 
-    if (contaIndex === -1) {
-        return res.status(404).json({ error: "Conta não encontrada." });
-    }
+            if (contaIndex === -1) {
+                return res.status(404).json({ error: "Conta não encontrada." });
+            }
 
-    user.contas.splice(contaIndex, 1);
-    await user.save();
+            user.contas.splice(contaIndex, 1);
+            await user.save();
 
-    return res.status(200).json({ message: "Conta desativada com sucesso." });
-}        
+            return res.status(200).json({ message: "Conta desativada com sucesso." });
+        }
+
+        return res.status(405).json({ error: "Método não permitido." });
 
     } catch (error) {
         console.error("❌ Erro:", error);
         return res.status(500).json({ error: "Erro interno no servidor." });
     }
 }
+
