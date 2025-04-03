@@ -120,6 +120,9 @@ async function addAccount() {
         return;
     }
 
+    // 🔹 Gerar um ID aleatório para a conta (caso não seja obrigatório pela API, pode ser removido depois)
+    const idConta = `tiktok_${Date.now()}`; 
+
     try {
         const response = await fetch("https://ganhesocial.com/api/contas", {
             method: "POST",
@@ -127,7 +130,10 @@ async function addAccount() {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ nomeConta: accountName })
+            body: JSON.stringify({ 
+                nomeConta: accountName,
+                id_conta: idConta // ✅ Agora estamos enviando id_conta também
+            })
         });
 
         const data = await response.json();
