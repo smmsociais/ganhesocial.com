@@ -156,7 +156,7 @@ accounts.forEach((account) => {
     }
 }
 
-async function disableAccount(accountId, button) {
+async function disableAccount(accountName, button) {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
@@ -164,12 +164,12 @@ async function disableAccount(accountId, button) {
         return;
     }
 
-    if (!confirm("Tem certeza que deseja desativar esta conta?")) {
+    if (!confirm(`Tem certeza que deseja desativar a conta "${accountName}"?`)) {
         return;
     }
 
     try {
-        const response = await fetch(`https://ganhesocial.com/api/contas/${accountId}`, { // 🛠️ ID agora está no caminho da URL
+        const response = await fetch(`https://ganhesocial.com/api/contas/${encodeURIComponent(accountName)}`, { 
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
