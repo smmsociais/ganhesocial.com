@@ -1,28 +1,28 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGO_URI) {
-    throw new Error("❌ MONGO_URI não foi definida no ambiente!");
+if (!MONGODB_URI) {
+    throw new Error("❌ MONGODB_URI não foi definida no ambiente!");
 }
 
-let isConnected = false; // 🚀 Flag para evitar múltiplas conexões
+let connection = null; // Variável global para armazenar a conexão
 
 const connectDB = async () => {
-    if (isConnected) {
+    if (connection) {
         console.log("✅ Já conectado ao MongoDB!");
-        return;
+        return connection;
     }
 
     try {
-        const db = await mongoose.connect(MONGO_URI, {
+        connection = await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            bufferCommands: false, // 🔹 Garante que os comandos não sejam armazenados antes da conexão
+            bufferCommands: false, // Evita armazenamento de comandos antes da conexão
         });
 
-        isConnected = db.connections[0].readyState === 1; // ✅ Verifica conexão ativa
         console.log("🟢 Conectado ao MongoDB!");
+        return connection;
     } catch (error) {
         console.error("❌ Erro ao conectar ao MongoDB:", error);
         throw new Error("Erro ao conectar ao banco de dados");
