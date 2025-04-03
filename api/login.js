@@ -1,6 +1,6 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
 const handler = async (req, res) => {
     if (req.method !== "POST") {
@@ -20,24 +20,7 @@ const handler = async (req, res) => {
     }
 
     try {
-        // 🔍 Verificando o reCAPTCHA com o Google
-        const secretKey = process.env.RECAPTCHA_SECRET;
-        const recaptchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ secret: secretKey, response: recaptcha })
-        });
-
-        const recaptchaData = await recaptchaResponse.json();
-
-        if (!recaptchaData.success) {
-            console.log("🔴 Falha na validação do reCAPTCHA!", recaptchaData["error-codes"]);
-            return res.status(400).json({ error: "Falha na validação do reCAPTCHA!", details: recaptchaData["error-codes"] });
-        }
-
-        console.log("🟢 reCAPTCHA validado com sucesso!");
-
-        // 🔍 Buscando usuário no banco de dados...
+        // 🔍 Buscar usuário no banco
         const usuario = await User.findOne({ email });
 
         if (!usuario) {
@@ -45,25 +28,19 @@ const handler = async (req, res) => {
             return res.status(400).json({ error: "Usuário não encontrado!" });
         }
 
-        // 🔓 Comparação direta da senha (SEM HASH)
         if (senha !== usuario.senha) {
             console.log("🔴 Senha incorreta!");
             return res.status(400).json({ error: "Senha incorreta!" });
         }
 
-        // 📌 Gerar/reutilizar token (SEM EXPIRAÇÃO)
-        let token = usuario.token;
-        if (!token) {
-            token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
-            usuario.token = token;
-            await usuario.save({ validateBeforeSave: false });
+        // 🔹 Gerar um novo token JWT válido
+        const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { algorithm: "HS256" });
 
-            console.log("🟢 Novo token gerado e salvo.");
-        } else {
-            console.log("🟢 Token já existente mantido.");
-        }
-        
-        console.log("🔹 Token gerado para usuário:", token);
+        console.log("🟢 Novo token JWT gerado:", token);
+
+        usuario.token = token;
+        await usuario.save({ validateBeforeSave: false });
+
         res.json({ message: "Login bem-sucedido!", token });
 
     } catch (error) {
@@ -73,3 +50,4 @@ const handler = async (req, res) => {
 };
 
 export default handler;
+
