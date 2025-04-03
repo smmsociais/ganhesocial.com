@@ -24,8 +24,8 @@ export default async function handler(req, res) {
             // Criar conta
             const { nomeConta, id_conta, id_tiktok } = req.body;
 
-            if (!nomeConta || !id_conta) {
-                return res.status(400).json({ error: "Nome da conta e id_conta são obrigatórios." });
+            if (!nomeConta) {
+                return res.status(400).json({ error: "Nome da conta é obrigatório." });
             }
 
             if (user.contas.some(conta => conta.nomeConta === nomeConta)) {
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
             user.contas.push({ nomeConta, id_conta, id_tiktok });
             await user.save();
 
-            return res.status(201).json({ message: "Conta adicionada com sucesso!", id_conta });
+            return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
         }
 
         if (req.method === "GET") {
@@ -43,18 +43,18 @@ export default async function handler(req, res) {
             return res.json(user.contas);
         }
 
-if (req.method === "DELETE") {
-    let { id } = req.query;
-    if (!id) {
-        id = req.url.split("/").pop(); // Captura o ID do final da URL
-    }
-
+        if (req.method === "DELETE") {
+            let { id } = req.query;
             if (!id) {
-                return res.status(400).json({ error: "ID da conta não fornecido." });
+                id = req.url.split("/").pop(); // Captura o nomeConta do final da URL
             }
 
-            // Remover conta do array do usuário
-            const contaIndex = user.contas.findIndex(conta => conta.id_conta === id);
+            if (!id) {
+                return res.status(400).json({ error: "Nome da conta não fornecido." });
+            }
+
+            // Remover conta do array do usuário pelo nomeConta
+            const contaIndex = user.contas.findIndex(conta => conta.nomeConta === id);
 
             if (contaIndex === -1) {
                 return res.status(404).json({ error: "Conta não encontrada." });
@@ -73,4 +73,3 @@ if (req.method === "DELETE") {
         return res.status(500).json({ error: "Erro interno no servidor." });
     }
 }
-
