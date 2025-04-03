@@ -9,14 +9,10 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    const { email, senha, recaptcha } = req.body;
+    const { email, senha} = req.body;
 
     if (!email || !senha) {
         return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
-    }
-
-    if (!recaptcha) {
-        return res.status(400).json({ error: "reCAPTCHA é obrigatório!" });
     }
 
     try {
