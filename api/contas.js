@@ -46,7 +46,7 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: "Já existe uma conta com este nome." });
             }
 
-            user.contas.push({ nomeConta, id_conta, id_tiktok, s, status: "Pendente" });
+            user.contas.push({ nomeConta, id_conta, id_tiktok });
             await user.save();
 
             return res.status(201).json({ message: "Conta adicionada com sucesso!", id_conta });
