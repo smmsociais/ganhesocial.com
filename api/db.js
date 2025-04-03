@@ -1,24 +1,32 @@
 import mongoose from "mongoose";
 
-let isConnected = false;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-async function connectDB() {
-  if (isConnected) return;
-
-  try {
-    const db = await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      bufferCommands: false,
-    });
-
-    isConnected = db.connections[0].readyState === 1;
-    console.log("🔥 Conectado ao MongoDB!");
-  } catch (error) {
-    console.error("❌ Erro ao conectar ao MongoDB:", error);
-    throw new Error("Erro ao conectar ao MongoDB");
-  }
+if (!MONGODB_URI) {
+    throw new Error("❌ MONGODB_URI não foi definida no ambiente!");
 }
 
-export default connectDB;  // Verifique se o export está correto!
+let isConnected = false; // 🚀 Flag para evitar múltiplas conexões
+
+const connectDB = async () => {
+    if (isConnected) {
+        console.log("✅ Já conectado ao MongoDB!");
+        return;
+    }
+
+    try {
+        const db = await mongoose.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            bufferCommands: false, // 🔹 Garante que os comandos não sejam armazenados antes da conexão
+        });
+
+        isConnected = db.connections[0].readyState === 1; // ✅ Verifica conexão ativa
+        console.log("🟢 Conectado ao MongoDB!");
+    } catch (error) {
+        console.error("❌ Erro ao conectar ao MongoDB:", error);
+        throw new Error("Erro ao conectar ao banco de dados");
+    }
+};
+
+export default connectDB;
