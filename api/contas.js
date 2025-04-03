@@ -44,19 +44,15 @@ export default async function handler(req, res) {
         }
 
 if (req.method === "DELETE") {
-    let { id } = req.query;
-    if (!id) {
-        id = decodeURIComponent(req.url.split("/").pop()); // Captura corretamente o nomeConta
-    }
-
-    console.log("🔹 Nome da conta recebido para exclusão:", id);
-
-    if (!id) {
+    const { nomeConta } = req.query;
+    if (!nomeConta) {
         return res.status(400).json({ error: "Nome da conta não fornecido." });
     }
 
-    // Encontrar e remover conta pelo nomeConta
-    const contaIndex = user.contas.findIndex(conta => conta.nomeConta === id);
+    console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
+
+    // Remover conta do array do usuário pelo nomeConta
+    const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
 
     if (contaIndex === -1) {
         return res.status(404).json({ error: "Conta não encontrada." });
@@ -65,7 +61,7 @@ if (req.method === "DELETE") {
     user.contas.splice(contaIndex, 1);
     await user.save();
 
-    return res.status(200).json({ message: `Conta ${id} desativada com sucesso.` });
+    return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
 }
 
         return res.status(405).json({ error: "Método não permitido." });
