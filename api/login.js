@@ -9,12 +9,13 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    const { email, senha} = req.body;
+    const { email, senha } = req.body;
 
     if (!email || !senha) {
         return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
     }
 
+    try { // 🔹 Adicionado bloco try corretamente
         // 🔍 Buscando usuário no banco de dados...
         const usuario = await User.findOne({ email });
 
@@ -44,7 +45,7 @@ const handler = async (req, res) => {
         console.log("🔹 Token gerado para usuário:", token);
         res.json({ message: "Login bem-sucedido!", token });
 
-    } catch (error) {
+    } catch (error) { // 🔹 Catch agora está no lugar certo
         console.error("❌ Erro ao realizar login:", error);
         res.status(500).json({ error: "Erro ao realizar login" });
     }
