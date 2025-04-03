@@ -57,11 +57,13 @@ const handler = async (req, res) => {
             token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
             usuario.token = token;
             await usuario.save({ validateBeforeSave: false });
+
             console.log("🟢 Novo token gerado e salvo.");
         } else {
             console.log("🟢 Token já existente mantido.");
         }
-
+        
+        console.log("🔹 Token gerado para usuário:", token);
         res.json({ message: "Login bem-sucedido!", token });
 
     } catch (error) {
