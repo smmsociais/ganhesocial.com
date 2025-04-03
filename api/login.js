@@ -7,16 +7,16 @@ const handler = async (req, res) => {
         return res.status(405).json({ error: "Método não permitido" });
     }
 
-    await connectDB();
+    try {
+        await connectDB(); // Aguarda a conexão com o MongoDB
 
-    const { email, senha } = req.body;
+        const { email, senha } = req.body;
 
-    if (!email || !senha) {
-        return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
-    }
+        if (!email || !senha) {
+            return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
+        }
 
-    try { // 🔹 Adicionado bloco try corretamente
-        // 🔍 Buscando usuário no banco de dados...
+        console.log("🔍 Buscando usuário no banco de dados...");
         const usuario = await User.findOne({ email });
 
         if (!usuario) {
@@ -24,13 +24,11 @@ const handler = async (req, res) => {
             return res.status(400).json({ error: "Usuário não encontrado!" });
         }
 
-        // 🔓 Comparação direta da senha (SEM HASH)
         if (senha !== usuario.senha) {
             console.log("🔴 Senha incorreta!");
             return res.status(400).json({ error: "Senha incorreta!" });
         }
 
-        // 📌 Gerar/reutilizar token (SEM EXPIRAÇÃO)
         let token = usuario.token;
         if (!token) {
             token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
@@ -41,13 +39,13 @@ const handler = async (req, res) => {
         } else {
             console.log("🟢 Token já existente mantido.");
         }
-        
-        console.log("🔹 Token gerado para usuário:", token);
-        res.json({ message: "Login bem-sucedido!", token });
 
-    } catch (error) { // 🔹 Catch agora está no lugar certo
+        console.log("🔹 Token gerado para usuário:", token);
+        return res.json({ message: "Login bem-sucedido!", token });
+
+    } catch (error) {
         console.error("❌ Erro ao realizar login:", error);
-        res.status(500).json({ error: "Erro ao realizar login" });
+        return res.status(500).json({ error: "Erro ao realizar login" });
     }
 };
 
