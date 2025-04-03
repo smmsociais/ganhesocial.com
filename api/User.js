@@ -6,7 +6,6 @@ const ContaSchema = new mongoose.Schema({
     id_conta: { type: String, required: false },
     id_tiktok: { type: String },
     s: { type: String },
-    status: { type: String, default: "Pendente" },
 });
 
 // 🔹 Schema para Histórico de Ações
