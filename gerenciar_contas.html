@@ -137,16 +137,16 @@ async function loadAccounts() {
         const accountList = document.getElementById("accountList");
         accountList.innerHTML = ""; 
 
-        if (!Array.isArray(accounts.contas)) {
-            throw new Error("Dados retornados não são uma lista de contas.");
-        }
+if (!Array.isArray(accounts)) {
+    throw new Error("Dados retornados não são uma lista de contas.");
+}
 
-        accounts.contas.forEach((account) => { // ✅ Agora acessando corretamente a lista
-            const li = document.createElement("li");
-            li.className = "account-item";
-            li.textContent = `${account.nomeConta}`;
-            accountList.appendChild(li);
-        });
+accounts.forEach((account) => { 
+    const li = document.createElement("li");
+    li.className = "account-item";
+    li.textContent = `${account.nomeConta}`;
+    accountList.appendChild(li);
+});
 
     } catch (error) {
         console.error("Erro ao carregar contas:", error);
