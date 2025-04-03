@@ -169,7 +169,7 @@ async function disableAccount(accountId, button) {
     }
 
     try {
-        const response = await fetch(`https://ganhesocial.com/api/contas?id=${accountId}`, {
+        const response = await fetch(`https://ganhesocial.com/api/contas/${accountId}`, { // 🛠️ ID agora está no caminho da URL
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
