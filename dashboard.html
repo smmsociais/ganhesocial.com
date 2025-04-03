@@ -327,47 +327,37 @@
             document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
         }
 
-        async function carregarHistorico() {
+async function carregarHistorico() {
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+        console.error("Token não encontrado.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao carregar histórico.");
+        }
+
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        const historico = [];
-        const hoje = new Date(); // Data atual (ex: 03/04/2025)
-        const hojeStr = hoje.toLocaleDateString("pt-BR");
+        const hoje = new Date().toISOString().split("T")[0]; // Data de hoje no formato YYYY-MM-DD
 
-        // Gerar entradas para os últimos 29 dias (incluindo hoje)
-        // Totalizando 29 entradas
-        for (let i = 0; i < 29; i++) {
-            let data = new Date(hoje);
-            data.setDate(data.getDate() - i);
-            // Recupera valor armazenado ou gera um valor aleatório
-            const ganhoKey = `ganho_${data.toLocaleDateString("pt-BR")}`;
-            const valorObtido = localStorage.getItem(ganhoKey);
-            const valor = valorObtido ? parseFloat(valorObtido) : parseFloat((Math.random() * 100).toFixed(2));
-
-            historico.push({ data: new Date(data), valor: valor });
-        }
-
-        // Adicionar entrada extra: exatamente um mês atrás
-        let dataMesAnterior = new Date(hoje);
-        dataMesAnterior.setMonth(dataMesAnterior.getMonth() - 1);
-        // Formata a data para garantir que seja exibida como desejado (ex: 03/03/2025)
-        const ganhoKeyMes = `ganho_${dataMesAnterior.toLocaleDateString("pt-BR")}`;
-        const valorObtidoMes = localStorage.getItem(ganhoKeyMes);
-        const valorMesAnterior = valorObtidoMes ? parseFloat(valorObtidoMes) : parseFloat((Math.random() * 100).toFixed(2));
-        historico.push({ data: new Date(dataMesAnterior), valor: valorMesAnterior });
-
-        // Ordenar os dados do mais recente para o mais antigo
-        historico.sort((a, b) => b.data - a.data);
-
-        // Preencher a tabela
-        historico.forEach(item => {
+        data.historico.forEach((item, index) => {
             const row = document.createElement("tr");
 
             const cellData = document.createElement("td");
-            const itemDateStr = item.data.toLocaleDateString("pt-BR");
-            // Se a data for a de hoje, exibe "Hoje"
-            cellData.textContent = (itemDateStr === hojeStr) ? "Hoje" : itemDateStr;
+            if (item.data === hoje) {
+                cellData.textContent = "Hoje";
+            } else {
+                const dataFormatada = new Date(item.data).toLocaleDateString("pt-BR");
+                cellData.textContent = dataFormatada;
+            }
             row.appendChild(cellData);
 
             const cellValor = document.createElement("td");
@@ -376,8 +366,10 @@
 
             tbody.appendChild(row);
         });
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
     }
-
+}
         function goToDashboard() {
             window.location.href = "dashboard.html";
         }
