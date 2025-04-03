@@ -346,18 +346,33 @@ async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        const hoje = new Date().toISOString().split("T")[0]; // Data de hoje no formato YYYY-MM-DD
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Removendo a hora para evitar erros de fuso horário
 
-        data.historico.forEach((item, index) => {
+        const historicoCorrigido = data.historico
+            .map(item => {
+                let dataItem = new Date(item.data);
+                dataItem.setHours(0, 0, 0, 0); // Padronizando a data
+
+                return {
+                    data: dataItem,
+                    valor: parseFloat(item.valor.toFixed(2))
+                };
+            })
+            .filter(item => {
+                const umMesAtras = new Date();
+                umMesAtras.setDate(hoje.getDate() - 29); // Pega os últimos 30 dias (incluindo hoje)
+                umMesAtras.setHours(0, 0, 0, 0);
+
+                return item.data >= umMesAtras && item.data <= hoje;
+            })
+            .sort((a, b) => b.data - a.data); // Ordenando do mais recente para o mais antigo
+
+        historicoCorrigido.forEach(item => {
             const row = document.createElement("tr");
 
             const cellData = document.createElement("td");
-            if (item.data === hoje) {
-                cellData.textContent = "Hoje";
-            } else {
-                const dataFormatada = new Date(item.data).toLocaleDateString("pt-BR");
-                cellData.textContent = dataFormatada;
-            }
+            cellData.textContent = (item.data.getTime() === hoje.getTime()) ? "Hoje" : item.data.toLocaleDateString("pt-BR");
             row.appendChild(cellData);
 
             const cellValor = document.createElement("td");
@@ -366,6 +381,7 @@ async function carregarHistorico() {
 
             tbody.appendChild(row);
         });
+
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
     }
