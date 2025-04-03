@@ -327,37 +327,41 @@
             document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
         }
 
-function carregarHistorico() {
-    const tbody = document.querySelector("#historicoTabela tbody");
-    tbody.innerHTML = "";
+async function carregarHistorico() {
+    const token = localStorage.getItem("authToken");
 
-    const historico = [];
-    const hoje = new Date();
-
-    for (let i = 0; i < 30; i++) {
-        const data = new Date();
-        data.setDate(hoje.getDate() - i);
-        const dataFormatada = data.toLocaleDateString("pt-BR");
-
-        // Simulando valores ou puxando do localStorage
-        const valor = parseFloat(localStorage.getItem(`ganho_${dataFormatada}`)) || (Math.random() * 100).toFixed(2);
-
-        historico.push({ data: dataFormatada, valor: parseFloat(valor) });
+    if (!token) {
+        console.error("Token não encontrado.");
+        return;
     }
 
-    historico.forEach(item => {
-        const row = document.createElement("tr");
+    try {
+        const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
+        const data = await response.json();
 
-        const cellData = document.createElement("td");
-        cellData.textContent = item.data;
-        row.appendChild(cellData);
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao carregar histórico.");
+        }
 
-        const cellValor = document.createElement("td");
-        cellValor.textContent = item.valor.toFixed(2);
-        row.appendChild(cellValor);
+        const tbody = document.querySelector("#historicoTabela tbody");
+        tbody.innerHTML = "";
 
-        tbody.appendChild(row);
-    });
+        data.historico.forEach(item => {
+            const row = document.createElement("tr");
+
+            const cellData = document.createElement("td");
+            cellData.textContent = new Date(item.data).toLocaleDateString("pt-BR");
+            row.appendChild(cellData);
+
+            const cellValor = document.createElement("td");
+            cellValor.textContent = item.valor.toFixed(2);
+            row.appendChild(cellValor);
+
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+    }
 }
 
         function goToDashboard() {
