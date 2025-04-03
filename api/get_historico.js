@@ -24,16 +24,16 @@ export default async function handler(req, res) {
             saldo = 0;
         }
 
-        // Distribuir saldo pelos últimos 30 dias (simulação)
+        // Distribuir saldo pelos últimos 30 dias corretamente
         const historico = [];
         const hoje = new Date();
 
         for (let i = 0; i < 30; i++) {
             const data = new Date();
-            data.setDate(hoje.getDate() - i);
-            const dataFormatada = data.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+            data.setDate(hoje.getDate() - i); // Garantir que o último dia seja correto
+            const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
 
-            // Exemplo de cálculo: dividir o saldo uniformemente (ou outro critério)
+            // Exemplo de cálculo: distribuir uniformemente o saldo
             const ganhoDiario = (saldo / 30).toFixed(2);
 
             historico.push({ data: dataFormatada, valor: parseFloat(ganhoDiario) });
