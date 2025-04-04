@@ -32,14 +32,14 @@ export default async function handler(req, res) {
         }
 
         // Buscar nome do usuário da conta (nomeConta) com base no id_conta
-        let nome_usuario = null;
-        if (id_conta) {
-            const contaEncontrada = user.contas.find(conta => conta.id_conta === id_conta);
-            if (contaEncontrada) {
-                nome_usuario = contaEncontrada.nomeConta;
-            }
-        }
+let nome_usuario = req.body.nome_usuario || null;
 
+if (!nome_usuario && id_conta) {
+    const contaEncontrada = user.contas.find(conta => conta.id_conta === id_conta);
+    if (contaEncontrada) {
+        nome_usuario = contaEncontrada.nomeConta;
+    }
+}
         // Calcular valor de confirmação
         const valor_confirmacao = quantidade_pontos / 1000;
 
