@@ -260,15 +260,15 @@ if (!accountFound) {
     }
 
 await salvarAcaoNoBanco({
-    nome_usuario: selectedAccount, // <- quem executou a ação
-    id_pedido: currentActionData.id_pedido,
-    id_conta: localStorage.getItem("id_conta"),
-    url_dir: currentActionData.url_dir,
-    unique_id_verificado: userId,
-    acao_validada: false,
-    valor_confirmacao: 0,
-    quantidade_pontos: currentActionData.quantidade_pontos,
-    tipo_acao: currentActionData.tipo_acao
+  nome_usuario: selectedAccount,
+  id_pedido: currentActionData.id_pedido,
+  id_conta: localStorage.getItem("id_conta"),
+  url_dir: currentActionData.url_dir,
+  unique_id_verificado: userId,
+  acao_validada: true,
+  valor_confirmacao: parseFloat(confirmData.valor),
+  quantidade_pontos: currentActionData.quantidade_pontos,
+  tipo_acao: currentActionData.tipo_acao
 });
 
     return;
