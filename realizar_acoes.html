@@ -345,19 +345,21 @@ if (!accountFound) {
             // Chama a função para salvar a ação no banco de dados
             async function salvarAcao() {
                 try {
-                    const response = await fetch("/api/salvar_acao", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-                        },
-                        body: JSON.stringify({
-                            nome_usuario: currentActionData.nome_usuario,
-                            acao_validada: true,
-                            valor_confirmacao: confirmData.valor,
-                            data: new Date().toISOString()
-                        })
-                    });
+await fetch("/api/salvar_acao", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+    },
+    body: JSON.stringify({
+        nome_usuario: currentActionData.nome_usuario,
+        quantidade_pontos: currentActionData.quantidade_pontos,  // 🔹 Adicionado
+        tipo_acao: currentActionData.tipo_acao,  // 🔹 Adicionado
+        acao_validada: false,
+        valor_confirmacao: 0,
+        data: new Date().toISOString()
+    })
+});
                     const data = await response.json();
                     console.log("Ação salva com sucesso:", data);
                 } catch (error) {
