@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     try {
         const response = await axios.get(userFollowingUrl, {
             headers: {
-                "x-rapidapi-key": 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
+                "x-rapidapi-key": '69fce242b9msh366bdb89ef2a97fp1a97cbjsnfb66a6f6bd68',
                 "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
             }
         });
