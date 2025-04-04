@@ -259,26 +259,17 @@ if (!accountFound) {
         console.error("Erro ao salvar ação localmente:", error);
     }
 
-    // Salva no banco de dados com acao_validada = false
-    try {
-        const response = await fetch("/api/salvar_acao", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-            },
-            body: JSON.stringify({
-                nome_usuario: currentActionData.nome_usuario,
-                acao_validada: false,
-                valor_confirmacao: 0,
-                data: new Date().toISOString()
-            })
-        });
-        const data = await response.json();
-        console.log("Ação falha salva com sucesso:", data);
-    } catch (error) {
-        console.error("Erro ao salvar ação falha:", error);
-    }
+await salvarAcaoNoBanco({
+    nome_usuario: currentActionData.nome_usuario,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    url_dir: currentActionData.url_dir,
+    unique_id_verificado: userId,
+    acao_validada: false,
+    valor_confirmacao: 0,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    tipo_acao: currentActionData.tipo_acao
+});
 
     return;
 }
