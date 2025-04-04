@@ -188,24 +188,35 @@ async function fetchAction() {
             document.getElementById("confirmButton").style.display = "block";
         }
 
- async function confirmAction() {
+        async function confirmAction() {
     const selectedAccount = document.getElementById("accountSelect").value;
     if (!selectedAccount) return;
 
     if (!currentActionData) {
+        console.error("Erro: Nenhuma ação carregada.");
         document.getElementById("statusMessage").textContent = "Erro: Nenhuma ação carregada.";
         return;
     }
 
+    console.log("currentActionData antes da confirmação:", currentActionData);
+    
     document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
-
+    
     try {
-        // Passo 1: Obter ID do usuário no TikTok
         const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
         const userInfoData = await response.json();
 
         if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
             throw new Error("Erro ao obter informações do usuário.");
+        }
+
+        const userId = userInfoData.data.user.id;
+        console.log("ID do usuário TikTok:", userId);
+
+        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
+    } catch (error) {
+        console.error("Erro ao obter informações do TikTok:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao obter informações do TikTok.";
         }
 
         const userId = userInfoData.data.user.id;
@@ -229,6 +240,7 @@ async function fetchAction() {
             document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
             return;
         }
+    }
 
         // Passo 3: Confirmar ação no backend
         document.getElementById("statusMessage").textContent = "Confirmando ação...";
@@ -271,12 +283,6 @@ async function fetchAction() {
         const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
         const novoSaldo = (saldoAtual + valorEmReais).toFixed(3);
         localStorage.setItem("saldoDisponivel", novoSaldo);
-
-    } catch (error) {
-        console.error("Erro:", error);
-        document.getElementById("statusMessage").textContent = error.message || "Erro na requisição.";
-    }
-}
 
 fetch("/api/salvar_acao", {
     method: "POST",
