@@ -12,22 +12,29 @@ export default async function handler(req, res) {
     if (!token) return res.status(401).json({ error: "Token ausente." });
 
     try {
-        // Verificar se o token pertence a um usuário cadastrado
+        // Encontrar o usuário pelo token
         const user = await User.findOne({ token });
         if (!user) {
             return res.status(403).json({ error: "Token inválido." });
         }
 
-        const { nome_usuario, acao_validada, valor_confirmacao, data } = req.body;
+        // Extrair os campos do corpo da requisição
+        const { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data } = req.body;
 
+        // Verificar se todos os campos obrigatórios estão presentes
+        if (!id_pedido || !id_conta || !url_dir || !unique_id_verificado) {
+            return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+        }
+
+        // Criar nova ação
         const novaAcao = new ActionHistory({
             user: user._id,
-            token,
-            nome_usuario,
-            id_pedido: "",  // Adicione os valores corretos se necessários
-            id_conta: "",  // Adicione os valores corretos se necessários
-            url_dir: "",  // Adicione os valores corretos se necessários
-            unique_id_verificado: "",  // Adicione os valores corretos se necessários
+            token: user.token,
+            nome_usuario: user.nome_usuario,
+            id_pedido,
+            id_conta,
+            url_dir,
+            unique_id_verificado,
             acao_validada,
             valor_confirmacao,
             data: new Date(data)
