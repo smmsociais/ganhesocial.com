@@ -1,5 +1,5 @@
 import connectDB from "./db.js";
-import { ActionHistory } from "./User.js";
+import { ActionHistory, User } from "./User.js";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -11,16 +11,23 @@ export default async function handler(req, res) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "Token ausente." });
 
-    // Verificar se o token corresponde a um armazenado (pode ser em um banco de dados ou variável de ambiente)
-    if (token !== process.env.VALID_TOKEN) {
-        return res.status(403).json({ error: "Token inválido." });
-    }
-
     try {
+        // Verificar se o token pertence a um usuário cadastrado
+        const user = await User.findOne({ token });
+        if (!user) {
+            return res.status(403).json({ error: "Token inválido." });
+        }
+
         const { nome_usuario, acao_validada, valor_confirmacao, data } = req.body;
 
         const novaAcao = new ActionHistory({
+            user: user._id,
+            token,
             nome_usuario,
+            id_pedido: "",  // Adicione os valores corretos se necessários
+            id_conta: "",  // Adicione os valores corretos se necessários
+            url_dir: "",  // Adicione os valores corretos se necessários
+            unique_id_verificado: "",  // Adicione os valores corretos se necessários
             acao_validada,
             valor_confirmacao,
             data: new Date(data)
