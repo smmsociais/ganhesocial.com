@@ -351,20 +351,15 @@ await fetch("/api/salvar_acao", {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`
   },
-  body: JSON.stringify({
+body: JSON.stringify({
     nome_usuario: currentActionData.nome_usuario,
-    id_pedido: currentActionData.id_pedido,
-    id_conta: currentActionData.id_conta || "", // opcional
-    url_dir: currentActionData.url_dir,
-    unique_id_verificado: idUsuario, // ou outro ID verificado que você tenha
     acao_validada: false,
     valor_confirmacao: 0,
     quantidade_pontos: Number(currentActionData.quantidade_pontos),
     tipo_acao: currentActionData.tipo_acao,
     data: new Date().toISOString()
-  })
+})
 });
-
                     const data = await response.json();
                     console.log("Ação salva com sucesso:", data);
                 } catch (error) {
@@ -412,6 +407,51 @@ await fetch("/api/salvar_acao", {
                 document.getElementById("statusMessage").textContent = "Erro ao carregar contas.";
             }
         }
+
+  async function salvarAcaoNoBanco({
+    nome_usuario,
+    id_pedido,
+    id_conta,
+    url_dir,
+    unique_id_verificado,
+    acao_validada,
+    valor_confirmacao,
+    quantidade_pontos,
+    tipo_acao
+}) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        console.error("Token de autenticação não encontrado.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/salvar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                nome_usuario,
+                id_pedido,
+                id_conta,
+                url_dir,
+                unique_id_verificado,
+                acao_validada,
+                valor_confirmacao,
+                quantidade_pontos: Number(quantidade_pontos),
+                tipo_acao,
+                data: new Date().toISOString()
+            })
+        });
+
+        const data = await response.json();
+        console.log("Ação salva no banco:", data);
+    } catch (error) {
+        console.error("Erro ao salvar ação no banco:", error);
+    }
+}      
     
         function goBack() {
             window.location.href = "/dashboard";
