@@ -303,9 +303,14 @@ async function confirmAction() {
     
             // Chama a função para salvar a ação no banco de dados
 async function salvarAcao() {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem('authToken');
     if (!token) {
-        console.error("Token não encontrado. Faça login novamente.");
+        console.error("Token de autenticação não encontrado.");
+        return;
+    }
+
+    if (!currentActionData) {
+        console.error("Nenhuma ação disponível para salvar.");
         return;
     }
 
