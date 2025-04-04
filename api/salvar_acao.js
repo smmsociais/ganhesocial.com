@@ -12,6 +12,9 @@ export default async function handler(req, res) {
     if (!token) return res.status(401).json({ error: "Token ausente." });
 
     try {
+        // Log dos dados recebidos para depuração
+        console.log("Dados recebidos:", req.body);
+
         // Encontrar o usuário pelo token
         const user = await User.findOne({ token });
         if (!user) {
@@ -19,11 +22,19 @@ export default async function handler(req, res) {
         }
 
         // Extrair os campos do corpo da requisição
-        const { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data, quantidade_pontos, tipo_acao } = req.body;
+        let { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data, quantidade_pontos, tipo_acao } = req.body;
 
-        // Verificar se `quantidade_pontos` e `tipo_acao` foram fornecidos
+        // Garantir que `quantidade_pontos` seja um número
+        if (quantidade_pontos) {
+            quantidade_pontos = Number(quantidade_pontos);
+            if (isNaN(quantidade_pontos)) {
+                return res.status(400).json({ error: "O campo quantidade_pontos deve ser um número válido." });
+            }
+        }
+
+        // Validação mínima
         if (!quantidade_pontos || !tipo_acao) {
-            return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios." });
+            return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios.", recebido: req.body });
         }
 
         // Criar objeto da ação com os campos mínimos
@@ -33,7 +44,7 @@ export default async function handler(req, res) {
             nome_usuario: user.nome_usuario,
             quantidade_pontos,
             tipo_acao,
-            data: new Date(data)
+            data: new Date(data || Date.now()) // Usar data atual se não enviada
         });
 
         // Apenas adicionar os outros campos se estiverem presentes
