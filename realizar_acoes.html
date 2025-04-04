@@ -317,6 +317,21 @@ async function loadAccounts() {
     }
 }
 
+ // Salvar no banco de dados
+await fetch("/api/salvar_acao", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+    },
+    body: JSON.stringify({
+        nome_usuario: currentActionData.nome_usuario,
+        acao_validada: true,
+        valor_confirmacao: confirmData.valor,
+        data: new Date().toISOString()
+    })
+});       
+
     function goBack() {
         window.location.href = "/dashboard";
     }
