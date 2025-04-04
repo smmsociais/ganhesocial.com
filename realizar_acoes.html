@@ -353,13 +353,14 @@ await fetch("/api/salvar_acao", {
     },
     body: JSON.stringify({
         nome_usuario: currentActionData.nome_usuario,
-        quantidade_pontos: currentActionData.quantidade_pontos,  // 🔹 Adicionado
-        tipo_acao: currentActionData.tipo_acao,  // 🔹 Adicionado
+        quantidade_pontos: Number(currentActionData.quantidade_pontos),  // 🔹 Converte para número
+        tipo_acao: currentActionData.tipo_acao,
         acao_validada: false,
         valor_confirmacao: 0,
         data: new Date().toISOString()
     })
 });
+
                     const data = await response.json();
                     console.log("Ação salva com sucesso:", data);
                 } catch (error) {
