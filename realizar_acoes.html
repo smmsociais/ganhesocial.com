@@ -240,10 +240,49 @@
     
                 const accountFound = followings.some(following => following.unique_id === actionUsername);
     
-                if (!accountFound) {
-                    document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
-                    return;
-                }
+if (!accountFound) {
+    document.getElementById("statusMessage").textContent = "Conta da ação não encontrada na lista de seguindo.";
+
+    // Salva no histórico local com status de falhou
+    try {
+        const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+        const newAction = {
+            tipo: currentActionData.tipo_acao,
+            usuario: currentActionData.nome_usuario,
+            pontos: currentActionData.quantidade_pontos,
+            status: "falhou",
+            data: new Date().toLocaleString()
+        };
+        actionHistory.push(newAction);
+        localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+    } catch (error) {
+        console.error("Erro ao salvar ação localmente:", error);
+    }
+
+    // Salva no banco de dados com acao_validada = false
+    try {
+        const response = await fetch("/api/salvar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                nome_usuario: currentActionData.nome_usuario,
+                acao_validada: false,
+                valor_confirmacao: 0,
+                data: new Date().toISOString()
+            })
+        });
+        const data = await response.json();
+        console.log("Ação falha salva com sucesso:", data);
+    } catch (error) {
+        console.error("Erro ao salvar ação falha:", error);
+    }
+
+    return;
+}
+
             } catch (error) {
                 console.error("Erro ao buscar lista de seguindo:", error);
                 document.getElementById("statusMessage").textContent = "Erro ao buscar lista de seguindo.";
