@@ -266,10 +266,15 @@ await salvarAcaoNoBanco({
   url_dir: currentActionData.url_dir,
   unique_id_verificado: userId,
   acao_validada: true,
-  valor_confirmacao: parseFloat(confirmData.valor),
+  valor_confirmacao: parseFloat(confirmData.valor), // ← agora está seguro
   quantidade_pontos: currentActionData.quantidade_pontos,
   tipo_acao: currentActionData.tipo_acao
 });
+
+// Notifica o usuário
+toast.success("Ação validada e salva com sucesso!");
+setIsVerifying(false);
+setShowConfirmModal(false);
 
     return;
 }
