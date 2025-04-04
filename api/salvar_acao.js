@@ -1,7 +1,6 @@
 // api/salvar_acao.js
 import connectDB from "./db.js";
 import { ActionHistory } from "./User.js";
-import jwt from "jsonwebtoken";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -11,16 +10,24 @@ export default async function handler(req, res) {
     await connectDB();
 
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Token ausente." });
+    if (!token) {
+        return res.status(401).json({ error: "Token ausente." });
+    }
+
+    // Lista de tokens válidos (pode ser movido para um banco de dados ou variáveis de ambiente)
+    const validTokens = [
+        "dcc3476d7f5ec04d52589bc67e2b7527f20ab9a4a239dc8b7df4fc649498feb1"
+    ];
+
+    if (!validTokens.includes(token)) {
+        return res.status(403).json({ error: "Token inválido." });
+    }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.id;
-
         const { nome_usuario, acao_validada, valor_confirmacao, data } = req.body;
 
         const novaAcao = new ActionHistory({
-            user: userId,
+            token, // Agora o token é o identificador da ação
             nome_usuario,
             acao_validada,
             valor_confirmacao,
