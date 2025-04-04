@@ -31,11 +31,11 @@ export default async function handler(req, res) {
                 return res.status(400).json({ error: "O campo quantidade_pontos deve ser um número válido." });
             }
         }
-
-        // Validação mínima
-        if (!quantidade_pontos || !tipo_acao) {
-            return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios.", recebido: req.body });
-        }
+        
+// Validação mínima
+if (quantidade_pontos === undefined || tipo_acao === undefined) {
+    return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios.", recebido: req.body });
+}
 
         // Criar objeto da ação com os campos mínimos
         const novaAcao = new ActionHistory({
