@@ -15,11 +15,11 @@ export default async function handler(req, res) {
         // Log dos dados recebidos para depuração
         console.log("Dados recebidos:", req.body);
 
-        // Encontrar o usuário pelo token
-        const user = await User.findOne({ token });
-        if (!user) {
-            return res.status(403).json({ error: "Token inválido." });
-        }
+// Encontrar o usuário pelo token
+const user = await User.findOne({ token });
+if (!user) {
+    return res.status(403).json({ error: "Token inválido." });
+}
 
         // Extrair os campos do corpo da requisição
         let { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data, quantidade_pontos, tipo_acao } = req.body;
@@ -37,25 +37,38 @@ if (quantidade_pontos === undefined || tipo_acao === undefined) {
     return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios.", recebido: req.body });
 }
 
-        // Criar objeto da ação com os campos mínimos
-        const novaAcao = new ActionHistory({
-            user: user._id,
-            token: user.token,
-            nome_usuario: user.nome_usuario,
-            quantidade_pontos,
-            tipo_acao,
-            data: new Date(data || Date.now()) // Usar data atual se não enviada
-        });
+  // Buscar nome do usuário da conta (nomeConta) com base no id_conta
+let nome_usuario = null;
+if (id_conta) {
+    const contaEncontrada = user.contas.find(conta => conta.id_conta === id_conta);
+    if (contaEncontrada) {
+        nome_usuario = contaEncontrada.nomeConta;
+    }
+}
 
-        // Apenas adicionar os outros campos se estiverem presentes
-        if (id_pedido) novaAcao.id_pedido = id_pedido;
-        if (id_conta) novaAcao.id_conta = id_conta;
-        if (url_dir) novaAcao.url_dir = url_dir;
-        if (unique_id_verificado) novaAcao.unique_id_verificado = unique_id_verificado;
-        if (acao_validada !== undefined) novaAcao.acao_validada = acao_validada;
-        if (valor_confirmacao !== undefined) novaAcao.valor_confirmacao = valor_confirmacao;
+if (!nome_usuario) {
+    return res.status(400).json({ error: "Conta TikTok não encontrada para este usuário.", id_conta });
+}      
 
-        await novaAcao.save();
+// Criar objeto da ação
+const novaAcao = new ActionHistory({
+    user: user._id,
+    token: user.token,
+    nome_usuario, // <- agora vem da conta TikTok
+    quantidade_pontos,
+    tipo_acao,
+    data: new Date(data || Date.now())
+});
+
+// Adicionar outros campos se presentes
+if (id_pedido) novaAcao.id_pedido = id_pedido;
+if (id_conta) novaAcao.id_conta = id_conta;
+if (url_dir) novaAcao.url_dir = url_dir;
+if (unique_id_verificado) novaAcao.unique_id_verificado = unique_id_verificado;
+if (acao_validada !== undefined) novaAcao.acao_validada = acao_validada;
+if (valor_confirmacao !== undefined) novaAcao.valor_confirmacao = valor_confirmacao;
+
+await novaAcao.save();
 
         res.status(200).json({ message: "Ação salva com sucesso." });
     } catch (error) {
