@@ -19,26 +19,30 @@ export default async function handler(req, res) {
         }
 
         // Extrair os campos do corpo da requisição
-        const { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data } = req.body;
+        const { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, valor_confirmacao, data, quantidade_pontos, tipo_acao } = req.body;
 
-        // Verificar se todos os campos obrigatórios estão presentes
-        if (!id_pedido || !id_conta || !url_dir || !unique_id_verificado) {
-            return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+        // Verificar se `quantidade_pontos` e `tipo_acao` foram fornecidos
+        if (!quantidade_pontos || !tipo_acao) {
+            return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios." });
         }
 
-        // Criar nova ação
+        // Criar objeto da ação com os campos mínimos
         const novaAcao = new ActionHistory({
             user: user._id,
             token: user.token,
             nome_usuario: user.nome_usuario,
-            id_pedido,
-            id_conta,
-            url_dir,
-            unique_id_verificado,
-            acao_validada,
-            valor_confirmacao,
+            quantidade_pontos,
+            tipo_acao,
             data: new Date(data)
         });
+
+        // Apenas adicionar os outros campos se estiverem presentes
+        if (id_pedido) novaAcao.id_pedido = id_pedido;
+        if (id_conta) novaAcao.id_conta = id_conta;
+        if (url_dir) novaAcao.url_dir = url_dir;
+        if (unique_id_verificado) novaAcao.unique_id_verificado = unique_id_verificado;
+        if (acao_validada !== undefined) novaAcao.acao_validada = acao_validada;
+        if (valor_confirmacao !== undefined) novaAcao.valor_confirmacao = valor_confirmacao;
 
         await novaAcao.save();
 
