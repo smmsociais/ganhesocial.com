@@ -346,19 +346,23 @@ if (!accountFound) {
             async function salvarAcao() {
                 try {
 await fetch("/api/salvar_acao", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-    },
-    body: JSON.stringify({
-        nome_usuario: currentActionData.nome_usuario,
-        quantidade_pontos: Number(currentActionData.quantidade_pontos),  // 🔹 Converte para número
-        tipo_acao: currentActionData.tipo_acao,
-        acao_validada: false,
-        valor_confirmacao: 0,
-        data: new Date().toISOString()
-    })
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    nome_usuario: currentActionData.nome_usuario,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: currentActionData.id_conta || "", // opcional
+    url_dir: currentActionData.url_dir,
+    unique_id_verificado: idUsuario, // ou outro ID verificado que você tenha
+    acao_validada: false,
+    valor_confirmacao: 0,
+    quantidade_pontos: Number(currentActionData.quantidade_pontos),
+    tipo_acao: currentActionData.tipo_acao,
+    data: new Date().toISOString()
+  })
 });
 
                     const data = await response.json();
