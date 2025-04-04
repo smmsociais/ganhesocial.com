@@ -1,4 +1,3 @@
-// api/salvar_acao.js
 import connectDB from "./db.js";
 import { ActionHistory } from "./User.js";
 
@@ -10,16 +9,10 @@ export default async function handler(req, res) {
     await connectDB();
 
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-        return res.status(401).json({ error: "Token ausente." });
-    }
+    if (!token) return res.status(401).json({ error: "Token ausente." });
 
-    // Lista de tokens válidos (pode ser movido para um banco de dados ou variáveis de ambiente)
-    const validTokens = [
-        "dcc3476d7f5ec04d52589bc67e2b7527f20ab9a4a239dc8b7df4fc649498feb1"
-    ];
-
-    if (!validTokens.includes(token)) {
+    // Verificar se o token corresponde a um armazenado (pode ser em um banco de dados ou variável de ambiente)
+    if (token !== process.env.VALID_TOKEN) {
         return res.status(403).json({ error: "Token inválido." });
     }
 
@@ -27,7 +20,6 @@ export default async function handler(req, res) {
         const { nome_usuario, acao_validada, valor_confirmacao, data } = req.body;
 
         const novaAcao = new ActionHistory({
-            token, // Agora o token é o identificador da ação
             nome_usuario,
             acao_validada,
             valor_confirmacao,
