@@ -284,21 +284,31 @@ async function fetchAction() {
         const novoSaldo = (saldoAtual + valorEmReais).toFixed(3);
         localStorage.setItem("saldoDisponivel", novoSaldo);
 
-fetch("/api/salvar_acao", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-    },
-    body: JSON.stringify({
-        nome_usuario: currentActionData.nome_usuario,
-        acao_validada: true,
-        valor_confirmacao: confirmData.valor,
-        data: new Date().toISOString()
-    })
-}).then(response => response.json())
-  .then(data => console.log("Ação salva com sucesso:", data))
-  .catch(error => console.error("Erro ao salvar ação:", error));
+        async function salvarAcao() {
+    try {
+        const response = await fetch("/api/salvar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                nome_usuario: currentActionData.nome_usuario,
+                acao_validada: true,
+                valor_confirmacao: confirmData.valor,
+                data: new Date().toISOString()
+            })
+        });
+
+        const data = await response.json();
+        console.log("Ação salva com sucesso:", data);
+    } catch (error) {
+        console.error("Erro ao salvar ação:", error);
+    }
+}
+
+// Chamando a função corretamente
+salvarAcao();
 
 async function loadAccounts() {
     try {
