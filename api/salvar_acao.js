@@ -46,15 +46,16 @@ if (id_conta) {
     }
 }
 
-if (!nome_usuario) {
-    return res.status(400).json({ error: "Conta TikTok não encontrada para este usuário.", id_conta });
-}      
+// Validação do nome_usuario vindo do body
+if (!req.body.nome_usuario) {
+    return res.status(400).json({ error: "O campo nome_usuario (da conta TikTok) é obrigatório." });
+}
 
-// Criar objeto da ação
+// Criar objeto da ação com os campos mínimos
 const novaAcao = new ActionHistory({
     user: user._id,
     token: user.token,
-    nome_usuario, // <- agora vem da conta TikTok
+    nome_usuario: req.body.nome_usuario, // ✅ Agora corretamente vindo do body
     quantidade_pontos,
     tipo_acao,
     data: new Date(data || Date.now())
