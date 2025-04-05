@@ -21,26 +21,27 @@ export default async function handler(req, res) {
 
         const ganhosMap = new Map();
 
-        // Corrigido: formata a data no padrão YYYY-MM-DD
         for (const ganho of usuario.ganhosPorDia || []) {
             const data = new Date(ganho.data);
+            // Ajusta para horário de Brasília (UTC-3)
+            data.setUTCHours(data.getUTCHours() - 3);
             const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
             ganhosMap.set(dataFormatada, ganho.valor);
         }
 
         const historico = [];
         const hoje = new Date();
+        hoje.setUTCHours(hoje.getUTCHours() - 3); // considera horário de Brasília
 
         for (let i = 0; i < 30; i++) {
-            const data = new Date();
-            data.setDate(hoje.getDate() - i);
-            const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
+            const data = new Date(hoje);
+            data.setDate(data.getDate() - i);
+            const dataFormatada = data.toISOString().split("T")[0];
 
             const valor = ganhosMap.get(dataFormatada) || 0;
             historico.push({ data: dataFormatada, valor });
         }
 
-        // Ordenar por data crescente
         historico.reverse();
 
         res.status(200).json({ historico });
