@@ -1,5 +1,37 @@
 import connectDB from "./db.js";
 import { ActionHistory, User } from "./User.js";
+import axios from "axios";
+
+function extrairUsername(url) {
+    const match = url.match(/@([\w\.\-_]+)/);
+    return match ? match[1] : null;
+}
+
+async function verificarAcaoValidada(nome_usuario, url_dir, req) {
+    const perfilAlvo = extrairUsername(url_dir);
+    if (!perfilAlvo || !nome_usuario) return false;
+
+    try {
+        const baseUrl = req.headers.host.startsWith("localhost")
+            ? `http://${req.headers.host}`
+            : `https://${req.headers.host}`;
+
+        // 1. Buscar user_id do usuário (quem executou a ação)
+        const infoRes = await axios.get(`${baseUrl}/api/user-info?unique_id=${nome_usuario}`);
+        const userId = infoRes.data?.user?.id;
+        if (!userId) return false;
+
+        // 2. Buscar lista de seguindo
+        const followingRes = await axios.get(`${baseUrl}/api/user-following?userId=${userId}`);
+        const followingList = followingRes.data?.followings || [];
+
+        // 3. Verificar se o perfil está na lista de seguindo
+        return followingList.some(user => user.unique_id === perfilAlvo);
+    } catch (err) {
+        console.warn("Erro na validação da ação:", err.message);
+        return false;
+    }
+}
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -19,9 +51,8 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Token inválido." });
         }
 
-        let { id_pedido, id_conta, url_dir, unique_id_verificado, acao_validada, data, quantidade_pontos, tipo_acao } = req.body;
+        let { id_pedido, id_conta, url_dir, unique_id_verificado, data, quantidade_pontos, tipo_acao } = req.body;
 
-        // Validação mínima
         if (quantidade_pontos === undefined || tipo_acao === undefined) {
             return res.status(400).json({ error: "Os campos quantidade_pontos e tipo_acao são obrigatórios.", recebido: req.body });
         }
@@ -31,19 +62,21 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "O campo quantidade_pontos deve ser um número válido." });
         }
 
-        // Buscar nome do usuário da conta (nomeConta) com base no id_conta
-let nome_usuario = req.body.nome_usuario || null;
+        // Buscar nome de usuário
+        let nome_usuario = req.body.nome_usuario || null;
+        if (!nome_usuario && id_conta) {
+            const contaEncontrada = user.contas.find(conta => conta.id_conta === id_conta);
+            if (contaEncontrada) {
+                nome_usuario = contaEncontrada.nomeConta;
+            }
+        }
 
-if (!nome_usuario && id_conta) {
-    const contaEncontrada = user.contas.find(conta => conta.id_conta === id_conta);
-    if (contaEncontrada) {
-        nome_usuario = contaEncontrada.nomeConta;
-    }
-}
+        // ✅ Validação automática da ação
+        const acao_validada = await verificarAcaoValidada(nome_usuario, url_dir, req);
+
         // Calcular valor de confirmação
         const valor_confirmacao = quantidade_pontos / 1000;
 
-        // Criar nova ação
         const novaAcao = new ActionHistory({
             user: user._id,
             token: user.token,
@@ -51,15 +84,14 @@ if (!nome_usuario && id_conta) {
             quantidade_pontos,
             tipo_acao,
             valor_confirmacao,
-            data: new Date(data || Date.now())
+            data: new Date(data || Date.now()),
+            acao_validada
         });
 
-        // Campos opcionais
         if (id_pedido) novaAcao.id_pedido = id_pedido;
         if (id_conta) novaAcao.id_conta = id_conta;
         if (url_dir) novaAcao.url_dir = url_dir;
         if (unique_id_verificado) novaAcao.unique_id_verificado = unique_id_verificado;
-        if (acao_validada !== undefined) novaAcao.acao_validada = acao_validada;
 
         await novaAcao.save();
 
