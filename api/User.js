@@ -31,13 +31,19 @@ const ActionHistorySchema = new mongoose.Schema({
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
     nome: { type: String, required: true },
-    nome_usuario: { type: String, required: true }, // <- ADICIONE ESTA LINHA
+    nome_usuario: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
     token: { type: String, required: true },
     saldo: { type: Number, default: 0 },
     contas: [ContaSchema],
-    historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }]
+    historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
+    ganhosPorDia: [ // ✅ ADICIONADO
+        {
+            data: { type: String }, // Ex: '2025-04-05'
+            valor: { type: Number, default: 0 }
+        }
+    ]
 });
 
 // 🔹 Exportação dos modelos
