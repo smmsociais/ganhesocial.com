@@ -307,9 +307,12 @@ if (accountFound) {
     const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
 
     if (ganhoHojeAnterior.data !== dataHoje) {
-        ganhoHojeAnterior.data = dataHoje;
-        ganhoHojeAnterior.valor = parseFloat(ganhoHojeAnterior.valor || 0) + valor;
-    }
+    ganhoHojeAnterior.data = dataHoje;
+    ganhoHojeAnterior.valor = valor;
+} else {
+    ganhoHojeAnterior.valor += valor;
+}
+
     localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
 }
 
