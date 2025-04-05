@@ -299,7 +299,7 @@ console.log("Encontrado?", accountFound);
 
     // SALVAR NO BANCO (sempre)
 await salvarAcaoNoBanco({
-    nome_usuario: currentActionData.nome_usuario,
+    nome_usuario: selectedAccount,
     id_pedido: currentActionData.id_pedido,
     id_conta: localStorage.getItem("id_conta"),
     url_dir: currentActionData.url_dir,
