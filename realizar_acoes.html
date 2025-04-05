@@ -185,7 +185,7 @@ if (valorBruto > 0.004) {
 }
 
 document.getElementById("points").textContent = `R$ ${valorFinal}`;
-    
+                    document.getElementById("confirmButton").style.display = "none";
                     document.getElementById("actionBox").style.display = "block";
                     currentActionData = data;
                 } else {
@@ -372,7 +372,6 @@ async function salvarAcao() {
         console.error("Erro ao salvar ação:", error);
     }
 }
-            salvarAcao();
     
         async function loadAccounts() {
             try {
@@ -438,7 +437,6 @@ const response = await fetch("/api/validar_acao", {
         "Authorization": `Bearer ${token}`
     },
 body: JSON.stringify({
-    token,
     nome_usuario, // 👈 adicione isto aqui!
     id_pedido,
     id_conta,
