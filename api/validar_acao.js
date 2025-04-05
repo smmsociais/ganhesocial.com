@@ -34,10 +34,7 @@ if (!nome_usuario && id_conta) {
     console.log("Buscando nome_usuario via id_conta:", id_conta);
     console.log("Contas do usuário:", usuario.contas);
 
-    const contaEncontrada = usuario.contas.find(conta => {
-        console.log("Comparando com:", conta.id_conta);
-        return conta.id_conta === id_conta;
-    });
+    const contaEncontrada = usuario.contas.find(conta => String(conta.id_conta) === String(id_conta));
 
     if (contaEncontrada) {
         console.log("Conta encontrada:", contaEncontrada);
@@ -46,6 +43,8 @@ if (!nome_usuario && id_conta) {
         console.warn("⚠️ Nenhuma conta correspondente foi encontrada.");
     }
 }
+
+console.log("🔍 nome_usuario final:", nome_usuario);
 
 if (!nome_usuario) {
     console.error("❌ nome_usuario indefinido! Enviando erro ao cliente.");
