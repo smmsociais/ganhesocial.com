@@ -317,7 +317,7 @@ await salvarAcaoNoBanco({
     url_dir: currentActionData.url_dir,
     unique_id_verificado: userId,
     acao_validada: accountFound, // ✅ true se achou, false se não
-    valor_confirmacao: accountFound ? parseFloat(confirmData.valor) : 0,
+    valor_confirmacao: parseFloat(confirmData.valor), // <- Valor sempre salvo, mesmo se não validou
     quantidade_pontos: currentActionData.quantidade_pontos,
     tipo_acao: currentActionData.tipo_acao
 });
