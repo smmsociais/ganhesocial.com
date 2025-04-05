@@ -26,7 +26,7 @@ export default async function handler(req, res) {
             saldo = 0;  // Definir saldo como 0 se não for um número válido
         }
 
-        res.status(200).json({ saldo: saldo.toFixed(2) });
+        res.status(200).json({ saldo }); // envia o número puro, ex: 0.005
     } catch (error) {
         console.error("Erro ao obter saldo:", error);
         res.status(500).json({ error: "Erro ao buscar saldo." });
