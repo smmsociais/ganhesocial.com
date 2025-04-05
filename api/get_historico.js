@@ -20,8 +20,12 @@ export default async function handler(req, res) {
         }
 
         const ganhosMap = new Map();
+
+        // Corrigido: formata a data no padrão YYYY-MM-DD
         for (const ganho of usuario.ganhosPorDia || []) {
-            ganhosMap.set(ganho.data, ganho.valor);
+            const data = new Date(ganho.data);
+            const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
+            ganhosMap.set(dataFormatada, ganho.valor);
         }
 
         const historico = [];
@@ -36,7 +40,7 @@ export default async function handler(req, res) {
             historico.push({ data: dataFormatada, valor });
         }
 
-        // Ordenar por data crescente (opcional)
+        // Ordenar por data crescente
         historico.reverse();
 
         res.status(200).json({ historico });
