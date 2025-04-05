@@ -27,7 +27,6 @@ export default async function handler(req, res) {
             return res.status(401).json({ message: "Usuário não autenticado" });
         }
 
-        // Obter nome_usuario com fallback via id_conta
         let nome_usuario = req.body.nome_usuario || null;
         if (!nome_usuario && id_conta) {
             const contaEncontrada = usuario.contas.find(conta => String(conta.id_conta) === String(id_conta));
@@ -44,13 +43,11 @@ export default async function handler(req, res) {
             usuario.nome_usuario = nome_usuario;
         }
 
-        // ➕ Aplica taxa de 0.001 se necessário
         let valorFinal = parseFloat(valor_confirmacao);
         if (valorFinal > 0.004) {
             valorFinal = Math.round((valorFinal - 0.001) * 1000) / 1000;
         }
 
-        // Cria o registro no histórico
         const novaAcao = new ActionHistory({
             user: usuario._id,
             token,
@@ -66,26 +63,19 @@ export default async function handler(req, res) {
         });
 
         await novaAcao.save();
-
-        // Adiciona no histórico do usuário
         usuario.historico_acoes.push(novaAcao._id);
 
-        // Atualiza saldo se ação foi validada
         if (acao_validada) {
             usuario.saldo += valorFinal;
         }
 
-        // ✅ Atualiza ganhosPorDia (usado pelo dashboard)
-const hoje = new Date();
-hoje.setHours(0, 0, 0, 0);
-
-// Corrige para timezone do Brasil (-3h)
-hoje.setUTCHours(3); // Isso faz com que ao salvar no banco UTC, a data seja o "dia certo" no Brasil
-
+        // Corrigir fuso horário para Brasil (UTC-3)
+        const hoje = new Date();
+        hoje.setUTCHours(3, 0, 0, 0); // Isso garante que ao salvar em UTC, o dia "brasileiro" esteja certo
 
         let entradaHoje = usuario.ganhosPorDia.find(entry => {
             const dataEntrada = new Date(entry.data);
-            dataEntrada.setHours(0, 0, 0, 0);
+            dataEntrada.setUTCHours(3, 0, 0, 0);
             return dataEntrada.getTime() === hoje.getTime();
         });
 
