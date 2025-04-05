@@ -174,13 +174,15 @@
                     document.getElementById("username").textContent = data.nome_usuario;
                     document.getElementById("actionUrl").href = data.url;
 
-                    const valorBruto = parseFloat(data.quantidade_pontos);
-    
+const valorBruto = parseFloat(data.quantidade_pontos);
+let valorFinal;
+
 if (valorBruto > 0.004) {
-    valorFinal = (valorBruto - 0.001).toFixed(3);
+    valorFinal = (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3);
 } else {
     valorFinal = valorBruto.toFixed(3);
 }
+
 document.getElementById("points").textContent = `R$ ${valorFinal}`;
     
                     document.getElementById("actionBox").style.display = "block";
