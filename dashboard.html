@@ -360,9 +360,11 @@ async function carregarHistorico() {
         tbody.innerHTML = "";
 
         // Define a data de hoje sem horário para padronização
-        const hojeObj = new Date();
-        hojeObj.setHours(0, 0, 0, 0);
-        const hojeISO = hojeObj.toISOString().split("T")[0];
+// Define "hoje" como UTC-3 (meia-noite no Brasil)
+const agora = new Date();
+const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000); // Ajusta 3h para trás
+hojeUtc3.setUTCHours(21, 0, 0, 0); // Define como "meia-noite" do Brasil em UTC
+const hojeISO = hojeUtc3.toISOString().split("T")[0];
 
         // Mapeia os dados recebidos padronizando a data
         let historico = data.historico.map(item => {
@@ -375,8 +377,8 @@ async function carregarHistorico() {
         });
 
         // Filtra para pegar apenas os registros dos últimos 30 dias
-        const limiteInferior = new Date(hojeObj);
-        limiteInferior.setDate(hojeObj.getDate() - 29);
+const limiteInferior = new Date(hojeUtc3);
+limiteInferior.setDate(hojeUtc3.getDate() - 29);
         historico = historico.filter(item => {
             return item.data >= limiteInferior && item.data <= hojeObj;
         });
