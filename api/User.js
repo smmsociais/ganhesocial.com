@@ -31,7 +31,7 @@ const ActionHistorySchema = new mongoose.Schema({
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
     nome: { type: String, required: true },
-    nome_usuario: { type: String, required: true },
+    nome_usuario: { type: String, required: false },
     email: { type: String, required: true, unique: true },
     senha: { type: String, required: true },
     token: { type: String, required: true },
