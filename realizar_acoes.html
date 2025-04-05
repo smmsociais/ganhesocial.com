@@ -437,7 +437,8 @@ const response = await fetch("/api/validar_acao", {
         "Authorization": `Bearer ${token}`
     },
 body: JSON.stringify({
-    nome_usuario, // 👈 adicione isto aqui!
+    token,
+    nome_usuario,
     id_pedido,
     id_conta,
     url_dir,
