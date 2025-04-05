@@ -308,7 +308,7 @@ if (accountFound) {
 
     if (ganhoHojeAnterior.data !== dataHoje) {
         ganhoHojeAnterior.data = dataHoje;
-        ganhoHojeAnterior.valor = 0;
+        ganhoHojeAnterior.valor = parseFloat(ganhoHojeAnterior.valor || 0) + valor;
     }
 
     ganhoHojeAnterior.valor += valor;
