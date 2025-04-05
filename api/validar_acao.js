@@ -1,60 +1,63 @@
-import connectDB from "./db.js";
-import { User } from "./User.js";
+import { connectToDatabase } from "@/utils/mongodb";
+import { User, ActionHistory } from "@/models/User";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
-        return res.status(405).json({ error: "Método não permitido." });
+        return res.status(405).json({ message: "Método não permitido" });
     }
 
-    await connectDB();
+    await connectToDatabase();
 
-    const { token, valorGanho = 0.05 } = req.body; // Valor padrão de R$0,05 por ação
-
-    if (!token) {
-        return res.status(400).json({ error: "Token obrigatório." });
-    }
+    const {
+        token,
+        id_pedido,
+        id_conta,
+        url_dir,
+        unique_id_verificado,
+        acao_validada,
+        valor_confirmacao,
+        quantidade_pontos,
+        tipo_acao
+    } = req.body;
 
     try {
         const usuario = await User.findOne({ token });
 
         if (!usuario) {
-            return res.status(403).json({ error: "Usuário não encontrado." });
+            return res.status(401).json({ message: "Usuário não autenticado" });
         }
 
-        // Atualiza o saldo
-        usuario.saldo = (usuario.saldo || 0) + parseFloat(valorGanho);
-
-        // Atualiza ou adiciona o histórico do dia
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-
-        if (!usuario.historicoGanhos) {
-            usuario.historicoGanhos = [];
-        }
-
-        const registroHoje = usuario.historicoGanhos.find(item => {
-            const dataItem = new Date(item.data);
-            dataItem.setHours(0, 0, 0, 0);
-            return dataItem.getTime() === hoje.getTime();
+        // Cria o registro no histórico
+        const novaAcao = new ActionHistory({
+            user: usuario._id,
+            token,
+            nome_usuario: usuario.nome_usuario,
+            id_pedido,
+            id_conta,
+            url_dir,
+            unique_id_verificado,
+            acao_validada,
+            valor_confirmacao,
+            quantidade_pontos,
+            tipo_acao
         });
 
-        if (registroHoje) {
-            registroHoje.valor += parseFloat(valorGanho);
-        } else {
-            usuario.historicoGanhos.push({
-                data: hoje.toISOString(),
-                valor: parseFloat(valorGanho),
-            });
+        await novaAcao.save();
+
+        // Adiciona no histórico do usuário (referência)
+        usuario.historico_acoes.push(novaAcao._id);
+
+        // Se a ação foi validada, atualiza o saldo
+        if (acao_validada) {
+            usuario.saldo += valor_confirmacao;
         }
 
         await usuario.save();
 
-        res.status(200).json({
-            mensagem: "Ação validada com sucesso!",
-            novoSaldo: usuario.saldo.toFixed(2)
-        });
-    } catch (error) {
-        console.error("Erro ao validar ação:", error);
-        res.status(500).json({ error: "Erro ao validar ação." });
+        res.status(200).json({ message: "Ação registrada com sucesso", acao: novaAcao });
+
+    } catch (erro) {
+        console.error("Erro ao registrar ação:", erro);
+        res.status(500).json({ message: "Erro interno do servidor" });
     }
 }
