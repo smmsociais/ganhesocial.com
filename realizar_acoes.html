@@ -424,16 +424,18 @@ const response = await fetch("/api/validar_acao", {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify({
-        id_pedido,
-        id_conta,
-        url_dir,
-        unique_id_verificado,
-        acao_validada,
-        valor_confirmacao,
-        quantidade_pontos: Number(quantidade_pontos),
-        tipo_acao
-    })
+body: JSON.stringify({
+    token, // 🔑 adiciona o token aqui
+    id_pedido,
+    id_conta,
+    url_dir,
+    unique_id_verificado,
+    acao_validada,
+    valor_confirmacao,
+    quantidade_pontos: Number(quantidade_pontos),
+    tipo_acao
+})
+
 });
 
         const data = await response.json();
