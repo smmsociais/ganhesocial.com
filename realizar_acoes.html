@@ -296,12 +296,25 @@ console.log("Encontrado?", accountFound);
         actionHistory.push(newAction);
         localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
 
-        if (accountFound) {
-            const valor = parseFloat(confirmData.valor);
-            const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-            const novoSaldo = (saldoAtual + valor).toFixed(3);
-            localStorage.setItem("saldoDisponivel", novoSaldo);
-        }
+if (accountFound) {
+    const valor = parseFloat(confirmData.valor);
+    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+    const novoSaldo = (saldoAtual + valor).toFixed(3);
+    localStorage.setItem("saldoDisponivel", novoSaldo);
+
+    // Atualiza ganhoHoje no localStorage
+    const dataHoje = new Date().toISOString().split("T")[0];
+    const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
+
+    if (ganhoHojeAnterior.data !== dataHoje) {
+        ganhoHojeAnterior.data = dataHoje;
+        ganhoHojeAnterior.valor = 0;
+    }
+
+    ganhoHojeAnterior.valor += valor;
+    localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
+}
+
     } catch (error) {
         console.error("Erro ao atualizar histórico e saldo:", error);
     }
