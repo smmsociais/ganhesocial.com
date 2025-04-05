@@ -72,7 +72,12 @@ export default async function handler(req, res) {
         }
 
         // ✅ Validação automática da ação
-        const acao_validada = await verificarAcaoValidada(nome_usuario, url_dir, req);
+        let acao_validada = req.body.acao_validada;
+
+if (acao_validada === undefined || acao_validada === null) {
+    // Se não foi enviado pelo frontend, faz a verificação automática
+    acao_validada = await verificarAcaoValidada(nome_usuario, url_dir, req);
+}
 
         // Calcular valor de confirmação
         const valor_confirmacao = quantidade_pontos / 1000;
