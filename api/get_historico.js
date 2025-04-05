@@ -14,30 +14,30 @@ export default async function handler(req, res) {
     }
 
     try {
-        const usuario = await User.findOne({ token }).select("saldo");
+        const usuario = await User.findOne({ token }).select("ganhosPorDia saldo");
         if (!usuario) {
             return res.status(403).json({ error: "Acesso negado." });
         }
 
-        let saldo = usuario.saldo;
-        if (typeof saldo !== "number" || isNaN(saldo)) {
-            saldo = 0;
+        const ganhosMap = new Map();
+        for (const ganho of usuario.ganhosPorDia || []) {
+            ganhosMap.set(ganho.data, ganho.valor);
         }
 
-        // Distribuir saldo pelos últimos 30 dias corretamente
         const historico = [];
         const hoje = new Date();
 
         for (let i = 0; i < 30; i++) {
             const data = new Date();
-            data.setDate(hoje.getDate() - i); // Garantir que o último dia seja correto
+            data.setDate(hoje.getDate() - i);
             const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
 
-            // Exemplo de cálculo: distribuir uniformemente o saldo
-            const ganhoDiario = (saldo / 30).toFixed(2);
-
-            historico.push({ data: dataFormatada, valor: parseFloat(ganhoDiario) });
+            const valor = ganhosMap.get(dataFormatada) || 0;
+            historico.push({ data: dataFormatada, valor });
         }
+
+        // Ordenar por data crescente (opcional)
+        historico.reverse();
 
         res.status(200).json({ historico });
     } catch (error) {
