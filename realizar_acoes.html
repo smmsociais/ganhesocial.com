@@ -310,8 +310,6 @@ if (accountFound) {
         ganhoHojeAnterior.data = dataHoje;
         ganhoHojeAnterior.valor = parseFloat(ganhoHojeAnterior.valor || 0) + valor;
     }
-
-    ganhoHojeAnterior.valor += valor;
     localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
 }
 
