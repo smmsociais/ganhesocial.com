@@ -1,4 +1,4 @@
-import { connectToDatabase } from "./db.js";
+import connectDB from "./db.js";
 import { User, ActionHistory } from "./User.js";
 
 export default async function handler(req, res) {
