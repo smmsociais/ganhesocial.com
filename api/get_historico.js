@@ -22,29 +22,32 @@ export default async function handler(req, res) {
         const ganhosMap = new Map();
 
         // Mapeia os ganhos, ajustando para UTC-3 (meia-noite no Brasil = 21h UTC)
-        for (const ganho of usuario.ganhosPorDia || []) {
-            const data = new Date(ganho.data);
-            data.setUTCHours(21, 0, 0, 0); // Ajusta para fuso UTC-3
-            const dataFormatada = data.toISOString().split("T")[0]; // YYYY-MM-DD
-            ganhosMap.set(dataFormatada, ganho.valor);
-        }
+for (const ganho of usuario.ganhosPorDia || []) {
+    const localData = new Date(ganho.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const data = new Date(localData);
+    data.setHours(0, 0, 0, 0);
+    const dataFormatada = data.toISOString().split("T")[0];
+    ganhosMap.set(dataFormatada, ganho.valor);
+}
+
 
         const historico = [];
 
         // Data de hoje em UTC-3
-        const hoje = new Date();
-        hoje.setUTCHours(21, 0, 0, 0);
+const hojeLocal = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+const hoje = new Date(hojeLocal);
+hoje.setHours(0, 0, 0, 0);
 
-        for (let i = 0; i < 30; i++) {
-            const data = new Date(hoje);
-            data.setDate(data.getDate() - i);
-            data.setUTCHours(21, 0, 0, 0); // Garantir consistência na comparação
+for (let i = 0; i < 30; i++) {
+    const data = new Date(hoje);
+    data.setDate(data.getDate() - i);
+    data.setHours(0, 0, 0, 0);
 
-            const dataFormatada = data.toISOString().split("T")[0];
-            const valor = ganhosMap.get(dataFormatada) || 0;
+    const dataFormatada = data.toISOString().split("T")[0];
+    const valor = ganhosMap.get(dataFormatada) || 0;
 
-            historico.push({ data: dataFormatada, valor });
-        }
+    historico.push({ data: dataFormatada, valor });
+}
 
         historico.reverse(); // Do mais antigo pro mais recente
 
