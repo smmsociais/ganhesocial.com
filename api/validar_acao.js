@@ -1,5 +1,5 @@
-import { connectToDatabase } from "../../utils/mongodb";
-import { User, ActionHistory } from "../../models/User";
+import { connectToDatabase } from "./db.js";
+import { User, ActionHistory } from "./User.js";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
