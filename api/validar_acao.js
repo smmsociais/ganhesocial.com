@@ -31,22 +31,24 @@ export default async function handler(req, res) {
 let nome_usuario = req.body.nome_usuario || null;
 
 if (!nome_usuario && id_conta) {
-    const contaEncontrada = usuario.contas.find(conta => conta.id_conta === id_conta);
+    console.log("Buscando nome_usuario via id_conta:", id_conta);
+    console.log("Contas do usuário:", usuario.contas);
+
+    const contaEncontrada = usuario.contas.find(conta => {
+        console.log("Comparando com:", conta.id_conta);
+        return conta.id_conta === id_conta;
+    });
 
     if (contaEncontrada) {
         console.log("Conta encontrada:", contaEncontrada);
         nome_usuario = contaEncontrada.nomeConta;
     } else {
-        console.warn(`Nenhuma conta encontrada com id_conta = ${id_conta}`);
+        console.warn("⚠️ Nenhuma conta correspondente foi encontrada.");
     }
 }
 
 if (!nome_usuario) {
-    console.error("Falha ao obter nome_usuario. Dados recebidos:", {
-        nome_usuario: req.body.nome_usuario,
-        id_conta,
-        contas_usuario: usuario.contas
-    });
+    console.error("❌ nome_usuario indefinido! Enviando erro ao cliente.");
     return res.status(400).json({ message: "Nome de usuário não encontrado." });
 }
 
