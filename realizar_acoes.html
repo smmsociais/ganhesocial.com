@@ -418,22 +418,23 @@ async function salvarAcaoNoBanco({
     }
 
     try {
-        const response = await fetch("/api/validar_acao", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                token,
-                id_pedido,
-                id_conta,
-                url_dir,
-                unique_id_verificado,
-                acao_validada,
-                valor_confirmacao,
-                quantidade_pontos: Number(quantidade_pontos),
-                tipo_acao
-            })
+const response = await fetch("/api/validar_acao", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+        id_pedido,
+        id_conta,
+        url_dir,
+        unique_id_verificado,
+        acao_validada,
+        valor_confirmacao,
+        quantidade_pontos: Number(quantidade_pontos),
+        tipo_acao
+    })
+});
         });
 
         const data = await response.json();
