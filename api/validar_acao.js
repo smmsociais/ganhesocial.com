@@ -75,21 +75,21 @@ export default async function handler(req, res) {
             usuario.saldo += valorFinal;
         }
 
- // Atualiza histórico diário de ganhos
-const hoje = new Date();
-hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar só a data
+        // ✅ Atualiza ganhosPorDia (usado pelo dashboard)
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera hora
 
-let entradaHoje = usuario.historico_diario.find(entry => {
-    const dataEntrada = new Date(entry.data);
-    dataEntrada.setHours(0, 0, 0, 0);
-    return dataEntrada.getTime() === hoje.getTime();
-});
+        let entradaHoje = usuario.ganhosPorDia.find(entry => {
+            const dataEntrada = new Date(entry.data);
+            dataEntrada.setHours(0, 0, 0, 0);
+            return dataEntrada.getTime() === hoje.getTime();
+        });
 
-if (entradaHoje) {
-    entradaHoje.total += valorFinal;
-} else {
-    usuario.historico_diario.push({ data: hoje, total: valorFinal });
-}       
+        if (entradaHoje) {
+            entradaHoje.valor += valorFinal;
+        } else {
+            usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
+        }
 
         await usuario.save();
 
