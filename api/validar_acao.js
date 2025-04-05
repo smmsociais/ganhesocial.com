@@ -53,32 +53,36 @@ if (!usuario.nome_usuario) {
     usuario.nome_usuario = nome_usuario;
 }
 
-        // Cria o registro no histórico
-        const novaAcao = new ActionHistory({
-            user: usuario._id,
-            token,
-            nome_usuario,
-            id_pedido,
-            id_conta,
-            url_dir,
-            unique_id_verificado,
-            acao_validada,
-            valor_confirmacao,
-            quantidade_pontos,
-            tipo_acao
-        });
+// Aplica taxa de 0.001
+let valorFinal = parseFloat(valor_confirmacao);
+if (valorFinal > 0.004) {
+    valorFinal = Math.round((valorFinal - 0.001) * 1000) / 1000;
+}
 
-        await novaAcao.save();
+// Cria o registro no histórico
+const novaAcao = new ActionHistory({
+    user: usuario._id,
+    token,
+    nome_usuario,
+    id_pedido,
+    id_conta,
+    url_dir,
+    unique_id_verificado,
+    acao_validada,
+    valor_confirmacao: valorFinal,
+    quantidade_pontos,
+    tipo_acao
+});
 
-        // Adiciona no histórico do usuário (referência)
-        usuario.historico_acoes.push(novaAcao._id);
+// Adiciona no histórico do usuário
+usuario.historico_acoes.push(novaAcao._id);
 
-        // Se a ação foi validada, atualiza o saldo
-        if (acao_validada) {
-            usuario.saldo += valor_confirmacao;
-        }
+// Se a ação foi validada, atualiza o saldo
+if (acao_validada) {
+    usuario.saldo += valorFinal;
+}
 
-        await usuario.save();
+await usuario.save();
 
         res.status(200).json({ message: "Ação registrada com sucesso", acao: novaAcao });
 
