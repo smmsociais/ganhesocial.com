@@ -254,7 +254,19 @@ async function confirmAction() {
 
         if (userFollowingData.code === 0 && userFollowingData.data) {
             const followings = userFollowingData.data.followings;
-            accountFound = followings.some(f => f.unique_id === currentActionData.nome_usuario);
+            // Normaliza os nomes de usuário para comparar de forma segura
+const targetUsername = currentActionData.nome_usuario?.replace(/^@/, '').toLowerCase();
+
+accountFound = followings.some(f => {
+    const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
+    return followingUsername === targetUsername;
+});
+
+// Debug útil no console
+console.log("Usuário esperado:", targetUsername);
+console.log("Seguindo:", followings.map(f => f.unique_id));
+console.log("Encontrado?", accountFound);
+
         }
     } catch (error) {
         console.error("Erro ao buscar lista de seguindo:", error);
