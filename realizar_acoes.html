@@ -298,17 +298,17 @@ console.log("Encontrado?", accountFound);
     }
 
     // SALVAR NO BANCO (sempre)
-    await salvarAcaoNoBanco({
-        nome_usuario: currentActionData.nome_usuario,
-        id_pedido: currentActionData.id_pedido,
-        id_conta: localStorage.getItem("id_conta"),
-        url_dir: currentActionData.url_dir,
-        unique_id_verificado: userId,
-        acao_validada: true,
-        valor_confirmacao: parseFloat(confirmData.valor), // Agora com segurança!
-        quantidade_pontos: currentActionData.quantidade_pontos,
-        tipo_acao: currentActionData.tipo_acao
-    });
+await salvarAcaoNoBanco({
+    nome_usuario: currentActionData.nome_usuario,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    url_dir: currentActionData.url_dir,
+    unique_id_verificado: userId,
+    acao_validada: accountFound, // ✅ true se achou, false se não
+    valor_confirmacao: accountFound ? parseFloat(confirmData.valor) : 0,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    tipo_acao: currentActionData.tipo_acao
+});
 
     document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
 }
