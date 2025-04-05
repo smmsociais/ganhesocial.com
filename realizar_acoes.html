@@ -174,13 +174,18 @@
                     document.getElementById("username").textContent = data.nome_usuario;
                     document.getElementById("actionUrl").href = data.url;
     
+const pontos = parseFloat(data.quantidade_pontos);
+const valorBruto = pontos * 0.001;
+let valorFinal;
+let textoExibicao;
+
 if (valorBruto > 0.004) {
     valorFinal = (valorBruto - 0.001).toFixed(3);
+    textoExibicao = `R$ ${valorBruto.toFixed(3)} - R$ 0.001 (taxa) = R$ ${valorFinal}`;
 } else {
     valorFinal = valorBruto.toFixed(3);
+    textoExibicao = `R$ ${valorFinal} (sem taxa)`;
 }
-document.getElementById("points").textContent = `R$ ${valorFinal}`;
-
 
 document.getElementById("points").textContent = textoExibicao;
     
