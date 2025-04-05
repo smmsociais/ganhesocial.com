@@ -31,7 +31,7 @@ await connectDB();
         const novaAcao = new ActionHistory({
             user: usuario._id,
             token,
-            nome_usuario: usuario.nome_usuario,
+            nome_usuario: { type: String, required: true },
             id_pedido,
             id_conta,
             url_dir,
