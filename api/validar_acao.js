@@ -28,17 +28,27 @@ export default async function handler(req, res) {
         }
 
         // 📌 Obter nome_usuario com fallback via id_conta
-        let nome_usuario = req.body.nome_usuario || null;
-        if (!nome_usuario && id_conta) {
-            const contaEncontrada = usuario.contas.find(conta => conta.id_conta === id_conta);
-            if (contaEncontrada) {
-                nome_usuario = contaEncontrada.nomeConta;
-            }
-        }
+let nome_usuario = req.body.nome_usuario || null;
 
-        if (!nome_usuario) {
-            return res.status(400).json({ message: "Nome de usuário não encontrado." });
-        }
+if (!nome_usuario && id_conta) {
+    const contaEncontrada = usuario.contas.find(conta => conta.id_conta === id_conta);
+
+    if (contaEncontrada) {
+        console.log("Conta encontrada:", contaEncontrada);
+        nome_usuario = contaEncontrada.nomeConta;
+    } else {
+        console.warn(`Nenhuma conta encontrada com id_conta = ${id_conta}`);
+    }
+}
+
+if (!nome_usuario) {
+    console.error("Falha ao obter nome_usuario. Dados recebidos:", {
+        nome_usuario: req.body.nome_usuario,
+        id_conta,
+        contas_usuario: usuario.contas
+    });
+    return res.status(400).json({ message: "Nome de usuário não encontrado." });
+}
 
         // Cria o registro no histórico
         const novaAcao = new ActionHistory({
