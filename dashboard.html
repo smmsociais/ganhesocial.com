@@ -359,14 +359,12 @@ async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        // Define a data de hoje sem horário para padronização
-// Define "hoje" como UTC-3 (meia-noite no Brasil)
-const agora = new Date();
-const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000); // Ajusta 3h para trás
-hojeUtc3.setUTCHours(21, 0, 0, 0); // Define como "meia-noite" do Brasil em UTC
-const hojeISO = hojeUtc3.toISOString().split("T")[0];
+        // Define "hoje" em UTC-3 (meia-noite no horário de Brasília)
+        const agora = new Date();
+        const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000); // Ajusta -3h
+        hojeUtc3.setUTCHours(21, 0, 0, 0); // Define como "meia-noite" BR em UTC
+        const hojeISO = hojeUtc3.toISOString().split("T")[0];
 
-        // Mapeia os dados recebidos padronizando a data
         let historico = data.historico.map(item => {
             let dataItem = new Date(item.data);
             dataItem.setHours(0, 0, 0, 0);
@@ -376,32 +374,26 @@ const hojeISO = hojeUtc3.toISOString().split("T")[0];
             };
         });
 
-        // Filtra para pegar apenas os registros dos últimos 30 dias
-const limiteInferior = new Date(hojeUtc3);
-limiteInferior.setDate(hojeUtc3.getDate() - 29);
+        const limiteInferior = new Date(hojeUtc3);
+        limiteInferior.setDate(hojeUtc3.getDate() - 29);
         historico = historico.filter(item => {
-            return item.data >= limiteInferior && item.data <= hojeObj;
+            return item.data >= limiteInferior && item.data <= hojeUtc3;
         });
 
-        // Verifica se há registro para hoje; se não, insere-o
         const temHoje = historico.some(item => item.data.toISOString().split("T")[0] === hojeISO);
         if (!temHoje) {
-            // Obtém o ganho de hoje do localStorage ou define 0, conforme sua lógica
             const ganhoHoje = parseFloat(localStorage.getItem("ganhoHoje")) || 0;
-            historico.push({ data: hojeObj, valor: ganhoHoje });
+            historico.push({ data: hojeUtc3, valor: ganhoHoje });
         }
 
-        // Ordena do mais recente (hoje) para o mais antigo
         historico.sort((a, b) => b.data - a.data);
 
-        // Preenche a tabela
         historico.forEach(item => {
             const row = document.createElement("tr");
 
             const cellData = document.createElement("td");
-            // Se a data for hoje, exibe "Hoje"
-            cellData.textContent = (item.data.toISOString().split("T")[0] === hojeISO) 
-                ? "Hoje" 
+            cellData.textContent = (item.data.toISOString().split("T")[0] === hojeISO)
+                ? "Hoje"
                 : item.data.toLocaleDateString("pt-BR");
             row.appendChild(cellData);
 
