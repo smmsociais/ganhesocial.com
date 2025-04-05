@@ -80,7 +80,10 @@ if (acao_validada === undefined || acao_validada === null) {
 }
 
         // Calcular valor de confirmação
-        const valor_confirmacao = quantidade_pontos / 1000;
+let valor_confirmacao = quantidade_pontos / 1000;
+if (valor_confirmacao > 0.004) {
+    valor_confirmacao -= 0.001;
+}
 
         const novaAcao = new ActionHistory({
             user: user._id,
