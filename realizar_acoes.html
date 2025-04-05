@@ -244,6 +244,8 @@ async function confirmAction() {
         });
 
         confirmData = await confirmResponse.json();
+        console.log("Dados de confirmação:", confirmData);
+
 
         if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
             throw new Error("Erro ao confirmar ação.");
