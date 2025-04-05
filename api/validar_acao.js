@@ -70,8 +70,11 @@ export default async function handler(req, res) {
         }
 
         // Corrigir fuso horário para Brasil (UTC-3)
-        const hoje = new Date();
-        hoje.setUTCHours(3, 0, 0, 0); // Isso garante que ao salvar em UTC, o dia "brasileiro" esteja certo
+const agora = new Date();
+agora.setUTCHours(agora.getUTCHours() - 3);
+agora.setHours(0, 0, 0, 0); // zera a hora depois do ajuste de fuso
+
+const hoje = agora;
 
         let entradaHoje = usuario.ganhosPorDia.find(entry => {
             const dataEntrada = new Date(entry.data);
