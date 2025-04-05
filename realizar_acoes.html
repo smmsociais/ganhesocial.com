@@ -400,7 +400,7 @@ async function salvarAcao() {
             }
         }
 
-  async function salvarAcaoNoBanco({
+async function salvarAcaoNoBanco({
     nome_usuario,
     id_pedido,
     id_conta,
@@ -418,14 +418,13 @@ async function salvarAcao() {
     }
 
     try {
-        const response = await fetch("/api/salvar_acao", {
+        const response = await fetch("/api/validar_acao", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                nome_usuario,
+                token,
                 id_pedido,
                 id_conta,
                 url_dir,
@@ -433,18 +432,17 @@ async function salvarAcao() {
                 acao_validada,
                 valor_confirmacao,
                 quantidade_pontos: Number(quantidade_pontos),
-                tipo_acao,
-                data: new Date().toISOString()
+                tipo_acao
             })
         });
 
         const data = await response.json();
-        console.log("Ação salva no banco:", data);
+        console.log("Ação registrada:", data);
     } catch (error) {
-        console.error("Erro ao salvar ação no banco:", error);
+        console.error("Erro ao registrar ação:", error);
     }
-}      
-    
+}
+
         function goBack() {
             window.location.href = "/dashboard";
         }
