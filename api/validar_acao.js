@@ -76,8 +76,12 @@ export default async function handler(req, res) {
         }
 
         // ✅ Atualiza ganhosPorDia (usado pelo dashboard)
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera hora
+const hoje = new Date();
+hoje.setHours(0, 0, 0, 0);
+
+// Corrige para timezone do Brasil (-3h)
+hoje.setUTCHours(3); // Isso faz com que ao salvar no banco UTC, a data seja o "dia certo" no Brasil
+
 
         let entradaHoje = usuario.ganhosPorDia.find(entry => {
             const dataEntrada = new Date(entry.data);
