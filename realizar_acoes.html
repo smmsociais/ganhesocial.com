@@ -174,7 +174,8 @@
                     document.getElementById("username").textContent = data.nome_usuario;
                     document.getElementById("actionUrl").href = data.url;
 
-const valorBruto = parseFloat(data.quantidade_pontos);
+const pontos = parseFloat(data.quantidade_pontos); // exemplo: 6
+const valorBruto = pontos / 1000; // 6 -> 0.006
 let valorFinal;
 
 if (valorBruto > 0.004) {
