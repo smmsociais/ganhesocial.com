@@ -27,15 +27,13 @@ export default async function handler(req, res) {
             return res.status(401).json({ message: "Usuário não autenticado" });
         }
 
-        // 📌 Obter nome_usuario com fallback via id_conta
+// Obter nome_usuario com fallback via id_conta
 let nome_usuario = req.body.nome_usuario || null;
-
 if (!nome_usuario && id_conta) {
     console.log("Buscando nome_usuario via id_conta:", id_conta);
     console.log("Contas do usuário:", usuario.contas);
 
     const contaEncontrada = usuario.contas.find(conta => String(conta.id_conta) === String(id_conta));
-
     if (contaEncontrada) {
         console.log("Conta encontrada:", contaEncontrada);
         nome_usuario = contaEncontrada.nomeConta;
@@ -44,11 +42,15 @@ if (!nome_usuario && id_conta) {
     }
 }
 
-console.log("🔍 nome_usuario final:", nome_usuario);
-
 if (!nome_usuario) {
     console.error("❌ nome_usuario indefinido! Enviando erro ao cliente.");
     return res.status(400).json({ message: "Nome de usuário não encontrado." });
+}
+
+// Atualiza o usuário com o nome_usuario, caso esteja faltando
+if (!usuario.nome_usuario) {
+    console.log("Atualizando o documento do usuário com nome_usuario:", nome_usuario);
+    usuario.nome_usuario = nome_usuario;
 }
 
         // Cria o registro no histórico
