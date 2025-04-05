@@ -69,24 +69,22 @@ export default async function handler(req, res) {
             usuario.saldo += valorFinal;
         }
 
-        // Corrigir fuso horário para Brasil (UTC-3)
+// Ajuste para meia-noite no horário de Brasília (UTC-3)
 const agora = new Date();
-agora.setUTCHours(agora.getUTCHours() - 3);
-agora.setHours(0, 0, 0, 0); // zera a hora depois do ajuste de fuso
-
+agora.setUTCHours(21, 0, 0, 0); // 00:00 no Brasil = 21:00 UTC
 const hoje = agora;
 
-        let entradaHoje = usuario.ganhosPorDia.find(entry => {
-            const dataEntrada = new Date(entry.data);
-            dataEntrada.setUTCHours(3, 0, 0, 0);
-            return dataEntrada.getTime() === hoje.getTime();
-        });
+let entradaHoje = usuario.ganhosPorDia.find(entry => {
+    const dataEntrada = new Date(entry.data);
+    dataEntrada.setUTCHours(21, 0, 0, 0); // também UTC-3
+    return dataEntrada.getTime() === hoje.getTime();
+});
 
-        if (entradaHoje) {
-            entradaHoje.valor += valorFinal;
-        } else {
-            usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
-        }
+if (entradaHoje) {
+    entradaHoje.valor += valorFinal;
+} else {
+    usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
+}
 
         await usuario.save();
 
