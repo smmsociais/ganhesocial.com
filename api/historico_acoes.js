@@ -1,5 +1,5 @@
 import connectDB from "./db.js";
-import { ActionHistory } from "./User.js";
+import { User } from "./User.js";
 
 export default async function handler(req, res) {
     if (req.method !== "GET") {
@@ -8,22 +8,44 @@ export default async function handler(req, res) {
 
     await connectDB();
 
+    const { token } = req.query;
+    if (!token) {
+        return res.status(400).json({ error: "Token obrigatório." });
+    }
+
     try {
-        // Buscar todas as ações e popular o nome do usuário associado
-        const historico = await ActionHistory.find().populate("user", "nome");
+        const usuario = await User.findOne({ token }).select("ganhosPorDia saldo");
+        if (!usuario) {
+            return res.status(403).json({ error: "Acesso negado." });
+        }
 
-        // Enviar apenas os campos necessários
-        const formattedData = historico.map(action => ({
-            nome_usuario: action.nome_usuario,  // Nome do usuário da ação
-            nome_cadastrado: action.user?.nome || "Desconhecido", // Nome do usuário cadastrado no sistema
-            acao_validada: action.acao_validada,  
-            valor_confirmacao: action.valor_confirmacao,  
-            data: action.data  
-        }));
+        const ganhosMap = new Map();
 
-        res.status(200).json(formattedData);
+        // Mapeia os ganhos usando o formato ISO "YYYY-MM-DD" para o horário de Brasília
+        for (const ganho of usuario.ganhosPorDia || []) {
+            const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+            ganhosMap.set(dataStr, ganho.valor);
+        }
+
+        const historico = [];
+        // Define "hoje" no formato ISO para Brasília
+        const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+        const hoje = new Date(hojeStr + "T00:00:00");
+
+        // Para os últimos 30 dias
+        for (let i = 0; i < 30; i++) {
+            const data = new Date(hoje);
+            data.setDate(data.getDate() - i);
+            const dataStr = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+            const valor = ganhosMap.get(dataStr) || 0;
+            historico.push({ data: dataStr, valor });
+        }
+
+        historico.reverse(); // Do mais antigo para o mais recente
+
+        res.status(200).json({ historico });
     } catch (error) {
-        console.error("Erro ao buscar histórico de ações:", error);
-        res.status(500).json({ error: "Erro ao buscar histórico de ações." });
+        console.error("Erro ao obter histórico de ganhos:", error);
+        res.status(500).json({ error: "Erro ao buscar histórico de ganhos." });
     }
 }
