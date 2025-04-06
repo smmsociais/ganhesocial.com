@@ -289,8 +289,6 @@ async function confirmAction() {
     const selectedAccount = document.getElementById("accountSelect").value;
     if (!selectedAccount || !currentActionData) return;
 
-    document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
-
     let userId;
     try {
         const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
@@ -309,7 +307,6 @@ async function confirmAction() {
     }
 
     // NOVO: Confirmar a ação no backend primeiro
-    document.getElementById("statusMessage").textContent = "Confirmando ação...";
     let confirmData;
     try {
         const confirmResponse = await fetch("/api/confirmar_acao", {
