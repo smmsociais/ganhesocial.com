@@ -27,19 +27,21 @@ export default async function handler(req, res) {
       ganhosMap.set(dataStr, ganho.valor);
     }
 
-    const historico = [];
-    const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    const hoje = new Date(hojeStr + "T00:00:00");
+// Obtém a data de hoje no fuso de Brasília
+const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+const hoje = new Date(hojeStr + "T00:00:00");
 
-    for (let i = 0; i < 30; i++) {
-      const data = new Date(hoje);
-      data.setDate(data.getDate() - i);
-      const dataStr = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-      const valor = ganhosMap.get(dataStr) || 0;
-      historico.push({ data: dataStr, valor });
-    }
+const historico = [];
 
-    historico.reverse(); // Do mais antigo para o mais recente
+for (let i = 0; i < 30; i++) {
+  const data = new Date(hoje);
+  data.setDate(data.getDate() - i);
+  const dataStr = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const valor = ganhosMap.get(dataStr) || 0;
+  historico.push({ data: dataStr, valor });
+}
+
+historico.reverse(); // Do mais antigo para o mais recente
 
     res.status(200).json({ historico });
   } catch (error) {
