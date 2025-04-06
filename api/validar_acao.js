@@ -75,8 +75,9 @@ const hoje = new Date(hojeLocalString);
 hoje.setHours(0, 0, 0, 0);
 
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
-    const dataEntrada = new Date(entry.data);
-    dataEntrada.setUTCHours(21, 0, 0, 0); // também UTC-3
+    const dataLocalString = new Date(entry.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const dataEntrada = new Date(dataLocalString);
+    dataEntrada.setHours(0, 0, 0, 0);
     return dataEntrada.getTime() === hoje.getTime();
 });
 
