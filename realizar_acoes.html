@@ -172,18 +172,22 @@
                     document.getElementById("statusMessage").textContent = "Ação encontrada!";
                     document.getElementById("actionType").textContent = data.tipo_acao;
                     document.getElementById("username").textContent = data.nome_usuario;
-// Detecta se é dispositivo mobile
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-// Extrai o nome de usuário do TikTok da URL vinda do backend
+                    
+// Extrai o nome de usuário (remove @ se tiver)
 const tiktokUsername = data.nome_usuario.replace(/^@/, '');
 
-// Define a URL conforme o dispositivo
-const mobileUrl = `tiktok.com/@${tiktokUsername}`;
-const desktopUrl = data.url || `https://www.tiktok.com/@${tiktokUsername}`;
+// Função para detectar se é mobile
+function isMobile() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
 
-// Atribui ao href do link a URL apropriada
-document.getElementById("actionUrl").href = isMobile ? mobileUrl : desktopUrl;
+// Define URLs diferentes se quiser (aqui são iguais por padrão)
+const mobileUrl = `https://www.tiktok.com/@${tiktokUsername}`;
+const desktopUrl = `https://www.tiktok.com/@${tiktokUsername}`;
+
+// Aponta para o link adequado
+document.getElementById("actionUrl").href = isMobile() ? mobileUrl : desktopUrl;
+
 
 const pontos = parseFloat(data.quantidade_pontos); // exemplo: 6
 const valorBruto = pontos / 1000; // 6 -> 0.006
