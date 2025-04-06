@@ -179,7 +179,7 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const tiktokUsername = data.nome_usuario.replace(/^@/, '');
 
 // Define a URL conforme o dispositivo
-const mobileUrl = `tiktok://user/@${tiktokUsername}`;
+const mobileUrl = `tiktok.com/@${tiktokUsername}`;
 const desktopUrl = data.url || `https://www.tiktok.com/@${tiktokUsername}`;
 
 // Atribui ao href do link a URL apropriada
