@@ -70,28 +70,52 @@ export default async function handler(req, res) {
       usuario.saldo += valorFinal;
     }
 
-// Converte a data atual para o horário de Brasília e zera as horas usando o formato ISO (en-CA)
-const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    // Cálculo preciso da data atual em Brasília (início do dia)
+    const now = new Date();
+    const optionsTime = { 
+      timeZone: "America/Sao_Paulo", 
+      hour: 'numeric', 
+      minute: 'numeric', 
+      second: 'numeric', 
+      hour12: false 
+    };
+    
+    const timeInBrasilia = now.toLocaleTimeString("en-US", optionsTime);
+    const [hours, minutes, seconds] = timeInBrasilia.split(':').map(Number);
+    const msSinceMidnight = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    const hoje = new Date(now.getTime() - msSinceMidnight);
 
-// Calcula o início do dia atual em Brasília
-const now = new Date();
-const optionsTime = { timeZone: "America/Sao_Paulo", hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-const timeInBrasilia = now.toLocaleTimeString("en-US", optionsTime);
-const [hours, minutes, seconds] = timeInBrasilia.split(':').map(Number);
-const msSinceMidnight = (hours * 3600 + minutes * 60 + seconds) * 1000;
-const hoje = new Date(now.getTime() - msSinceMidnight);
+    // Formata a data para comparação (YYYY-MM-DD)
+    const hojeStr = hoje.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
-// Procura uma entrada para hoje em ganhosPorDia
-let entradaHoje = usuario.ganhosPorDia.find(entry => {
-    const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    return entryStr === hojeStr;
-});
+    // Procura uma entrada para hoje em ganhosPorDia
+    let entradaHoje = usuario.ganhosPorDia.find(entry => {
+      const entryDate = new Date(entry.data);
+      const entryStr = entryDate.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      return entryStr === hojeStr;
+    });
+
+    if (entradaHoje) {
+      entradaHoje.valor += valorFinal;
+    } else {
+      usuario.ganhosPorDia.push({ 
+        data: hoje, 
+        valor: valorFinal 
+      });
+    }
 
     await usuario.save();
 
-    res.status(200).json({ message: "Ação registrada com sucesso", acao: novaAcao });
+    res.status(200).json({ 
+      message: "Ação registrada com sucesso", 
+      acao: novaAcao,
+      saldoAtual: usuario.saldo
+    });
   } catch (erro) {
     console.error("Erro ao registrar ação:", erro);
-    res.status(500).json({ message: "Erro interno do servidor" });
+    res.status(500).json({ 
+      message: "Erro interno do servidor",
+      error: erro.message 
+    });
   }
 }
