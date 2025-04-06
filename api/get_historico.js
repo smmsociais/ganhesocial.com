@@ -21,34 +21,27 @@ export default async function handler(req, res) {
 
         const ganhosMap = new Map();
 
-        // Mapeia os ganhos ajustando para o fuso de Brasília
+        // Mapeia os ganhos usando o formato ISO "YYYY-MM-DD" para o horário de Brasília
         for (const ganho of usuario.ganhosPorDia || []) {
-            const dataLocalString = new Date(ganho.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-            const dataLocal = new Date(dataLocalString);
-            dataLocal.setHours(0, 0, 0, 0);
-            const dataFormatada = dataLocal.toISOString().split("T")[0]; // YYYY-MM-DD
-            ganhosMap.set(dataFormatada, ganho.valor);
+            const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+            ganhosMap.set(dataStr, ganho.valor);
         }
 
         const historico = [];
+        // Define "hoje" no formato ISO para Brasília
+        const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+        const hoje = new Date(hojeStr + "T00:00:00");
 
-        // Data de hoje no horário de Brasília
-        const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-        const hoje = new Date(hojeLocalString);
-        hoje.setHours(0, 0, 0, 0);
-
+        // Para os últimos 30 dias
         for (let i = 0; i < 30; i++) {
             const data = new Date(hoje);
             data.setDate(data.getDate() - i);
-            data.setHours(0, 0, 0, 0);
-
-            const dataFormatada = data.toISOString().split("T")[0];
-            const valor = ganhosMap.get(dataFormatada) || 0;
-
-            historico.push({ data: dataFormatada, valor });
+            const dataStr = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+            const valor = ganhosMap.get(dataStr) || 0;
+            historico.push({ data: dataStr, valor });
         }
 
-        historico.reverse(); // Do mais antigo pro mais recente
+        historico.reverse(); // Do mais antigo para o mais recente
 
         res.status(200).json({ historico });
     } catch (error) {
