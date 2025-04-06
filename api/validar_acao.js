@@ -69,10 +69,10 @@ export default async function handler(req, res) {
             usuario.saldo += valorFinal;
         }
 
-// Ajuste para meia-noite no horário de Brasília (UTC-3)
-const agora = new Date();
-agora.setUTCHours(21, 0, 0, 0); // 00:00 no Brasil = 21:00 UTC
-const hoje = agora;
+// Converte a data atual para o horário de Brasília e zera as horas
+const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+const hoje = new Date(hojeLocalString);
+hoje.setHours(0, 0, 0, 0);
 
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
     const dataEntrada = new Date(entry.data);
