@@ -20,7 +20,7 @@ const formattedData = historico.map(action => ({
     valor_confirmacao: action.valor_confirmacao,
     data: action.data,
     rede_social: action.rede_social || "TikTok", // ou outro nome que use
-    tipo: action.tipo || "Ação" // fallback se não existir
+    tipo: action.tipo || "Seguir" // fallback se não existir
 }));
 
         res.status(200).json(formattedData);
