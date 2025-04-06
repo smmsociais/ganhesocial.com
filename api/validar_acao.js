@@ -78,7 +78,9 @@ function getBrasiliaMidnightDate() {
   return brTime;
 }
 
-const hoje = getBrasiliaMidnightDate();
+const hoje = new Date(
+  new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }) + "T00:00:00-03:00"
+);
 
 // Procura uma entrada para hoje em ganhosPorDia
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
