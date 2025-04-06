@@ -342,13 +342,17 @@ await salvarAcaoNoBanco({
     id_conta: localStorage.getItem("id_conta"),
     url_dir: currentActionData.url_dir,
     unique_id_verificado: userId,
-    acao_validada: accountFound, // ✅ true se achou, false se não
-    valor_confirmacao: parseFloat(confirmData.valor), // <- Valor sempre salvo, mesmo se não validou
+    acao_validada: accountFound,
+    valor_confirmacao: parseFloat(confirmData.valor),
     quantidade_pontos: currentActionData.quantidade_pontos,
     tipo_acao: currentActionData.tipo_acao
 });
 
-    document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
+document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
+
+// Chama a próxima ação
+fetchAction();
+
 }
     
             // Chama a função para salvar a ação no banco de dados
