@@ -71,8 +71,14 @@ export default async function handler(req, res) {
     }
 
 // Converte a data atual para o horário de Brasília e zera as horas usando o formato ISO (en-CA)
-const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-const hoje = new Date(hojeStr + "T00:00:00");
+function getBrasiliaMidnightDate() {
+  const now = new Date();
+  const brTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  brTime.setHours(0, 0, 0, 0);
+  return brTime;
+}
+
+const hoje = getBrasiliaMidnightDate();
 
 // Procura uma entrada para hoje em ganhosPorDia
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
