@@ -70,21 +70,21 @@ export default async function handler(req, res) {
       usuario.saldo += valorFinal;
     }
 
-    // Define "hoje" de forma consistente usando o padrão "en-CA"
-    const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    const hoje = new Date(hojeStr + "T00:00:00");
+// Cria a data de hoje de forma consistente para o fuso de Brasília (formato ISO)
+const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+const hoje = new Date(hojeStr + "T00:00:00");
 
-    // Procura uma entrada para hoje em ganhosPorDia
-    let entradaHoje = usuario.ganhosPorDia.find(entry => {
-      const dataEntryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-      return dataEntryStr === hojeStr;
-    });
+// Procura uma entrada para hoje em ganhosPorDia
+let entradaHoje = usuario.ganhosPorDia.find(entry => {
+  const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  return entryStr === hojeStr;
+});
 
-    if (entradaHoje) {
-      entradaHoje.valor += valorFinal;
-    } else {
-      usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
-    }
+if (entradaHoje) {
+  entradaHoje.valor += valorFinal;
+} else {
+  usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
+}
 
     await usuario.save();
 
