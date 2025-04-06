@@ -190,8 +190,6 @@
             const selectedAccount = document.getElementById("accountSelect").value;
             if (!selectedAccount) return;
     
-            document.getElementById("statusMessage").textContent = "Vinculando conta...";
-    
             try {
                 const response = await fetch("/api/vincular_conta", {
                     method: 'POST',
@@ -320,8 +318,6 @@ async function confirmAction() {
         });
 
         confirmData = await confirmResponse.json();
-        console.log("Dados de confirmação:", confirmData);
-
 
         if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
             throw new Error("Erro ao confirmar ação.");
@@ -348,15 +344,9 @@ accountFound = followings.some(f => {
     return followingUsername === targetUsername;
 });
 
-// Debug útil no console
-console.log("Usuário esperado:", targetUsername);
-console.log("Seguindo:", followings.map(f => f.unique_id));
-console.log("Encontrado?", accountFound);
-
         }
     } catch (error) {
         console.error("Erro ao buscar lista de seguindo:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao verificar seguindo.";
         return;
     }
 
@@ -491,7 +481,6 @@ async function salvarAcao() {
         });
 
         const data = await response.json();
-        console.log("Ação salva com sucesso:", data);
     } catch (error) {
         console.error("Erro ao salvar ação:", error);
     }
@@ -576,7 +565,6 @@ body: JSON.stringify({
 });
 
         const data = await response.json();
-        console.log("Ação registrada:", data);
     } catch (error) {
         console.error("Erro ao registrar ação:", error);
     }
