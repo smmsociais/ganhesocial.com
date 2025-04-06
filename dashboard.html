@@ -374,11 +374,17 @@ async function carregarHistorico() {
             };
         });
 
-        const limiteInferior = new Date(hojeUtc3);
-        limiteInferior.setDate(hojeUtc3.getDate() - 29);
-        historico = historico.filter(item => {
-            return item.data >= limiteInferior && item.data <= hojeUtc3;
-        });
+const datasValidas = [];
+for (let i = 0; i < 30; i++) {
+    const data = new Date(hojeUtc3);
+    data.setDate(data.getDate() - i);
+    datasValidas.push(data.toISOString().split("T")[0]);
+}
+
+historico = historico.filter(item => {
+    const dataStr = item.data.toISOString().split("T")[0];
+    return datasValidas.includes(dataStr);
+});
 
         const temHoje = historico.some(item => item.data.toISOString().split("T")[0] === hojeISO);
         if (!temHoje) {
