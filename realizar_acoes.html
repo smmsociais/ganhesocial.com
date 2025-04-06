@@ -417,11 +417,11 @@ await salvarAcaoNoBanco({
     tipo_acao: currentActionData.tipo_acao
 });
 
-document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
-
-// Chama a próxima ação
+// Chama a próxima ação imediatamente
 fetchAction();
 
+// Atualiza status após iniciar nova busca (sem esperar)
+document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
 }
 
 async function skipAction() {
