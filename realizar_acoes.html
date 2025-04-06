@@ -84,6 +84,42 @@
             background-color: #4cae4c;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .open-action-button {
+            flex: 1;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .open-action-button:hover {
+            background-color: #0069d9;
+        }
+
+        .skip-button {
+            flex: 1;
+            padding: 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .skip-button:hover {
+            background-color: #c9302c;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -111,10 +147,14 @@
             <p><strong>Ação:</strong> <span id="actionType"></span></p>
             <p><strong>Usuário:</strong> <span id="username"></span></p>
             <p><strong>Pontos:</strong> <span id="points"></span></p>
-            <img id="profileImage" src="" alt="Avatar do TikTok" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px; display: none;">           
-            <p><a id="actionUrl" href="#" target="_blank" onclick="showConfirmButton()">Abrir ação</a></p>
+            <img id="profileImage" src="" alt="Avatar do TikTok" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px; display: none;">
+            
+            <div class="action-buttons">
+                <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir ação</a>
+                <button class="skip-button" onclick="skipAction()">Pular ação</button>
+            </div>
+            
             <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
-            <button id="skipButton" class="back-button" onclick="skipAction()">Pular Ação</button>
         </div>        
 
         <button class="back-button" onclick="goBack()">Voltar</button>
