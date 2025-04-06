@@ -112,9 +112,9 @@
             <p><strong>Usuário:</strong> <span id="username"></span></p>
             <p><strong>Pontos:</strong> <span id="points"></span></p>
             <p><a id="actionUrl" href="#" target="_blank" onclick="showConfirmButton()">Abrir ação</a></p>
-            <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar
-                Ação</button>
-        </div>
+            <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+            <button id="skipButton" class="back-button" onclick="skipAction()">Pular Ação</button>
+        </div>        
 
         <button class="back-button" onclick="goBack()">Voltar</button>
     </div>
@@ -341,6 +341,45 @@ document.getElementById("statusMessage").textContent = "Ação salva com sucesso
 // Chama a próxima ação
 fetchAction();
 
+}
+
+async function skipAction() {
+    // Salva a ação como "não validada" para histórico, sem pontuar
+    if (currentActionData) {
+        try {
+            const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+            actionHistory.push({
+                tipo: currentActionData.tipo_acao,
+                usuario: currentActionData.nome_usuario,
+                pontos: currentActionData.quantidade_pontos,
+                status: "pulada",
+                data: new Date().toLocaleString()
+            });
+            localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+        } catch (error) {
+            console.error("Erro ao salvar ação pulada:", error);
+        }
+
+        // Opcional: também salvar no backend
+        await salvarAcaoNoBanco({
+            nome_usuario: currentActionData.nome_usuario,
+            id_pedido: currentActionData.id_pedido,
+            id_conta: localStorage.getItem("id_conta"),
+            url_dir: currentActionData.url_dir,
+            unique_id_verificado: null,
+            acao_validada: false,
+            valor_confirmacao: 0,
+            quantidade_pontos: currentActionData.quantidade_pontos,
+            tipo_acao: currentActionData.tipo_acao
+        });
+    }
+
+    // Atualiza a interface
+    document.getElementById("statusMessage").textContent = "Ação pulada. Buscando nova ação...";
+    document.getElementById("actionBox").style.display = "none";
+
+    // Carrega a próxima ação
+    fetchAction();
 }
     
             // Chama a função para salvar a ação no banco de dados
