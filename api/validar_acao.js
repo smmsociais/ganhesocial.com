@@ -70,20 +70,20 @@ export default async function handler(req, res) {
       usuario.saldo += valorFinal;
     }
 
-// Cria a data de hoje de forma consistente para o fuso de Brasília (formato ISO)
+// Converte a data atual para o horário de Brasília e zera as horas usando o formato ISO (en-CA)
 const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 const hoje = new Date(hojeStr + "T00:00:00");
 
 // Procura uma entrada para hoje em ganhosPorDia
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
-  const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  return entryStr === hojeStr;
+    const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    return entryStr === hojeStr;
 });
 
 if (entradaHoje) {
-  entradaHoje.valor += valorFinal;
+    entradaHoje.valor += valorFinal;
 } else {
-  usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
+    usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
 }
 
     await usuario.save();
