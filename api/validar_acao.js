@@ -69,22 +69,23 @@ export default async function handler(req, res) {
             usuario.saldo += valorFinal;
         }
 
-// Converte a data atual para o horário de Brasília e zera as horas
-const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-const hoje = new Date(hojeLocalString);
-hoje.setHours(0, 0, 0, 0);
+        // Converte a data atual para o horário de Brasília e zera as horas
+        const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+        const hoje = new Date(hojeLocalString);
+        hoje.setHours(0, 0, 0, 0);
 
-let entradaHoje = usuario.ganhosPorDia.find(entry => {
-    const dataEntrada = new Date(entry.data);
-    dataEntrada.setUTCHours(21, 0, 0, 0); // também UTC-3
-    return dataEntrada.getTime() === hoje.getTime();
-});
+        let entradaHoje = usuario.ganhosPorDia.find(entry => {
+            const dataLocalString = new Date(entry.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+            const dataEntrada = new Date(dataLocalString);
+            dataEntrada.setHours(0, 0, 0, 0);
+            return dataEntrada.getTime() === hoje.getTime();
+        });
 
-if (entradaHoje) {
-    entradaHoje.valor += valorFinal;
-} else {
-    usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
-}
+        if (entradaHoje) {
+            entradaHoje.valor += valorFinal;
+        } else {
+            usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
+        }
 
         await usuario.save();
 
