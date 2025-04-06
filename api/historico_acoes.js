@@ -13,13 +13,14 @@ export default async function handler(req, res) {
         const historico = await ActionHistory.find().populate("user", "nome");
 
         // Enviar apenas os campos necessários
-        const formattedData = historico.map(action => ({
-            nome_usuario: action.nome_usuario,  // Nome do usuário da ação
-            nome_cadastrado: action.user?.nome || "Desconhecido", // Nome do usuário cadastrado no sistema
-            acao_validada: action.acao_validada,  
-            valor_confirmacao: action.valor_confirmacao,  
-            data: action.data  
-        }));
+const formattedData = historico.map(action => ({
+    nome_usuario: action.nome_usuario,
+    nome_cadastrado: action.user?.nome || "Desconhecido",
+    acao_validada: action.acao_validada,
+    valor_confirmacao: action.valor_confirmacao,
+    data: action.data,
+    rede_social: action.rede_social || "TikTok" // fallback se não existir
+}));
 
         res.status(200).json(formattedData);
     } catch (error) {
