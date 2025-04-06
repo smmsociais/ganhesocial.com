@@ -190,6 +190,8 @@
             const selectedAccount = document.getElementById("accountSelect").value;
             if (!selectedAccount) return;
     
+            document.getElementById("statusMessage").textContent = "Vinculando conta...";
+    
             try {
                 const response = await fetch("/api/vincular_conta", {
                     method: 'POST',
@@ -287,6 +289,8 @@ async function confirmAction() {
     const selectedAccount = document.getElementById("accountSelect").value;
     if (!selectedAccount || !currentActionData) return;
 
+    document.getElementById("statusMessage").textContent = "Obtendo informações do TikTok...";
+
     let userId;
     try {
         const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
@@ -297,12 +301,15 @@ async function confirmAction() {
         }
 
         userId = userInfoData.data.user.id;
+        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
     } catch (error) {
         console.error("Erro ao obter informações do TikTok:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao obter informações do TikTok.";
         return;
     }
 
     // NOVO: Confirmar a ação no backend primeiro
+    document.getElementById("statusMessage").textContent = "Confirmando ação...";
     let confirmData;
     try {
         const confirmResponse = await fetch("/api/confirmar_acao", {
@@ -318,13 +325,17 @@ async function confirmAction() {
         });
 
         confirmData = await confirmResponse.json();
+        console.log("Dados de confirmação:", confirmData);
+
 
         if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
             throw new Error("Erro ao confirmar ação.");
         }
 
+        document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
     } catch (error) {
         console.error("Erro ao confirmar ação:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
         return;
     }
 
@@ -344,9 +355,15 @@ accountFound = followings.some(f => {
     return followingUsername === targetUsername;
 });
 
+// Debug útil no console
+console.log("Usuário esperado:", targetUsername);
+console.log("Seguindo:", followings.map(f => f.unique_id));
+console.log("Encontrado?", accountFound);
+
         }
     } catch (error) {
         console.error("Erro ao buscar lista de seguindo:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao verificar seguindo.";
         return;
     }
 
@@ -400,15 +417,11 @@ await salvarAcaoNoBanco({
     tipo_acao: currentActionData.tipo_acao
 });
 
-// Limpa a interface atual antes de buscar a próxima
-document.getElementById("actionBox").style.display = "none";
-document.getElementById("confirmButton").style.display = "none";
-document.getElementById("profileImage").style.display = "none";
-document.getElementById("statusMessage").textContent = "Buscando nova ação...";
-
 // Chama a próxima ação imediatamente
 fetchAction();
 
+// Atualiza status após iniciar nova busca (sem esperar)
+document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
 }
 
 async function skipAction() {
@@ -481,6 +494,7 @@ async function salvarAcao() {
         });
 
         const data = await response.json();
+        console.log("Ação salva com sucesso:", data);
     } catch (error) {
         console.error("Erro ao salvar ação:", error);
     }
@@ -565,6 +579,7 @@ body: JSON.stringify({
 });
 
         const data = await response.json();
+        console.log("Ação registrada:", data);
     } catch (error) {
         console.error("Erro ao registrar ação:", error);
     }
