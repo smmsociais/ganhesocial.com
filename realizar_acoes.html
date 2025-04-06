@@ -417,11 +417,17 @@ await salvarAcaoNoBanco({
     tipo_acao: currentActionData.tipo_acao
 });
 
+document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
+
+// Limpa a interface atual antes de buscar a próxima
+document.getElementById("actionBox").style.display = "none";
+document.getElementById("confirmButton").style.display = "none";
+document.getElementById("profileImage").style.display = "none";
+document.getElementById("statusMessage").textContent = "Buscando nova ação...";
+
 // Chama a próxima ação imediatamente
 fetchAction();
 
-// Atualiza status após iniciar nova busca (sem esperar)
-document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
 }
 
 async function skipAction() {
