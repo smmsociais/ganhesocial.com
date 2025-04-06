@@ -299,10 +299,8 @@ async function confirmAction() {
         }
 
         userId = userInfoData.data.user.id;
-        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
     } catch (error) {
         console.error("Erro ao obter informações do TikTok:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao obter informações do TikTok.";
         return;
     }
 
@@ -329,10 +327,8 @@ async function confirmAction() {
             throw new Error("Erro ao confirmar ação.");
         }
 
-        document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
     } catch (error) {
         console.error("Erro ao confirmar ação:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
         return;
     }
 
@@ -413,8 +409,6 @@ await salvarAcaoNoBanco({
     quantidade_pontos: currentActionData.quantidade_pontos,
     tipo_acao: currentActionData.tipo_acao
 });
-
-document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
 
 // Limpa a interface atual antes de buscar a próxima
 document.getElementById("actionBox").style.display = "none";
