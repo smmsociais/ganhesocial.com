@@ -359,46 +359,55 @@ async function carregarHistorico() {
         const tbody = document.querySelector("#historicoTabela tbody");
         tbody.innerHTML = "";
 
-        // Define "hoje" em UTC-3 (meia-noite no horário de Brasília)
+        // Define "hoje" em UTC-3 (Brasília)
         const agora = new Date();
-        const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000); // Ajusta -3h
-        hojeUtc3.setUTCHours(21, 0, 0, 0); // Define como "meia-noite" BR em UTC
-        const hojeISO = hojeUtc3.toISOString().split("T")[0];
+        const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+        hojeUtc3.setUTCHours(21, 0, 0, 0); // meia-noite BR = 21h UTC
+        const hojeFormatado = hojeUtc3.toLocaleDateString("pt-BR");
 
+        // Monta lista de datas dos últimos 30 dias
+        const datasValidas = [];
+        for (let i = 0; i < 30; i++) {
+            const data = new Date(hojeUtc3);
+            data.setDate(data.getDate() - i);
+            datasValidas.push(data.toLocaleDateString("pt-BR"));
+        }
+
+        // Filtra histórico pra datas válidas
         let historico = data.historico.map(item => {
-            let dataItem = new Date(item.data);
-            dataItem.setHours(0, 0, 0, 0);
+            const dataItem = new Date(item.data);
             return {
                 data: dataItem,
                 valor: parseFloat(item.valor.toFixed(2))
             };
+        }).filter(item => {
+            const dataStr = item.data.toLocaleDateString("pt-BR");
+            return datasValidas.includes(dataStr);
         });
 
-const datasValidas = [];
-for (let i = 0; i < 30; i++) {
-    const data = new Date(hojeUtc3);
-    data.setDate(data.getDate() - i);
-    datasValidas.push(data.toISOString().split("T")[0]);
-}
+        // Adiciona linhas na tabela
+        datasValidas.forEach(dataStr => {
+            const itemHistorico = historico.find(item => item.data.toLocaleDateString("pt-BR") === dataStr);
+            const valor = itemHistorico ? itemHistorico.valor.toFixed(2) : "0.00";
 
-historico = historico.filter(item => {
-const dataStr = new Date(item.data.getTime() - 3 * 60 * 60 * 1000).toISOString().split("T")[0];
-    return datasValidas.includes(dataStr);
-});
+            const row = document.createElement("tr");
 
-const dataFormatada = item.data.toLocaleDateString('pt-BR');
-const hojeFormatado = hojeUtc3.toLocaleDateString('pt-BR');
+            const cellData = document.createElement("td");
+            cellData.textContent = dataStr === hojeFormatado ? "Hoje" : dataStr;
 
-const temHoje = historico.some(item => {
-    const dataFormatada = item.data.toLocaleDateString('pt-BR');
-    return dataFormatada === hojeFormatado;
-});
+            const cellValor = document.createElement("td");
+            cellValor.textContent = valor;
 
+            row.appendChild(cellData);
+            row.appendChild(cellValor);
+            tbody.appendChild(row);
+        });
 
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
     }
 }
+
         function goToDashboard() {
             window.location.href = "dashboard.html";
         }
