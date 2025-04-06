@@ -386,29 +386,14 @@ const dataStr = new Date(item.data.getTime() - 3 * 60 * 60 * 1000).toISOString()
     return datasValidas.includes(dataStr);
 });
 
-        const temHoje = historico.some(item => item.data.toISOString().split("T")[0] === hojeISO);
-        if (!temHoje) {
-            const ganhoHoje = parseFloat(localStorage.getItem("ganhoHoje")) || 0;
-            historico.push({ data: hojeUtc3, valor: ganhoHoje });
-        }
+const dataFormatada = item.data.toLocaleDateString('pt-BR');
+const hojeFormatado = hojeUtc3.toLocaleDateString('pt-BR');
 
-        historico.sort((a, b) => b.data - a.data);
+const temHoje = historico.some(item => {
+    const dataFormatada = item.data.toLocaleDateString('pt-BR');
+    return dataFormatada === hojeFormatado;
+});
 
-        historico.forEach(item => {
-            const row = document.createElement("tr");
-
-            const cellData = document.createElement("td");
-            cellData.textContent = (item.data.toISOString().split("T")[0] === hojeISO)
-                ? "Hoje"
-                : item.data.toLocaleDateString("pt-BR");
-            row.appendChild(cellData);
-
-            const cellValor = document.createElement("td");
-            cellValor.textContent = item.valor.toFixed(2);
-            row.appendChild(cellValor);
-
-            tbody.appendChild(row);
-        });
 
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
