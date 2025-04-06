@@ -72,19 +72,20 @@ export default async function handler(req, res) {
 
 // Converte a data atual para o horário de Brasília e zera as horas usando o formato ISO (en-CA)
 const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-const hoje = new Date(hojeStr + "T00:00:00");
+
+// Calcula o início do dia atual em Brasília
+const now = new Date();
+const optionsTime = { timeZone: "America/Sao_Paulo", hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+const timeInBrasilia = now.toLocaleTimeString("en-US", optionsTime);
+const [hours, minutes, seconds] = timeInBrasilia.split(':').map(Number);
+const msSinceMidnight = (hours * 3600 + minutes * 60 + seconds) * 1000;
+const hoje = new Date(now.getTime() - msSinceMidnight);
 
 // Procura uma entrada para hoje em ganhosPorDia
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
     const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     return entryStr === hojeStr;
 });
-
-if (entradaHoje) {
-    entradaHoje.valor += valorFinal;
-} else {
-    usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
-}
 
     await usuario.save();
 
