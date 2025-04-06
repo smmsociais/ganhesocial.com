@@ -48,10 +48,11 @@
         .action-box {
             display: none;
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background: #eef;
+            background: var(--container-light); /* Mesma cor do container */
+            text-align: center; /* Centraliza o conteúdo */
         }
 
         .back-button {
@@ -120,6 +121,20 @@
             background-color: #c9302c;
         }
 
+        .profile-image-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .profile-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: none;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -130,6 +145,11 @@
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
+            }
+
+            .action-box {
+                background: var(--container-dark);
+                border-color: var(--border-dark);
             }
         }
     </style>
@@ -147,7 +167,10 @@
             <p><strong>Ação:</strong> <span id="actionType"></span></p>
             <p><strong>Usuário:</strong> <span id="username"></span></p>
             <p><strong>Pontos:</strong> <span id="points"></span></p>
-            <img id="profileImage" src="" alt="Avatar do TikTok" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px; display: none;">
+            
+            <div class="profile-image-container">
+                <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
+            </div>
             
             <div class="action-buttons">
                 <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir ação</a>
@@ -220,21 +243,21 @@ const url = `https://www.tiktok.com/@${tiktokUsername}`;
 document.getElementById("actionUrl").href = url;
 
 // 👇 Novo trecho para buscar avatar
-try {
-    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-    const userInfo = await resUserInfo.json();
-    
-    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-        const profileImg = document.getElementById("profileImage");
-        profileImg.src = userInfo.data.user.avatarLarger;
-        profileImg.style.display = "block";
-    } else {
-        document.getElementById("profileImage").style.display = "none";
-    }
-} catch (e) {
-    console.error("Erro ao carregar avatar:", e);
-    document.getElementById("profileImage").style.display = "none";
-}
+       try {
+            const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+            const userInfo = await resUserInfo.json();
+            
+            if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                const profileImg = document.getElementById("profileImage");
+                profileImg.src = userInfo.data.user.avatarLarger;
+                profileImg.style.display = "block"; // Agora usando a classe profile-image
+            } else {
+                document.getElementById("profileImage").style.display = "none";
+            }
+        } catch (e) {
+            console.error("Erro ao carregar avatar:", e);
+            document.getElementById("profileImage").style.display = "none";
+        }
 
     const pontos = parseFloat(data.quantidade_pontos);
     const valorBruto = pontos / 1000;
