@@ -70,13 +70,13 @@ export default async function handler(req, res) {
         }
 
 // Ajuste para meia-noite no horário de Brasília (UTC-3)
-const hojeLocal = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-const hoje = new Date(hojeLocal);
-hoje.setHours(0, 0, 0, 0);
+const agora = new Date();
+agora.setUTCHours(21, 0, 0, 0); // 00:00 no Brasil = 21:00 UTC
+const hoje = agora;
 
 let entradaHoje = usuario.ganhosPorDia.find(entry => {
     const dataEntrada = new Date(entry.data);
-    dataEntrada.setHours(0, 0, 0, 0);
+    dataEntrada.setUTCHours(21, 0, 0, 0); // também UTC-3
     return dataEntrada.getTime() === hoje.getTime();
 });
 
