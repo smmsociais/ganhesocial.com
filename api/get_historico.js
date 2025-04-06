@@ -1,6 +1,13 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
 
+// Função para converter qualquer Date em "YYYY-MM-DD" no fuso de Brasília
+function formatarDataBrasilia(dateInput) {
+  const dataBR = new Date(dateInput.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  return dataBR.toISOString().slice(0, 10); // Retorna 'YYYY-MM-DD'
+}
+
+// Retorna o Date correspondente à meia-noite de hoje no fuso de Brasília
 function getBrasiliaMidnightDate() {
   const now = new Date();
   const brTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -29,7 +36,7 @@ export default async function handler(req, res) {
     const ganhosMap = new Map();
 
     for (const ganho of usuario.ganhosPorDia || []) {
-      const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      const dataStr = formatarDataBrasilia(new Date(ganho.data));
       ganhosMap.set(dataStr, ganho.valor);
     }
 
@@ -39,8 +46,10 @@ export default async function handler(req, res) {
     for (let i = 0; i < 30; i++) {
       const data = new Date(hoje);
       data.setDate(data.getDate() - i);
-      const dataFormatada = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+      const dataFormatada = formatarDataBrasilia(data);
       const valor = ganhosMap.get(dataFormatada) || 0;
+
       historico.push({ data: dataFormatada, valor });
     }
 
