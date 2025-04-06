@@ -1,6 +1,13 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
 
+function getBrasiliaMidnightDate() {
+  const now = new Date();
+  const brTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  brTime.setHours(0, 0, 0, 0);
+  return brTime;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -19,27 +26,25 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Acesso negado." });
     }
 
-const ganhosMap = new Map();
+    const ganhosMap = new Map();
 
-for (const ganho of usuario.ganhosPorDia || []) {
-    // Formata a data do ganho para o fuso de Brasília no formato ISO
-    const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    ganhosMap.set(dataStr, ganho.valor);
-}
+    for (const ganho of usuario.ganhosPorDia || []) {
+      const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      ganhosMap.set(dataStr, ganho.valor);
+    }
 
-const historico = [];
-const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-const hoje = new Date(hojeStr + "T00:00:00");
+    const historico = [];
+    const hoje = getBrasiliaMidnightDate();
 
-for (let i = 0; i < 30; i++) {
-    const data = new Date(hoje);
-    data.setDate(data.getDate() - i);
-    const dataFormatada = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    const valor = ganhosMap.get(dataFormatada) || 0;
-    historico.push({ data: dataFormatada, valor });
-}
+    for (let i = 0; i < 30; i++) {
+      const data = new Date(hoje);
+      data.setDate(data.getDate() - i);
+      const dataFormatada = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+      const valor = ganhosMap.get(dataFormatada) || 0;
+      historico.push({ data: dataFormatada, valor });
+    }
 
-historico.reverse(); // Do mais antigo para o mais recente
+    historico.reverse(); // Do mais antigo para o mais recente
 
     res.status(200).json({ historico });
   } catch (error) {
