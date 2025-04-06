@@ -114,6 +114,7 @@
             <p><a id="actionUrl" href="#" target="_blank" onclick="showConfirmButton()">Abrir ação</a></p>
             <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
             <button id="skipButton" class="back-button" onclick="skipAction()">Pular Ação</button>
+            <img id="profileImage" src="" alt="Avatar do TikTok" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px; display: none;">
         </div>        
 
         <button class="back-button" onclick="goBack()">Voltar</button>
@@ -173,10 +174,27 @@
     document.getElementById("actionType").textContent = data.tipo_acao;
     document.getElementById("username").textContent = data.nome_usuario;
     
-    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const url = `https://www.tiktok.com/@${tiktokUsername}`;
-    document.getElementById("actionUrl").href = url;
+const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const url = `https://www.tiktok.com/@${tiktokUsername}`;
+document.getElementById("actionUrl").href = url;
+
+// 👇 Novo trecho para buscar avatar
+try {
+    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+    const userInfo = await resUserInfo.json();
+    
+    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+        const profileImg = document.getElementById("profileImage");
+        profileImg.src = userInfo.data.user.avatarLarger;
+        profileImg.style.display = "block";
+    } else {
+        document.getElementById("profileImage").style.display = "none";
+    }
+} catch (e) {
+    console.error("Erro ao carregar avatar:", e);
+    document.getElementById("profileImage").style.display = "none";
+}
 
     const pontos = parseFloat(data.quantidade_pontos);
     const valorBruto = pontos / 1000;
