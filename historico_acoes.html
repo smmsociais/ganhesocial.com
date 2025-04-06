@@ -98,8 +98,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                 listItem.classList.add("history-item");
 listItem.innerHTML = `
     <strong>${action.rede_social}</strong><br>
-    <strong>Usuário:</strong> ${action.nome_usuario} <br>
     <strong>Tipo:</strong> ${action.tipo} <br>
+    <strong>Usuário:</strong> ${action.nome_usuario} <br>
     <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : "❌ Não Validada"}<br>
     <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
     <small>Data: ${new Date(action.data).toLocaleString()}</small>
