@@ -169,44 +169,32 @@
                 const data = await response.json();
     
                 if (data.status === "ENCONTRADA") {
-                    document.getElementById("statusMessage").textContent = "Ação encontrada!";
-                    document.getElementById("actionType").textContent = data.tipo_acao;
-                    document.getElementById("username").textContent = data.nome_usuario;
-                    
-// Extrai o nome de usuário (remove @ se tiver)
-const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+    document.getElementById("statusMessage").textContent = "Ação encontrada!";
+    document.getElementById("actionType").textContent = data.tipo_acao;
+    document.getElementById("username").textContent = data.nome_usuario;
+    
+    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const url = `https://www.tiktok.com/@${tiktokUsername}`;
+    document.getElementById("actionUrl").href = url;
 
-// Função para detectar se é mobile
-function isMobile() {
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
+    const pontos = parseFloat(data.quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    let valorFinal = (valorBruto > 0.004)
+        ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
+        : valorBruto.toFixed(3);
 
-// Define URLs diferentes se quiser (aqui são iguais por padrão)
-const mobileUrl = `https://www.tiktok.com/@${tiktokUsername}`;
-const desktopUrl = `https://www.tiktok.com/@${tiktokUsername}`;
-
-// Aponta para o link adequado
-document.getElementById("actionUrl").href = isMobile() ? mobileUrl : desktopUrl;
-
-
-const pontos = parseFloat(data.quantidade_pontos); // exemplo: 6
-const valorBruto = pontos / 1000; // 6 -> 0.006
-let valorFinal;
-
-if (valorBruto > 0.004) {
-    valorFinal = (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3);
+    document.getElementById("points").textContent = `R$ ${valorFinal}`;
+    document.getElementById("confirmButton").style.display = "none";
+    document.getElementById("actionBox").style.display = "block";
+    currentActionData = data;
 } else {
-    valorFinal = valorBruto.toFixed(3);
+    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
+    document.getElementById("actionBox").style.display = "none";
+    
+    // Tenta buscar nova ação após 3 segundos
+    setTimeout(fetchAction, 3000);
 }
-
-document.getElementById("points").textContent = `R$ ${valorFinal}`;
-                    document.getElementById("confirmButton").style.display = "none";
-                    document.getElementById("actionBox").style.display = "block";
-                    currentActionData = data;
-                } else {
-                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível.";
-                    document.getElementById("actionBox").style.display = "none";
-                }
             } catch (error) {
                 document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
             }
