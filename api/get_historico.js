@@ -21,26 +21,27 @@ export default async function handler(req, res) {
 
         const ganhosMap = new Map();
 
-        // Mapeia os ganhos ajustando para o fuso de Brasília
-        for (const ganho of usuario.ganhosPorDia || []) {
-            const dataLocalString = new Date(ganho.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-            const dataLocal = new Date(dataLocalString);
-            dataLocal.setHours(0, 0, 0, 0);
-            const dataFormatada = dataLocal.toISOString().split("T")[0]; // YYYY-MM-DD
-            ganhosMap.set(dataFormatada, ganho.valor);
-        }
+        // Mapeia os ganhos, ajustando para UTC-3 (meia-noite no Brasil = 21h UTC)
+for (const ganho of usuario.ganhosPorDia || []) {
+    // Converte a data do ganho para o horário de Brasília
+    const dataLocalString = new Date(ganho.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const dataLocal = new Date(dataLocalString);
+    dataLocal.setHours(0, 0, 0, 0);
+    const dataFormatada = dataLocal.toISOString().split("T")[0]; // YYYY-MM-DD
+    ganhosMap.set(dataFormatada, ganho.valor);
+}
 
         const historico = [];
 
-        // Data de hoje no horário de Brasília
-        const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-        const hoje = new Date(hojeLocalString);
-        hoje.setHours(0, 0, 0, 0);
+// Obtém a data de hoje no fuso horário de Brasília
+const hojeLocalString = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+const hoje = new Date(hojeLocalString);
+hoje.setHours(0, 0, 0, 0);
 
         for (let i = 0; i < 30; i++) {
             const data = new Date(hoje);
             data.setDate(data.getDate() - i);
-            data.setHours(0, 0, 0, 0);
+            data.setUTCHours(21, 0, 0, 0); // Garantir consistência na comparação
 
             const dataFormatada = data.toISOString().split("T")[0];
             const valor = ganhosMap.get(dataFormatada) || 0;
