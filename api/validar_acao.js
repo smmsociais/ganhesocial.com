@@ -70,29 +70,28 @@ export default async function handler(req, res) {
       usuario.saldo += valorFinal;
     }
 
-// Converte a data atual para o horário de Brasília e zera as horas usando o formato ISO (en-CA)
-function getBrasiliaMidnightDate() {
-  const now = new Date();
-  const brTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  brTime.setHours(0, 0, 0, 0);
-  return brTime;
-}
+    // Função para criar data de meia-noite no fuso de Brasília
+    function getDataBrasiliaFormatada() {
+      const agora = new Date();
+      const brDate = new Date(agora.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      brDate.setHours(0, 0, 0, 0);
+      return brDate;
+    }
 
-const hoje = new Date(
-  new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }) + "T00:00:00-03:00"
-);
+    const hojeBrasilia = getDataBrasiliaFormatada();
+    const hojeStr = hojeBrasilia.toISOString().slice(0, 10);
 
-// Procura uma entrada para hoje em ganhosPorDia
-let entradaHoje = usuario.ganhosPorDia.find(entry => {
-    const entryStr = new Date(entry.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    return entryStr === hojeStr;
-});
+    // Procura uma entrada de ganhos para o dia atual
+    let entradaHoje = usuario.ganhosPorDia.find(entry => {
+      const entryStr = new Date(entry.data).toISOString().slice(0, 10);
+      return entryStr === hojeStr;
+    });
 
-if (entradaHoje) {
-    entradaHoje.valor += valorFinal;
-} else {
-    usuario.ganhosPorDia.push({ data: hoje, valor: valorFinal });
-}
+    if (entradaHoje) {
+      entradaHoje.valor += valorFinal;
+    } else {
+      usuario.ganhosPorDia.push({ data: hojeBrasilia, valor: valorFinal });
+    }
 
     await usuario.save();
 
