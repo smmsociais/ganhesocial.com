@@ -19,26 +19,24 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Acesso negado." });
     }
 
-    const ganhosMap = new Map();
+const ganhosMap = new Map();
 
-    // Mapeia os ganhos usando o formato ISO "YYYY-MM-DD" para o fuso de Brasília
-    for (const ganho of usuario.ganhosPorDia || []) {
-      const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-      ganhosMap.set(dataStr, ganho.valor);
-    }
+for (const ganho of usuario.ganhosPorDia || []) {
+    // Formata a data do ganho para o fuso de Brasília no formato ISO
+    const dataStr = new Date(ganho.data).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    ganhosMap.set(dataStr, ganho.valor);
+}
 
-// Obtém a data de hoje no fuso de Brasília
+const historico = [];
 const hojeStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 const hoje = new Date(hojeStr + "T00:00:00");
 
-const historico = [];
-
 for (let i = 0; i < 30; i++) {
-  const data = new Date(hoje);
-  data.setDate(data.getDate() - i);
-  const dataStr = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const valor = ganhosMap.get(dataStr) || 0;
-  historico.push({ data: dataStr, valor });
+    const data = new Date(hoje);
+    data.setDate(data.getDate() - i);
+    const dataFormatada = data.toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    const valor = ganhosMap.get(dataFormatada) || 0;
+    historico.push({ data: dataFormatada, valor });
 }
 
 historico.reverse(); // Do mais antigo para o mais recente
