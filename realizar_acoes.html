@@ -417,11 +417,33 @@ await salvarAcaoNoBanco({
     tipo_acao: currentActionData.tipo_acao
 });
 
-// Chama a próxima ação imediatamente
+// Atualiza a interface para buscar nova ação
+document.getElementById("statusMessage").textContent = "Ação salva localmente. Buscando nova ação...";
+document.getElementById("actionBox").style.display = "none";
+document.getElementById("confirmButton").style.display = "none";
+document.getElementById("profileImage").style.display = "none";
+
+// Inicia a próxima busca IMEDIATAMENTE
 fetchAction();
 
-// Atualiza status após iniciar nova busca (sem esperar)
-document.getElementById("statusMessage").textContent = "Ação salva com sucesso!";
+// Salva no banco em segundo plano (não espera)
+salvarAcaoNoBanco({
+    nome_usuario: selectedAccount,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    url_dir: currentActionData.url_dir,
+    unique_id_verificado: userId,
+    acao_validada: accountFound,
+    valor_confirmacao: parseFloat(confirmData.valor),
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    tipo_acao: currentActionData.tipo_acao
+}).then(() => {
+    console.log("Ação salva no banco com sucesso.");
+}).catch((err) => {
+    console.error("Erro ao salvar ação no banco:", err);
+});
+
+
 }
 
 async function skipAction() {
