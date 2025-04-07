@@ -100,7 +100,7 @@ listItem.innerHTML = `
     <strong>${action.rede_social}</strong><br>
     <strong>Tipo:</strong> ${action.tipo} <br>
     <strong>Usuário:</strong> ${action.nome_usuario} <br>
-    <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : "❌ Não Validada"}<br>
+    <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : `❌ Não Validada ${action.url_dir ? `<a href="${action.url_dir}" target="_blank" style="margin-left: 10px;">Ver Ação</a>` : ""}`}<br>
     <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
     <small>Data: ${new Date(action.data).toLocaleString()}</small>
 `;
