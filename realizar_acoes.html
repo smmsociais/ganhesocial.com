@@ -46,7 +46,8 @@
         }
 
         .action-box {
-            display: block; /* Alterado para mostrar inicialmente */
+            display: block;
+            /* Alterado para mostrar inicialmente */
             margin-top: 20px;
             padding: 15px;
             border: 1px solid #ccc;
@@ -68,16 +69,31 @@
         .warning-box h3 {
             color: #d9534f;
             margin-top: 0;
+            margin-bottom: 10px;
+            /* Adicionado espaçamento abaixo do título */
             text-align: center;
         }
 
         .warning-box ul {
             padding-left: 20px;
+            margin: 10px 0;
+            /* Espaçamento acima e abaixo da lista */
+        }
+
+        .warning-box ul li {
+            margin-bottom: 8px;
+            /* Espaçamento entre itens da lista */
+        }
+
+        .warning-box p {
+            margin-top: 12px;
+            /* Espaçamento acima do parágrafo final */
             margin-bottom: 0;
         }
 
         .action-content {
-            display: none; /* Esconde o conteúdo da ação inicialmente */
+            display: none;
+            /* Esconde o conteúdo da ação inicialmente */
         }
 
         .back-button {
@@ -199,10 +215,10 @@
             <div id="warningMessage" class="warning-box">
                 <h3>Atenção</h3>
                 <ul>
-                    <li>Não deixe de seguir ou curtir após as ações serem realizadas</li>
-                    <li>Não envie mensagens privadas para os perfis das ações</li>
+                    <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
+                    <li>Não envie mensagens privadas para os perfis das ações.</li>
                 </ul>
-                <p>Sua conta será permanentemente suspensa da plataforma, caso você faça</p>
+                <p>Sua conta será permanentemente suspensa da plataforma, caso você faça.</p>
             </div>
 
             <!-- Conteúdo da ação (inicialmente oculto) -->
@@ -217,10 +233,12 @@
 
                 <div class="action-buttons">
                     <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                    <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
+                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
+                        onclick="showConfirmButton()">Abrir Ação</a>
                 </div>
 
-                <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
+                    style="display: none;">Confirmar Ação</button>
             </div>
         </div>
 
@@ -565,4 +583,5 @@
         window.onload = loadAccounts;
     </script>
 </body>
+
 </html>
