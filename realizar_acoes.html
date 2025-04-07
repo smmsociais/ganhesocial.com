@@ -254,7 +254,7 @@
             preloadNextAction();
             
         
-            const pontos = parseFloat(data.quantidade_pontos);
+            const pontos = parseFloat(currentActionData.quantidade_pontos);
             const valorBruto = pontos / 1000;
             let valorFinal = (valorBruto > 0.004)
                 ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
@@ -263,7 +263,6 @@
             document.getElementById("points").textContent = `R$ ${valorFinal}`;
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("actionBox").style.display = "block";
-            currentActionData = data;
             
             // Tenta buscar nova ação após 3 segundos
             setTimeout(fetchAction, 3000);
