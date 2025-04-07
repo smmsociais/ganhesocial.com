@@ -221,7 +221,7 @@
             const id_conta = localStorage.getItem("id_conta");
             if (!id_conta) return;
 
-            document.getElementById("statusMessage").textContent = "Buscando ações...";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
             try {
                 const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
