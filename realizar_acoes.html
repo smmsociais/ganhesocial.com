@@ -253,32 +253,6 @@
             // Pré-carrega a próxima ação
             preloadNextAction();
             
-                        if (data.status === "ENCONTRADA") {
-            document.getElementById("statusMessage").textContent = "Ação encontrada!";
-            document.getElementById("actionType").textContent = data.tipo_acao;
-            document.getElementById("username").textContent = data.nome_usuario;
-            
-        const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const url = `https://www.tiktok.com/@${tiktokUsername}`;
-        document.getElementById("actionUrl").href = url;
-        
-        // 👇 Novo trecho para buscar avatar
-               try {
-                    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                    const userInfo = await resUserInfo.json();
-                    
-                    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                        const profileImg = document.getElementById("profileImage");
-                        profileImg.src = userInfo.data.user.avatarLarger;
-                        profileImg.style.display = "block"; // Agora usando a classe profile-image
-                    } else {
-                        document.getElementById("profileImage").style.display = "none";
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar avatar:", e);
-                    document.getElementById("profileImage").style.display = "none";
-                }
         
             const pontos = parseFloat(data.quantidade_pontos);
             const valorBruto = pontos / 1000;
@@ -290,13 +264,9 @@
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("actionBox").style.display = "block";
             currentActionData = data;
-        } else {
-            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
-            document.getElementById("actionBox").style.display = "none";
             
             // Tenta buscar nova ação após 3 segundos
             setTimeout(fetchAction, 3000);
-        }
         }
                 
                 function showConfirmButton() {
