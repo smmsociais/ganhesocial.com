@@ -234,7 +234,6 @@
                 const data = await response.json();
 
                 if (data.status === "ENCONTRADA") {
-                    document.getElementById("statusMessage").textContent = "Ação encontrada!";
                     document.getElementById("actionType").textContent = data.tipo_acao;
                     document.getElementById("username").textContent = data.nome_usuario;
 
@@ -334,7 +333,6 @@
 
     } catch (error) {
         console.error("Erro ao confirmar ação:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
         return;
     }
 
@@ -359,7 +357,6 @@
         }
     } catch (error) {
         console.error("Erro ao buscar lista de seguindo:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao verificar seguindo.";
         return;
     }
 
@@ -525,7 +522,6 @@
                 });
             } catch (error) {
                 console.error("Erro ao carregar contas:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao carregar contas.";
             }
         }
 
