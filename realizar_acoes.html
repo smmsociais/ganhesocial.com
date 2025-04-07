@@ -208,7 +208,6 @@
 
                 if (data.id_conta) {
                     localStorage.setItem("id_conta", data.id_conta);
-                    document.getElementById("statusMessage").textContent = "Conta vinculada!";
                     fetchAction();
                 } else {
                     document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
@@ -295,7 +294,6 @@
     document.getElementById("actionBox").style.display = "none";
     document.getElementById("confirmButton").style.display = "none";
     document.getElementById("profileImage").style.display = "none";
-    document.getElementById("statusMessage").textContent = "Processando ação...";
 
     let userId;
     try {
@@ -307,15 +305,12 @@
         }
 
         userId = userInfoData.data.user.id;
-        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
     } catch (error) {
         console.error("Erro ao obter informações do TikTok:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao obter informações do TikTok.";
         return;
     }
 
     // Confirma a ação no backend
-    document.getElementById("statusMessage").textContent = "Confirmando ação...";
     let confirmData;
     try {
         const confirmResponse = await fetch("/api/confirmar_acao", {
@@ -337,7 +332,6 @@
             throw new Error("Erro ao confirmar ação.");
         }
 
-        document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
     } catch (error) {
         console.error("Erro ao confirmar ação:", error);
         document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
@@ -421,8 +415,6 @@
     document.getElementById("statusMessage").textContent = "Buscando nova ação...";
     fetchAction();
 }
-
-
         async function skipAction() {
             // Salva a ação como "não validada" para histórico, sem pontuar
             if (currentActionData) {
