@@ -20,12 +20,20 @@
             background-color: var(--bg-light);
             color: var(--text-light);
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .container {
@@ -34,7 +42,9 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 300px;
+            width: 90%;
+            max-width: 500px;
+            margin: 30px auto;
             transition: background 0.3s;
         }
 
@@ -90,18 +100,98 @@
             display: none;
         }
 
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
         /* Estilos padronizados para todos os botões */
         .back-button,
         .confirm-button,
         .open-action-button,
         .skip-button {
             padding: 10px;
-            font-size: 14px; /* Tamanho de fonte igual para todos */
-            font-weight: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            height: 40px; /* Altura fixa para todos */
+            height: 40px;
             box-sizing: border-box;
         }
 
@@ -132,7 +222,6 @@
             display: flex;
             gap: 10px;
             margin-top: 10px;
-            /* Removido flex-direction: row-reverse */
         }
 
         /* Botão Pular Ação (agora à esquerda) */
@@ -182,15 +271,32 @@
                 color: var(--text-dark);
             }
 
-            .container {
+            .header,
+            .container,
+            .action-box {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
             }
 
-            .action-box {
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
                 background: var(--container-dark);
-                border-color: var(--border-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
 
             .warning-box {
@@ -202,6 +308,15 @@
 </head>
 
 <body>
+    <div class="header">
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div style="width: 30px;"></div>
+    </div>
+
     <div class="container">
         <h2>Realizar Ações TikTok</h2>
         <select id="accountSelect" onchange="bindAccount()">
@@ -240,7 +355,66 @@
         <button class="back-button" onclick="goBack()">Voltar</button>
     </div>
 
+    <!-- Menu Overlay e Conteúdo -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-content" id="menuContent">
+        <a class="menu-item" onclick="goToDashboard()">Página Inicial</a>
+        <a class="menu-item" onclick="goToSelectAccount()">Realizar Ações</a>
+        <a class="menu-item" onclick="goToAddAccount()">Adicionar Conta</a>
+        <a class="menu-item" onclick="goToManageAccounts()">Gerenciar Contas</a>
+        <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
+        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
+        <a class="menu-item" onclick="goToSupport()">Suporte</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                window.location.href = "dashboard.html";
+            }
+
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
+
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
+
+            // Carrega contas ao iniciar
+            loadAccounts();
+        });
+
         let currentActionData = null;
 
         async function bindAccount() {
@@ -575,8 +749,39 @@
             window.location.href = "/dashboard";
         }
 
-        window.onload = loadAccounts;
+        // Funções do menu
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
+
+        function goToSelectAccount() {
+            window.location.href = "realizar_acoes";
+        }
+
+        function goToAddAccount() {
+            window.location.href = "adicionar_conta";
+        }
+
+        function goToManageAccounts() {
+            window.location.href = "gerenciar_contas";
+        }
+
+        function goToHistory() {
+            window.location.href = "historico_acoes";
+        }
+
+        function goToAccount() {
+            window.location.href = "profile";
+        }
+
+        function goToSupport() {
+            window.location.href = "suporte";
+        }
+
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
+        }
     </script>
 </body>
-
 </html>
