@@ -158,11 +158,10 @@
 
 <body>
     <div class="container">
-        <h2>Selecionar Conta</h2>
+        <h2>Realizar Ações TikTok</h2>
         <select id="accountSelect" onchange="bindAccount()">
             <option value="">Selecione uma conta</option>
         </select>
-        <p id="statusMessage" class="status-message">Aguardando seleção...</p>
 
         <div id="actionBox" class="action-box">
             <p><strong>Ação:</strong> Seguir</p> <!-- Nome fixo da ação -->
@@ -174,8 +173,8 @@
             </div>
 
             <div class="action-buttons">
-                <button class="skip-button" onclick="skipAction()">Pular ação</button>
-                <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir ação</a>
+                <button class="skip-button" onclick="skipAction()">Pular Ação</button>
+                <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
             </div>
 
             <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
