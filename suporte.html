@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suporte ao Usuário</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            transition: background 0.3s;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .input-box, .textarea-box {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: var(--container-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .textarea-box {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .submit-button, .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .submit-button {
+            background-color: #007bff;
+        }
+
+        .submit-button:hover {
+            background-color: #0069d9;
+        }
+
+        .back-button {
+            background-color: #6c757d;
+        }
+
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                border: 1px solid var(--border-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            }
+
+            .input-box, .textarea-box {
+                background: var(--container-dark);
+                border: 1px solid var(--border-dark);
+                color: var(--text-dark);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Suporte ao Usuário</h2>
+        <input type="text" class="input-box" id="userName" placeholder="Seu nome">
+        <input type="email" class="input-box" id="userEmail" placeholder="Seu e-mail">
+        <textarea class="textarea-box" id="userMessage" placeholder="Descreva sua dúvida ou problema..."></textarea>
+        <button class="submit-button" onclick="submitSupport()">Enviar Solicitação</button>
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = "/dashboard";
+        }
+
+        function submitSupport() {
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const message = document.getElementById('userMessage').value.trim();
+
+            if (!name || !email || !message) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            // Aqui você pode ajustar a URL e lógica para envio real da solicitação
+            alert("Sua solicitação foi enviada com sucesso! Entraremos em contato pelo seu e-mail.");
+            
+            // Resetar campos após envio simulado
+            document.getElementById('userName').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userMessage').value = '';
+        }
+    </script>
+</body>
+</html>
