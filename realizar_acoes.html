@@ -37,7 +37,7 @@
         }
 
         .logo {
-            height: 40px;
+            height: 100px;
             margin-right: 10px;
         }
 
@@ -303,11 +303,11 @@
         }
 
         .left-header {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Espaço entre menu e logo */
-}
-       
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            /* Espaço entre menu e logo */
+        }
     </style>
 </head>
 
@@ -320,7 +320,8 @@
                 <span></span>
             </div>
             <a href="dashboard.html" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png" alt="Logo GanheSocial" class="logo">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png"
+                    alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
@@ -353,10 +354,12 @@
 
                 <div class="action-buttons">
                     <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                    <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
+                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
+                        onclick="showConfirmButton()">Abrir Ação</a>
                 </div>
 
-                <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
+                    style="display: none;">Confirmar Ação</button>
             </div>
         </div>
     </div>
@@ -786,4 +789,5 @@
         }
     </script>
 </body>
+
 </html>
