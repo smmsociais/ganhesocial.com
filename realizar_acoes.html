@@ -29,16 +29,26 @@
 
         .header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
             background-color: var(--container-light);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
         }
 
         .logo {
-            height: 40px;
-            margin-right: 10px;
+            height: 50px;
+            margin-left: 15px;
+            cursor: pointer;
         }
 
         .container {
@@ -49,12 +59,8 @@
             text-align: center;
             width: 90%;
             max-width: 500px;
-            margin: 30px auto;
+            margin: 100px auto 30px;
             transition: background 0.3s;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
         }
 
         .status-message {
@@ -306,12 +312,14 @@
 
 <body>
     <div class="header">
-        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png" alt="Logo GanheSocial" class="logo">
         <div class="menu-toggle" id="menuToggle">
             <span></span>
             <span></span>
             <span></span>
         </div>
+        <a href="dashboard.html" class="logo-container">
+            <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png" alt="Logo GanheSocial" class="logo">
+        </a>
     </div>
 
     <div class="container">
