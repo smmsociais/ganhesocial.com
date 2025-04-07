@@ -47,7 +47,6 @@
 
         .action-box {
             display: block;
-            /* Alterado para mostrar inicialmente */
             margin-top: 20px;
             padding: 15px;
             border: 1px solid #ccc;
@@ -70,41 +69,47 @@
             color: #d9534f;
             margin-top: 0;
             margin-bottom: 10px;
-            /* Adicionado espaçamento abaixo do título */
             text-align: center;
         }
 
         .warning-box ul {
             padding-left: 20px;
             margin: 10px 0;
-            /* Espaçamento acima e abaixo da lista */
         }
 
         .warning-box ul li {
             margin-bottom: 8px;
-            /* Espaçamento entre itens da lista */
         }
 
         .warning-box p {
             margin-top: 12px;
-            /* Espaçamento acima do parágrafo final */
             margin-bottom: 0;
         }
 
         .action-content {
             display: none;
-            /* Esconde o conteúdo da ação inicialmente */
+        }
+
+        /* Estilos padronizados para todos os botões */
+        .back-button,
+        .confirm-button,
+        .open-action-button,
+        .skip-button {
+            padding: 10px;
+            font-size: 14px; /* Tamanho de fonte igual para todos */
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            height: 40px; /* Altura fixa para todos */
+            box-sizing: border-box;
         }
 
         .back-button {
             width: 100%;
-            padding: 10px;
             margin-top: 10px;
             background-color: #d9534f;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
 
         .back-button:hover {
@@ -113,54 +118,48 @@
 
         .confirm-button {
             width: 100%;
-            padding: 10px;
             margin-top: 10px;
             background-color: #5cb85c;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
 
         .confirm-button:hover {
             background-color: #4cae4c;
         }
 
+        /* Container dos botões de ação */
         .action-buttons {
             display: flex;
             gap: 10px;
             margin-top: 10px;
-            flex-direction: row-reverse;
+            /* Removido flex-direction: row-reverse */
         }
 
-        .open-action-button {
-            flex: 1;
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        .open-action-button:hover {
-            background-color: #0069d9;
-        }
-
+        /* Botão Pular Ação (agora à esquerda) */
         .skip-button {
             flex: 1;
-            padding: 10px;
             background-color: #d9534f;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
 
         .skip-button:hover {
             background-color: #c9302c;
+        }
+
+        /* Botão Abrir Ação (agora à direita) */
+        .open-action-button {
+            flex: 1;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .open-action-button:hover {
+            background-color: #0069d9;
         }
 
         .profile-image-container {
@@ -211,7 +210,6 @@
         <p id="statusMessage" class="status-message"></p>
 
         <div id="actionBox" class="action-box">
-            <!-- Aviso inicial (sempre visível antes da seleção) -->
             <div id="warningMessage" class="warning-box">
                 <h3>Atenção</h3>
                 <ul>
@@ -221,7 +219,6 @@
                 <p>Sua conta será permanentemente suspensa da plataforma, caso você faça.</p>
             </div>
 
-            <!-- Conteúdo da ação (inicialmente oculto) -->
             <div id="actionContent" class="action-content">
                 <p><strong>Ação:</strong> Seguir</p>
                 <p><strong>Usuário:</strong> <span id="username"></span></p>
@@ -233,12 +230,10 @@
 
                 <div class="action-buttons">
                     <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
-                        onclick="showConfirmButton()">Abrir Ação</a>
+                    <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
                 </div>
 
-                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
-                    style="display: none;">Confirmar Ação</button>
+                <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
             </div>
         </div>
 
