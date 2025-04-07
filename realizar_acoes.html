@@ -234,13 +234,14 @@
                 const data = await response.json();
 
                 if (data.status === "ENCONTRADA") {
-                    document.getElementById("actionType").textContent = data.tipo_acao;
-                    document.getElementById("username").textContent = data.nome_usuario;
+    document.getElementById("statusMessage").textContent = "";
+    document.getElementById("actionType").textContent = data.tipo_acao;
+    document.getElementById("username").textContent = data.nome_usuario;
 
-                    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    const url = `https://www.tiktok.com/@${tiktokUsername}`;
-                    document.getElementById("actionUrl").href = url;
+    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const url = `https://www.tiktok.com/@${tiktokUsername}`;
+    document.getElementById("actionUrl").href = url;
 
                     // 👇 Novo trecho para buscar avatar
                     try {
