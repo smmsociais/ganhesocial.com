@@ -100,10 +100,16 @@ listItem.innerHTML = `
     <strong>${action.rede_social}</strong><br>
     <strong>Tipo:</strong> ${action.tipo} <br>
     <strong>Usuário:</strong> ${action.nome_usuario} <br>
-    <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : `❌ Não Validada ${action.url_dir ? `<a href="${action.url_dir}" target="_blank" style="margin-left: 10px;">Ver Ação</a>` : ""}`}<br>
+    <strong>Status:</strong> ${action.acao_validada ? "✅ Validada" : `❌ Não Validada ${action.url_dir ? `<a href="${action.url_dir}" target="_blank" class="view-action-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 4px;">
+            <path d="M6.354 5.5H3.5A2.5 2.5 0 0 0 1 8v3a2.5 2.5 0 0 0 2.5 2.5h3A2.5 2.5 0 0 0 9 11.5v-2.854l-.354.353A.5.5 0 0 1 8 9V7a.5.5 0 0 1 .5-.5H11a.5.5 0 0 1 .353.854l-.353.353V8.5a.5.5 0 0 1-1 0V7.707l-2.146 2.147a.5.5 0 0 1-.708 0L6.5 8.707V11.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 .5 11.5V8a1.5 1.5 0 0 1 1.5-1.5h2.854l-.353-.354A.5.5 0 0 1 4.5 5.5h2.854z"/>
+        </svg>
+        Ver Ação
+    </a>` : ""}`}<br>
     <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
     <small>Data: ${new Date(action.data).toLocaleString()}</small>
 `;
+
                 historyList.appendChild(listItem);
             });
         }
