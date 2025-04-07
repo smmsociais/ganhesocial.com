@@ -288,132 +288,140 @@
         }
 
         async function confirmAction() {
-            const selectedAccount = document.getElementById("accountSelect").value;
-            if (!selectedAccount || !currentActionData) return;
+    const selectedAccount = document.getElementById("accountSelect").value;
+    if (!selectedAccount || !currentActionData) return;
 
-            let userId;
-            try {
-                const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
-                const userInfoData = await response.json();
+    // Oculta imediatamente o conteúdo da actionBox
+    document.getElementById("actionBox").style.display = "none";
+    document.getElementById("confirmButton").style.display = "none";
+    document.getElementById("profileImage").style.display = "none";
+    document.getElementById("statusMessage").textContent = "Processando ação...";
 
-                if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
-                    throw new Error("Erro ao obter informações do usuário.");
-                }
+    let userId;
+    try {
+        const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
+        const userInfoData = await response.json();
 
-                userId = userInfoData.data.user.id;
-            } catch (error) {
-                console.error("Erro ao obter informações do TikTok:", error);
-                return;
-            }
+        if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
+            throw new Error("Erro ao obter informações do usuário.");
+        }
 
-            // NOVO: Confirmar a ação no backend primeiro
-            let confirmData;
-            try {
-                const confirmResponse = await fetch("/api/confirmar_acao", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-                    },
-                    body: JSON.stringify({
-                        id_conta: localStorage.getItem("id_conta"),
-                        id_pedido: currentActionData.id_pedido
-                    })
-                });
+        userId = userInfoData.data.user.id;
+        document.getElementById("statusMessage").textContent = "Dados obtidos com sucesso!";
+    } catch (error) {
+        console.error("Erro ao obter informações do TikTok:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao obter informações do TikTok.";
+        return;
+    }
 
-                confirmData = await confirmResponse.json();
-
-                if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
-                    throw new Error("Erro ao confirmar ação.");
-                }
-
-            } catch (error) {
-                console.error("Erro ao confirmar ação:", error);
-                return;
-            }
-
-            // AGORA: Verificar lista de seguindo
-            let accountFound = false;
-            try {
-                const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
-                const userFollowingData = await responseFollowing.json();
-
-                if (userFollowingData.code === 0 && userFollowingData.data) {
-                    const followings = userFollowingData.data.followings;
-                    // Normaliza os nomes de usuário para comparar de forma segura
-                    const targetUsername = currentActionData.nome_usuario?.replace(/^@/, '').toLowerCase();
-
-                    accountFound = followings.some(f => {
-                        const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
-                        return followingUsername === targetUsername;
-                    });
-
-                }
-            } catch (error) {
-                console.error("Erro ao buscar lista de seguindo:", error);
-                return;
-            }
-
-            // Histórico local
-            try {
-                const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-                const newAction = {
-                    tipo: currentActionData.tipo_acao,
-                    usuario: currentActionData.nome_usuario,
-                    pontos: currentActionData.quantidade_pontos,
-                    status: accountFound ? "confirmada" : "falhou",
-                    data: new Date().toLocaleString()
-                };
-                actionHistory.push(newAction);
-                localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
-
-                if (accountFound) {
-                    const valor = parseFloat(confirmData.valor);
-                    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-                    const novoSaldo = (saldoAtual + valor).toFixed(3);
-                    localStorage.setItem("saldoDisponivel", novoSaldo);
-
-                    // Atualiza ganhoHoje no localStorage
-                    const dataHoje = new Date().toISOString().split("T")[0];
-                    const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
-
-                    if (ganhoHojeAnterior.data !== dataHoje) {
-                        ganhoHojeAnterior.data = dataHoje;
-                        ganhoHojeAnterior.valor = valor;
-                    } else {
-                        ganhoHojeAnterior.valor += valor;
-                    }
-
-                    localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
-                }
-
-            } catch (error) {
-                console.error("Erro ao atualizar histórico e saldo:", error);
-            }
-
-            // SALVAR NO BANCO (sempre)
-            await salvarAcaoNoBanco({
-                nome_usuario: selectedAccount,
-                id_pedido: currentActionData.id_pedido,
+    // Confirma a ação no backend
+    document.getElementById("statusMessage").textContent = "Confirmando ação...";
+    let confirmData;
+    try {
+        const confirmResponse = await fetch("/api/confirmar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
                 id_conta: localStorage.getItem("id_conta"),
-                url_dir: currentActionData.url_dir,
-                unique_id_verificado: userId,
-                acao_validada: accountFound,
-                valor_confirmacao: parseFloat(confirmData.valor),
-                quantidade_pontos: currentActionData.quantidade_pontos,
-                tipo_acao: currentActionData.tipo_acao
+                id_pedido: currentActionData.id_pedido
+            })
+        });
+
+        confirmData = await confirmResponse.json();
+        console.log("Dados de confirmação:", confirmData);
+
+        if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
+            throw new Error("Erro ao confirmar ação.");
+        }
+
+        document.getElementById("statusMessage").textContent = "Ação confirmada com sucesso!";
+    } catch (error) {
+        console.error("Erro ao confirmar ação:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
+        return;
+    }
+
+    // Verifica se o usuário está seguindo o perfil esperado
+    let accountFound = false;
+    try {
+        const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
+        const userFollowingData = await responseFollowing.json();
+
+        if (userFollowingData.code === 0 && userFollowingData.data) {
+            const followings = userFollowingData.data.followings;
+            const targetUsername = currentActionData.nome_usuario?.replace(/^@/, '').toLowerCase();
+
+            accountFound = followings.some(f => {
+                const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
+                return followingUsername === targetUsername;
             });
 
-            // Limpa a interface atual antes de buscar a próxima
-            document.getElementById("actionBox").style.display = "none";
-            document.getElementById("confirmButton").style.display = "none";
-            document.getElementById("profileImage").style.display = "none";
-            document.getElementById("statusMessage").textContent = "Buscando nova ação...";
-
-            // Chama a próxima ação imediatamente
-            fetchAction();
-
+            console.log("Usuário esperado:", targetUsername);
+            console.log("Seguindo:", followings.map(f => f.unique_id));
+            console.log("Encontrado?", accountFound);
         }
+    } catch (error) {
+        console.error("Erro ao buscar lista de seguindo:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao verificar seguindo.";
+        return;
+    }
+
+    // Atualiza o histórico e o saldo local
+    try {
+        const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+        const newAction = {
+            tipo: currentActionData.tipo_acao,
+            usuario: currentActionData.nome_usuario,
+            pontos: currentActionData.quantidade_pontos,
+            status: accountFound ? "confirmada" : "falhou",
+            data: new Date().toLocaleString()
+        };
+        actionHistory.push(newAction);
+        localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+
+        if (accountFound) {
+            const valor = parseFloat(confirmData.valor);
+            const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+            const novoSaldo = (saldoAtual + valor).toFixed(3);
+            localStorage.setItem("saldoDisponivel", novoSaldo);
+
+            const dataHoje = new Date().toISOString().split("T")[0];
+            const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
+
+            if (ganhoHojeAnterior.data !== dataHoje) {
+                ganhoHojeAnterior.data = dataHoje;
+                ganhoHojeAnterior.valor = valor;
+            } else {
+                ganhoHojeAnterior.valor += valor;
+            }
+
+            localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
+        }
+    } catch (error) {
+        console.error("Erro ao atualizar histórico e saldo:", error);
+    }
+
+    // Salva a ação no banco de dados (aguarda sua conclusão ou faz em background)
+    await salvarAcaoNoBanco({
+        nome_usuario: selectedAccount,
+        id_pedido: currentActionData.id_pedido,
+        id_conta: localStorage.getItem("id_conta"),
+        url_dir: currentActionData.url_dir,
+        unique_id_verificado: userId,
+        acao_validada: accountFound,
+        valor_confirmacao: parseFloat(confirmData.valor),
+        quantidade_pontos: currentActionData.quantidade_pontos,
+        tipo_acao: currentActionData.tipo_acao
+    });
+
+    // Inicia a próxima ação imediatamente
+    document.getElementById("statusMessage").textContent = "Buscando nova ação...";
+    fetchAction();
+}
+
 
         async function skipAction() {
             // Salva a ação como "não validada" para histórico, sem pontuar
