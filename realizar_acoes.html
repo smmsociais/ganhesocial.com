@@ -46,13 +46,38 @@
         }
 
         .action-box {
-            display: none;
+            display: block; /* Alterado para mostrar inicialmente */
             margin-top: 20px;
             padding: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
             background: var(--container-light);
             text-align: center;
+        }
+
+        .warning-box {
+            display: block;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ffcc00;
+            border-radius: 5px;
+            background-color: #fff8e6;
+            text-align: left;
+        }
+
+        .warning-box h3 {
+            color: #d9534f;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .warning-box ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        .action-content {
+            display: none; /* Esconde o conteúdo da ação inicialmente */
         }
 
         .back-button {
@@ -89,7 +114,7 @@
             display: flex;
             gap: 10px;
             margin-top: 10px;
-            flex-direction: row-reverse; /* Inverte a ordem dos botões */
+            flex-direction: row-reverse;
         }
 
         .open-action-button {
@@ -152,6 +177,11 @@
                 background: var(--container-dark);
                 border-color: var(--border-dark);
             }
+
+            .warning-box {
+                background-color: #2a2a00;
+                border-color: #ffcc00;
+            }
         }
     </style>
 </head>
@@ -165,34 +195,35 @@
         <p id="statusMessage" class="status-message"></p>
 
         <div id="actionBox" class="action-box">
-            <div id="warningMessage">
-                <h3 style="color: #d9534f;">Atenção</h3>
-                <p style="font-size: 14px; text-align: left;">
-                    É expressamente proibido:
-                    <ul style="text-align: left; font-size: 14px; margin: 0; padding-left: 20px;">
-                        <li>Deixar de seguir / curtir / apagar comentários, após os mesmos serem realizados.</li>
-                        <li>Deixar seus próprios perfis privados.</li>
-                        <li>Enviar mensagens privadas / directs para os perfis das ações.</li>
-                    </ul>
-                    <br>
-                    <strong style="color: #d9534f;">Sua conta será automaticamente suspensa, caso você faça.</strong>
-                </p>
-            </div>
-            
-            <p><strong>Ação:</strong> Seguir</p> <!-- Nome fixo da ação -->
-            <p><strong>Usuário:</strong> <span id="username"></span></p>
-            <p><strong>Valor:</strong> <span id="points"></span></p>
-
-            <div class="profile-image-container">
-                <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
+            <!-- Aviso inicial (sempre visível antes da seleção) -->
+            <div id="warningMessage" class="warning-box">
+                <h3>Atenção</h3>
+                <p>É expressamente proibido:</p>
+                <ul>
+                    <li>Deixar de seguir / curtir / apagar comentários, após os mesmos serem realizados</li>
+                    <li>Deixar seus próprios perfis privados</li>
+                    <li>Enviar mensagens privadas / directs para os perfis das ações</li>
+                </ul>
+                <p>Sua conta será automaticamente suspensa, caso você faça</p>
             </div>
 
-            <div class="action-buttons">
-                <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
-            </div>
+            <!-- Conteúdo da ação (inicialmente oculto) -->
+            <div id="actionContent" class="action-content">
+                <p><strong>Ação:</strong> Seguir</p>
+                <p><strong>Usuário:</strong> <span id="username"></span></p>
+                <p><strong>Valor:</strong> <span id="points"></span></p>
 
-            <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+                <div class="profile-image-container">
+                    <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
+                </div>
+
+                <div class="action-buttons">
+                    <button class="skip-button" onclick="skipAction()">Pular Ação</button>
+                    <a id="actionUrl" href="#" target="_blank" class="open-action-button" onclick="showConfirmButton()">Abrir Ação</a>
+                </div>
+
+                <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
+            </div>
         </div>
 
         <button class="back-button" onclick="goBack()">Voltar</button>
@@ -219,6 +250,9 @@
 
                 if (data.id_conta) {
                     localStorage.setItem("id_conta", data.id_conta);
+                    // Esconde o aviso e mostra o conteúdo da ação
+                    document.getElementById("warningMessage").style.display = "none";
+                    document.getElementById("actionContent").style.display = "block";
                     fetchAction();
                 } else {
                     document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
@@ -230,8 +264,6 @@
 
         async function fetchAction() {
             const id_conta = localStorage.getItem("id_conta");
-            document.getElementById("warningMessage").style.display = "none";
-    document.getElementById("actionBox").style.display = "block";
             if (!id_conta) return;
 
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
@@ -278,11 +310,9 @@
 
                     document.getElementById("points").textContent = `R$ ${valorFinal}`;
                     document.getElementById("confirmButton").style.display = "none";
-                    document.getElementById("actionBox").style.display = "block";
                     currentActionData = data;
                 } else {
                     document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
-                    document.getElementById("actionBox").style.display = "none";
                     setTimeout(fetchAction, 3000);
                 }
             } catch (error) {
@@ -298,7 +328,6 @@
             const selectedAccount = document.getElementById("accountSelect").value;
             if (!selectedAccount || !currentActionData) return;
 
-            document.getElementById("actionBox").style.display = "none";
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("profileImage").style.display = "none";
 
@@ -446,7 +475,6 @@
             }
 
             document.getElementById("statusMessage").textContent = "Ação pulada. Buscando nova ação...";
-            document.getElementById("actionBox").style.display = "none";
             fetchAction();
         }
 
@@ -475,9 +503,6 @@
                 }
 
                 const accountSelect = document.getElementById("accountSelect");
-                document.getElementById("actionBox").style.display = "block";
-                document.getElementById("warningMessage").style.display = "block";
-
                 accountSelect.innerHTML = '<option value="">Selecione uma conta</option>';
 
                 accounts.forEach((account) => {
