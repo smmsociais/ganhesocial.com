@@ -181,7 +181,6 @@
         }
 
         /* Estilos padronizados para todos os botões */
-        .back-button,
         .confirm-button,
         .open-action-button,
         .skip-button {
@@ -193,17 +192,6 @@
             cursor: pointer;
             height: 40px;
             box-sizing: border-box;
-        }
-
-        .back-button {
-            width: 100%;
-            margin-top: 10px;
-            background-color: #d9534f;
-            color: white;
-        }
-
-        .back-button:hover {
-            background-color: #c9302c;
         }
 
         .confirm-button {
@@ -351,9 +339,6 @@
                 <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">Confirmar Ação</button>
             </div>
         </div>
-
-        <button class="back-button" onclick="goBack()">Voltar</button>
-    </div>
 
     <!-- Menu Overlay e Conteúdo -->
     <div class="menu-overlay" id="menuOverlay"></div>
@@ -743,10 +728,6 @@
             } catch (error) {
                 console.error("Erro ao registrar ação:", error);
             }
-        }
-
-        function goBack() {
-            window.location.href = "/dashboard";
         }
 
         // Funções do menu
