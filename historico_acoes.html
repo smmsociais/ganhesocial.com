@@ -13,6 +13,8 @@
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
+            --valid-color: #28a745; /* Verde para válido */
+            --invalid-color: #dc3545; /* Vermelho para inválido */
         }
 
         body {
@@ -52,6 +54,16 @@
             border-radius: 5px;
             margin-bottom: 10px;
             border-left: 5px solid #007BFF;
+        }
+
+        .status-valid {
+            color: var(--valid-color);
+            font-weight: bold;
+        }
+
+        .status-invalid {
+            color: var(--invalid-color);
+            font-weight: bold;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -96,11 +108,12 @@ document.addEventListener("DOMContentLoaded", async function() {
             historyData.forEach(action => {
                 const listItem = document.createElement("li");
                 listItem.classList.add("history-item");
-listItem.innerHTML = `
+                const statusClass = action.acao_validada ? "status-valid" : "status-invalid";
+                listItem.innerHTML = `
     <strong>${action.rede_social}</strong><br>
     <strong>Tipo:</strong> ${action.tipo} <br>
     <strong>Usuário:</strong> ${action.nome_usuario} <br>
-    <strong>Status:</strong> ${action.acao_validada ? "Válida" : `Inválida ${action.url_dir ? `<a href="${action.url_dir}" target="_blank" style="margin-left: 10px;">Ver Ação</a>` : ""}`}<br>
+    <strong>Status:</strong> <span class="${statusClass}">${action.acao_validada ? "Válida" : `Inválida`}</span> ${!action.acao_validada && action.url_dir ? `<a href="${action.url_dir}" target="_blank" style="margin-left: 10px;">Ver Ação</a>` : ""}<br>
     <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
     <small>Data: ${new Date(action.data).toLocaleString()}</small>
 `;
@@ -112,7 +125,6 @@ listItem.innerHTML = `
         historyList.innerHTML = "<li>Erro ao carregar histórico de ações.</li>";
     }
 });
-
 </script>
 
 </body>
