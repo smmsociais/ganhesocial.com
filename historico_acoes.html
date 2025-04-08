@@ -15,6 +15,8 @@
             --border-dark: #30363d;
             --valid-color: #28a745; /* Verde para válido */
             --invalid-color: #dc3545; /* Vermelho para inválido */
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
         }
 
         body {
@@ -23,37 +25,56 @@
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            align-items: flex-start;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px 0;
             transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 1200px;
             transition: background 0.3s;
         }
 
         h2 {
             text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary-color);
         }
 
-        .history-list {
-            list-style: none;
-            padding: 0;
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
 
-        .history-item {
-            background: #eef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            border-left: 5px solid #007BFF;
+        .history-table th {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: left;
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: #f3f3f3;
+        }
+
+        .history-table tr:hover {
+            background-color: #e9e9e9;
         }
 
         .status-valid {
@@ -64,6 +85,29 @@
         .status-invalid {
             color: var(--invalid-color);
             font-weight: bold;
+        }
+
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-actions {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .table-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -78,9 +122,52 @@
                 border: 1px solid var(--border-dark);
             }
 
-            .history-item {
-                background: var(--container-dark);
-                border-left: 5px solid #1f6feb;
+            h2 {
+                color: var(--primary-dark);
+            }
+
+            .history-table th {
+                background-color: var(--primary-dark);
+            }
+
+            .history-table tr:nth-child(even) {
+                background-color: var(--container-dark);
+            }
+
+            .history-table tr:hover {
+                background-color: #1f2937;
+            }
+
+            .history-table td {
+                border-bottom: 1px solid var(--border-dark);
+            }
+
+            .action-link {
+                color: var(--primary-dark);
+            }
+
+            .no-actions {
+                color: #aaa;
+            }
+
+            .table-container {
+                border: 1px solid var(--border-dark);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .history-table {
+                font-size: 0.8em;
+            }
+            
+            .history-table th, 
+            .history-table td {
+                padding: 8px 10px;
             }
         }
     </style>
@@ -88,9 +175,24 @@
 <body>
     <div class="container">
         <h2>Histórico de Ações</h2>
-        <ul class="history-list" id="historyList">
-            <!-- Os itens serão adicionados dinamicamente aqui -->
-        </ul>
+        <div class="table-container">
+            <table class="history-table" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Rede Social</th>
+                        <th>Tipo</th>
+                        <th>Usuário</th>
+                        <th>Status</th>
+                        <th>Valor (R$)</th>
+                        <th>Data</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="historyList">
+                    <!-- Os itens serão adicionados dinamicamente aqui -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
 <script>
@@ -103,26 +205,30 @@ document.addEventListener("DOMContentLoaded", async function() {
         const historyData = await response.json();
 
         if (historyData.length === 0) {
-            historyList.innerHTML = "<li>Nenhuma ação registrada.</li>";
+            historyList.innerHTML = `<tr><td colspan="7" class="no-actions">Nenhuma ação registrada.</td></tr>`;
         } else {
             historyData.forEach(action => {
-                const listItem = document.createElement("li");
-                listItem.classList.add("history-item");
+                const row = document.createElement("tr");
                 const statusClass = action.acao_validada ? "status-valid" : "status-invalid";
-                listItem.innerHTML = `
-    <strong>${action.rede_social}</strong><br>
-    <strong>Tipo:</strong> ${action.tipo} <br>
-    <strong>Usuário:</strong> ${action.nome_usuario} <br>
-    <strong>Status:</strong> <span class="${statusClass}">${action.acao_validada ? "Válida" : `Inválida`}</span> ${!action.acao_validada && action.url_dir ? `<a href="${action.url_dir}" target="_blank" style="margin-left: 10px;">Ver Ação</a>` : ""}<br>
-    <strong>Valor Confirmado:</strong> R$ ${action.valor_confirmacao.toFixed(3)}<br> 
-    <small>Data: ${new Date(action.data).toLocaleString()}</small>
-`;
-                historyList.appendChild(listItem);
+                const statusText = action.acao_validada ? "Válida" : "Inválida";
+                const actionLink = !action.acao_validada && action.url_dir ? 
+                    `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
+                
+                row.innerHTML = `
+                    <td>${action.rede_social}</td>
+                    <td>${action.tipo}</td>
+                    <td>${action.nome_usuario}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>${action.valor_confirmacao.toFixed(3)}</td>
+                    <td>${new Date(action.data).toLocaleString()}</td>
+                    <td>${actionLink}</td>
+                `;
+                historyList.appendChild(row);
             });
         }
     } catch (error) {
         console.error("Erro ao carregar histórico:", error);
-        historyList.innerHTML = "<li>Erro ao carregar histórico de ações.</li>";
+        historyList.innerHTML = `<tr><td colspan="7" class="no-actions">Erro ao carregar histórico de ações.</td></tr>`;
     }
 });
 </script>
