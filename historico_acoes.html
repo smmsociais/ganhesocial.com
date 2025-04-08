@@ -13,14 +13,16 @@
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
-            --valid-color: #28a745; /* Verde para válido */
-            --invalid-color: #dc3545; /* Vermelho para inválido */
+            --valid-color: #28a745;
+            --invalid-color: #dc3545;
             --primary-color: #007BFF;
             --primary-dark: #1f6feb;
             --header-bg-light: #f8f9fa;
             --header-text-light: #212529;
             --header-bg-dark: #212529;
             --header-text-dark: #f8f9fa;
+            --pagination-active: #007bff;
+            --pagination-hover: #e9ecef;
         }
 
         body {
@@ -114,6 +116,48 @@
             overflow-y: auto;
             border-radius: 8px;
             border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: var(--primary-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover {
+            background-color: var(--pagination-hover);
+        }
+
+        .pagination button.active {
+            background-color: var(--pagination-active);
+            color: white;
+            border-color: var(--pagination-active);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -161,6 +205,25 @@
             .table-container {
                 border: 1px solid var(--border-dark);
             }
+
+            .pagination button {
+                background-color: var(--container-dark);
+                color: var(--primary-dark);
+                border-color: var(--border-dark);
+            }
+
+            .pagination button:hover {
+                background-color: #343a40;
+            }
+
+            .pagination button.active {
+                background-color: var(--primary-dark);
+                color: white;
+            }
+
+            .pagination-info {
+                color: #aaa;
+            }
         }
 
         @media (max-width: 768px) {
@@ -176,6 +239,15 @@
             .history-table th, 
             .history-table td {
                 padding: 8px 10px;
+            }
+
+            .pagination {
+                gap: 3px;
+            }
+
+            .pagination button {
+                padding: 6px 8px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -201,46 +273,132 @@
                 </tbody>
             </table>
         </div>
+        <div class="pagination-info" id="paginationInfo">
+            Carregando...
+        </div>
+        <div class="pagination" id="pagination">
+            <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
+        </div>
     </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", async function() {
     const historyList = document.getElementById("historyList");
+    const pagination = document.getElementById("pagination");
+    const paginationInfo = document.getElementById("paginationInfo");
+    
+    // Configurações de paginação
+    const itemsPerPage = 50;
+    const maxPages = 50;
+    let currentPage = 1;
+    let totalPages = 1;
+    let allActions = [];
 
-    try {
-        // 🔹 Buscar dados da API
-        const response = await fetch("/api/historico_acoes");
-        const historyData = await response.json();
-
-        if (historyData.length === 0) {
-            historyList.innerHTML = `<tr><td colspan="7" class="no-actions">Nenhuma ação registrada.</td></tr>`;
-        } else {
-            // Ordenar ações por data (mais recente primeiro)
-            const sortedData = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
+    // Carregar dados da API
+    async function loadData(page = 1) {
+        try {
+            currentPage = page;
+            historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Carregando...</td></tr>';
             
-            sortedData.forEach(action => {
-                const row = document.createElement("tr");
-                const statusClass = action.acao_validada ? "status-valid" : "status-invalid";
-                const statusText = action.acao_validada ? "Válida" : "Inválida";
-                const actionLink = !action.acao_validada && action.url_dir ? 
-                    `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
-                
-                row.innerHTML = `
-                    <td>${action.rede_social}</td>
-                    <td>${action.tipo}</td>
-                    <td>${action.nome_usuario}</td>
-                    <td><span class="${statusClass}">${statusText}</span></td>
-                    <td>${action.valor_confirmacao.toFixed(3)}</td>
-                    <td>${new Date(action.data).toLocaleString()}</td>
-                    <td>${actionLink}</td>
-                `;
-                historyList.appendChild(row);
-            });
+            // Se ainda não carregamos todos os dados, buscar da API
+            if (allActions.length === 0) {
+                const response = await fetch("/api/historico_acoes");
+                const historyData = await response.json();
+                allActions = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
+            }
+            
+            // Calcular total de páginas
+            totalPages = Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages);
+            
+            // Atualizar informações de paginação
+            updatePaginationInfo();
+            
+            // Gerar paginação
+            generatePagination();
+            
+            // Exibir itens da página atual
+            displayPageItems();
+            
+        } catch (error) {
+            console.error("Erro ao carregar histórico:", error);
+            historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
         }
-    } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-        historyList.innerHTML = `<tr><td colspan="7" class="no-actions">Erro ao carregar histórico de ações.</td></tr>`;
     }
+    
+    // Exibir itens da página atual
+    function displayPageItems() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
+        const pageActions = allActions.slice(startIndex, endIndex);
+        
+        if (pageActions.length === 0) {
+            historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+            return;
+        }
+        
+        historyList.innerHTML = '';
+        pageActions.forEach(action => {
+            const row = document.createElement("tr");
+            const statusClass = action.acao_validada ? "status-valid" : "status-invalid";
+            const statusText = action.acao_validada ? "Válida" : "Inválida";
+            const actionLink = !action.acao_validada && action.url_dir ? 
+                `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
+            
+            row.innerHTML = `
+                <td>${action.rede_social}</td>
+                <td>${action.tipo}</td>
+                <td>${action.nome_usuario}</td>
+                <td><span class="${statusClass}">${statusText}</span></td>
+                <td>${action.valor_confirmacao.toFixed(3)}</td>
+                <td>${new Date(action.data).toLocaleString()}</td>
+                <td>${actionLink}</td>
+            `;
+            historyList.appendChild(row);
+        });
+    }
+    
+    // Atualizar informações de paginação
+    function updatePaginationInfo() {
+        const startItem = (currentPage - 1) * itemsPerPage + 1;
+        const endItem = Math.min(currentPage * itemsPerPage, allActions.length);
+        paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${allActions.length} ações`;
+    }
+    
+    // Gerar controles de paginação
+    function generatePagination() {
+        pagination.innerHTML = '';
+        
+        // Botão Anterior
+        const prevButton = document.createElement("button");
+        prevButton.innerHTML = "&laquo; Anterior";
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener("click", () => loadData(currentPage - 1));
+        pagination.appendChild(prevButton);
+        
+        // Números das páginas
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement("button");
+            pageButton.textContent = i;
+            if (i === currentPage) {
+                pageButton.classList.add("active");
+            }
+            pageButton.addEventListener("click", () => loadData(i));
+            pagination.appendChild(pageButton);
+        }
+        
+        // Botão Próximo
+        const nextButton = document.createElement("button");
+        nextButton.innerHTML = "Próximo &raquo;";
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener("click", () => loadData(currentPage + 1));
+        pagination.appendChild(nextButton);
+    }
+    
+    // Inicializar carregando a primeira página
+    loadData(1);
 });
 </script>
 
