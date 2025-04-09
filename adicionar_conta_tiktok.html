@@ -312,7 +312,7 @@
 
         <div id="messageBox" class="message-box" style="display: none;"></div>
 
-        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (sem o @)">
+        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (com ou sem @)">
         <button class="add-button" onclick="addAccount()">Adicionar Conta</button>
     </div>
 
@@ -342,19 +342,15 @@
             
             // Rolagem suave para a mensagem
             messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            // Auto-esconder após 5 segundos (exceto para mensagens de sucesso)
-            if (!isError) {
-                setTimeout(() => {
-                    if (messageBox.textContent === message) {
-                        messageBox.style.display = 'none';
-                    }
-                }, 5000);
-            }
+        }
+
+        // Função para formatar o nome de usuário (remover @ se existir)
+        function formatUsername(username) {
+            return username.startsWith('@') ? username.substring(1) : username;
         }
 
         async function addAccount() {
-            const accountName = document.getElementById('accountName').value.trim();
+            let accountName = document.getElementById('accountName').value.trim();
             const messageBox = document.getElementById('messageBox');
             
             // Esconder mensagem anterior
@@ -364,6 +360,9 @@
                 showMessage("Por favor, insira o nome de usuário do TikTok.", true);
                 return;
             }
+
+            // Remover @ do início do nome de usuário, se existir
+            accountName = formatUsername(accountName);
 
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -391,7 +390,12 @@
                     throw new Error(data.error || "Erro ao adicionar conta");
                 }
 
-                showMessage(`Conta "${accountName}" adicionada com sucesso!`);
+                showMessage(`Conta "${accountName}" adicionada com sucesso! Redirecionando...`);
+                
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    window.location.href = "/gerenciar_contas";
+                }, 2000);
 
             } catch (error) {
                 showMessage(error.message, true);
