@@ -29,7 +29,7 @@ export default async function handler(req, res) {
             }
 
             if (user.contas.some(conta => conta.nomeConta === nomeConta)) {
-                return res.status(400).json({ error: "Já existe uma conta com este nome." });
+                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
             }
 
             user.contas.push({ nomeConta, id_conta, id_tiktok });
