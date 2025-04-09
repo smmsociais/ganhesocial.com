@@ -391,12 +391,7 @@
                     throw new Error(data.error || "Erro ao adicionar conta");
                 }
 
-                showMessage(`Conta "${accountName}" adicionada com sucesso! Redirecionando...`);
-                
-                // Redirecionar após 2 segundos
-                setTimeout(() => {
-                    window.location.href = "/gerenciar_contas";
-                }, 2000);
+                showMessage(`Conta "${accountName}" adicionada com sucesso!`);
 
             } catch (error) {
                 showMessage(error.message, true);
