@@ -312,7 +312,7 @@
 
         <div id="messageBox" class="message-box" style="display: none;"></div>
 
-        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (com ou sem @)">
+        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok">
         <button class="add-button" onclick="addAccount()">Adicionar Conta</button>
     </div>
 
@@ -390,12 +390,7 @@
                     throw new Error(data.error || "Erro ao adicionar conta");
                 }
 
-                showMessage(`Conta "${accountName}" adicionada com sucesso! Redirecionando...`);
-                
-                // Redirecionar após 2 segundos
-                setTimeout(() => {
-                    window.location.href = "/gerenciar_contas";
-                }, 2000);
+                showMessage(`Conta "${accountName}" adicionada com sucesso!`);
 
             } catch (error) {
                 showMessage(error.message, true);
