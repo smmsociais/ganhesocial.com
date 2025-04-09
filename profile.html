@@ -137,7 +137,7 @@
                 throw new Error(data.error || "Erro ao carregar perfil");
             }
 
-            document.getElementById("name").value = data.nome || "";
+            document.getElementById("name").value = data.nome_usuario || "";
             document.getElementById("email").value = data.email || "";
             document.getElementById("authToken").value = data.token; // O token do banco
 
