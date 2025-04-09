@@ -3,65 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adicionar Conta</title>
+    <title>Adicionar Conta TikTok</title>
     <style>
         :root {
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
-
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .logo {
+            height: 30px;
+            margin-right: 10px;
         }
 
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
+            width: 90%;
+            max-width: 500px;
+            margin: 30px auto;
             transition: background 0.3s;
+        }
+
+        .requirements-box {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+            border-radius: 4px;
+        }
+
+        .requirements-box h3 {
+            margin-top: 0;
+            color: var(--warning-color);
+        }
+
+        .requirements-box ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        .requirements-box li {
+            margin-bottom: 8px;
         }
 
         .input-box {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            padding: 12px;
+            margin: 10px 0;
             border-radius: 5px;
             border: 1px solid #ddd;
             background: var(--container-light);
             color: var(--text-light);
-            transition: background 0.3s, color 0.3s;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-box:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
         .add-button, .back-button {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            padding: 12px;
+            margin: 10px 0;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             color: white;
             font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
         }
 
         .add-button {
-            background-color: #007BFF;
+            background-color: var(--primary-color);
         }
 
         .add-button:hover {
@@ -69,11 +123,91 @@
         }
 
         .back-button {
-            background-color: #d9534f;
+            background-color: #6c757d;
         }
 
         .back-button:hover {
-            background-color: #c9302c;
+            background-color: #5a6268;
+        }
+
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--error-color);
+            font-size: 16px;
+            text-decoration: none;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -82,10 +216,16 @@
                 color: var(--text-dark);
             }
 
+            .header,
             .container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
+            }
+
+            .requirements-box {
+                background-color: #2a2a00;
+                border-left-color: var(--warning-color);
             }
 
             .input-box {
@@ -93,65 +233,209 @@
                 border: 1px solid var(--border-dark);
                 color: var(--text-dark);
             }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Adicionar Conta</h2>
+    <div class="header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <a href="dashboard.html" class="logo-container">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
 
-        <input type="text" id="accountName" class="input-box" placeholder="Nome da Conta">
-        <button class="add-button" onclick="addAccount()">Adicionar</button>
+    <div class="container">
+        <h2>Adicionar Conta TikTok</h2>
+        
+        <div class="requirements-box">
+            <h3>Requisitos:</h3>
+            <ul>
+                <li>A sua conta do TikTok deve estar como pública</li>
+                <li>A sua conta deve ser real e ter no mínimo: 6 publicações e foto de perfil</li>
+                <li>A sua última publicação não pode ter mais do que 30 dias</li>
+                <li><strong>Importante:</strong> Para receber mais ações e pontuações maiores, você precisa conectar perfis verdadeiros e de qualidade</li>
+            </ul>
+        </div>
+
+        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (sem o @)">
+        <button class="add-button" onclick="addAccount()">Adicionar Conta</button>
         <button class="back-button" onclick="goBack()">Voltar</button>
     </div>
 
+    <!-- Menu Overlay e Conteúdo -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-content" id="menuContent">
+        <a class="menu-item" href="dashboard.html">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="suporte">Suporte</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
+        </div>
+    </div>
+
     <script>
-async function addAccount() {
-    const accountName = document.getElementById('accountName').value.trim();
-    if (!accountName) {
-        alert("Por favor, insira um nome para a conta.");
-        return;
-    }
-
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        alert("Você precisa estar logado para adicionar uma conta.");
-        window.location.href = "/login"; 
-        return;
-    }
-
-    // 🔹 Gerar um ID aleatório para a conta (caso não seja obrigatório pela API, pode ser removido depois)
-    const idConta = `tiktok_${Date.now()}`; 
-
-    try {
-        const response = await fetch("https://ganhesocial.com/api/contas", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ 
-                nomeConta: accountName,
-                id_conta: idConta // ✅ Agora estamos enviando id_conta também
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao adicionar conta");
+        // Funções de navegação globais
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
         }
 
-        alert(`Conta "${accountName}" adicionada com sucesso!`);
-        window.location.href = "/gerenciar_contas";
+        function goToSelectAccount() {
+            window.location.href = "realizar_acoes";
+        }
 
-    } catch (error) {
-        alert(error.message); // Mostra erro se a conta já existir
-    }
-}
+        function goToAddAccount() {
+            window.location.href = "adicionar_conta";
+        }
+
+        function goToManageAccounts() {
+            window.location.href = "gerenciar_contas";
+        }
+
+        function goToHistory() {
+            window.location.href = "historico_acoes";
+        }
+
+        function goToAccount() {
+            window.location.href = "profile";
+        }
+
+        function goToSupport() {
+            window.location.href = "suporte";
+        }
+
         function goBack() {
-            window.location.href = "/dashboard";
+            window.location.href = "adicionar_conta";
         }
+
+        async function addAccount() {
+            const accountName = document.getElementById('accountName').value.trim();
+            if (!accountName) {
+                alert("Por favor, insira o nome de usuário do TikTok.");
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert("Você precisa estar logado para adicionar uma conta.");
+                window.location.href = "/login"; 
+                return;
+            }
+
+            try {
+                const response = await fetch("https://ganhesocial.com/api/contas", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        nomeConta: accountName,
+                        plataforma: "tiktok"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao adicionar conta");
+                }
+
+                alert(`Conta "${accountName}" adicionada com sucesso!`);
+                window.location.href = "/gerenciar_contas";
+
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+                window.location.href = "dashboard.html";
+            }
+
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+
+            menuToggle.addEventListener('click', function() {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
+
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
+        });
     </script>
 </body>
 </html>
