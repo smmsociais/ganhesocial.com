@@ -108,6 +108,7 @@
         <input type="text" id="name" class="input-box" placeholder="Nome">
         <input type="email" id="email" class="input-box" placeholder="E-mail">
         <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
+        <input type="password" id="newPassword" class="input-box" placeholder="Nova Senha (deixe em branco para não alterar)">
 
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
         <button class="back-button" onclick="goBack()">Voltar</button>
@@ -146,14 +147,20 @@
         }
     }
 
-async function saveProfile() {
+    async function saveProfile() {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
-    const token = document.getElementById('authToken').value.trim(); // Token do ActionHistory
+    const newPassword = document.getElementById('newPassword').value.trim();
+    const token = document.getElementById('authToken').value.trim();
 
     if (!name || !email) {
         alert("Nome e e-mail são obrigatórios.");
         return;
+    }
+
+    const body = { nome_usuario: name, email: email };
+    if (newPassword) {
+        body.senha = newPassword;
     }
 
     try {
@@ -163,7 +170,7 @@ async function saveProfile() {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ nome_usuario: name, email: email })
+            body: JSON.stringify(body)
         });
 
         const data = await response.json();
