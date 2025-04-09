@@ -106,7 +106,7 @@
         <h2>Editar Perfil</h2>
 
         <input type="text" id="name" class="input-box" placeholder="Nome">
-        <input type="email" id="email" class="input-box" placeholder="E-mail">
+        <input type="email" id="email" class="input-box" placeholder="E-mail" readonly>
         <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
         <input type="password" id="newPassword" class="input-box" placeholder="Nova Senha (deixe em branco para não alterar)">
 
@@ -149,16 +149,15 @@
 
     async function saveProfile() {
     const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
     const newPassword = document.getElementById('newPassword').value.trim();
     const token = document.getElementById('authToken').value.trim();
 
-    if (!name || !email) {
-        alert("Nome e e-mail são obrigatórios.");
+    if (!name) {
+        alert("O nome é obrigatório.");
         return;
     }
 
-    const body = { nome_usuario: name, email: email };
+    const body = { nome_usuario: name };
     if (newPassword) {
         body.senha = newPassword;
     }
