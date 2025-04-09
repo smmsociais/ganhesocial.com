@@ -17,6 +17,7 @@
             --primary-dark: #1f6feb;
             --error-color: #dc3545;
             --warning-color: #ffc107;
+            --success-color: #28a745;
         }
 
         body {
@@ -101,7 +102,7 @@
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
-        .add-button, .back-button {
+        .add-button {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -112,14 +113,30 @@
             font-size: 16px;
             font-weight: bold;
             transition: background-color 0.3s;
-        }
-
-        .add-button {
             background-color: var(--primary-color);
         }
 
         .add-button:hover {
             background-color: #0056b3;
+        }
+
+        .message-box {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
         }
 
         /* Estilos do menu hamburguer */
@@ -226,6 +243,16 @@
                 color: var(--text-dark);
             }
 
+            .error-message {
+                background-color: #3a1a1d;
+                border-left-color: var(--error-color);
+            }
+
+            .success-message {
+                background-color: #1a3a1d;
+                border-left-color: var(--success-color);
+            }
+
             .menu-toggle span {
                 background-color: var(--text-dark);
             }
@@ -277,10 +304,13 @@
             <h3>Requisitos:</h3>
             <ul>
                 <li>A sua conta do TikTok deve estar como pública</li>
-                <li>A sua conta deve ser real e ter no mínimo 2 publicações e foto de perfil</li>
-                <li><strong> Conecte perfis de qualidade para receber mais ações.</li>
+                <li>A sua conta deve ser real e ter no mínimo: 6 publicações e foto de perfil</li>
+                <li>A sua última publicação não pode ter mais do que 30 dias</li>
+                <li><strong>Importante:</strong> Para receber mais ações e pontuações maiores, você precisa conectar perfis verdadeiros e de qualidade</li>
             </ul>
         </div>
+
+        <div id="messageBox" class="message-box" style="display: none;"></div>
 
         <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (sem o @)">
         <button class="add-button" onclick="addAccount()">Adicionar Conta</button>
@@ -303,49 +333,41 @@
     </div>
 
     <script>
-        // Funções de navegação globais
-        function goToDashboard() {
-            window.location.href = "dashboard.html";
-        }
-
-        function goToSelectAccount() {
-            window.location.href = "realizar_acoes";
-        }
-
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
-
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
-
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
-
-        function goToAccount() {
-            window.location.href = "profile";
-        }
-
-        function goToSupport() {
-            window.location.href = "suporte";
-        }
-
-        function goBack() {
-            window.location.href = "adicionar_conta";
+        // Função para exibir mensagens na página
+        function showMessage(message, isError = false) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
+            messageBox.style.display = 'block';
+            
+            // Rolagem suave para a mensagem
+            messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Auto-esconder após 5 segundos (exceto para mensagens de sucesso)
+            if (!isError) {
+                setTimeout(() => {
+                    if (messageBox.textContent === message) {
+                        messageBox.style.display = 'none';
+                    }
+                }, 5000);
+            }
         }
 
         async function addAccount() {
             const accountName = document.getElementById('accountName').value.trim();
+            const messageBox = document.getElementById('messageBox');
+            
+            // Esconder mensagem anterior
+            messageBox.style.display = 'none';
+            
             if (!accountName) {
-                alert("Por favor, insira o nome de usuário do TikTok.");
+                showMessage("Por favor, insira o nome de usuário do TikTok.", true);
                 return;
             }
 
             const token = localStorage.getItem('authToken');
             if (!token) {
-                alert("Você precisa estar logado para adicionar uma conta.");
+                showMessage("Você precisa estar logado para adicionar uma conta.", true);
                 window.location.href = "/login"; 
                 return;
             }
@@ -369,11 +391,15 @@
                     throw new Error(data.error || "Erro ao adicionar conta");
                 }
 
-                alert(`Conta "${accountName}" adicionada com sucesso!`);
-                window.location.href = "/gerenciar_contas";
+                showMessage(`Conta "${accountName}" adicionada com sucesso! Redirecionando...`);
+                
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    window.location.href = "/gerenciar_contas";
+                }, 2000);
 
             } catch (error) {
-                alert(error.message);
+                showMessage(error.message, true);
             }
         }
 
