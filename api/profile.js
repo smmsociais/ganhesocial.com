@@ -28,7 +28,7 @@ const handler = async (req, res) => {
 
       // Retornar os dados do perfil com o token correto do UserSchema
       res.json({
-        nome_usuario: usuario.nome_usuario,  // Nome correto do UserSchema
+        nome_usuario: usuario.nome, // ← pega do banco corretamente
         email: usuario.email,
         token: usuario.token // ✅ Agora retornando o token do UserSchema
       });
