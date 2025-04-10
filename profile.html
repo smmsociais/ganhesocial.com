@@ -10,11 +10,14 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --border-light: #ddd;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
+            --error-color: #f85149;
+            --success-color: #238636;
         }
 
         body {
@@ -44,32 +47,54 @@
             padding: 10px;
             margin-top: 10px;
             border-radius: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-light);
             background: var(--container-light);
             color: var(--text-light);
-            transition: background 0.3s, color 0.3s;
+            transition: all 0.3s;
         }
 
         .input-box[readonly] {
             background: transparent;
-            border: 1px solid transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-light);
             cursor: not-allowed;
+            padding-left: 0;
         }
 
         .save-button {
             width: 100%;
             padding: 10px;
-            margin-top: 10px;
+            margin-top: 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             color: white;
             font-size: 16px;
             background-color: #28a745;
+            transition: background-color 0.3s;
         }
 
         .save-button:hover {
             background-color: #218838;
+        }
+
+        .message {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -92,7 +117,20 @@
 
             .input-box[readonly] {
                 background: transparent;
-                border: 1px solid transparent;
+                border: none;
+                border-bottom: 1px solid var(--border-dark);
+            }
+
+            .error-message {
+                background-color: #2d2223;
+                color: var(--error-color);
+                border: 1px solid var(--error-color);
+            }
+
+            .success-message {
+                background-color: #1c2b21;
+                color: var(--success-color);
+                border: 1px solid var(--success-color);
             }
         }
     </style>
@@ -102,14 +140,15 @@
     <div class="container">
         <h2>Editar Perfil</h2>
 
+        <div id="errorMessage" class="message error-message"></div>
+        <div id="successMessage" class="message success-message"></div>
+
         <input type="text" id="name" class="input-box" readonly placeholder="Nome">
         <input type="email" id="email" class="input-box" placeholder="E-mail" readonly>
         <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
-        <input type="password" id="newPassword" class="input-box"
-            placeholder="Nova Senha (deixe em branco para não alterar)">
+        <input type="password" id="newPassword" class="input-box" placeholder="Nova Senha (deixe em branco para não alterar)">
         <input type="password" id="confirmPassword" class="input-box" placeholder="Confirmar Nova Senha">
     
-
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
     </div>
 
@@ -118,8 +157,10 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                alert("Você precisa estar logado para acessar esta página.");
-                window.location.href = "/login";
+                showMessage("Você precisa estar logado para acessar esta página.", true);
+                setTimeout(() => {
+                    window.location.href = "/login";
+                }, 2000);
                 return;
             }
 
@@ -139,11 +180,31 @@
 
                 document.getElementById("name").value = data.nome_usuario || "";
                 document.getElementById("email").value = data.email || "";
-                document.getElementById("authToken").value = data.token; // O token do banco
+                document.getElementById("authToken").value = data.token;
 
             } catch (error) {
-                alert(error.message);
+                showMessage(error.message, true);
             }
+        }
+
+        function showMessage(message, isError = false) {
+            const errorElement = document.getElementById("errorMessage");
+            const successElement = document.getElementById("successMessage");
+            
+            if (isError) {
+                errorElement.textContent = message;
+                errorElement.style.display = "block";
+                successElement.style.display = "none";
+            } else {
+                successElement.textContent = message;
+                successElement.style.display = "block";
+                errorElement.style.display = "none";
+            }
+            
+            setTimeout(() => {
+                errorElement.style.display = "none";
+                successElement.style.display = "none";
+            }, 5000);
         }
 
         async function saveProfile() {
@@ -153,17 +214,26 @@
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
             const token = document.getElementById('authToken').value.trim();
 
+            // Clear previous messages
+            showMessage("", false);
+            showMessage("", true);
+
             if (!name) {
-                alert("O nome é obrigatório.");
+                showMessage("O nome é obrigatório.", true);
                 return;
             }
 
             if (newPassword) {
                 if (newPassword !== confirmPassword) {
-                    alert("As senhas não coincidem.");
+                    showMessage("As senhas não coincidem.", true);
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    showMessage("A senha deve ter pelo menos 6 caracteres.", true);
                     return;
                 }
             }
+
             const body = { nome_usuario: name, email };
             if (newPassword) {
                 body.senha = newPassword;
@@ -185,9 +255,12 @@
                     throw new Error(data.error || "Erro ao salvar perfil");
                 }
 
-                alert("Perfil atualizado com sucesso!");
+                showMessage("Perfil atualizado com sucesso!", false);
+                document.getElementById('newPassword').value = "";
+                document.getElementById('confirmPassword').value = "";
+                
             } catch (error) {
-                alert(error.message);
+                showMessage(error.message, true);
             }
         }
 
