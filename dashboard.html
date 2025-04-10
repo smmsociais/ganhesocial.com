@@ -270,7 +270,7 @@
         <a class="menu-item" onclick="goToManageAccounts()">Gerenciar Contas</a>
         <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
         <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
-        <a class="menu-item" onclick="goToSupport()">Suporte</a>
+        <a class="menu-item" onclick="goToWithdraw()">Realizar Saque</a>
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
@@ -433,8 +433,8 @@ async function carregarHistorico() {
             window.location.href = "profile";
         }
 
-        function goToSupport() {
-            window.location.href = "suporte";
+        function goToWithdraw() {
+            window.location.href = "realizar_saque";
         }        
 
         function logout() {
