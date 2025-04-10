@@ -169,32 +169,35 @@
     </div>
 
 <script>
-    async function loadWithdrawData() {
-        const token = localStorage.getItem("authToken");
+async function loadWithdrawData() {
+    const token = localStorage.getItem("authToken");
 
-        if (!token) {
-            alert("Você precisa estar logado para acessar esta página.");
-            window.location.href = "/login";
-            return;
-        }
+    if (!token) {
+        alert("Você precisa estar logado para acessar esta página.");
+        window.location.href = "/login";
+        return;
+    }
 
-        try {
+    try {
         const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.error || "Erro ao buscar saldo.");
         }
+
         const saldo = parseFloat(data.saldo);
-        // Atualiza localStorage se desejar manter o valor
         localStorage.setItem("saldoDisponivel", saldo);
-        document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+        document.getElementById("availableBalance").textContent = `R$ ${saldo.toFixed(2)}`;
+
+        // Carrega chave PIX salva se existir
+        if (data.pix_key) {
+            document.getElementById('pixKey').value = data.pix_key;
+        }
+
     } catch (error) {
         console.error("Erro ao carregar saldo:", error);
     }
 }
-
-            document.getElementById("availableBalance").textContent = `R$ ${data.balance.toFixed(2)}`;
-            
             // Carrega chave PIX salva se existir
             if (data.pix_key) {
                 document.getElementById('pixKey').value = data.pix_key;
