@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realizar Saque</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            transition: background 0.3s;
+        }
+
+        .input-box, .select-box {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: var(--container-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .input-box[readonly] {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .withdraw-button, .back-button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+
+        .withdraw-button {
+            background-color: #28a745;
+        }
+
+        .withdraw-button:hover {
+            background-color: #218838;
+        }
+
+        .back-button {
+            background-color: #d9534f;
+        }
+
+        .back-button:hover {
+            background-color: #c9302c;
+        }
+
+        .info-text {
+            font-size: 14px;
+            margin: 10px 0;
+            color: #6a737d;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .input-box, .select-box {
+                background: var(--container-dark);
+                border: 1px solid var(--border-dark);
+                color: var(--text-dark);
+            }
+
+            .info-text {
+                color: #8b949e;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Realizar Saque</h2>
+
+        <input type="text" id="amount" class="input-box" placeholder="Valor (R$)" oninput="formatCurrency(this)">
+        <select id="paymentMethod" class="select-box">
+            <option value="" disabled selected>Selecione o método de pagamento</option>
+            <option value="pix">PIX</option>
+            <option value="bank_transfer">Transferência Bancária</option>
+        </select>
+        
+        <div id="pixFields" style="display: none;">
+            <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX">
+        </div>
+        
+        <div id="bankFields" style="display: none;">
+            <input type="text" id="bankName" class="input-box" placeholder="Banco">
+            <input type="text" id="accountNumber" class="input-box" placeholder="Número da Conta">
+            <input type="text" id="agency" class="input-box" placeholder="Agência">
+            <input type="text" id="accountType" class="input-box" placeholder="Tipo de Conta (Corrente/Poupança)">
+            <input type="text" id="accountHolder" class="input-box" placeholder="Titular da Conta">
+            <input type="text" id="cpfHolder" class="input-box" placeholder="CPF do Titular">
+        </div>
+
+        <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
+        
+        <p class="info-text">Taxa de saque: R$ 2,00 | Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
+
+        <button class="withdraw-button" onclick="requestWithdraw()">Solicitar Saque</button>
+        <button class="back-button" onclick="goBack()">Voltar</button>
+    </div>
+
+<script>
+    async function loadWithdrawData() {
+        const token = localStorage.getItem("authToken");
+
+        if (!token) {
+            alert("Você precisa estar logado para acessar esta página.");
+            window.location.href = "/login";
+            return;
+        }
+
+        try {
+            const response = await fetch("https://ganhesocial.com/api/balance", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Erro ao carregar saldo");
+            }
+
+            document.getElementById("authToken").value = token;
+            document.getElementById("availableBalance").textContent = `R$ ${data.balance.toFixed(2)}`;
+            
+            // Carrega métodos de pagamento salvos se existirem
+            if (data.payment_methods) {
+                // Aqui você pode preencher os campos com os métodos salvos
+            }
+
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    function formatCurrency(input) {
+        // Remove tudo que não é número
+        let value = input.value.replace(/\D/g, '');
+        
+        // Adiciona os centavos
+        value = (value / 100).toFixed(2);
+        
+        // Formata como moeda
+        input.value = 'R$ ' + value.replace('.', ',').replace(/(\d)(?=(\d{3})+\,)/g, "$1.");
+    }
+
+    document.getElementById("paymentMethod").addEventListener("change", function() {
+        const method = this.value;
+        document.getElementById("pixFields").style.display = method === "pix" ? "block" : "none";
+        document.getElementById("bankFields").style.display = method === "bank_transfer" ? "block" : "none";
+    });
+
+    async function requestWithdraw() {
+        const amount = document.getElementById('amount').value.replace(/\D/g, '');
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const token = document.getElementById('authToken').value.trim();
+        
+        if (!amount || parseFloat(amount) <= 200) { // 200 = R$ 2,00 em centavos (valor mínimo)
+            alert("O valor mínimo para saque é R$ 2,01.");
+            return;
+        }
+
+        if (!paymentMethod) {
+            alert("Selecione um método de pagamento.");
+            return;
+        }
+
+        let paymentData = {};
+        if (paymentMethod === "pix") {
+            const pixKey = document.getElementById('pixKey').value.trim();
+            if (!pixKey) {
+                alert("Informe a chave PIX.");
+                return;
+            }
+            paymentData = { pix_key: pixKey };
+        } else if (paymentMethod === "bank_transfer") {
+            const bankName = document.getElementById('bankName').value.trim();
+            const accountNumber = document.getElementById('accountNumber').value.trim();
+            const agency = document.getElementById('agency').value.trim();
+            const accountType = document.getElementById('accountType').value.trim();
+            const accountHolder = document.getElementById('accountHolder').value.trim();
+            const cpfHolder = document.getElementById('cpfHolder').value.trim();
+            
+            if (!bankName || !accountNumber || !agency || !accountType || !accountHolder || !cpfHolder) {
+                alert("Preencha todos os dados bancários.");
+                return;
+            }
+            
+            paymentData = {
+                bank_name: bankName,
+                account_number: accountNumber,
+                agency: agency,
+                account_type: accountType,
+                account_holder: accountHolder,
+                cpf_holder: cpfHolder
+            };
+        }
+
+        try {
+            const response = await fetch("https://ganhesocial.com/api/withdraw", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    amount: parseFloat(amount),
+                    payment_method: paymentMethod,
+                    payment_data: paymentData
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Erro ao solicitar saque");
+            }
+
+            alert("Saque solicitado com sucesso! O valor será processado em até 2 dias úteis.");
+            window.location.href = "/dashboard";
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    function goBack() {
+        window.location.href = "/dashboard";
+    }
+
+    window.onload = loadWithdrawData;
+</script>
+</body>
+</html>
