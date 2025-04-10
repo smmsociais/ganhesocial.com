@@ -87,6 +87,28 @@
             color: #6a737d;
         }
 
+        .info-box {
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .info-box.dark {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+
+        .info-content {
+            font-size: 13px;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -108,12 +130,31 @@
             .info-text {
                 color: #8b949e;
             }
+
+            .info-title {
+                color: var(--text-dark);
+            }
+
+            .info-box {
+                background: rgba(255,255,255,0.05);
+                border: 1px solid var(--border-dark);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Realizar Saque</h2>
+        <h2>Solicitar Saque</h2>
+
+        <div class="info-box">
+            <div class="info-title">Valor Mínimo</div>
+            <div class="info-content">O valor mínimo para saque é de R$ 5,00.</div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-title">Taxa de Saque</div>
+            <div class="info-content">Não há taxa de saque.</div>
+        </div>
 
         <input type="text" id="amount" class="input-box" placeholder="Valor (R$)" oninput="formatCurrency(this)">
         <select id="paymentMethod" class="select-box">
@@ -137,7 +178,7 @@
 
         <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
         
-        <p class="info-text">Taxa de saque: R$ 2,00 | Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
+        <p class="info-text">Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
 
         <button class="withdraw-button" onclick="requestWithdraw()">Solicitar Saque</button>
         <button class="back-button" onclick="goBack()">Voltar</button>
@@ -202,8 +243,8 @@
         const paymentMethod = document.getElementById('paymentMethod').value;
         const token = document.getElementById('authToken').value.trim();
         
-        if (!amount || parseFloat(amount) <= 200) { // 200 = R$ 2,00 em centavos (valor mínimo)
-            alert("O valor mínimo para saque é R$ 2,01.");
+        if (!amount || parseFloat(amount) < 500) { // 500 centavos = R$ 5,00 (novo valor mínimo)
+            alert("O valor mínimo para saque é R$ 5,00.");
             return;
         }
 
