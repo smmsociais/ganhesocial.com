@@ -155,6 +155,7 @@
 
         async function saveProfile() {
     const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
     const newPassword = document.getElementById('newPassword').value.trim();
     const confirmPassword = document.getElementById('confirmPassword').value.trim();
     const token = document.getElementById('authToken').value.trim();
@@ -170,8 +171,7 @@
             return;
         }
     }
-
-    const body = { nome_usuario: name };
+    const body = { nome_usuario: name, email };
     if (newPassword) {
         body.senha = newPassword;
     }
