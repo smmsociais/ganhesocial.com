@@ -11,11 +11,13 @@
             --text-light: #24292e;
             --container-light: #f6f8fa;
             --border-light: #ddd;
+            --label-light: #586069;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
+            --label-dark: #8b949e;
             --error-color: #f85149;
             --success-color: #238636;
         }
@@ -34,36 +36,51 @@
 
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
+            width: 320px;
             transition: background 0.3s;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--label-light);
+            font-weight: 600;
         }
 
         .input-box {
             width: 100%;
             padding: 10px;
-            margin-top: 10px;
             border-radius: 5px;
             border: 1px solid var(--border-light);
             background: var(--container-light);
             color: var(--text-light);
             transition: all 0.3s;
+            box-sizing: border-box;
         }
 
         .input-box[readonly] {
             background: transparent;
             border: none;
-            border-bottom: 1px solid var(--border-light);
-            cursor: not-allowed;
             padding-left: 0;
+            font-weight: bold;
+            cursor: not-allowed;
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 0;
         }
 
         .save-button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-top: 20px;
             border: none;
             border-radius: 5px;
@@ -72,6 +89,7 @@
             font-size: 16px;
             background-color: #28a745;
             transition: background-color 0.3s;
+            font-weight: bold;
         }
 
         .save-button:hover {
@@ -79,10 +97,11 @@
         }
 
         .message {
-            padding: 10px;
-            margin-top: 10px;
+            padding: 12px;
+            margin: 15px 0;
             border-radius: 5px;
             display: none;
+            font-size: 14px;
         }
 
         .error-message {
@@ -97,6 +116,12 @@
             border: 1px solid #c3e6cb;
         }
 
+        .page-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -109,6 +134,10 @@
                 border: 1px solid var(--border-dark);
             }
 
+            .form-label {
+                color: var(--label-dark);
+            }
+
             .input-box {
                 background: var(--container-dark);
                 border: 1px solid var(--border-dark);
@@ -116,8 +145,7 @@
             }
 
             .input-box[readonly] {
-                background: transparent;
-                border: none;
+                color: var(--text-dark);
                 border-bottom: 1px solid var(--border-dark);
             }
 
@@ -132,22 +160,45 @@
                 color: var(--success-color);
                 border: 1px solid var(--success-color);
             }
+
+            .page-title {
+                color: var(--text-dark);
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h2>Editar Perfil</h2>
+        <h2 class="page-title">Editar Perfil</h2>
 
         <div id="errorMessage" class="message error-message"></div>
         <div id="successMessage" class="message success-message"></div>
 
-        <input type="text" id="name" class="input-box" readonly placeholder="Nome">
-        <input type="email" id="email" class="input-box" placeholder="E-mail" readonly>
-        <input type="text" id="authToken" class="input-box" readonly placeholder="Token de Autenticação">
-        <input type="password" id="newPassword" class="input-box" placeholder="Nova Senha (deixe em branco para não alterar)">
-        <input type="password" id="confirmPassword" class="input-box" placeholder="Confirmar Nova Senha">
+        <div class="form-group">
+            <label for="name" class="form-label">Nome</label>
+            <input type="text" id="name" class="input-box" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="email" class="form-label">E-mail</label>
+            <input type="email" id="email" class="input-box" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="authToken" class="form-label">Token de Autenticação</label>
+            <input type="text" id="authToken" class="input-box" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="newPassword" class="form-label">Nova Senha</label>
+            <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
+            <input type="password" id="confirmPassword" class="input-box">
+        </div>
     
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
     </div>
