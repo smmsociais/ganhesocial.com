@@ -198,10 +198,6 @@ async function loadWithdrawData() {
         console.error("Erro ao carregar saldo:", error);
     }
 }
-            // Carrega chave PIX salva se existir
-            if (data.pix_key) {
-                document.getElementById('pixKey').value = data.pix_key;
-            }
 
     function formatCurrency(input) {
         // Remove tudo que não é número
