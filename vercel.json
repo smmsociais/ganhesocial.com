@@ -10,6 +10,6 @@
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
     { "source": "/historico_acoes", "destination": "/historico_acoes.html" },
     { "source": "/profile", "destination": "/profile.html" },
-    { "source": "/realizar_saque", "destination": "/realizar_saque.html" }      
+    { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" }      
   ]
 }
