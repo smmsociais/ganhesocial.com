@@ -20,18 +20,38 @@
             --label-dark: #8b949e;
             --error-color: #f85149;
             --success-color: #238636;
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .logo {
+            height: 30px;
+            margin-right: 10px;
         }
 
         .container {
@@ -39,7 +59,9 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 320px;
+            width: 90%;
+            max-width: 500px;
+            margin: 30px auto;
             transition: background 0.3s;
         }
 
@@ -153,12 +175,93 @@
             color: var(--text-light);
         }
 
+        /* Menu Hamburger Styles */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--error-color);
+            font-size: 16px;
+            text-decoration: none;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
+            .header,
             .container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
@@ -203,11 +306,52 @@
             .page-title {
                 color: var(--text-dark);
             }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
 
 <body>
+    <div class="header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <a href="dashboard.html" class="logo-container">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+
     <div class="container">
         <h2 class="page-title">Editar Perfil</h2>
 
@@ -244,6 +388,22 @@
         </div>
     
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
+    </div>
+
+    <!-- Menu Overlay e Conteúdo -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-content" id="menuContent">
+        <a class="menu-item" href="dashboard.html">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="suporte">Suporte</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
+        </div>
     </div>
 
     <script>
@@ -372,17 +532,59 @@
             }
         }
 
-        // Set up copy functionality
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
+        }
+
+        // Set up menu and copy functionality
         document.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('authToken');
             const copyIcon = document.getElementById('copyIcon');
             
             tokenInput.addEventListener('click', copyTokenToClipboard);
             copyIcon.addEventListener('click', copyTokenToClipboard);
+
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+
+            menuToggle.addEventListener('click', function() {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
+
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
         });
 
         window.onload = loadProfile;
     </script>
 </body>
-
 </html>
