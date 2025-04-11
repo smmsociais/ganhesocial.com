@@ -11,17 +11,15 @@
             --text-light: #24292e;
             --container-light: #f6f8fa;
             --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
+            --positive-color: #2e8b57;
+            --negative-color: #dc3545;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
+            --positive-dark: #3aa76d;
+            --negative-dark: #e5534b;
         }
 
         body {
@@ -89,92 +87,97 @@
             height: 300px;
             margin-top: 20px;
             position: relative;
-            overflow: hidden;
         }
 
         .chart {
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: flex-end;
-            height: 250px;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
+            justify-content: space-between;
             position: relative;
         }
 
         .chart-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-bar {
             flex: 1;
+            margin: 0 2px;
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            position: relative;
-            height: 100%;
         }
 
-        .chart-bar {
-            width: 20px;
-            background-color: var(--positive-color);
+        .bar {
+            width: 12px;
             border-radius: 3px 3px 0 0;
+            background-color: var(--positive-color);
             transition: height 0.5s ease;
             position: relative;
-            margin: 0 2px;
         }
 
-        .chart-bar.negative {
+        .bar.negative {
             background-color: var(--negative-color);
         }
 
-        .chart-bar.neutral {
-            background-color: var(--neutral-color);
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-light);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .chart-label {
-            position: absolute;
-            bottom: -25px;
+        .bar:hover .bar-value {
+            opacity: 1;
+        }
+
+        .bar-date {
             font-size: 10px;
+            margin-top: 5px;
             text-align: center;
-            transform: rotate(-45deg);
-            transform-origin: top left;
-            white-space: nowrap;
             color: var(--text-light);
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            height: 40px;
+            display: flex;
+            align-items: center;
         }
 
-        .chart-value {
-            position: absolute;
-            top: -20px;
-            font-size: 10px;
-            color: var(--text-light);
-        }
-
-        .chart-axis-y {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 30px;
-            border-right: 1px solid #ddd;
-        }
-
-        .chart-axis-y-label {
+        .chart-scale {
             position: absolute;
             left: 0;
             width: 100%;
-            text-align: right;
-            padding-right: 5px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            color: var(--text-light);
             font-size: 10px;
-            transform: translateY(-50%);
         }
 
-        .chart-tooltip {
+        .chart-scale-item {
+            position: relative;
+        }
+
+        .chart-scale-item:before {
+            content: '';
             position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-            display: none;
+            left: 50%;
+            top: -8px;
+            width: 1px;
+            height: 5px;
+            background-color: rgba(0, 0, 0, 0.1);
         }
 
         /* Estilos do menu hamburguer */
@@ -294,32 +297,41 @@
                 color: var(--text-dark);
             }
 
-            .chart {
-                border-bottom: 1px solid #444;
+            .saldo-disponivel {
+                color: var(--positive-dark);
             }
 
-            .chart-label, .chart-value {
+            .bar {
+                background-color: var(--positive-dark);
+            }
+
+            .bar.negative {
+                background-color: var(--negative-dark);
+            }
+
+            .bar-value, .bar-date {
                 color: var(--text-dark);
             }
 
-            .chart-axis-y {
-                border-right: 1px solid #444;
+            .chart-line {
+                background-color: rgba(255, 255, 255, 0.1);
             }
 
-            .saldo-disponivel {
-                color: var(--positive-color-dark);
+            .chart-scale-item:before {
+                background-color: rgba(255, 255, 255, 0.1);
             }
+        }
 
-            .chart-bar {
-                background-color: var(--positive-color-dark);
+        @media (max-width: 600px) {
+            .bar {
+                width: 8px;
             }
-
-            .chart-bar.negative {
-                background-color: var(--negative-color-dark);
-            }
-
-            .chart-bar.neutral {
-                background-color: var(--neutral-color-dark);
+            
+            .bar-date {
+                writing-mode: horizontal-tb;
+                transform: none;
+                height: auto;
+                margin-top: 10px;
             }
         }
     </style>
@@ -342,9 +354,13 @@
     <div class="historico-container">
         <h3 style="text-align: center; margin-top: 0;">Histórico de Ganhos Diários</h3>
         <div class="chart-container">
-            <div class="chart-axis-y" id="chartAxisY"></div>
-            <div class="chart" id="dailyChart"></div>
-            <div class="chart-tooltip" id="chartTooltip"></div>
+            <div class="chart" id="dailyChart">
+                <!-- Gráfico será gerado via JavaScript -->
+            </div>
+            <div class="chart-line"></div>
+            <div class="chart-scale" id="chartScale">
+                <!-- Escala será gerada via JavaScript -->
+            </div>
         </div>
     </div>
 
@@ -424,7 +440,7 @@
                 const saldo = parseFloat(data.saldo);
                 // Atualiza localStorage se desejar manter o valor
                 localStorage.setItem("saldoDisponivel", saldo);
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(3)}`;
+                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
@@ -458,7 +474,7 @@
                     datasValidas.push({
                         date: data,
                         dateStr: data.toLocaleDateString("pt-BR"),
-                        displayDate: i === 0 ? "Hoje" : data.toLocaleDateString("pt-BR")
+                        isToday: data.toLocaleDateString("pt-BR") === hojeFormatado
                     });
                 }
 
@@ -475,95 +491,71 @@
                 });
 
                 // Prepara dados para o gráfico
-                const chartData = datasValidas.map(dateObj => {
+                const chartData = datasValidas.map(day => {
                     const itemHistorico = historico.find(item => 
-                        item.data.toLocaleDateString("pt-BR") === dateObj.dateStr
+                        item.data.toLocaleDateString("pt-BR") === day.dateStr
                     );
                     return {
-                        date: dateObj.date,
-                        dateStr: dateObj.dateStr,
-                        displayDate: dateObj.displayDate,
-                        value: itemHistorico ? itemHistorico.valor : 0
+                        date: day.date,
+                        dateStr: day.dateStr,
+                        isToday: day.isToday,
+                        valor: itemHistorico ? itemHistorico.valor : 0
                     };
                 }).reverse(); // Inverte para mostrar do mais antigo para o mais recente
 
+                // Renderiza o gráfico
                 renderChart(chartData);
+
             } catch (error) {
                 console.error("Erro ao carregar histórico:", error);
             }
         }
 
         function renderChart(data) {
-            const chart = document.getElementById('dailyChart');
-            const chartAxisY = document.getElementById('chartAxisY');
-            const tooltip = document.getElementById('chartTooltip');
-            
-            chart.innerHTML = '';
-            chartAxisY.innerHTML = '';
+            const chartContainer = document.getElementById('dailyChart');
+            const scaleContainer = document.getElementById('chartScale');
+            chartContainer.innerHTML = '';
+            scaleContainer.innerHTML = '';
 
-            if (data.length === 0) return;
+            // Encontra o valor máximo para escalar o gráfico
+            const maxValue = Math.max(...data.map(item => Math.abs(item.valor)), 10);
+            const chartHeight = 250; // Altura fixa do gráfico em pixels
 
-            // Encontra valores máximos e mínimos para escalar o gráfico
-            const values = data.map(item => item.value);
-            const maxValue = Math.max(...values, 0.1); // Pelo menos 0.1 para evitar divisão por zero
-            const minValue = Math.min(...values, 0);
-            
-            // Cria eixos Y
-            const yAxisSteps = 5;
-            for (let i = 0; i <= yAxisSteps; i++) {
-                const value = (maxValue / yAxisSteps) * i;
-                const yPos = 100 - (i * (100 / yAxisSteps));
-                
-                const axisLabel = document.createElement('div');
-                axisLabel.className = 'chart-axis-y-label';
-                axisLabel.style.top = `${yPos}%`;
-                axisLabel.textContent = value.toFixed(2);
-                chartAxisY.appendChild(axisLabel);
+            // Adiciona escala
+            const scaleSteps = 5;
+            for (let i = 0; i <= scaleSteps; i++) {
+                const value = (maxValue / scaleSteps * (scaleSteps - i)).toFixed(2);
+                const scaleItem = document.createElement('div');
+                scaleItem.className = 'chart-scale-item';
+                scaleItem.textContent = `R$ ${value}`;
+                scaleItem.style.bottom = `${(i / scaleSteps) * 100}%`;
+                scaleContainer.appendChild(scaleItem);
             }
 
-            // Cria barras do gráfico
-            data.forEach((item, index) => {
-                const barHeight = (item.value / maxValue) * 100;
-                const barValue = item.value.toFixed(2);
-                
+            // Adiciona barras para cada dia
+            data.forEach(item => {
                 const barContainer = document.createElement('div');
-                barContainer.className = 'chart-line';
-                
+                barContainer.className = 'chart-bar';
+
+                const barHeight = (Math.abs(item.valor) / maxValue) * chartHeight;
                 const bar = document.createElement('div');
-                bar.className = 'chart-bar';
-                if (item.value > 0) bar.className += ' positive';
-                else if (item.value < 0) bar.className += ' negative';
-                else bar.className += ' neutral';
-                
-                bar.style.height = `${Math.max(1, barHeight)}%`;
-                
-                const valueLabel = document.createElement('div');
-                valueLabel.className = 'chart-value';
-                valueLabel.textContent = barValue;
-                
-                const dateLabel = document.createElement('div');
-                dateLabel.className = 'chart-label';
-                dateLabel.textContent = item.displayDate;
-                
+                bar.className = 'bar';
+                if (item.valor < 0) bar.classList.add('negative');
+                bar.style.height = `${barHeight}px`;
+
+                const barValue = document.createElement('div');
+                barValue.className = 'bar-value';
+                barValue.textContent = `R$ ${item.valor.toFixed(2)}`;
+
+                const barDate = document.createElement('div');
+                barDate.className = 'bar-date';
+                barDate.textContent = item.isToday ? 'Hoje' : 
+                    `${item.date.getDate()}/${item.date.getMonth() + 1}`;
+
+                bar.appendChild(barValue);
                 barContainer.appendChild(bar);
-                barContainer.appendChild(valueLabel);
-                barContainer.appendChild(dateLabel);
-                chart.appendChild(barContainer);
-
-                // Adiciona interatividade
-                barContainer.addEventListener('mouseover', (e) => {
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${item.displayDate}</strong><br>R$ ${barValue}`;
-                });
-
-                barContainer.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = `${e.pageX + 10}px`;
-                    tooltip.style.top = `${e.pageY + 10}px`;
-                });
-
-                barContainer.addEventListener('mouseout', () => {
-                    tooltip.style.display = 'none';
-                });
+                barContainer.appendChild(barDate);
+                chartContainer.appendChild(barContainer);
             });
         }
 
