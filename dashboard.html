@@ -486,9 +486,9 @@
                 const barContainer = document.createElement('div');
                 barContainer.className = 'chart-bar';
 
-                const barHeight = item.valor !== 0 ? 
-                    Math.max(minHeight, (Math.abs(item.valor) / maxValor * 100)) 
-                    minHeight;
+const barHeight = item.valor !== 0 
+    ? Math.max(minHeight, (Math.abs(item.valor) / maxValor * 100)) 
+    : minHeight;
 
                 const bar = document.createElement('div');
                 bar.className = `bar ${item.valor < 0 ? 'negative' : ''}`;
