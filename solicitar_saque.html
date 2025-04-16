@@ -104,6 +104,13 @@
             font-size: 13px;
         }
 
+        .error-message {
+            color: #d9534f;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -134,6 +141,10 @@
                 background: rgba(255,255,255,0.05);
                 border: 1px solid var(--border-dark);
             }
+
+            .error-message {
+                color: #ff6b6b;
+            }
         }
     </style>
 </head>
@@ -156,10 +167,16 @@
             <div class="info-content">O prazo para os pagamentos são de imediato.</div>
         </div>
 
+        <div class="info-box">
+            <div class="info-title">Chave PIX</div>
+            <div class="info-content">Aceitamos apenas chaves PIX do tipo CPF (apenas números, sem pontuação).</div>
+        </div>
+
         <input type="text" id="amount" class="input-box" placeholder="Valor (R$)" oninput="formatCurrency(this)">
         
         <div id="pixFields">
-            <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX">
+            <input type="text" id="pixKey" class="input-box" placeholder="CPF (somente números)" maxlength="11" oninput="validateCPF(this)">
+            <div id="cpfError" class="error-message">Informe um CPF válido com 11 dígitos (somente números)</div>
         </div>
         
         <p class="info-text">Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
@@ -189,8 +206,8 @@ async function loadWithdrawData() {
         localStorage.setItem("saldoDisponivel", saldo);
         document.getElementById("availableBalance").textContent = `R$ ${saldo.toFixed(2)}`;
 
-        // Carrega chave PIX salva se existir
-        if (data.pix_key) {
+        // Carrega chave PIX salva se existir e for CPF
+        if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
             document.getElementById('pixKey').value = data.pix_key;
         }
 
@@ -199,64 +216,85 @@ async function loadWithdrawData() {
     }
 }
 
-    function formatCurrency(input) {
-        // Remove tudo que não é número
-        let value = input.value.replace(/\D/g, '');
-        
-        // Adiciona os centavos
-        value = (value / 100).toFixed(2);
-        
-        // Formata como moeda
-        input.value = 'R$ ' + value.replace('.', ',').replace(/(\d)(?=(\d{3})+\,)/g, "$1.");
+function validateCPF(input) {
+    const cpf = input.value.replace(/\D/g, '');
+    const errorElement = document.getElementById('cpfError');
+    
+    // Limita a 11 dígitos
+    input.value = cpf.slice(0, 11);
+    
+    if (cpf.length === 11) {
+        errorElement.style.display = 'none';
+        return true;
+    } else {
+        errorElement.style.display = 'block';
+        return false;
+    }
+}
+
+function formatCurrency(input) {
+    // Remove tudo que não é número
+    let value = input.value.replace(/\D/g, '');
+    
+    // Adiciona os centavos
+    value = (value / 100).toFixed(2);
+    
+    // Formata como moeda
+    input.value = 'R$ ' + value.replace('.', ',').replace(/(\d)(?=(\d{3})+\,)/g, "$1.");
+}
+
+async function requestWithdraw() {
+    const amount = document.getElementById('amount').value.replace(/\D/g, '');
+    const pixKey = document.getElementById('pixKey').value.trim();
+    const token = localStorage.getItem("authToken");
+    
+    if (!amount || parseFloat(amount) < 500) { // 500 centavos = R$ 5,00
+        alert("O valor mínimo para saque é R$ 5,00.");
+        return;
     }
 
-    async function requestWithdraw() {
-        const amount = document.getElementById('amount').value.replace(/\D/g, '');
-        const pixKey = document.getElementById('pixKey').value.trim();
-        const token = localStorage.getItem("authToken");
-        
-        if (!amount || parseFloat(amount) < 500) { // 500 centavos = R$ 5,00
-            alert("O valor mínimo para saque é R$ 5,00.");
-            return;
-        }
-
-        if (!pixKey) {
-            alert("Informe a chave PIX.");
-            return;
-        }
-
-        try {
-            const response = await fetch("https://ganhesocial.com/api/withdraw", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    amount: parseFloat(amount),
-                    payment_method: "pix",
-                    payment_data: { pix_key: pixKey }
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "Erro ao solicitar saque");
-            }
-
-            alert("Saque solicitado com sucesso! O pagamento será processado imediatamente.");
-            window.location.href = "/dashboard";
-        } catch (error) {
-            alert(error.message);
-        }
+    // Validação do CPF
+    if (!/^\d{11}$/.test(pixKey)) {
+        document.getElementById('cpfError').style.display = 'block';
+        alert("Por favor, informe um CPF válido com 11 dígitos (somente números).");
+        return;
     }
 
-    function goBack() {
+    try {
+        const response = await fetch("https://ganhesocial.com/api/withdraw", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                amount: parseFloat(amount),
+                payment_method: "pix",
+                payment_data: { 
+                    pix_key: pixKey,
+                    pix_key_type: "cpf" // Especifica que é um CPF
+                }
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao solicitar saque");
+        }
+
+        alert("Saque solicitado com sucesso! O pagamento será processado imediatamente.");
         window.location.href = "/dashboard";
+    } catch (error) {
+        alert(error.message);
     }
+}
 
-    window.onload = loadWithdrawData;
+function goBack() {
+    window.location.href = "/dashboard";
+}
+
+window.onload = loadWithdrawData;
 </script>
 </body>
 </html>
