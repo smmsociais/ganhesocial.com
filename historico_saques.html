@@ -9,17 +9,17 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
-            --success-light: #28a745; /* Verde */
-            --pending-light: #ffc107; /* Amarelo */
-            --failed-light: #dc3545; /* Vermelho */
+            --success-light: #28a745;
+            --pending-light: #ffc107;
+            --failed-light: #dc3545;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
             --border-dark: #30363d;
-            --success-dark: #2ea043; /* Verde */
-            --pending-dark: #d29922; /* Amarelo */
-            --failed-dark: #f85149; /* Vermelho */
+            --success-dark: #2ea043;
+            --pending-dark: #d29922;
+            --failed-dark: #f85149;
         }
 
         body {
@@ -155,25 +155,7 @@
                     </tr>
                 </thead>
                 <tbody id="withdrawals-list">
-                    <!-- Exemplo de linhas para demonstração -->
-                    <tr>
-                        <td>01/01/2023 10:00</td>
-                        <td>R$ 100,00</td>
-                        <td>PIX</td>
-                        <td class="status-completed">Efetuado</td>
-                    </tr>
-                    <tr>
-                        <td>02/01/2023 11:00</td>
-                        <td>R$ 200,00</td>
-                        <td>PIX</td>
-                        <td class="status-pending">Pendente</td>
-                    </tr>
-                    <tr>
-                        <td>03/01/2023 12:00</td>
-                        <td>R$ 300,00</td>
-                        <td>PIX</td>
-                        <td class="status-failed">Falhou</td>
-                    </tr>
+                    <!-- Linhas serão adicionadas dinamicamente -->
                 </tbody>
             </table>
             <div id="no-withdrawals" class="no-withdrawals" style="display: none;">
@@ -212,68 +194,69 @@
         }
 
         function displayWithdrawals(withdrawals) {
-            const withdrawalsList = document.getElementById("withdrawals-list");
-            const noWithdrawalsMsg = document.getElementById("no-withdrawals");
+    const withdrawalsList = document.getElementById("withdrawals-list");
+    const noWithdrawalsMsg = document.getElementById("no-withdrawals");
 
-            withdrawalsList.innerHTML = "";
+    withdrawalsList.innerHTML = "";
 
-            if (withdrawals.length === 0) {
-                noWithdrawalsMsg.style.display = "block";
-                return;
-            }
+    if (withdrawals.length === 0) {
+        noWithdrawalsMsg.style.display = "block";
+        return;
+    }
 
-            noWithdrawalsMsg.style.display = "none";
+    noWithdrawalsMsg.style.display = "none";
 
-            withdrawals.sort((a, b) => {
-                const aTime = typeof a.date === 'object' && a.date.$date
-                    ? Number(a.date.$date.$numberLong || a.date.$date)
-                    : Date.parse(a.date);
+    withdrawals.sort((a, b) => {
+        const aTime = typeof a.date === 'object' && a.date.$date
+            ? Number(a.date.$date.$numberLong || a.date.$date)
+            : Date.parse(a.date);
 
-                const bTime = typeof b.date === 'object' && b.date.$date
-                    ? Number(b.date.$date.$numberLong || b.date.$date)
-                    : Date.parse(b.date);
+        const bTime = typeof b.date === 'object' && b.date.$date
+            ? Number(b.date.$date.$numberLong || b.date.$date)
+            : Date.parse(b.date);
 
-                return bTime - aTime;
-            });
+        return bTime - aTime;
+    });
 
-            withdrawals.forEach(withdrawal => {
-                const row = document.createElement("tr");
+    withdrawals.forEach(withdrawal => {
+        const row = document.createElement("tr");
 
-                const timestamp = typeof withdrawal.date === 'object' && withdrawal.date.$date
-                    ? Number(withdrawal.date.$date.$numberLong || withdrawal.date.$date)
-                    : Date.parse(withdrawal.date);
+        const timestamp = typeof withdrawal.date === 'object' && withdrawal.date.$date
+            ? Number(withdrawal.date.$date.$numberLong || withdrawal.date.$date)
+            : Date.parse(withdrawal.date);
 
-                const date = new Date(withdrawal.date);
-                const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+            const date = new Date(withdrawal.date);
+const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit'
+});
 
-                const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
 
-                let statusClass = '';
-                if (withdrawal.status === 'completed') statusClass = 'status-completed';
-                else if (withdrawal.status === 'pending') statusClass = 'status-pending';
-                else if (withdrawal.status === 'failed') statusClass = 'status-failed';
+        const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
 
-                let statusText = '';
-                switch (withdrawal.status) {
-                    case 'completed': statusText = 'Efetuado'; break;
-                    case 'pending': statusText = 'Pendente'; break;
-                    case 'failed': statusText = 'Falhou'; break;
-                    default: statusText = withdrawal.status;
-                }
+        let statusClass = '';
+if (withdrawal.status === 'completed') statusClass = 'status-completed';
+else if (withdrawal.status === 'pending') statusClass = 'status-pending';
+else if (withdrawal.status === 'failed') statusClass = 'status-failed';
 
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${formattedValue}</td>
-                    <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                `;
+let statusText = '';
+switch (withdrawal.status) {
+    case 'completed': statusText = 'Efetuado'; break;
+    case 'pending': statusText = 'Pendente'; break;
+    case 'failed': statusText = 'Falhou'; break;
+    default: statusText = withdrawal.status;
+}
 
-                withdrawalsList.appendChild(row);
-            });
-        }
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${formattedValue}</td>
+            <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
+            <td class="${statusClass}">${statusText}</td>
+        `;
+
+        withdrawalsList.appendChild(row);
+    });
+}
 
         window.onload = loadWithdrawals;
     </script>
