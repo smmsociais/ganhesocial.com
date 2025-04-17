@@ -358,6 +358,7 @@
         <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
         <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
         <a class="menu-item" onclick="goToWithdraw()">Solicitar Saque</a>
+        <a class="menu-item" onclick="goToWithdrawHistory()">Histórico de Saques</a>   
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
@@ -593,7 +594,11 @@
 
         function goToWithdraw() {
             window.location.href = "solicitar_saque";
-        }        
+        }
+
+         function goToWithdrawHistory() {
+            window.location.href = "historico_saque";
+        }          
 
         function logout() {
             localStorage.removeItem("authToken");
