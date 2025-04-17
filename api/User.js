@@ -13,8 +13,9 @@ const WithdrawSchema = new mongoose.Schema({
     valor: { type: Number, required: true },
     chave_pix: { type: String, required: true },
     tipo_chave: { type: String, default: "cpf" },
-    data: { type: Date, default: Date.now },
     status: { type: String, default: "pendente" } // ou "aprovado", "recusado"
+}, {
+    timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" }
 });
 
 // 🔹 Schema para Histórico de Ações
