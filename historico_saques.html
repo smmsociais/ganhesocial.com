@@ -235,16 +235,20 @@ const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTime
         const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
 
         let statusClass = '';
-if (withdrawal.status === 'completed') statusClass = 'status-completed';
-else if (withdrawal.status === 'pending') statusClass = 'status-pending';
-else if (withdrawal.status === 'failed') statusClass = 'status-failed';
-
 let statusText = '';
-switch (withdrawal.status) {
-    case 'completed': statusText = 'Efetuado'; break;
-    case 'pending': statusText = 'Pendente'; break;
-    case 'failed': statusText = 'Falhou'; break;
-    default: statusText = withdrawal.status;
+
+if (withdrawal.status === 'completed') {
+    statusClass = 'status-completed';
+    statusText = 'Efetuado';
+} else if (withdrawal.status === 'pending') {
+    statusClass = 'status-pending';
+    statusText = 'Pendente';
+} else if (withdrawal.status === 'failed') {
+    statusClass = 'status-failed';
+    statusText = 'Falhou';
+} else {
+    statusClass = 'status-pending'; // fallback
+    statusText = 'Pendente'; // fallback padrão
 }
 
         row.innerHTML = `
