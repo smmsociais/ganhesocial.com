@@ -225,42 +225,55 @@
 
     noWithdrawalsMsg.style.display = "none";
 
-    withdrawals.sort((a, b) => new Date(b.date) - new Date(a.date));
+    withdrawals.sort((a, b) => {
+        const aTime = typeof a.date === 'object' && a.date.$date
+            ? Number(a.date.$date.$numberLong || a.date.$date)
+            : Date.parse(a.date);
 
-    withdrawals.forEach(withdrawal => {
-    const row = document.createElement("tr");
+        const bTime = typeof b.date === 'object' && b.date.$date
+            ? Number(b.date.$date.$numberLong || b.date.$date)
+            : Date.parse(b.date);
 
-    const date = new Date(withdrawal.date);
-    const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
+        return bTime - aTime;
     });
 
-    const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
+    withdrawals.forEach(withdrawal => {
+        const row = document.createElement("tr");
 
-    let statusClass = '';
-    if (withdrawal.status === 'completed') statusClass = 'status-completed';
-    else if (withdrawal.status === 'pending') statusClass = 'status-pending';
-    else if (withdrawal.status === 'failed') statusClass = 'status-failed';
+        const timestamp = typeof withdrawal.date === 'object' && withdrawal.date.$date
+            ? Number(withdrawal.date.$date.$numberLong || withdrawal.date.$date)
+            : Date.parse(withdrawal.date);
 
-    let statusText = '';
-    switch (withdrawal.status) {
-        case 'completed': statusText = 'Concluído'; break;
-        case 'pending': statusText = 'Pendente'; break;
-        case 'failed': statusText = 'Falhou'; break;
-        default: statusText = withdrawal.status;
-    }
+        const date = new Date(timestamp);
+        const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-    row.innerHTML = `
-        <td>${formattedDate}</td>
-        <td>${formattedValue}</td>
-        <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
-        <td class="${statusClass}">${statusText}</td>
-    `;
+        const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
 
-    withdrawalsList.appendChild(row);
-});
+        let statusClass = '';
+        if (withdrawal.status === 'completed') statusClass = 'status-completed';
+        else if (withdrawal.status === 'pending') statusClass = 'status-pending';
+        else if (withdrawal.status === 'failed') statusClass = 'status-failed';
 
+        let statusText = '';
+        switch (withdrawal.status) {
+            case 'completed': statusText = 'Concluído'; break;
+            case 'pending': statusText = 'Pendente'; break;
+            case 'failed': statusText = 'Falhou'; break;
+            default: statusText = withdrawal.status;
+        }
+
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${formattedValue}</td>
+            <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
+            <td class="${statusClass}">${statusText}</td>
+        `;
+
+        withdrawalsList.appendChild(row);
+    });
 }
         function goBack() {
             window.location.href = "/dashboard";
