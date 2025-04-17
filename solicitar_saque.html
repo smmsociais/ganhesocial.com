@@ -246,8 +246,15 @@ async function loadWithdrawData() {
 
         // Carrega chave PIX salva se existir e for CPF
         if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
-  document.getElementById('pixKey').value    = data.pix_key;
-  document.getElementById('pixKey').disabled = true;
+    const input = document.getElementById('pixKey');
+    input.value    = maskCPFString(data.pix_key);  // veja abaixo
+    input.disabled = true;
+}
+
+// função utilitária para formatar uma string limpa em CPF
+function maskCPFString(str) {
+    return str
+       .replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
 }
 
     } catch (error) {
