@@ -254,7 +254,11 @@ if (withdrawal.status === 'completed') {
         row.innerHTML = `
             <td>${formattedDate}</td>
             <td>${formattedValue}</td>
-            <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
+<td>${
+    (withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey))
+        ? withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+        : (withdrawal.pixKey || withdrawal.method || '-')
+}</td>
             <td class="${statusClass}">${statusText}</td>
         `;
 
