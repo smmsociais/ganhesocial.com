@@ -225,7 +225,7 @@
 
     noWithdrawalsMsg.style.display = "none";
 
-    withdrawals.sort((a, b) => new Date(b.data) - new Date(a.data));
+    withdrawals.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     withdrawals.forEach(withdrawal => {
     const row = document.createElement("tr");
