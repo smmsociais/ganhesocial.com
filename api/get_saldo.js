@@ -14,19 +14,23 @@ export default async function handler(req, res) {
     }
 
     try {
-        const usuario = await User.findOne({ token }).select("saldo");
+        const usuario = await User.findOne({ token }).select("saldo chavePix");
         if (!usuario) {
             return res.status(403).json({ error: "Acesso negado." });
         }
 
         // Verificar se saldo é válido
         let saldo = usuario.saldo;
-
         if (typeof saldo !== "number" || isNaN(saldo)) {
-            saldo = 0;  // Definir saldo como 0 se não for um número válido
+            saldo = 0;
         }
 
-        res.status(200).json({ saldo }); // envia o número puro, ex: 0.005
+        // Retornar saldo e chavePix (se existir)
+        res.status(200).json({
+            saldo,
+            chavePix: usuario.chavePix || null
+        });
+
     } catch (error) {
         console.error("Erro ao obter saldo:", error);
         res.status(500).json({ error: "Erro ao buscar saldo." });
