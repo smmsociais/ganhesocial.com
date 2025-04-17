@@ -244,11 +244,12 @@ function formatCurrency(input) {
 }
 
 async function requestWithdraw() {
-    const amount = document.getElementById('amount').value.replace(/\D/g, '');
+    const rawAmount = document.getElementById('amount').value.replace(/\D/g, '');
+    const amount = parseFloat(rawAmount) / 100; // valor em reais
     const pixKey = document.getElementById('pixKey').value.trim();
     const token = localStorage.getItem("authToken");
     
-    if (!amount || parseFloat(amount) < 500) { // 500 centavos = R$ 5,00
+    if (!amount || amount < 5) {
         alert("O valor mínimo para saque é R$ 5,00.");
         return;
     }
