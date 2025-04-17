@@ -41,6 +41,8 @@ const UserSchema = new mongoose.Schema({
     senha: { type: String, required: true },
     token: { type: String, required: true },
     saldo: { type: Number, default: 0 },
+    pix_key:      { type: String, default: null },
+    pix_key_type: { type: String, default: null },
     contas: [ContaSchema],
     historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
     saques: [WithdrawSchema],
