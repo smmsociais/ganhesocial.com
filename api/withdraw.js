@@ -23,7 +23,6 @@ if (req.method === "GET") {
         amount: saque.valor,
         pixKey: saque.chave_pix,
         keyType: saque.tipo_chave,
-        status: saque.status,
         date: saque.data ? saque.data.toISOString() : new Date().toISOString()
     }));
     return res.status(200).json(saquesFormatados);
@@ -54,7 +53,6 @@ if (req.method === "GET") {
             valor: amount,
             chave_pix: chavePix,
             tipo_chave: tipoChave,
-            status: "Efetuado",
             data: new Date()
         });
 
