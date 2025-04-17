@@ -246,10 +246,8 @@ async function loadWithdrawData() {
 
         // Carrega chave PIX salva se existir e for CPF
         if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
-    document.getElementById('pixKey').value = data.pix_key;
-    document.getElementById('pixKey').disabled = true;
-    document.getElementById('pixWarning').style.display = "none";
-}
+            document.getElementById('pixKey').value = data.pix_key;
+        }
 
     } catch (error) {
         console.error("Erro ao carregar saldo:", error);
