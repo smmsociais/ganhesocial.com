@@ -55,7 +55,7 @@ export default async function handler(req, res) {
             chave_pix: chavePix,
             tipo_chave: tipoChave,
             status: "pendente",
-            createdAt: new Date()
+            data: new Date()
         });
 
         await user.save();
