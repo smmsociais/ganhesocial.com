@@ -13,7 +13,6 @@ const WithdrawSchema = new mongoose.Schema({
     valor: { type: Number, required: true },
     chave_pix: { type: String, required: true },
     tipo_chave: { type: String, default: "cpf" },
-    status: { type: String, default: "Efetuado" }
 }, {
     timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
