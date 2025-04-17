@@ -18,43 +18,55 @@ export default async function handler(req, res) {
     }
 
     // ✅ Requisição GET - retorna histórico de saques
-if (req.method === "GET") {
-    const saquesFormatados = user.saques.map(saque => ({
-        amount: saque.valor,
-        pixKey: saque.chave_pix,
-        keyType: saque.tipo_chave,
-        status: saque.status,
-        date: saque.data ? saque.data.toISOString() : new Date().toISOString()
-    }));
-    return res.status(200).json(saquesFormatados);
-}
+    if (req.method === "GET") {
+        const saquesFormatados = user.saques.map(saque => ({
+            amount: saque.valor,
+            pixKey: saque.chave_pix,
+            keyType: saque.tipo_chave,
+            status: saque.status,
+            date: saque.data?.toISOString() || null
+        }));
+        return res.status(200).json(saquesFormatados);
+    }
 
     // ✅ Requisição POST - novo saque
     if (req.method === "POST") {
         const { amount, payment_method, payment_data } = req.body;
-        // … validações de amount, método e pix_key …
-      
+
+        if (!amount || typeof amount !== "number" || amount <= 0) {
+            return res.status(400).json({ error: "Valor de saque inválido." });
+        }
+
+        if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+            return res.status(400).json({ error: "Dados de pagamento incompletos." });
+        }
+
+        // Validação de saldo insuficiente
+        if (user.saldo < amount) {
+            return res.status(400).json({ error: "Saldo insuficiente para saque." });
+        }
+
         // 1) Salva pix_key no usuário, se ainda não existir
         if (!user.pix_key) {
-          user.pix_key = payment_data.pix_key;
-          user.pix_key_type = payment_data.pix_key_type;
+            user.pix_key = payment_data.pix_key;
+            user.pix_key_type = payment_data.pix_key_type;
         } else if (user.pix_key !== payment_data.pix_key) {
-          return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+            return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
         }
-      
+
         // 2) Desconta saldo e adiciona saque
         user.saldo -= amount;
         user.saques.push({
-          valor:      amount,
-          chave_pix:  user.pix_key,
-          tipo_chave: user.pix_key_type,
-          status:     "pendente",
-          data:       new Date()
+            valor: amount,
+            chave_pix: user.pix_key,
+            tipo_chave: user.pix_key_type,
+            status: "pendente",
+            data: new Date()
         });
-      
+
         await user.save();
         return res.status(200).json({ message: "Saque solicitado com sucesso." });
-      }      
+    }
 
     // ❌ Método não permitido
     return res.status(405).json({ error: "Método não permitido" });
