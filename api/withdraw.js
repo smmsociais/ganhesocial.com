@@ -2,7 +2,7 @@ import connectDB from "./db.js";
 import { User } from "./User.js";
 
 export default async function handler(req, res) {
-    await dbConnect();
+    await connectDB();
 
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Método não permitido" });
