@@ -32,36 +32,29 @@ if (req.method === "GET") {
     // ✅ Requisição POST - novo saque
     if (req.method === "POST") {
         const { amount, payment_method, payment_data } = req.body;
-
-        if (!amount || amount < 5 || payment_method !== "pix" || !payment_data?.pix_key) {
-            return res.status(400).json({ error: "Dados inválidos para saque" });
+        // … validações de amount, método e pix_key …
+      
+        // 1) Salva pix_key no usuário, se ainda não existir
+        if (!user.pix_key) {
+          user.pix_key = payment_data.pix_key;
+          user.pix_key_type = payment_data.pix_key_type;
+        } else if (user.pix_key !== payment_data.pix_key) {
+          return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
         }
-
-        const chavePix = payment_data.pix_key;
-        const tipoChave = payment_data.pix_key_type || "cpf";
-
-        if (!/^\d{11}$/.test(chavePix)) {
-            return res.status(400).json({ error: "CPF inválido" });
-        }
-
-        if (user.saldo < amount) {
-            return res.status(400).json({ error: "Saldo insuficiente" });
-        }
-
+      
+        // 2) Desconta saldo e adiciona saque
         user.saldo -= amount;
-
-user.saques.push({
-    valor: amount,
-    chave_pix: chavePix,
-    tipo_chave: tipoChave,
-    status: "completed",
-    data: new Date()
-});
-
+        user.saques.push({
+          valor:      amount,
+          chave_pix:  user.pix_key,
+          tipo_chave: user.pix_key_type,
+          status:     "pendente",
+          data:       new Date()
+        });
+      
         await user.save();
-
-        return res.status(200).json({ message: "Saque solicitado com sucesso" });
-    }
+        return res.status(200).json({ message: "Saque solicitado com sucesso." });
+      }      
 
     // ❌ Método não permitido
     return res.status(405).json({ error: "Método não permitido" });
