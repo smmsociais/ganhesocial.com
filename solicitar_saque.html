@@ -146,7 +146,7 @@
 
         <div class="info-box">
             <div class="info-title">Valor Mínimo</div>
-            <div class="info-content">O valor mínimo para saque é de R$ 5,00.</div>
+            <div class="info-content">O valor mínimo para saque é de R$ 10,00.</div>
         </div>
 
         <div class="info-box">
@@ -156,11 +156,11 @@
 
         <div class="info-box">
             <div class="info-title">Prazos</div>
-            <div class="info-content">O prazo para os pagamentos são de imediato.</div>
+            <div class="info-content">O prazo médio para os pagamentos são de 2 horas, mas geralmente são de imediato.</div>
         </div>
 
         <div class="info-box">
-            <div class="info-title">Chave PIX</div>
+            <div class="info-title">Método de Saque</div>
             <div class="info-content">Aceitamos apenas chaves PIX do tipo CPF.</div>
         </div>
 
@@ -168,7 +168,7 @@
         
         <div id="pixFields">
             <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX CPF" maxlength="14" oninput="maskCPF(this)">
-            <div id="cpfError" class="error-message">Informe um CPF válido com 11 dígitos (somente números)</div>
+            <div id="cpfError" class="error-message">Informe um CPF válido com 11 dígitos</div>
         </div>
         
         <p class="info-text">Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
@@ -244,8 +244,8 @@ async function requestWithdraw() {
     const pixKey = document.getElementById('pixKey').value.trim();
     const token = localStorage.getItem("authToken");
     
-    if (!amount || amount < 5) {
-        alert("O valor mínimo para saque é R$ 5,00.");
+    if (!amount || amount < 10) {
+        alert("O valor mínimo para saque é de R$ 10,00.");
         return;
     }
 
