@@ -54,7 +54,7 @@ if (req.method === "GET") {
             valor: amount,
             chave_pix: chavePix,
             tipo_chave: tipoChave,
-            status: "pendente",
+            status: "Efetuado",
             data: new Date()
         });
 
