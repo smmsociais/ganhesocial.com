@@ -213,57 +213,54 @@
         }
 
         function displayWithdrawals(withdrawals) {
-            const withdrawalsList = document.getElementById("withdrawals-list");
-            const noWithdrawalsMsg = document.getElementById("no-withdrawals");
+    const withdrawalsList = document.getElementById("withdrawals-list");
+    const noWithdrawalsMsg = document.getElementById("no-withdrawals");
 
-            // Limpa a lista atual
-            withdrawalsList.innerHTML = "";
+    withdrawalsList.innerHTML = "";
 
-            if (withdrawals.length === 0) {
-                noWithdrawalsMsg.style.display = "block";
-                return;
-            }
+    if (withdrawals.length === 0) {
+        noWithdrawalsMsg.style.display = "block";
+        return;
+    }
 
-            noWithdrawalsMsg.style.display = "none";
+    noWithdrawalsMsg.style.display = "none";
 
-            withdrawals.sort((a, b) => new Date(b.data) - new Date(a.data));
+    withdrawals.sort((a, b) => new Date(b.data) - new Date(a.data));
 
-            // Adiciona cada saque à tabela
-            withdrawals.forEach(withdrawal => {
-                const row = document.createElement("tr");
-                
-                // Formata a data
-                const date = new Date(withdrawal.data);
-                const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                
-                // Formata o valor
-                const formattedValue = 'R$ ' + Number(withdrawal.amount).toFixed(2).replace('.', ',');
-                
-                // Determina a classe de status
-                let statusClass = '';
-                if (withdrawal.status === 'completed') statusClass = 'status-completed';
-                else if (withdrawal.status === 'pending') statusClass = 'status-pending';
-                else if (withdrawal.status === 'failed') statusClass = 'status-failed';
-                
-                // Converte o status para português
-                let statusText = '';
-                switch(withdrawal.status) {
-                    case 'completed': statusText = 'Concluído'; break;
-                    case 'pending': statusText = 'Pendente'; break;
-                    case 'failed': statusText = 'Falhou'; break;
-                    default: statusText = withdrawal.status;
-                }
-                
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${formattedValue}</td>
-                    <td>${withdrawal.pixKey || withdrawal.method || '-'}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                `;
-                
-                withdrawalsList.appendChild(row);
-            });
+    withdrawals.forEach(withdrawal => {
+        const row = document.createElement("tr");
+
+        const date = new Date(withdrawal.data);
+        const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const formattedValue = 'R$ ' + Number(withdrawal.valor).toFixed(2).replace('.', ',');
+
+        let statusClass = '';
+        if (withdrawal.status === 'completed') statusClass = 'status-completed';
+        else if (withdrawal.status === 'pending') statusClass = 'status-pending';
+        else if (withdrawal.status === 'failed') statusClass = 'status-failed';
+
+        let statusText = '';
+        switch (withdrawal.status) {
+            case 'completed': statusText = 'Concluído'; break;
+            case 'pending': statusText = 'Pendente'; break;
+            case 'failed': statusText = 'Falhou'; break;
+            default: statusText = withdrawal.status;
         }
+
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${formattedValue}</td>
+            <td>${withdrawal.chave_pix || withdrawal.method || '-'}</td>
+            <td class="${statusClass}">${statusText}</td>
+        `;
+
+        withdrawalsList.appendChild(row);
+    });
+}
 
         function goBack() {
             window.location.href = "/dashboard";
