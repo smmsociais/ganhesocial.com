@@ -448,14 +448,8 @@
             alertBox.textContent = message;
             alertBox.className = `alert-message alert-${type}`;
             alertBox.style.display = 'block';
-            
-            // Auto-esconder após 5 segundos (apenas para mensagens de sucesso)
-            if (type === 'success') {
-                setTimeout(() => {
-                    alertBox.style.display = 'none';
-                }, 5000);
+
             }
-        }
 
         async function loadWithdrawData() {
             const token = localStorage.getItem("authToken");
