@@ -1,5 +1,5 @@
 import { User } from './User';
-import dbConnect from './dbConnect'; // Assumindo que você tem um utilitário de conexão com MongoDB
+import dbConnect from './db'; // Assumindo que você tem um utilitário de conexão com MongoDB
 
 export default async function handler(req, res) {
     await dbConnect();
