@@ -18,16 +18,16 @@ export default async function handler(req, res) {
     }
 
     // ✅ Requisição GET - retorna histórico de saques
-    if (req.method === "GET") {
-        const saquesFormatados = user.saques.map(saque => ({
-            amount: saque.valor,
-            pixKey: saque.chave_pix,
-            keyType: saque.tipo_chave,
-            status: saque.status,
-            date: saque.data || new Date()
-        }));
-        return res.status(200).json(saquesFormatados);
-    }
+if (req.method === "GET") {
+    const saquesFormatados = user.saques.map(saque => ({
+        amount: saque.valor,
+        pixKey: saque.chave_pix,
+        keyType: saque.tipo_chave,
+        status: saque.status,
+        date: saque.data ? saque.data.toISOString() : new Date().toISOString()
+    }));
+    return res.status(200).json(saquesFormatados);
+}
 
     // ✅ Requisição POST - novo saque
     if (req.method === "POST") {
