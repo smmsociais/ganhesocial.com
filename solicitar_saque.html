@@ -68,14 +68,6 @@
             background-color: #218838;
         }
 
-        .back-button {
-            background-color: #d9534f;
-        }
-
-        .back-button:hover {
-            background-color: #c9302c;
-        }
-
         .info-text {
             font-size: 14px;
             margin: 10px 0;
@@ -169,20 +161,19 @@
 
         <div class="info-box">
             <div class="info-title">Chave PIX</div>
-            <div class="info-content">Aceitamos apenas chaves PIX do tipo CPF (apenas números, sem pontuação).</div>
+            <div class="info-content">Aceitamos apenas chaves PIX do tipo CPF.</div>
         </div>
 
-        <input type="text" id="amount" class="input-box" placeholder="Valor (R$)" oninput="formatCurrency(this)">
+        <input type="text" id="amount" class="input-box" placeholder="Valor" oninput="formatCurrency(this)">
         
         <div id="pixFields">
-            <input type="text" id="pixKey" class="input-box" placeholder="CPF (somente números)" maxlength="11" oninput="validateCPF(this)">
+            <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX CPF" maxlength="14" oninput="maskCPF(this)">
             <div id="cpfError" class="error-message">Informe um CPF válido com 11 dígitos (somente números)</div>
         </div>
         
         <p class="info-text">Saldo disponível: <span id="availableBalance">R$ 0,00</span></p>
 
         <button class="withdraw-button" onclick="requestWithdraw()">Solicitar Saque</button>
-        <button class="back-button" onclick="goBack()">Voltar</button>
     </div>
 
 <script>
@@ -216,20 +207,24 @@ async function loadWithdrawData() {
     }
 }
 
-function validateCPF(input) {
-    const cpf = input.value.replace(/\D/g, '');
-    const errorElement = document.getElementById('cpfError');
-    
-    // Limita a 11 dígitos
-    input.value = cpf.slice(0, 11);
-    
-    if (cpf.length === 11) {
-        errorElement.style.display = 'none';
-        return true;
-    } else {
-        errorElement.style.display = 'block';
-        return false;
+function maskCPF(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove tudo que não é número
+    value = value.slice(0, 11); // Limita a 11 dígitos
+
+    // Aplica a máscara CPF: XXX.XXX.XXX-XX
+    if (value.length > 9) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    } else if (value.length > 6) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{1,3})$/, "$1.$2.$3");
+    } else if (value.length > 3) {
+        value = value.replace(/^(\d{3})(\d{1,3})$/, "$1.$2");
     }
+
+    input.value = value;
+
+    // Validação simples para mostrar/ocultar erro
+    const isValid = value.length === 14;
+    document.getElementById('cpfError').style.display = isValid ? 'none' : 'block';
 }
 
 function formatCurrency(input) {
@@ -255,9 +250,10 @@ async function requestWithdraw() {
     }
 
     // Validação do CPF
-    if (!/^\d{11}$/.test(pixKey)) {
+    const cpfSemPontuacao = pixKey.replace(/\D/g, '');
+if (!/^\d{11}$/.test(cpfSemPontuacao)) {
         document.getElementById('cpfError').style.display = 'block';
-        alert("Por favor, informe um CPF válido com 11 dígitos (somente números).");
+        alert("Por favor, informe um CPF válido.");
         return;
     }
 
@@ -272,7 +268,7 @@ async function requestWithdraw() {
                 amount: parseFloat(amount),
                 payment_method: "pix",
                 payment_data: { 
-                    pix_key: pixKey,
+                    pix_key: cpfSemPontuacao,
                     pix_key_type: "cpf" // Especifica que é um CPF
                 }
             })
@@ -289,10 +285,6 @@ async function requestWithdraw() {
     } catch (error) {
         alert(error.message);
     }
-}
-
-function goBack() {
-    window.location.href = "/dashboard";
 }
 
 window.onload = loadWithdrawData;
