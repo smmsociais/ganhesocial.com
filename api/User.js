@@ -22,8 +22,8 @@ const ActionHistorySchema = new mongoose.Schema({
     acao_validada: { type: Boolean, required: true },
     valor_confirmacao: { type: Number, required: true },
 
-    quantidade_pontos: { type: Number, required: true }, // ✅ Corrigido
-    tipo_acao: { type: String, required: true },         // ✅ Corrigido
+    quantidade_pontos: { type: Number, required: true },
+    tipo_acao: { type: String, required: true },
 
     data: { type: Date, default: Date.now }
 });
@@ -38,12 +38,22 @@ const UserSchema = new mongoose.Schema({
     saldo: { type: Number, default: 0 },
     contas: [ContaSchema],
     historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
-    ganhosPorDia: [ // ✅ ADICIONADO
+    saques: [WithdrawSchema],
+    ganhosPorDia: [
         {
-            data: { type: String }, // Ex: '2025-04-05'
+            data: { type: String },
             valor: { type: Number, default: 0 }
         }
     ]
+});
+
+// 🔹 Schema para Histórico de Saques
+const WithdrawSchema = new mongoose.Schema({
+    valor: { type: Number, required: true },
+    chave_pix: { type: String, required: true },
+    tipo_chave: { type: String, default: "cpf" },
+    data: { type: Date, default: Date.now },
+    status: { type: String, default: "pendente" } // ou "aprovado", "recusado"
 });
 
 // 🔹 Exportação dos modelos
