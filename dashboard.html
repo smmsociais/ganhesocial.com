@@ -425,7 +425,7 @@
                 const saldo = parseFloat(data.saldo);
                 // Atualiza localStorage se desejar manter o valor
                 localStorage.setItem("saldoDisponivel", saldo);
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toFixed(2)}`;
+                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
