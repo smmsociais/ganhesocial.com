@@ -247,8 +247,8 @@ if (withdrawal.status === 'completed') {
     statusClass = 'status-failed';
     statusText = 'Falhou';
 } else {
-    statusClass = 'status-pending'; // fallback
-    statusText = 'Pendente'; // fallback padrão
+    statusClass = 'status-completed';
+    statusText = 'Efetuado';
 }
 
         row.innerHTML = `
