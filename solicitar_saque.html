@@ -195,7 +195,7 @@ async function loadWithdrawData() {
 
         const saldo = parseFloat(data.saldo);
         localStorage.setItem("saldoDisponivel", saldo);
-        document.getElementById("availableBalance").textContent = `R$ ${saldo.toFixed(2)}`;
+        document.getElementById("availableBalance").textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         // Carrega chave PIX salva se existir e for CPF
         if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
