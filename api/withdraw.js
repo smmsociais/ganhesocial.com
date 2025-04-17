@@ -32,36 +32,35 @@ if (req.method === "GET") {
     // ✅ Requisição POST - novo saque
     if (req.method === "POST") {
         const { amount, payment_method, payment_data } = req.body;
-
-        if (!amount || amount < 5 || payment_method !== "pix" || !payment_data?.pix_key) {
-            return res.status(400).json({ error: "Dados inválidos para saque" });
+    
+        if (!amount || amount < 10 || payment_method !== "pix" || !payment_data?.pix_key) {
+            return res.status(400).json({ error: "Dados inválidos" });
         }
-
-        const chavePix = payment_data.pix_key;
-        const tipoChave = payment_data.pix_key_type || "cpf";
-
-        if (!/^\d{11}$/.test(chavePix)) {
-            return res.status(400).json({ error: "CPF inválido" });
+    
+        // Verifica se o usuário já tem uma chave PIX cadastrada
+        if (!user.pix_key) {
+            // Cadastra a chave PIX pela primeira vez
+            user.pix_key = payment_data.pix_key;
+            user.pix_key_type = payment_data.pix_key_type;
+            await user.save();
+        } else if (user.pix_key !== payment_data.pix_key) {
+            // Impede alteração posterior
+            return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
         }
-
-        if (user.saldo < amount) {
-            return res.status(400).json({ error: "Saldo insuficiente" });
-        }
-
-        user.saldo -= amount;
-
-user.saques.push({
-    valor: amount,
-    chave_pix: chavePix,
-    tipo_chave: tipoChave,
-    status: "completed",
-    data: new Date()
-});
-
+    
+        // Salvar o saque
+        user.saques.push({
+            valor: amount,
+            chave_pix: user.pix_key,
+            tipo_chave: user.pix_key_type,
+            status: "pendente",
+            data: new Date()
+        });
+    
         await user.save();
-
-        return res.status(200).json({ message: "Saque solicitado com sucesso" });
-    }
+    
+        return res.status(200).json({ message: "Saque solicitado com sucesso." });
+    }    
 
     // ❌ Método não permitido
     return res.status(405).json({ error: "Método não permitido" });
