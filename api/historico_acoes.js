@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       valor_confirmacao: action.valor_confirmacao,
       data: action.data,
       rede_social: action.rede_social || "TikTok",
-      tipo: action.tipo_acao || "Seguir",
+      tipo: action.tipo || "Seguir",
       url_dir: action.url_dir || null
     }));
 
