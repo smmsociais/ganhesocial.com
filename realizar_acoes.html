@@ -457,62 +457,67 @@
         }
 
         async function fetchAction() {
-            const id_conta = localStorage.getItem("id_conta");
-            if (!id_conta) return;
+    const id_conta = localStorage.getItem("id_conta");
+    if (!id_conta) return;
 
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+    // Esconde temporariamente o conteúdo da ação
+    document.getElementById("acaoContainer").style.display = "none";
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+
+    try {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.status === "ENCONTRADA") {
+            document.getElementById("statusMessage").textContent = "";
+            document.getElementById("username").textContent = data.nome_usuario;
+
+            const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+            const url = `https://www.tiktok.com/@${tiktokUsername}`;
+            document.getElementById("actionUrl").href = url;
 
             try {
-                const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                    }
-                });
+                const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+                const userInfo = await resUserInfo.json();
 
-                const data = await response.json();
-
-                if (data.status === "ENCONTRADA") {
-                    document.getElementById("statusMessage").textContent = "";
-                    document.getElementById("username").textContent = data.nome_usuario;
-
-                    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-                    const url = `https://www.tiktok.com/@${tiktokUsername}`;
-                    document.getElementById("actionUrl").href = url;
-
-                    try {
-                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                        const userInfo = await resUserInfo.json();
-
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            const profileImg = document.getElementById("profileImage");
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
-                        } else {
-                            document.getElementById("profileImage").style.display = "none";
-                        }
-                    } catch (e) {
-                        console.error("Erro ao carregar avatar:", e);
-                        document.getElementById("profileImage").style.display = "none";
-                    }
-
-                    const pontos = parseFloat(data.quantidade_pontos);
-                    const valorBruto = pontos / 1000;
-                    let valorFinal = (valorBruto > 0.004)
-                        ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
-                        : valorBruto.toFixed(3);
-
-                    document.getElementById("points").textContent = `R$ ${valorFinal}`;
-                    document.getElementById("confirmButton").style.display = "none";
-                    currentActionData = data;
+                if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                    const profileImg = document.getElementById("profileImage");
+                    profileImg.src = userInfo.data.user.avatarLarger;
+                    profileImg.style.display = "block";
                 } else {
-                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
-                    setTimeout(fetchAction, 3000);
+                    document.getElementById("profileImage").style.display = "none";
                 }
-            } catch (error) {
-                document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
+            } catch (e) {
+                console.error("Erro ao carregar avatar:", e);
+                document.getElementById("profileImage").style.display = "none";
             }
+
+            const pontos = parseFloat(data.quantidade_pontos);
+            const valorBruto = pontos / 1000;
+            let valorFinal = (valorBruto > 0.004)
+                ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
+                : valorBruto.toFixed(3);
+
+            document.getElementById("points").textContent = `R$ ${valorFinal}`;
+            document.getElementById("confirmButton").style.display = "none";
+            currentActionData = data;
+
+            // Mostra novamente o conteúdo da ação
+            document.getElementById("acaoContainer").style.display = "block";
+        } else {
+            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
+            setTimeout(fetchAction, 3000);
         }
+    } catch (error) {
+        document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
+    }
+}
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
