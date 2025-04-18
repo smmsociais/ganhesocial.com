@@ -182,7 +182,7 @@
         }
 
         .menu-logout {
-            padding: 15px 25px;
+            padding: 25px 25px;
             cursor: pointer;
             color: #dc3545;
             font-size: 16px;
@@ -373,8 +373,8 @@
         <a class="menu-item" onclick="goToManageAccounts()">Gerenciar Contas</a>
         <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
         <a class="menu-item" onclick="goToWithdraw()">Solicitar Saque</a>
-        <a class="menu-item" onclick="goToWithdrawHistory()">Histórico de Saques</a> 
-        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>          
+        <a class="menu-item" onclick="goToWithdrawHistory()">Histórico de Saques</a>
+        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
@@ -796,13 +796,13 @@
             window.location.href = "solicitar_saque";
         }
 
-         function goToWithdrawHistory() {
+        function goToWithdrawHistory() {
             window.location.href = "historico_saques";
         }
-        
+
         function goToAccount() {
             window.location.href = "profile";
-        }       
+        }
 
         function logout() {
             localStorage.removeItem("authToken");
