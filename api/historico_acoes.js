@@ -9,20 +9,19 @@ export default async function handler(req, res) {
     await connectDB();
 
     try {
-        // Buscar todas as ações e popular o nome do usuário associado
+        // Buscar histórico com o usuário populado apenas para ter acesso à associação, caso queira mais tarde
         const historico = await ActionHistory.find().populate("user", "nome");
 
-        // Enviar apenas os campos necessários
-const formattedData = historico.map(action => ({
-    nome_usuario: action.nome_usuario,
-    nome_cadastrado: action.user?.nome || "Desconhecido",
-    acao_validada: action.acao_validada,
-    valor_confirmacao: action.valor_confirmacao,
-    data: action.data,
-    rede_social: action.rede_social || "TikTok",
-    tipo: action.tipo || "Seguir",
-    url_dir: action.url_dir || null  // 🔹 Adiciona a URL da ação
-}));
+        // Retornar os dados com nome_usuario diretamente salvo no histórico
+        const formattedData = historico.map(action => ({
+            nome_usuario: action.nome_usuario, // ← já é o nome da conta usada (ex: "renisson042")
+            acao_validada: action.acao_validada,
+            valor_confirmacao: action.valor_confirmacao,
+            data: action.data,
+            rede_social: action.rede_social || "TikTok",
+            tipo: action.tipo_acao || "Seguir",  // ← Corrigido para refletir o nome correto do campo
+            url_dir: action.url_dir || null
+        }));
 
         res.status(200).json(formattedData);
     } catch (error) {
