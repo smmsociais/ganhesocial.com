@@ -178,7 +178,7 @@
         }
 
         .menu-footer {
-            margin-top: 270px;
+            margin-top: 40vh;
             padding: 15px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
@@ -387,9 +387,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
-            if (!token) {
-                window.location.href = "dashboard";
-            }
+
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
