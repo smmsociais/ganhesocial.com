@@ -512,11 +512,10 @@
                     // Mostra o conteúdo da ação com animação
                     document.getElementById("actionContent").style.opacity = "1";
                 } else {
-                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
+                    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
                     setTimeout(fetchAction, 3000);
                 }
             } catch (error) {
-                document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
                 document.getElementById("actionContent").style.opacity = "1";
             }
         }
@@ -533,7 +532,7 @@
             document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("profileImage").style.display = "none";
-            document.getElementById("statusMessage").textContent = "Processando confirmação...";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
             let userId;
             try {
@@ -547,7 +546,6 @@
                 userId = userInfoData.data.user.id;
             } catch (error) {
                 console.error("Erro ao obter informações do TikTok:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
                 document.getElementById("actionContent").style.opacity = "1";
                 return;
             }
@@ -575,7 +573,6 @@
 
             } catch (error) {
                 console.error("Erro ao confirmar ação:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
                 document.getElementById("actionContent").style.opacity = "1";
                 return;
             }
@@ -652,7 +649,7 @@
             });
 
             // Busca nova ação sem mostrar o conteúdo da anterior
-            document.getElementById("statusMessage").textContent = "Buscando nova ação...";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
         }
 
@@ -660,7 +657,7 @@
             if (currentActionData) {
                 // Esconde o conteúdo da ação enquanto processa o pulo
                 document.getElementById("actionContent").style.opacity = "0";
-                document.getElementById("statusMessage").textContent = "Pulando ação...";
+                document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
                 try {
                     const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
@@ -689,7 +686,7 @@
                 });
             }
 
-            document.getElementById("statusMessage").textContent = "Ação pulada. Buscando nova ação...";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
         }
 
