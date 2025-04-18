@@ -14,14 +14,13 @@ export default async function handler(req, res) {
 
         // Enviar apenas os campos necessários
 const formattedData = historico.map(action => ({
-    nome_usuario: action.nome_usuario,
-    nome_cadastrado: action.user?.nome || "Desconhecido",
+    nome_usuario: action.user?.nome || "Desconhecido",
     acao_validada: action.acao_validada,
     valor_confirmacao: action.valor_confirmacao,
     data: action.data,
     rede_social: action.rede_social || "TikTok",
     tipo: action.tipo || "Seguir",
-    url_dir: action.url_dir || null  // 🔹 Adiciona a URL da ação
+    url_dir: action.url_dir || null
 }));
 
         res.status(200).json(formattedData);
