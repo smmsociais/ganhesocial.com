@@ -343,11 +343,10 @@
                 <p>Sua conta será permanentemente suspensa da plataforma, caso você faça.</p>
             </div>
 
-            <div id="acaoContainer">
-                <p><strong>Ação:</strong> Seguir</p>
+            <div id="actionContent" class="action-content">
+                <p><strong>Ação:</strong> <span id="actionType"></span></p>
                 <p><strong>Usuário:</strong> <span id="username"></span></p>
                 <p><strong>Valor:</strong> <span id="points"></span></p>
-            </div>            
 
                 <div class="profile-image-container">
                     <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
@@ -458,67 +457,69 @@
         }
 
         async function fetchAction() {
-    const id_conta = localStorage.getItem("id_conta");
-    if (!id_conta) return;
+            const id_conta = localStorage.getItem("id_conta");
+            if (!id_conta) return;
 
-    // Esconde temporariamente o conteúdo da ação
-    document.getElementById("acaoContainer").style.display = "none";
-    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-
-    try {
-        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (data.status === "ENCONTRADA") {
-            document.getElementById("statusMessage").textContent = "";
-            document.getElementById("username").textContent = data.nome_usuario;
-
-            const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-            const url = `https://www.tiktok.com/@${tiktokUsername}`;
-            document.getElementById("actionUrl").href = url;
+            // Esconde o conteúdo da ação enquanto busca nova ação
+            document.getElementById("actionContent").style.opacity = "0";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
             try {
-                const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                const userInfo = await resUserInfo.json();
+                const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
 
-                if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                    const profileImg = document.getElementById("profileImage");
-                    profileImg.src = userInfo.data.user.avatarLarger;
-                    profileImg.style.display = "block";
+                const data = await response.json();
+
+                if (data.status === "ENCONTRADA") {
+                    document.getElementById("statusMessage").textContent = "";
+                    document.getElementById("actionType").textContent = data.tipo_acao;
+                    document.getElementById("username").textContent = data.nome_usuario;
+
+                    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+                    const url = `https://www.tiktok.com/@${tiktokUsername}`;
+                    document.getElementById("actionUrl").href = url;
+
+                    try {
+                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+                        const userInfo = await resUserInfo.json();
+
+                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                            const profileImg = document.getElementById("profileImage");
+                            profileImg.src = userInfo.data.user.avatarLarger;
+                            profileImg.style.display = "block";
+                        } else {
+                            document.getElementById("profileImage").style.display = "none";
+                        }
+                    } catch (e) {
+                        console.error("Erro ao carregar avatar:", e);
+                        document.getElementById("profileImage").style.display = "none";
+                    }
+
+                    const pontos = parseFloat(data.quantidade_pontos);
+                    const valorBruto = pontos / 1000;
+                    let valorFinal = (valorBruto > 0.004)
+                        ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
+                        : valorBruto.toFixed(3);
+
+                    document.getElementById("points").textContent = `R$ ${valorFinal}`;
+                    document.getElementById("confirmButton").style.display = "none";
+                    currentActionData = data;
+                    
+                    // Mostra o conteúdo da ação com animação
+                    document.getElementById("actionContent").style.opacity = "1";
                 } else {
-                    document.getElementById("profileImage").style.display = "none";
+                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
+                    setTimeout(fetchAction, 3000);
                 }
-            } catch (e) {
-                console.error("Erro ao carregar avatar:", e);
-                document.getElementById("profileImage").style.display = "none";
+            } catch (error) {
+                document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
+                document.getElementById("actionContent").style.opacity = "1";
             }
-
-            const pontos = parseFloat(data.quantidade_pontos);
-            const valorBruto = pontos / 1000;
-            let valorFinal = (valorBruto > 0.004)
-                ? (Math.round((valorBruto - 0.001) * 1000) / 1000).toFixed(3)
-                : valorBruto.toFixed(3);
-
-            document.getElementById("points").textContent = `R$ ${valorFinal}`;
-            document.getElementById("confirmButton").style.display = "none";
-            currentActionData = data;
-
-            // Mostra novamente o conteúdo da ação
-            document.getElementById("acaoContainer").style.display = "block";
-        } else {
-            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível. Tentando novamente...";
-            setTimeout(fetchAction, 3000);
         }
-    } catch (error) {
-        document.getElementById("statusMessage").textContent = "Erro ao buscar ação.";
-    }
-}
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
@@ -528,8 +529,11 @@
             const selectedAccount = document.getElementById("accountSelect").value;
             if (!selectedAccount || !currentActionData) return;
 
+            // Esconde o conteúdo da ação enquanto processa a confirmação
+            document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("profileImage").style.display = "none";
+            document.getElementById("statusMessage").textContent = "Processando confirmação...";
 
             let userId;
             try {
@@ -543,6 +547,8 @@
                 userId = userInfoData.data.user.id;
             } catch (error) {
                 console.error("Erro ao obter informações do TikTok:", error);
+                document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
+                document.getElementById("actionContent").style.opacity = "1";
                 return;
             }
 
@@ -569,6 +575,8 @@
 
             } catch (error) {
                 console.error("Erro ao confirmar ação:", error);
+                document.getElementById("statusMessage").textContent = "Erro ao confirmar ação.";
+                document.getElementById("actionContent").style.opacity = "1";
                 return;
             }
 
@@ -592,6 +600,8 @@
                 }
             } catch (error) {
                 console.error("Erro ao buscar lista de seguindo:", error);
+                document.getElementById("statusMessage").textContent = "Erro ao verificar ação.";
+                document.getElementById("actionContent").style.opacity = "1";
                 return;
             }
 
@@ -641,12 +651,17 @@
                 tipo_acao: currentActionData.tipo_acao
             });
 
+            // Busca nova ação sem mostrar o conteúdo da anterior
             document.getElementById("statusMessage").textContent = "Buscando nova ação...";
             fetchAction();
         }
 
         async function skipAction() {
             if (currentActionData) {
+                // Esconde o conteúdo da ação enquanto processa o pulo
+                document.getElementById("actionContent").style.opacity = "0";
+                document.getElementById("statusMessage").textContent = "Pulando ação...";
+
                 try {
                     const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
                     actionHistory.push({
