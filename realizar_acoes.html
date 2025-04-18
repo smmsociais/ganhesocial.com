@@ -319,7 +319,7 @@
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard.html" class="logo-container">
+            <a href="dashboard" class="logo-container">
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
@@ -372,8 +372,9 @@
         <a class="menu-item" onclick="goToAddAccount()">Adicionar Conta</a>
         <a class="menu-item" onclick="goToManageAccounts()">Gerenciar Contas</a>
         <a class="menu-item" onclick="goToHistory()">Histórico de Ações</a>
-        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>
-        <a class="menu-item" onclick="goToSupport()">Suporte</a>
+        <a class="menu-item" onclick="goToWithdraw()">Solicitar Saque</a>
+        <a class="menu-item" onclick="goToWithdrawHistory()">Histórico de Saques</a> 
+        <a class="menu-item" onclick="goToAccount()">Minha Conta</a>          
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
@@ -385,7 +386,7 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                window.location.href = "dashboard.html";
+                window.location.href = "dashboard";
             }
 
             // Controle do menu hamburguer
@@ -501,16 +502,16 @@
                     const pontos = parseFloat(data.quantidade_pontos);
                     const valorBruto = pontos / 1000;
                     let valorDescontado = (valorBruto > 0.004)
-                    ? valorBruto - 0.001
-                    : valorBruto;
+                        ? valorBruto - 0.001
+                        : valorBruto;
 
-                     // Garante que o valor fique entre 0.004 e 0.006
-                     let valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+                    // Garante que o valor fique entre 0.004 e 0.006
+                    let valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
                     document.getElementById("points").textContent = `R$ ${valorFinal}`;
                     document.getElementById("confirmButton").style.display = "none";
                     currentActionData = data;
-                    
+
                     // Mostra o conteúdo da ação com animação
                     document.getElementById("actionContent").style.opacity = "1";
                 } else {
@@ -591,7 +592,7 @@
                         const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
                         return followingUsername === targetUsername;
                     });
-                    
+
                 }
             } catch (error) {
                 console.error("Erro ao buscar lista de seguindo:", error);
@@ -772,7 +773,7 @@
 
         // Funções do menu
         function goToDashboard() {
-            window.location.href = "dashboard.html";
+            window.location.href = "dashboard";
         }
 
         function goToSelectAccount() {
@@ -791,18 +792,22 @@
             window.location.href = "historico_acoes";
         }
 
-        function goToAccount() {
-            window.location.href = "profile";
+        function goToWithdraw() {
+            window.location.href = "solicitar_saque";
         }
 
-        function goToSupport() {
-            window.location.href = "suporte";
+         function goToWithdrawHistory() {
+            window.location.href = "historico_saques";
         }
+        
+        function goToAccount() {
+            window.location.href = "profile";
+        }       
 
         function logout() {
             localStorage.removeItem("authToken");
             window.location.href = "https://ganhesocial.com";
-        }
+        }   
     </script>
 </body>
 
