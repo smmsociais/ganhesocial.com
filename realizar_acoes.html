@@ -344,7 +344,7 @@
             </div>
 
             <div id="actionContent" class="action-content">
-                <p><strong>Ação:</strong> <span id="actionType"></span></p>
+                <p><strong>Ação:</strong> Seguir</p>
                 <p><strong>Usuário:</strong> <span id="username"></span></p>
                 <p><strong>Valor:</strong> <span id="points"></span></p>
 
@@ -568,7 +568,6 @@
                 });
 
                 confirmData = await confirmResponse.json();
-                console.log("Dados de confirmação:", confirmData);
 
                 if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
                     throw new Error("Erro ao confirmar ação.");
@@ -594,9 +593,6 @@
                         return followingUsername === targetUsername;
                     });
 
-                    console.log("Usuário esperado:", targetUsername);
-                    console.log("Seguindo:", followings.map(f => f.unique_id));
-                    console.log("Encontrado?", accountFound);
                 }
             } catch (error) {
                 console.error("Erro ao buscar lista de seguindo:", error);
