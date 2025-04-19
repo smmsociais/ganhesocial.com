@@ -18,7 +18,14 @@ export default async function handler(req, res) {
         const data = response.data;
 
         if (data.status === "ENCONTRADA") {
-            res.json(data);
+            // Aqui você verifica se a API externa possui o campo 'unique_id'
+            const unique_id = data.unique_id;  // Certifique-se de que a API externa fornece esse campo
+
+            // Repasse o campo 'unique_id' para o frontend
+            res.json({
+                ...data,
+                unique_id // Inclui o unique_id na resposta para o frontend
+            });
         } else {
             res.status(404).json({ error: "Nenhuma ação encontrada." });
         }
