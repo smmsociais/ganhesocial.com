@@ -29,23 +29,26 @@ export default async function handler(req, res) {
     quantidade_pontos
   } = req.body;
 
-if (!id_conta || !id_pedido || !nome_usuario) { // Remover unique_id_verificado da verificação
-    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+if (!id_conta || !id_pedido || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+  return res.status(400).json({ error: "Campos obrigatórios ausentes." });
 }
 
   try {
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      id_conta,
-      id_pedido,
-      nome_usuario,
-      url_dir,
-      tipo: tipo_acao || "Seguir",
-      rede_social: "TikTok",
-      valor_confirmacao: quantidade_pontos,
-      acao_validada: null, // pendente
-      data: new Date()
-    });
+const novaAcao = new ActionHistory({
+  user: usuario._id,
+  token: usuario.token,
+  nome_usuario,
+  id_pedido,
+  id_conta,
+  url_dir,
+  tipo_acao,
+  quantidade_pontos,
+  tipo: tipo_acao || "Seguir",
+  rede_social: "TikTok",
+  valor_confirmacao: quantidade_pontos,
+  acao_validada: null,
+  data: new Date()
+});
 
     await novaAcao.save();
 
