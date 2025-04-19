@@ -832,6 +832,10 @@
             }
         }
 
+
+
+        async function registrarAcaoPendente(acao) {
+    try {
         console.log("Enviando para registrar_acao_pendente:", {
     nome_usuario: selectedAccount,
     id_pedido: currentActionData.id_pedido,
@@ -842,9 +846,6 @@
     valor_confirmacao: parseFloat(confirmData.valor),
     status: "pendente"
 });
-
-        async function registrarAcaoPendente(acao) {
-    try {
         await fetch("/api/registrar_acao_pendente", {
             method: "POST",
             headers: {
