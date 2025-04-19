@@ -518,7 +518,7 @@
                     document.getElementById("actionUrl").href = url;
 
                     try {
-                        const resUserInfo = await rateLimitedFetch(() => fetch(`/api/user-info?unique_id=${tiktokUsername}`));
+                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
                         const userInfo = await resUserInfo.json();
 
                         if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
