@@ -637,7 +637,6 @@
     tipo_acao: currentActionData.tipo_acao,
     quantidade_pontos: Number(currentActionData.quantidade_pontos),
     valor_confirmacao: parseFloat(confirmData.valor),
-    unique_id_verificado: currentActionData.unique_id
 });
 
             let accountFound = false;
@@ -701,7 +700,6 @@
                 id_pedido: currentActionData.id_pedido,
                 id_conta: localStorage.getItem("id_conta"),
                 url_dir: currentActionData.url_dir,
-                unique_id_verificado: userId,
                 acao_validada: accountFound,
                 valor_confirmacao: parseFloat(confirmData.valor),
                 quantidade_pontos: currentActionData.quantidade_pontos,
