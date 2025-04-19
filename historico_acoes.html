@@ -561,8 +561,13 @@ document.addEventListener("DOMContentLoaded", function() {
         historyList.innerHTML = '';
         pageActions.forEach(action => {
             const row = document.createElement("tr");
-            const statusClass = action.acao_validada ? "status-valid" : "status-invalid";
-            const statusText = action.acao_validada ? "Válida" : "Inválida";
+            let statusClass;
+if (action.status === "Válida") statusClass = "status-valid";
+else if (action.status === "Inválida") statusClass = "status-invalid";
+else statusClass = "status-pendente";
+
+const statusText = action.status;
+
             const actionLink = !action.acao_validada && action.url_dir ? 
                 `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
             
