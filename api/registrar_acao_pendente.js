@@ -29,9 +29,9 @@ export default async function handler(req, res) {
     quantidade_pontos
   } = req.body;
 
-  if (!id_conta || !id_pedido || !nome_usuario || !unique_id_verificado) {
+if (!id_conta || !id_pedido || !nome_usuario) { // Remover unique_id_verificado da verificação
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
-  }
+}
 
   try {
     const novaAcao = new ActionHistory({
