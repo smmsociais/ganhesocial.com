@@ -16,7 +16,6 @@ const ActionHistorySchema = new mongoose.Schema({
   id_pedido: { type: String, required: true },
   id_conta: { type: String, required: true },
   url_dir: { type: String, required: true },
-  unique_id_verificado: { type: String, required: true },
   acao_validada: { type: Boolean, default: null }, // valor inicial pode ser null (pendente)
   valor_confirmacao: { type: Number, default: 0 },
   quantidade_pontos: { type: Number, required: true },
