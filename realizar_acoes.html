@@ -475,6 +475,22 @@
             loadAccounts();
         });
 
+        async function verificarAcoesPendentes() {
+    try {
+        const response = await fetch("/api/verificar_pendentes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+            }
+        });
+
+        const data = await response.json();
+        console.log("Verificação de pendentes:", data);
+    } catch (error) {
+        console.error("Erro ao verificar ações pendentes:", error);
+    }
+}
         let currentActionData = null;
 
         async function bindAccount() {
@@ -736,7 +752,6 @@
                     id_pedido: currentActionData.id_pedido,
                     id_conta: localStorage.getItem("id_conta"),
                     url_dir: currentActionData.url_dir,
-                    unique_id_verificado: null,
                     acao_validada: false,
                     valor_confirmacao: 0,
                     quantidade_pontos: currentActionData.quantidade_pontos,
@@ -791,7 +806,6 @@
             id_pedido,
             id_conta,
             url_dir,
-            unique_id_verificado,
             acao_validada,
             valor_confirmacao,
             quantidade_pontos,
@@ -816,7 +830,6 @@
                         id_pedido,
                         id_conta,
                         url_dir,
-                        unique_id_verificado,
                         acao_validada,
                         valor_confirmacao,
                         quantidade_pontos: Number(quantidade_pontos),
