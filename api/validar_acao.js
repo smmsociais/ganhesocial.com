@@ -13,7 +13,6 @@ export default async function handler(req, res) {
         id_pedido,
         id_conta,
         url_dir,
-        unique_id_verificado,
         acao_validada,
         valor_confirmacao,
         quantidade_pontos,
@@ -50,25 +49,25 @@ export default async function handler(req, res) {
             valorFinal = Math.round((valorFinal - 0.001) * 1000) / 1000;
         }
 
-        // Cria o registro no histórico
-        const novaAcao = new ActionHistory({
+        // Buscar ação pendente existente
+        let acaoExistente = await ActionHistory.findOne({
             user: usuario._id,
-            token,
-            nome_usuario,
             id_pedido,
             id_conta,
-            url_dir,
-            unique_id_verificado,
-            acao_validada,
-            valor_confirmacao: valorFinal,
-            quantidade_pontos,
-            tipo_acao
+            acao_validada: null
         });
 
-        await novaAcao.save();
+        if (!acaoExistente) {
+            return res.status(404).json({ message: "Ação pendente não encontrada para validação." });
+        }
 
-        // Adiciona no histórico do usuário
-        usuario.historico_acoes.push(novaAcao._id);
+        // Atualiza os campos da ação existente
+        acaoExistente.acao_validada = acao_validada;
+        acaoExistente.valor_confirmacao = valorFinal;
+        acaoExistente.quantidade_pontos = quantidade_pontos;
+        acaoExistente.tipo = tipo_acao || "Seguir";
+
+        await acaoExistente.save();
 
         // Atualiza saldo se ação foi validada
         if (acao_validada) {
@@ -77,10 +76,10 @@ export default async function handler(req, res) {
 
         await usuario.save();
 
-        res.status(200).json({ message: "Ação registrada com sucesso", acao: novaAcao });
+        res.status(200).json({ message: "Ação validada com sucesso", acao: acaoExistente });
 
     } catch (erro) {
-        console.error("Erro ao registrar ação:", erro);
+        console.error("Erro ao validar ação:", erro);
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 }
