@@ -56,8 +56,21 @@ const UserSchema = new mongoose.Schema({
   ganhosPorDia: [GanhosPorDiaSchema]
 });
 
+// 🔹 Schema para Verificação Global
+const VerificacaoGlobalSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: "verificacao_global"
+  },
+  ultimaVerificacao: {
+    type: Date,
+    required: true
+  }
+});
+
 // 🔹 Exportação dos modelos
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
+const VerificacaoGlobal = mongoose.models.VerificacaoGlobal || mongoose.model("VerificacaoGlobal", VerificacaoGlobalSchema);
 
-export { User, ActionHistory };
+export { User, ActionHistory, VerificacaoGlobal };
