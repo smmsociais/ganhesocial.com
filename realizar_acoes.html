@@ -629,6 +629,17 @@
                 return;
             }
 
+            await registrarAcaoPendente({
+    nome_usuario: selectedAccount,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    url_dir: currentActionData.url_dir,
+    tipo_acao: currentActionData.tipo_acao,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    valor_confirmacao: parseFloat(confirmData.valor),
+    status: "pendente"
+});
+
             let accountFound = false;
             try {
                 const responseFollowing = await rateLimitedFetch(() => fetch(`/api/user-following?userId=${userId}`));
@@ -651,79 +662,90 @@
                 return;
             }
 
-            const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-const timestamp = new Date().toLocaleString();
-const newAction = {
-    tipo: currentActionData.tipo_acao,
-    usuario: currentActionData.nome_usuario,
-    pontos: currentActionData.quantidade_pontos,
-    status: "pendente",
-    data: timestamp
-};
-actionHistory.push(newAction);
-localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+            try {
+                const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+                const newAction = {
+                    tipo: currentActionData.tipo_acao,
+                    usuario: currentActionData.nome_usuario,
+                    pontos: currentActionData.quantidade_pontos,
+                    status: accountFound ? "confirmada" : "falhou",
+                    data: new Date().toLocaleString()
+                };
+                actionHistory.push(newAction);
+                localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
 
-// Atualizar depois de verificar se a conta realmente segue
-(async () => {
-    let accountFound = false;
-    try {
-        const responseFollowing = await rateLimitedFetch(() => fetch(`/api/user-following?userId=${userId}`));
-        const userFollowingData = await responseFollowing.json();
+                if (accountFound) {
+                    const valor = parseFloat(confirmData.valor);
+                    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
+                    const novoSaldo = (saldoAtual + valor).toFixed(3);
+                    localStorage.setItem("saldoDisponivel", novoSaldo);
 
-        if (userFollowingData.code === 0 && userFollowingData.data) {
-            const followings = userFollowingData.data.followings;
-            const targetUsername = currentActionData.nome_usuario?.replace(/^@/, '').toLowerCase();
+                    const dataHoje = new Date().toISOString().split("T")[0];
+                    const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
 
-            accountFound = followings.some(f => {
-                const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
-                return followingUsername === targetUsername;
+                    if (ganhoHojeAnterior.data !== dataHoje) {
+                        ganhoHojeAnterior.data = dataHoje;
+                        ganhoHojeAnterior.valor = valor;
+                    } else {
+                        ganhoHojeAnterior.valor += valor;
+                    }
+
+                    localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
+                }
+            } catch (error) {
+                console.error("Erro ao atualizar histórico e saldo:", error);
+            }
+
+            await salvarAcaoNoBanco({
+                nome_usuario: selectedAccount,
+                id_pedido: currentActionData.id_pedido,
+                id_conta: localStorage.getItem("id_conta"),
+                url_dir: currentActionData.url_dir,
+                unique_id_verificado: userId,
+                acao_validada: accountFound,
+                valor_confirmacao: parseFloat(confirmData.valor),
+                quantidade_pontos: currentActionData.quantidade_pontos,
+                tipo_acao: currentActionData.tipo_acao
             });
-        }
-    } catch (error) {
-        console.error("Erro ao buscar lista de seguindo:", error);
-    }
 
-    // Atualiza o status no histórico local
-    const updatedHistory = (JSON.parse(localStorage.getItem("actionHistory")) || []).map(action => {
-        if (action.data === timestamp && action.usuario === currentActionData.nome_usuario) {
-            action.status = accountFound ? "confirmada" : "falhou";
-        }
-        return action;
-    });
-    localStorage.setItem("actionHistory", JSON.stringify(updatedHistory));
-
-    if (accountFound) {
-        const valor = parseFloat(confirmData.valor);
-        const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-        const novoSaldo = (saldoAtual + valor).toFixed(3);
-        localStorage.setItem("saldoDisponivel", novoSaldo);
-
-        const dataHoje = new Date().toISOString().split("T")[0];
-        const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
-
-        if (ganhoHojeAnterior.data !== dataHoje) {
-            ganhoHojeAnterior.data = dataHoje;
-            ganhoHojeAnterior.valor = valor;
-        } else {
-            ganhoHojeAnterior.valor += valor;
+            // Busca nova ação sem mostrar o conteúdo da anterior
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+            fetchAction();
         }
 
-        localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
-    }
+        async function skipAction() {
+            if (currentActionData) {
+                // Esconde o conteúdo da ação enquanto processa o pulo
+                document.getElementById("actionContent").style.opacity = "0";
+                document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
-    await salvarAcaoNoBanco({
-        nome_usuario: selectedAccount,
-        id_pedido: currentActionData.id_pedido,
-        id_conta: localStorage.getItem("id_conta"),
-        url_dir: currentActionData.url_dir,
-        unique_id_verificado: userId,
-        acao_validada: accountFound,
-        valor_confirmacao: parseFloat(confirmData.valor),
-        quantidade_pontos: currentActionData.quantidade_pontos,
-        tipo_acao: currentActionData.tipo_acao
-    });
+                try {
+                    const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+                    actionHistory.push({
+                        tipo: currentActionData.tipo_acao,
+                        usuario: currentActionData.nome_usuario,
+                        pontos: currentActionData.quantidade_pontos,
+                        status: "pulada",
+                        data: new Date().toLocaleString()
+                    });
+                    localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+                } catch (error) {
+                    console.error("Erro ao salvar ação pulada:", error);
+                }
 
-})();
+                await salvarAcaoNoBanco({
+                    nome_usuario: currentActionData.nome_usuario,
+                    id_pedido: currentActionData.id_pedido,
+                    id_conta: localStorage.getItem("id_conta"),
+                    url_dir: currentActionData.url_dir,
+                    unique_id_verificado: null,
+                    acao_validada: false,
+                    valor_confirmacao: 0,
+                    quantidade_pontos: currentActionData.quantidade_pontos,
+                    tipo_acao: currentActionData.tipo_acao
+                });
+            }
+
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
         }
@@ -809,6 +831,21 @@ localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
                 console.error("Erro ao registrar ação:", error);
             }
         }
+
+        async function registrarAcaoPendente(acao) {
+    try {
+        await fetch("/api/registrar_acao_pendente", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify(acao)
+        });
+    } catch (error) {
+        console.error("Erro ao registrar ação pendente:", error);
+    }
+}
 
         // Funções do menu
         function goToDashboard() {
