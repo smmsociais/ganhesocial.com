@@ -635,9 +635,9 @@
     id_conta: localStorage.getItem("id_conta"),
     url_dir: currentActionData.url_dir,
     tipo_acao: currentActionData.tipo_acao,
-    quantidade_pontos: currentActionData.quantidade_pontos,
+    quantidade_pontos: Number(currentActionData.quantidade_pontos),
     valor_confirmacao: parseFloat(confirmData.valor),
-    status: "pendente"
+    unique_id_verificado: currentActionData.unique_id
 });
 
             let accountFound = false;
