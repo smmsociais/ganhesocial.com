@@ -832,6 +832,17 @@
             }
         }
 
+        console.log("Enviando para registrar_acao_pendente:", {
+    nome_usuario: selectedAccount,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    url_dir: currentActionData.url_dir,
+    tipo_acao: currentActionData.tipo_acao,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    valor_confirmacao: parseFloat(confirmData.valor),
+    status: "pendente"
+});
+
         async function registrarAcaoPendente(acao) {
     try {
         await fetch("/api/registrar_acao_pendente", {
