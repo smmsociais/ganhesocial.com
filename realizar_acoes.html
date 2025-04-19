@@ -400,38 +400,6 @@
     </div>
 
     <script>
-
-        // Fila de requisições com limite de 5 por segundo (300 por minuto)
-        const requestQueue = [];
-        let isProcessingQueue = false;
-
-        async function processQueue() {
-            if (isProcessingQueue) return;
-            isProcessingQueue = true;
-
-            while (requestQueue.length > 0) {
-                const { fn, resolve, reject } = requestQueue.shift();
-                console.log("[Fila] Executando requisição. Requisições restantes:", requestQueue.length);
-                try {
-                    const result = await fn();
-                    resolve(result);
-                } catch (err) {
-                    reject(err);
-                }
-                await new Promise(r => setTimeout(r, 200));
-            }
-
-            console.log("[Fila] Todas as requisições foram processadas.");
-            isProcessingQueue = false;
-        }
-
-        function rateLimitedFetch(fn) {
-            console.log("[Fila] Nova requisição adicionada. Tamanho da fila:", requestQueue.length + 1);
-            return new Promise((resolve, reject) => {
-                requestQueue.push({ fn, resolve, reject });
-                processQueue();
-            });
-        }
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
