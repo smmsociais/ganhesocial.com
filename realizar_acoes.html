@@ -573,7 +573,7 @@
 
             let userId;
             try {
-                const response = await rateLimitedFetch(() => fetch(`/api/user-info?unique_id=${selectedAccount}`));
+                const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
                 const userInfoData = await response.json();
 
                 if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
@@ -625,7 +625,7 @@
 
             let accountFound = false;
             try {
-                const responseFollowing = await rateLimitedFetch(() => fetch(`/api/user-following?userId=${userId}`));
+                const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
                 const userFollowingData = await responseFollowing.json();
 
                 if (userFollowingData.code === 0 && userFollowingData.data) {
