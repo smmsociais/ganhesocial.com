@@ -40,7 +40,6 @@ if (!id_conta || !id_pedido || !nome_usuario) { // Remover unique_id_verificado 
       id_pedido,
       nome_usuario,
       url_dir,
-      unique_id_verificado,
       tipo: tipo_acao || "Seguir",
       rede_social: "TikTok",
       valor_confirmacao: quantidade_pontos,
