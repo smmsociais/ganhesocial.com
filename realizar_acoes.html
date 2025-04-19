@@ -834,6 +834,14 @@
 
         async function registrarAcaoPendente(acao) {
     try {
+        // Validação básica
+        if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
+            console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
+            return;
+        }
+
+        console.log("📤 Enviando ação pendente:", acao);
+
         const response = await fetch("/api/registrar_acao_pendente", {
             method: "POST",
             headers: {
@@ -844,13 +852,15 @@
         });
 
         const data = await response.json();
+        console.log("📥 Resposta da API registrar_acao_pendente:", data);
 
         if (data.status !== "success") {
+            console.warn("⚠️ Resposta com status diferente de 'success'", data);
             throw new Error("Falha ao registrar ação pendente.");
         }
 
     } catch (error) {
-        console.error("Erro ao registrar ação pendente:", error);
+        console.error("❌ Erro ao registrar ação pendente:", error);
     }
 }
 
