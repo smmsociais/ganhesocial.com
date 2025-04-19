@@ -85,7 +85,7 @@ export default async function handler(req, res) {
         await controleGlobal.save();
 
         // CHAMADAS À API PARA VERIFICAÇÃO
-        const followingResponse = await axios.get(`http://localhost:3000/api/user-following?userId=${user_id_tiktok}`);
+        const followingResponse = await axios.get(`/api/user-following?userId=${user_id_tiktok}`);
         const listaSeguindo = followingResponse.data?.user_following || [];
 
         const seguiu = listaSeguindo.some(user => user?.unique_id?.toLowerCase() === unique_id.toLowerCase());
