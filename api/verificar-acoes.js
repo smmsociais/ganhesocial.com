@@ -64,30 +64,42 @@ export default async function handler(req, res) {
         const valid = ActionSchema.parse(acao);
         console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
 
-        // 1. Verificamos se o usuário está seguindo o perfil-alvo no TikTok
-        let accountFound = false;
-        try {
-const idConta = String(valid.id_conta).trim();
-if (!/^\d+$/.test(idConta)) {
-  throw new Error(`id_conta inválido: ${idConta}`);
+// ...dentro do for, ao invés de usar unique_id ou id_conta:
+let accountFound = false;
+try {
+  // idConta é o string(valid.id_conta)
+  const idConta = String(valid.id_conta).trim();
+  if (!/^\d+$/.test(idConta)) {
+    throw new Error(`id_conta inválido: ${idConta}`);
+  }
+
+  // CHAMADA CORRETA à sua rota de user-following
+  const followingRes = await axios.get(
+    `${API_URL}/user-following?userId=${idConta}`,
+    {
+      headers: {
+        // usa o token que você salvou junto com a action no banco
+        Authorization: `Bearer ${valid.token}`
+      }
+    }
+  );
+
+  const followingData = followingRes.data;
+  if (followingData.code === 0 && Array.isArray(followingData.data?.followings)) {
+    const followings = followingData.data.followings;
+    // extrai o username alvo da URL (ex: /@foo → foo)
+    let targetUsername = valid.url_dir.toLowerCase();
+    const match = targetUsername.match(/@([\w_.]+)/);
+    targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
+
+    accountFound = followings.some(f =>
+      f.unique_id?.toLowerCase() === targetUsername
+    );
+  }
+} catch (e) {
+  console.error("   ✗ Falha em /user-following:", e.message);
+  continue;
 }
-const followingRes = await axios.get(
-  `${API_URL}/user-following?id_conta=${idConta}`
-);
-          const followingData = followingRes.data;
-          if (followingData.code === 0 && followingData.data?.followings?.length) {
-            const followings = followingData.data.followings;
-            let targetUsername = valid.url_dir.toLowerCase();
-            const match = targetUsername.match(/@([\w_.]+)/);
-            targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
-            accountFound = followings.some(f => 
-              f.unique_id?.toLowerCase() === targetUsername
-            );
-          }
-        } catch (e) {
-          console.error("   ✗ Falha em /user-following:", e.message);
-          continue;
-        }
 
         // 2. Atualiza acao_validada
         await colecao.updateOne(
