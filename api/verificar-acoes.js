@@ -67,9 +67,9 @@ export default async function handler(req, res) {
         // 1. Verificamos se o usuário está seguindo o perfil-alvo no TikTok
         let accountFound = false;
         try {
-          const followingRes = await axios.get(
-            `${API_URL}/user-following?unique_id=${valid.nome_usuario.replace(/^@/, '')}`
-          );
+const followingRes = await axios.get(
+  `${API_URL}/user-following?unique_id=${valid.id_conta}`
+);
           const followingData = followingRes.data;
           if (followingData.code === 0 && followingData.data?.followings?.length) {
             const followings = followingData.data.followings;
