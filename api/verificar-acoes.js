@@ -1,9 +1,9 @@
-import jwt from 'jsonwebtoken';
-import { MongoClient, ObjectId } from 'mongodb';
-import axios from 'axios';
+import pkg from "mongodb";
+import { z } from "zod";
 
-const uri = process.env.MONGODB_URI;
-const dbName = 'ganhesocial';
+const { MongoClient, ObjectId } = pkg;
+const MONGODB_URI = process.env.MONGODB_URI;
+const API_URL = "https://ganhesocial.com/api";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
