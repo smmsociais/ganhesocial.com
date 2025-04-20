@@ -46,10 +46,10 @@ export default async function handler(req, res) {
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("users");       // ajuste para a coleção correta
 
-const acoes = await colecao.find({ acao_validada: null })
-  .sort({ data: 1 })
-  .limit(120)
-  .toArray();
+    const acoes = await colecao.find({ acao_validada: null })
+      .sort({ data: 1 })
+      .limit(120)
+      .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
     if (acoes.length === 0) {
@@ -64,27 +64,11 @@ const acoes = await colecao.find({ acao_validada: null })
         const valid = ActionSchema.parse(acao);
         console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
 
-        // 1. Obtemos o ID do usuário no TikTok
-        let tiktokUserId;
-        try {
-          const userInfoRes = await axios.get(
-            `${API_URL}/user-info?unique_id=${valid.nome_usuario.replace(/^@/, '')}`
-          );
-          const userInfo = userInfoRes.data;
-          if (!userInfo || userInfo.code !== 0 || !userInfo.data?.user?.id) {
-            throw new Error("TikTok user info inválido");
-          }
-          tiktokUserId = userInfo.data.user.id;
-        } catch (e) {
-          console.error("   ✗ Falha em /user-info:", e.message);
-          continue;
-        }
-
-        // 2. Verificamos se ele está seguindo o perfil-alvo
+        // 1. Verificamos se o usuário está seguindo o perfil-alvo
         let accountFound = false;
         try {
           const followingRes = await axios.get(
-            `${API_URL}/user-following?userId=${tiktokUserId}`
+            `${API_URL}/user-following?userId=${valid.nome_usuario.replace(/^@/, '')}`
           );
           const followingData = followingRes.data;
           if (followingData.code === 0 && followingData.data?.followings?.length) {
@@ -101,13 +85,13 @@ const acoes = await colecao.find({ acao_validada: null })
           continue;
         }
 
-        // 3. Atualiza acao_validada
+        // 2. Atualiza acao_validada
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
           { $set: { acao_validada: accountFound, verificada_em: new Date() } }
         );
 
-        // 4. Se validada, soma ao saldo do usuário
+        // 3. Se validada, soma ao saldo do usuário
         if (accountFound) {
           const valor = parseFloat(valid.valor_confirmacao);
           if (!isNaN(valor) && valor > 0) {
