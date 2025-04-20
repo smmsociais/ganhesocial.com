@@ -1,6 +1,5 @@
 import connectDB from "./db.js";
 import { User, ActionHistory, VerificacaoGlobal } from "./User.js";
-import axios from "axios";
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -13,12 +12,10 @@ export default async function handler(req, res) {
         token,
         id_pedido,
         id_conta,
-        url_dir,
         valor_confirmacao,
         quantidade_pontos,
         tipo_acao,
         unique_id,     // ID do perfil que o usuário deve seguir
-        user_id_tiktok // ID do usuário autenticado (da conta vinculada)
     } = req.body;
 
     try {
@@ -77,38 +74,29 @@ export default async function handler(req, res) {
             acaoExistente.tipo = tipo_acao || "Seguir";
             await acaoExistente.save();
 
-            return res.status(200).json({ status: "pendente", message: "A verificação está em intervalo global. A ação será validada em breve." });
+            return res.status(200).json({
+                status: "pendente",
+                message: "A verificação está em intervalo global. A ação foi registrada e será validada em breve."
+            });
         }
 
         // Atualiza o tempo de verificação global
         controleGlobal.ultimaVerificacao = agora;
         await controleGlobal.save();
 
-        // CHAMADAS À API PARA VERIFICAÇÃO
-const protocol = req.headers["x-forwarded-proto"] || "http";
-const host = req.headers.host;
-const baseUrl = `${protocol}://${host}`;
-
-const followingResponse = await axios.get(`${baseUrl}/api/user-following?userId=${user_id_tiktok}`);
-
-        const listaSeguindo = followingResponse.data?.user_following || [];
-
-        const seguiu = listaSeguindo.some(user => user?.unique_id?.toLowerCase() === unique_id.toLowerCase());
-
-        // Atualiza ação e saldo se confirmado
-acaoExistente.acao_validada = null; // ainda não validado
-acaoExistente.status = null; // ou "pendente", se quiser usar esse valor explicitamente
+        // Registra a ação como pendente para posterior verificação
+        acaoExistente.acao_validada = null;
+        acaoExistente.status = "pendente";
         acaoExistente.valor_confirmacao = valorFinal;
         acaoExistente.quantidade_pontos = quantidade_pontos;
         acaoExistente.tipo = tipo_acao || "Seguir";
-
         await acaoExistente.save();
 
-return res.status(200).json({
-    status: "pendente",
-    message: "A ação foi registrada e será validada em breve.",
-    acao: acaoExistente
-});
+        return res.status(200).json({
+            status: "pendente",
+            message: "A ação foi registrada e será validada em breve.",
+            acao: acaoExistente
+        });
 
     } catch (erro) {
         console.error("Erro ao validar ação:", erro);
