@@ -10,8 +10,7 @@ export default async function handler(req, res) {
   try {
     if (!db) {
       await client.connect();
-      db = client.db();
-
+      db = client.db("ganhesocial");
     }
 
     const colecao = db.collection("acoes");
