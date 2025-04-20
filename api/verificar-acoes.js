@@ -27,46 +27,46 @@ export default async function handler(req, res) {
     const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 }).limit(10).toArray();
 
-    for (const acao of acoes) {
-      const { user_id, perfil_unique_id, _id } = acao;
+for (const acao of acoes) {
+  const { user, nome_usuario, _id } = acao;
+  const user_id = user.toString();
+  const perfil_unique_id = nome_usuario;
 
-      if (verificacoes[user_id] && agora - verificacoes[user_id] < 60000) continue;
+  if (verificacoes[user_id] && agora - verificacoes[user_id] < 60000) continue;
 
-      try {
-        const [infoRes, followingRes] = await Promise.all([
-          fetch(`${API_URL}/user-info`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id })
-          }),
-          fetch(`${API_URL}/user-following`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id })
-          }),
-        ]);
+  try {
+    const [infoRes, followingRes] = await Promise.all([
+      fetch(`${API_URL}/user-info`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id })
+      }),
+      fetch(`${API_URL}/user-following`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id })
+      }),
+    ]);
 
-        const info = await infoRes.json();
-        const following = await followingRes.json();
+    const info = await infoRes.json();
+    const following = await followingRes.json();
 
-        const perfis = following?.following || [];
-        const seguiu = perfis.some(p => p.unique_id === perfil_unique_id);
+    const perfis = following?.following || [];
+    const seguiu = perfis.some(p => p.unique_id === perfil_unique_id);
 
-        const novo_status = seguiu ? "valida" : "invalida";
-
-await colecao.updateOne(
-  { _id: new ObjectId(_id) },
-  {
-    $set: {
-      acao_validada: seguiu, // true ou false
-      data_verificacao: new Date()
-    }
-  }
-);
-        verificacoes[user_id] = agora;
-      } catch (e) {
-        console.error(`Erro ao verificar ação ${_id}:`, e);
+    await colecao.updateOne(
+      { _id: new ObjectId(_id) },
+      {
+        $set: {
+          acao_validada: seguiu,
+          data_verificacao: new Date()
+        }
       }
-    }
+    );
 
+    verificacoes[user_id] = agora;
+  } catch (e) {
+    console.error(`Erro ao verificar ação ${_id}:`, e);
+  }
+}
     res.status(200).json({ status: "ok", processadas: acoes.length });
 
   } catch (err) {
