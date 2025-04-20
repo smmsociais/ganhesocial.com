@@ -444,21 +444,21 @@
         });
 
         async function verificarAcoesPendentes() {
-    try {
-        const response = await fetch("/api/verificar_pendentes", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-            }
-        });
+            try {
+                const response = await fetch("/api/verificar_pendentes", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+                    }
+                });
 
-        const data = await response.json();
-        console.log("Verificação de pendentes:", data);
-    } catch (error) {
-        console.error("Erro ao verificar ações pendentes:", error);
-    }
-}
+                const data = await response.json();
+                console.log("Verificação de pendentes:", data);
+            } catch (error) {
+                console.error("Erro ao verificar ações pendentes:", error);
+            }
+        }
         let currentActionData = null;
 
         async function bindAccount() {
@@ -571,22 +571,6 @@
             document.getElementById("profileImage").style.display = "none";
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
-            let userId;
-            try {
-                const response = await fetch(`/api/user-info?unique_id=${selectedAccount}`);
-                const userInfoData = await response.json();
-
-                if (!userInfoData || userInfoData.code !== 0 || !userInfoData.data || !userInfoData.data.user) {
-                    throw new Error("Erro ao obter informações do usuário.");
-                }
-
-                userId = userInfoData.data.user.id;
-            } catch (error) {
-                console.error("Erro ao obter informações do TikTok:", error);
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
-
             let confirmData;
             try {
                 const confirmResponse = await fetch("/api/confirmar_acao", {
@@ -614,69 +598,16 @@
             }
 
             await registrarAcaoPendente({
-    nome_usuario: selectedAccount,
-    id_pedido: currentActionData.id_pedido,
-    id_conta: localStorage.getItem("id_conta"),
-    url_dir: currentActionData.url_dir,
-    tipo_acao: currentActionData.tipo_acao,
-    quantidade_pontos: Number(currentActionData.quantidade_pontos),
-    valor_confirmacao: parseFloat(confirmData.valor),
-});
+                nome_usuario: selectedAccount,
+                id_pedido: currentActionData.id_pedido,
+                id_conta: localStorage.getItem("id_conta"),
+                url_dir: currentActionData.url_dir,
+                tipo_acao: currentActionData.tipo_acao,
+                quantidade_pontos: Number(currentActionData.quantidade_pontos),
+                valor_confirmacao: parseFloat(confirmData.valor),
+            });
 
-            let accountFound = false;
-            try {
-                const responseFollowing = await fetch(`/api/user-following?userId=${userId}`);
-                const userFollowingData = await responseFollowing.json();
 
-                if (userFollowingData.code === 0 && userFollowingData.data) {
-                    const followings = userFollowingData.data.followings;
-                    const targetUsername = currentActionData.nome_usuario?.replace(/^@/, '').toLowerCase();
-
-                    accountFound = followings.some(f => {
-                        const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
-                        return followingUsername === targetUsername;
-                    });
-
-                }
-            } catch (error) {
-                console.error("Erro ao buscar lista de seguindo:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao verificar ação.";
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
-
-            try {
-                const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-                const newAction = {
-                    tipo: currentActionData.tipo_acao,
-                    usuario: currentActionData.nome_usuario,
-                    pontos: currentActionData.quantidade_pontos,
-                    status: accountFound ? "confirmada" : "falhou",
-                    data: new Date().toLocaleString()
-                };
-                actionHistory.push(newAction);
-                localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
-
-                if (accountFound) {
-                    const valor = parseFloat(confirmData.valor);
-                    const saldoAtual = parseFloat(localStorage.getItem("saldoDisponivel")) || 0;
-                    const novoSaldo = (saldoAtual + valor).toFixed(3);
-                    localStorage.setItem("saldoDisponivel", novoSaldo);
-
-                    const dataHoje = new Date().toISOString().split("T")[0];
-                    const ganhoHojeAnterior = JSON.parse(localStorage.getItem("ganhoHojeData")) || {};
-
-                    if (ganhoHojeAnterior.data !== dataHoje) {
-                        ganhoHojeAnterior.data = dataHoje;
-                        ganhoHojeAnterior.valor = valor;
-                    } else {
-                        ganhoHojeAnterior.valor += valor;
-                    }
-
-                    localStorage.setItem("ganhoHojeData", JSON.stringify(ganhoHojeAnterior));
-                }
-            } catch (error) {
-                console.error("Erro ao atualizar histórico e saldo:", error);
             }
 
             await salvarAcaoNoBanco({
@@ -693,7 +624,6 @@
             // Busca nova ação sem mostrar o conteúdo da anterior
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
-        }
 
         async function skipAction() {
             if (currentActionData) {
@@ -812,36 +742,36 @@
         }
 
         async function registrarAcaoPendente(acao) {
-    try {
-        // Validação básica
-        if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
-            console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
-            return;
+            try {
+                // Validação básica
+                if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
+                    console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
+                    return;
+                }
+
+                console.log("📤 Enviando ação pendente:", acao);
+
+                const response = await fetch("/api/registrar_acao_pendente", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify(acao)
+                });
+
+                const data = await response.json();
+                console.log("📥 Resposta da API registrar_acao_pendente:", data);
+
+                if (data.status !== "success") {
+                    console.warn("⚠️ Resposta com status diferente de 'success'", data);
+                    throw new Error("Falha ao registrar ação pendente.");
+                }
+
+            } catch (error) {
+                console.error("❌ Erro ao registrar ação pendente:", error);
+            }
         }
-
-        console.log("📤 Enviando ação pendente:", acao);
-
-        const response = await fetch("/api/registrar_acao_pendente", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-            },
-            body: JSON.stringify(acao)
-        });
-
-        const data = await response.json();
-        console.log("📥 Resposta da API registrar_acao_pendente:", data);
-
-        if (data.status !== "success") {
-            console.warn("⚠️ Resposta com status diferente de 'success'", data);
-            throw new Error("Falha ao registrar ação pendente.");
-        }
-
-    } catch (error) {
-        console.error("❌ Erro ao registrar ação pendente:", error);
-    }
-}
 
         // Funções do menu
         function goToDashboard() {
