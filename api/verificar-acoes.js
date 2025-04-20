@@ -63,7 +63,7 @@ export default async function handler(req, res) {
         // e o updateOne abaixo:
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
-          { $set: { acao_validada: /* true/false */, data_verificacao: new Date() } }
+          { $set: { acao_validada: true, data_verificacao: new Date() } }
         );
         processadas++;
         console.log(`   ✓ Ação ${valid._id} atualizada.`);
