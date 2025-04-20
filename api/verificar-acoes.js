@@ -21,8 +21,10 @@ async function connectToDatabase() {
   return db;
 }
 
+// Schema mínimo para validar ação
 const ActionSchema = z.object({
   _id: z.any(),
+  user: z.any(),                // pega o ObjectId do campo `user`
   nome_usuario: z.string().min(1),
   id_pedido: z.string().min(1),
   id_conta: z.string().min(1),
@@ -30,7 +32,6 @@ const ActionSchema = z.object({
   quantidade_pontos: z.number(),
   valor_confirmacao: z.union([z.string(), z.number()]),
   tipo_acao: z.string().min(1),
-  user_id: z.string().optional(),
 });
 
 export default async function handler(req, res) {
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
 
     const db = await connectToDatabase();
     const colecao = db.collection("actionhistories");
-    const usuarios = db.collection("usuarios");
+    const usuarios = db.collection("users");       // ajuste para a coleção correta
 
     const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 })
@@ -66,9 +67,10 @@ export default async function handler(req, res) {
         // 1. Obtemos o ID do usuário no TikTok
         let tiktokUserId;
         try {
-          const userInfoRes = await axios.get(`${API_URL}/user-info?unique_id=${valid.nome_usuario.replace(/^@/, '')}`);
+          const userInfoRes = await axios.get(
+            `${API_URL}/user-info?unique_id=${valid.nome_usuario.replace(/^@/, '')}`
+          );
           const userInfo = userInfoRes.data;
-
           if (!userInfo || userInfo.code !== 0 || !userInfo.data?.user?.id) {
             throw new Error("TikTok user info inválido");
           }
@@ -81,54 +83,52 @@ export default async function handler(req, res) {
         // 2. Verificamos se ele está seguindo o perfil-alvo
         let accountFound = false;
         try {
-          const followingRes = await axios.get(`${API_URL}/user-following?userId=${tiktokUserId}`);
+          const followingRes = await axios.get(
+            `${API_URL}/user-following?userId=${tiktokUserId}`
+          );
           const followingData = followingRes.data;
-
-          if (followingData.code === 0 && followingData.data?.followings?.length > 0) {
+          if (followingData.code === 0 && followingData.data?.followings?.length) {
             const followings = followingData.data.followings;
-
-            // Extrai o @username do campo url_dir (link ou @nome)
             let targetUsername = valid.url_dir.toLowerCase();
-            const match = targetUsername.match(/@([a-zA-Z0-9_.]+)/);
+            const match = targetUsername.match(/@([\w_.]+)/);
             targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
-
-            accountFound = followings.some(f => {
-              const followingUsername = f.unique_id?.toLowerCase();
-              return followingUsername === targetUsername;
-            });
+            accountFound = followings.some(f => 
+              f.unique_id?.toLowerCase() === targetUsername
+            );
           }
         } catch (e) {
           console.error("   ✗ Falha em /user-following:", e.message);
           continue;
         }
 
-        const resultadoVerificacao = accountFound;
-        const updateFields = {
-          acao_validada: resultadoVerificacao,
-          verificada_em: new Date()
-        };
-
+        // 3. Atualiza acao_validada
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
-          { $set: updateFields }
+          { $set: { acao_validada: accountFound, verificada_em: new Date() } }
         );
 
-if (resultadoVerificacao && valid.user_id) {
-  let valor = parseFloat(valid.valor_confirmacao);
-  if (!isNaN(valor) && valor > 0) {
-    await usuarios.updateOne(
-      { _id: new ObjectId(valid.user_id) },
-      { $inc: { saldo: valor } }
-    );
-  } else {
-    console.warn(`   ⚠ valor_confirmacao inválido para ação ${valid._id}:`, valid.valor_confirmacao);
-  }
-}
-        console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${resultadoVerificacao}`);
+        // 4. Se validada, soma ao saldo do usuário
+        if (accountFound) {
+          const valor = parseFloat(valid.valor_confirmacao);
+          if (!isNaN(valor) && valor > 0) {
+            await usuarios.updateOne(
+              { _id: new ObjectId(valid.user) },
+              { $inc: { saldo: valor } }
+            );
+            console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
+          } else {
+            console.warn(
+              `   ⚠ valor_confirmacao inválido para ação ${valid._id}:`,
+              valid.valor_confirmacao
+            );
+          }
+        }
+
+        console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${accountFound}`);
         processadas++;
 
       } catch (err) {
-        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err.message);
+        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err);
       }
     }
 
