@@ -2,8 +2,8 @@ name: Verificar Ações Pendentes
 
 on:
   schedule:
-    - cron: '*/1 * * * *' # a cada 1 minuto
-  workflow_dispatch:
+    - cron: '*/1 * * * *' # Executa a cada 1 minuto
+  workflow_dispatch: # Permite rodar manualmente pelo GitHub
 
 jobs:
   ping-verificacao:
@@ -11,4 +11,16 @@ jobs:
     steps:
       - name: Enviar requisição para verificar ações
         run: |
-          curl -X GET "https://ganhesocial.com/api/verificar-acoes"
+          echo "Iniciando requisição para a API de verificação..."
+          RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" -X GET "https://ganhesocial.com/api/verificar-acoes")
+          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Resposta da API:"
+          echo "$BODY"
+          echo "Status HTTP: $STATUS"
+          
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Erro: a requisição falhou com status $STATUS"
+            exit 1
+          fi
