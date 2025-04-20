@@ -96,24 +96,19 @@ const followingResponse = await axios.get(`${baseUrl}/api/user-following?userId=
         const seguiu = listaSeguindo.some(user => user?.unique_id?.toLowerCase() === unique_id.toLowerCase());
 
         // Atualiza ação e saldo se confirmado
-        acaoExistente.acao_validada = seguiu;
-        acaoExistente.status = seguiu ? "confirmado" : "rejeitado";
+acaoExistente.acao_validada = null; // ainda não validado
+acaoExistente.status = null; // ou "pendente", se quiser usar esse valor explicitamente
         acaoExistente.valor_confirmacao = valorFinal;
         acaoExistente.quantidade_pontos = quantidade_pontos;
         acaoExistente.tipo = tipo_acao || "Seguir";
 
         await acaoExistente.save();
 
-        if (seguiu) {
-            usuario.saldo += valorFinal;
-            await usuario.save();
-        }
-
-        return res.status(200).json({
-            status: seguiu ? "confirmado" : "rejeitado",
-            message: seguiu ? "Ação validada com sucesso!" : "A ação não foi validada. O perfil não foi seguido.",
-            acao: acaoExistente
-        });
+return res.status(200).json({
+    status: "pendente",
+    message: "A ação foi registrada e será validada em breve.",
+    acao: acaoExistente
+});
 
     } catch (erro) {
         console.error("Erro ao validar ação:", erro);
