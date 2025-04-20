@@ -501,7 +501,9 @@
                     const url = `https://www.tiktok.com/@${tiktokUsername}`;
                     document.getElementById("actionUrl").href = url;
 
-                    try {
+                    let currentUserId = null; // variável para armazenar o ID da conta
+
+try {
     const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
     const userInfo = await resUserInfo.json();
 
@@ -510,8 +512,9 @@
         profileImg.src = userInfo.data.user.avatarLarger;
         profileImg.style.display = "block";
 
-        // Armazena o unique_id para evitar chamadas repetidas
+        // Armazena o unique_id e o id da conta TikTok
         localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+        currentUserId = userInfo.data.user.id; // ← salva o ID para usar depois
     } else {
         document.getElementById("profileImage").style.display = "none";
     }
@@ -633,17 +636,17 @@
                 }
 
                 await salvarAcaoNoBanco({
-                    nome_usuario: currentActionData.nome_usuario,
-                    id_pedido: currentActionData.id_pedido,
-                    id_conta: localStorage.getItem("id_conta"),
-                    url_dir: currentActionData.url_dir,
-                    acao_validada: false,
-                    valor_confirmacao: 0,
-                    quantidade_pontos: currentActionData.quantidade_pontos,
-                    tipo_acao: currentActionData.tipo_acao
-                });
-            }
+    nome_usuario: currentActionData.nome_usuario,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: currentUserId, // ← id correto da conta
+    url_dir: currentActionData.url_dir,
+    acao_validada: false,
+    valor_confirmacao: 0,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    tipo_acao: currentActionData.tipo_acao
+});
 
+}
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
         }
