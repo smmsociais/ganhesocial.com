@@ -26,9 +26,14 @@ async function connectToDatabase() {
 // Schema de validação para ações pendentes
 const ActionSchema = z.object({
   _id: z.any(),
-  nome_usuario: z.string().min(1),
-  id_conta: z.string().min(1),
-  id_pedido: z.string().min(1),
+  nome_usuario: z.string().min(3),
+  token: z.string().min(10),
+  user: z.any(),
+  id_pedido: z.string().min(3),
+  url_dir: z.string().url(),
+  tipo_acao: z.string(),
+  quantidade_pontos: z.number(),
+  id_conta: z.string().min(3)
 });
 
 export default async function handler(req, res) {
