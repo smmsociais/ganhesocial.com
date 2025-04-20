@@ -8,6 +8,7 @@ const API_URL = "https://ganhesocial.com/api";
 
 let cachedClient = null;
 let cachedDb = null;
+
 async function connectToDatabase() {
   if (cachedDb) return cachedDb;
   const client = await MongoClient.connect(MONGODB_URI, {
@@ -20,7 +21,6 @@ async function connectToDatabase() {
   return db;
 }
 
-// Schema mínimo para validar ação
 const ActionSchema = z.object({
   _id: z.any(),
   nome_usuario: z.string().min(1),
@@ -28,9 +28,9 @@ const ActionSchema = z.object({
   id_conta: z.string().min(1),
   url_dir: z.string().min(1),
   quantidade_pontos: z.number(),
-  valor_confirmacao: z.union([z.string(), z.number()]),
+  valor_confirmacao: z.string(),
   tipo_acao: z.string().min(1),
-  user_id: z.string().min(1).optional(),
+  user_id: z.string().min(1),
 });
 
 export default async function handler(req, res) {
@@ -45,7 +45,6 @@ export default async function handler(req, res) {
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("usuarios");
 
-    console.log("Buscando ações pendentes em 'actionhistories'…");
     const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 })
       .limit(10)
@@ -57,6 +56,7 @@ export default async function handler(req, res) {
     }
 
     let processadas = 0;
+
     for (const acao of acoes) {
       console.log("— Documento bruto:", acao);
       try {
@@ -75,14 +75,10 @@ export default async function handler(req, res) {
           tiktokUserId = userInfo.data.user.id;
         } catch (e) {
           console.error("   ✗ Falha em /user-info:", e.message);
-          await colecao.updateOne(
-            { _id: new ObjectId(valid._id) },
-            { $set: { acao_validada: false, verificada_em: new Date() } }
-          );
           continue;
         }
 
-        // 2. Buscamos os usuários que ele está seguindo
+        // 2. Verificamos se ele está seguindo o perfil-alvo
         let accountFound = false;
         try {
           const followingRes = await axios.get(`${API_URL}/user-following?userId=${tiktokUserId}`);
@@ -90,49 +86,46 @@ export default async function handler(req, res) {
 
           if (followingData.code === 0 && followingData.data?.followings?.length > 0) {
             const followings = followingData.data.followings;
-            const targetUsername = valid.url_dir.replace(/^@/, '').toLowerCase();
+
+            // Extrai o @username do campo url_dir (link ou @nome)
+            let targetUsername = valid.url_dir.toLowerCase();
+            const match = targetUsername.match(/@([a-zA-Z0-9_.]+)/);
+            targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
+
             accountFound = followings.some(f => {
-              const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
+              const followingUsername = f.unique_id?.toLowerCase();
               return followingUsername === targetUsername;
             });
           }
         } catch (e) {
           console.error("   ✗ Falha em /user-following:", e.message);
-          await colecao.updateOne(
-            { _id: new ObjectId(valid._id) },
-            { $set: { acao_validada: false, verificada_em: new Date() } }
-          );
           continue;
         }
 
-        const valor = typeof valid.valor_confirmacao === "string"
-          ? parseFloat(valid.valor_confirmacao)
-          : valid.valor_confirmacao;
+        const resultadoVerificacao = accountFound;
+        const updateFields = {
+          acao_validada: resultadoVerificacao,
+          verificada_em: new Date()
+        };
 
-        // Atualiza ação como confirmada ou falhou
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
-          {
-            $set: {
-              acao_validada: accountFound,
-              verificada_em: new Date(),
-            }
-          }
+          { $set: updateFields }
         );
 
-        // Se confirmada, incrementa saldo do usuário
-        if (accountFound && valid.user_id) {
+        if (resultadoVerificacao) {
+          const valor = parseFloat(valid.valor_confirmacao);
           await usuarios.updateOne(
             { _id: new ObjectId(valid.user_id) },
             { $inc: { saldo: valor } }
           );
         }
 
-        console.log(`   ✓ Ação ${valid._id} ${accountFound ? "confirmada" : "rejeitada"}`);
+        console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${resultadoVerificacao}`);
         processadas++;
 
       } catch (err) {
-        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err);
+        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err.message);
       }
     }
 
