@@ -1,5 +1,5 @@
-import dbConnect from "@/lib/dbConnect";
-import { ActionHistory, User } from "@/models/User";
+import connectDB from "./db.js";
+import { ActionHistory, User } from "./User.js";
 import axios from "axios";
 import { z } from "zod";
 
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
-  await dbConnect();
+  await connectDB();
   console.log("🔌 Conexão com o banco de dados estabelecida.");
   console.log("🔎 Buscando ações pendentes...");
 
