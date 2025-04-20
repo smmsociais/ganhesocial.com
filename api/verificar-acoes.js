@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
 const acoes = await colecao.find({ acao_validada: null })
   .sort({ data: 1 })
-  .limit(1)
+  .limit(120)
   .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
