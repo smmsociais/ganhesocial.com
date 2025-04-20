@@ -64,11 +64,11 @@ export default async function handler(req, res) {
         const valid = ActionSchema.parse(acao);
         console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
 
-        // 1. Verificamos se o usuário está seguindo o perfil-alvo
+        // 1. Verificamos se o usuário está seguindo o perfil-alvo no TikTok
         let accountFound = false;
         try {
           const followingRes = await axios.get(
-            `${API_URL}/user-following?userId=${valid.nome_usuario.replace(/^@/, '')}`
+            `${API_URL}/user-following?unique_id=${valid.nome_usuario.replace(/^@/, '')}`
           );
           const followingData = followingRes.data;
           if (followingData.code === 0 && followingData.data?.followings?.length) {
