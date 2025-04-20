@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     const agora = new Date();
     const verificacoes = {};
 
-    const acoes = await colecao.find({ status: "pendente" })
+    const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 }).limit(10).toArray();
 
     for (const acao of acoes) {
@@ -52,16 +52,15 @@ export default async function handler(req, res) {
 
         const novo_status = seguiu ? "valida" : "invalida";
 
-        await colecao.updateOne(
-          { _id: new ObjectId(_id) },
-          {
-            $set: {
-              status: novo_status,
-              data_verificacao: new Date()
-            }
-          }
-        );
-
+await colecao.updateOne(
+  { _id: new ObjectId(_id) },
+  {
+    $set: {
+      acao_validada: seguiu, // true ou false
+      data_verificacao: new Date()
+    }
+  }
+);
         verificacoes[user_id] = agora;
       } catch (e) {
         console.error(`Erro ao verificar ação ${_id}:`, e);
