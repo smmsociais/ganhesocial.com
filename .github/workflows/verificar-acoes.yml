@@ -2,7 +2,7 @@ name: Verificar Ações Pendentes
 
 on:
   schedule:
-    - cron: '*/1 * * * *' # Executa a cada 1 minuto
+    - cron: '*/5 * * * *' # Executa a cada 1 minuto
   workflow_dispatch: # Permite rodar manualmente pelo GitHub
 
 jobs:
