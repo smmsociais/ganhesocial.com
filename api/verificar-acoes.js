@@ -114,11 +114,15 @@ export default async function handler(req, res) {
         );
 
 if (resultadoVerificacao && valid.user_id) {
-  const valor = parseFloat(valid.valor_confirmacao);
-  await usuarios.updateOne(
-    { _id: new ObjectId(valid.user_id) },
-    { $inc: { saldo: valor } }
-  );
+  let valor = parseFloat(valid.valor_confirmacao);
+  if (!isNaN(valor) && valor > 0) {
+    await usuarios.updateOne(
+      { _id: new ObjectId(valid.user_id) },
+      { $inc: { saldo: valor } }
+    );
+  } else {
+    console.warn(`   ⚠ valor_confirmacao inválido para ação ${valid._id}:`, valid.valor_confirmacao);
+  }
 }
         console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${resultadoVerificacao}`);
         processadas++;
