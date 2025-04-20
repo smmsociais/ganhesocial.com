@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       .limit(10)
       .toArray();
 
-    console.log(`✅ Encontradas ${acoes.length} ações pendentes.`);
+    console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
     if (acoes.length === 0) {
       return res.status(200).json({ status: "ok", processadas: 0 });
     }
