@@ -29,9 +29,9 @@ const ActionSchema = z.object({
   id_conta: z.string().min(1),
   url_dir: z.string().min(1),
   quantidade_pontos: z.number(),
-  valor_confirmacao: z.string(),
+  valor_confirmacao: z.union([z.string(), z.number()]), // aceita string ou número
   tipo_acao: z.string().min(1),
-  user_id: z.string().min(1),
+  user_id: z.string().min(1).optional(), // opcional
 });
 
 export default async function handler(req, res) {
@@ -106,7 +106,10 @@ export default async function handler(req, res) {
         );
 
         if (accountFound) {
-          const valor = parseFloat(valid.valor_confirmacao);
+          const valor = typeof valid.valor_confirmacao === "string"
+  ? parseFloat(valid.valor_confirmacao)
+  : valid.valor_confirmacao;
+
           await usuarios.updateOne(
             { _id: new ObjectId(valid.user_id) },
             { $inc: { saldo: valor } }
