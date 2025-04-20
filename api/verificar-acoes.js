@@ -46,10 +46,10 @@ export default async function handler(req, res) {
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("users");       // ajuste para a coleção correta
 
-    const acoes = await colecao.find({ acao_validada: null })
-      .sort({ data: 1 })
-      .limit(10)
-      .toArray();
+const acoes = await colecao.find({ acao_validada: null })
+  .sort({ data: 1 })
+  .limit(1)
+  .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
     if (acoes.length === 0) {
