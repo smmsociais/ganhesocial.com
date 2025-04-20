@@ -1,82 +1,104 @@
-import pkg from "mongodb";
-import { z } from "zod";
+import jwt from 'jsonwebtoken';
+import { MongoClient, ObjectId } from 'mongodb';
+import axios from 'axios';
 
-const { MongoClient, ObjectId } = pkg;
-const MONGODB_URI = process.env.MONGODB_URI;
-const API_URL = "https://ganhesocial.com/api";
-
-// cache para serverless
-let cachedClient = null;
-let cachedDb = null;
-async function connectToDatabase() {
-  if (cachedDb) return cachedDb;
-  const client = await MongoClient.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-  // usa o default DB da URI
-  const db = client.db();
-  cachedClient = client;
-  cachedDb = db;
-  return db;
-}
-
-// schema para validar mínimos campos
-const ActionSchema = z.object({
-  _id: z.any(),
-  nome_usuario: z.string().min(1),
-  id_conta: z.string().min(1),
-  id_pedido: z.string().min(1),
-});
+const uri = process.env.MONGODB_URI;
+const dbName = 'ganhesocial';
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido. Use GET." });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Método não permitido' });
   }
 
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Token não fornecido' });
+  }
+
+  let userId;
   try {
-    console.log("▶ verificar-acoes chamado em", new Date().toISOString());
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.userId;
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
 
-    const db = await connectToDatabase();
-    console.log("✔ Conectado ao MongoDB");
-    const colecao = db.collection("actionhistories");
+  const client = new MongoClient(uri);
+  await client.connect();
+  const db = client.db(dbName);
 
-    console.log("Buscando ações pendentes em 'actionhistories'…");
-    const acoes = await colecao.find({ acao_validada: null })
-      .sort({ data: 1 })
-      .limit(10)
-      .toArray();
+  try {
+    const acoesPendentes = await db.collection('acoes_realizadas').find({
+      user_id: userId,
+      status: 'pendente'
+    }).toArray();
 
-    console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
-    if (acoes.length === 0) {
-      return res.status(200).json({ status: "ok", processadas: 0 });
-    }
+    const resultados = [];
 
-    let processadas = 0;
-    for (const acao of acoes) {
-      console.log("— Documento bruto:", acao);
+    for (const acao of acoesPendentes) {
+      const { nome_usuario, url_dir, id_pedido, id_conta, quantidade_pontos, valor_confirmacao, tipo_acao } = acao;
+
+      // 1. Obtemos o ID do usuário no TikTok
+      let tiktokUserId;
       try {
-        const valid = ActionSchema.parse(acao);
-        console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
+        const userInfoRes = await axios.get(`${process.env.BASE_URL}/api/user-info?unique_id=${nome_usuario.replace(/^@/, '')}`);
+        const userInfo = userInfoRes.data;
 
-        // ... as suas chamadas a `/user-info` e `/user-following`
-        // e o updateOne abaixo:
-        await colecao.updateOne(
-          { _id: new ObjectId(valid._id) },
-          { $set: { acao_validada: true, data_verificacao: new Date() } }
-        );
-        processadas++;
-        console.log(`   ✓ Ação ${valid._id} atualizada.`);
-      } catch (err) {
-        console.error(`   ✗ Falha ao processar ação ${acao._id}:`, err);
+        if (!userInfo || userInfo.code !== 0 || !userInfo.data?.user?.id) {
+          throw new Error('TikTok user info inválido');
+        }
+
+        tiktokUserId = userInfo.data.user.id;
+      } catch (e) {
+        resultados.push({ id_pedido, status: 'erro_user_info' });
+        continue;
       }
+
+      // 2. Buscamos os usuários que ele está seguindo
+      let accountFound = false;
+      try {
+        const followingRes = await axios.get(`${process.env.BASE_URL}/api/user-following?userId=${tiktokUserId}`);
+        const followingData = followingRes.data;
+
+        if (followingData.code === 0 && followingData.data?.followings?.length > 0) {
+          const followings = followingData.data.followings;
+          const targetUsername = url_dir.replace(/^@/, '').toLowerCase();
+
+          accountFound = followings.some(f => {
+            const followingUsername = f.unique_id?.replace(/^@/, '').toLowerCase();
+            return followingUsername === targetUsername;
+          });
+        }
+      } catch (e) {
+        resultados.push({ id_pedido, status: 'erro_following' });
+        continue;
+      }
+
+      const statusAcao = accountFound ? 'confirmada' : 'falhou';
+
+      await db.collection('acoes_realizadas').updateOne(
+        { _id: acao._id },
+        { $set: { status: statusAcao, verificada_em: new Date() } }
+      );
+
+      // Se confirmada, atualiza saldo do usuário
+      if (accountFound) {
+        const valor = parseFloat(valor_confirmacao);
+        await db.collection('usuarios').updateOne(
+          { _id: new ObjectId(userId) },
+          { $inc: { saldo: valor } }
+        );
+      }
+
+      resultados.push({ id_pedido, status: statusAcao });
     }
 
-    console.log(`✔ Fim do processamento: ${processadas} ações processadas.`);
-    return res.status(200).json({ status: "ok", processadas });
+    res.status(200).json({ status: 'ok', resultados });
 
-  } catch (error) {
-    console.error("✗ Erro geral em verificar-acoes:", error);
-    return res.status(500).json({ error: "Erro interno", details: error.message });
+  } catch (err) {
+    console.error("Erro ao verificar ações pendentes:", err);
+    res.status(500).json({ status: 'erro', message: 'Erro ao verificar ações pendentes' });
+  } finally {
+    await client.close();
   }
 }
