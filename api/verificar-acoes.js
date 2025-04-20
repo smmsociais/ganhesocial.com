@@ -41,11 +41,13 @@ export default async function handler(req, res) {
 
   try {
     console.log("▶ verificar-acoes chamado em", new Date().toISOString());
-    const db = await connectToDatabase();
-    const colecao = db.collection("acoes_realizadas");
-    const usuarios = db.collection("usuarios");
 
-    const acoes = await colecao.find({ status: "pendente" })
+    const db = await connectToDatabase();
+    console.log("✔ Conectado ao MongoDB");
+    const colecao = db.collection("actionhistories");
+
+    console.log("Buscando ações pendentes em 'actionhistories'…");
+    const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 })
       .limit(10)
       .toArray();
@@ -56,14 +58,12 @@ export default async function handler(req, res) {
     }
 
     let processadas = 0;
-
     for (const acao of acoes) {
       console.log("— Documento bruto:", acao);
-
       try {
         const valid = ActionSchema.parse(acao);
-        console.log(`→ Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
-
+        console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
+        
         // 1. Obtemos o ID do usuário no TikTok
         let tiktokUserId;
         try {
