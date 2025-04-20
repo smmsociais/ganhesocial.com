@@ -6,8 +6,8 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Método não permitido' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
   const token = req.headers.authorization?.split(' ')[1];
