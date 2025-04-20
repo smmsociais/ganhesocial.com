@@ -3,7 +3,6 @@ const { MongoClient, ObjectId } = pkg;
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
-
 const client = new MongoClient(MONGODB_URI);
 let db = null;
 
@@ -12,88 +11,70 @@ export default async function handler(req, res) {
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Método não permitido." });
     }
-
-    console.log("Rota verificar-acoes chamada:", new Date().toISOString());
+    console.log("▶ verificar-acoes chamado em", new Date().toISOString());
 
     if (!db) {
-      console.log("Conectando ao banco de dados...");
       await client.connect();
       db = client.db("ganhesocial");
-      console.log("Conexão com o banco de dados estabelecida.");
+      console.log("✔ Conectado ao MongoDB (ganhesocial)");
     }
 
-    const colecao = db.collection("acoes");
-    const agora = new Date();
-    const verificacoes = {};
-    console.log("Buscando ações pendentes...");
-
+    const colecao = db.collection("actionhistories");
+    console.log("Buscando ações pendentes em 'actionhistories'...");
     const acoes = await colecao.find({ acao_validada: null })
-      .sort({ data: 1 }).limit(10).toArray();
-
-    console.log(`Encontradas ${acoes.length} ações pendentes.`);
-    
-    if (acoes.length === 0) {
-      console.log("Nenhuma ação pendente encontrada.");
-    }
+      .sort({ data: 1 })
+      .limit(10)
+      .toArray();
+    console.log(`✅ Encontradas ${acoes.length} ações pendentes.`);
 
     for (const acao of acoes) {
-      const { user_id, perfil_unique_id, _id } = acao;
-      console.log(`Processando ação ${_id} para o usuário ${user_id} (perfil: ${perfil_unique_id})`);
-
-      if (verificacoes[user_id] && agora - verificacoes[user_id] < 60000) {
-        console.log(`Usuário ${user_id} já foi verificado recentemente. Pulando ação ${_id}.`);
-        continue;
-      }
+      const { _id, nome_usuario } = acao;
+      console.log(`— Processando _id=${_id}, nome_usuario='${nome_usuario}'`);
 
       try {
-        console.log(`Verificando dados do usuário ${user_id}...`);
-        const [infoRes, followingRes] = await Promise.all([
-          fetch(`${API_URL}/user-info`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id })
-          }),
-          fetch(`${API_URL}/user-following`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id })
-          }),
-        ]);
+        // 1) Busca info do usuário no TikTok
+        const infoRes = await fetch(
+          `${API_URL}/user-info?unique_id=${encodeURIComponent(nome_usuario)}`
+        );
+        if (!infoRes.ok) throw new Error(`user-info retornou ${infoRes.status}`);
+        const infoJson = await infoRes.json();
+        const tiktokUserId = infoJson.data.user.id;
+        console.log(`   • TikTok user ID: ${tiktokUserId}`);
 
-        console.log(`Respostas recebidas da API para o usuário ${user_id}.`);
+        // 2) Busca lista de quem segue
+        const followRes = await fetch(
+          `${API_URL}/user-following?userId=${tiktokUserId}`
+        );
+        if (!followRes.ok) throw new Error(`user-following retornou ${followRes.status}`);
+        const followJson = await followRes.json();
+        console.log(`   • Recebeu ${followJson.data.followings.length} itens de seguindo`);
 
-        const info = await infoRes.json();
-        const following = await followingRes.json();
+        // 3) Verifica se seguiu
+        const seguiu = followJson.data.followings.some(f =>
+          f.unique_id.replace(/^@/, "").toLowerCase() === nome_usuario.toLowerCase()
+        );
+        console.log(`   • Resultado: ${seguiu ? "VALIDA" : "INVALIDA"}`);
 
-        console.log(`Dados do usuário ${user_id}:`, info);
-        console.log(`Seguindo dados do usuário ${user_id}:`, following);
-
-        const perfis = following?.following || [];
-        const seguiu = perfis.some(p => p.unique_id === perfil_unique_id);
-
-        const novo_status = seguiu ? "valida" : "invalida";
-        console.log(`Ação ${_id} do usuário ${user_id} ${novo_status}.`);
-
+        // 4) Atualiza documento
         await colecao.updateOne(
           { _id: new ObjectId(_id) },
           {
             $set: {
-              acao_validada: seguiu, // true ou false
+              acao_validada: seguiu,
               data_verificacao: new Date()
             }
           }
         );
-
-        console.log(`Ação ${_id} foi atualizada para o status ${novo_status}.`);
-
-        verificacoes[user_id] = agora;
-      } catch (e) {
-        console.error(`Erro ao verificar ação ${_id} para o usuário ${user_id}:`, e);
+        console.log(`   ✓ Ação ${_id} atualizada para acao_validada=${seguiu}`);
+      } catch (innerErr) {
+        console.error(`   ✗ Erro ao processar ação ${_id}:`, innerErr.message);
       }
     }
 
-    res.status(200).json({ status: "ok", processadas: acoes.length });
-    console.log(`Processamento concluído. ${acoes.length} ações processadas.`);
+    console.log(`✔ Fim do processamento: ${acoes.length} ações processadas.`);
+    return res.status(200).json({ status: "ok", processadas: acoes.length });
   } catch (err) {
-    console.error("Erro geral na execução de verificar-acoes:", err);
-    res.status(500).json({ error: "Erro interno" });
+    console.error("✗ Erro geral em verificar-acoes:", err);
+    return res.status(500).json({ error: "Erro interno", details: err.message });
   }
 }
