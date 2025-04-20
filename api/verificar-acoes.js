@@ -72,7 +72,7 @@ if (!/^\d+$/.test(idConta)) {
   throw new Error(`id_conta inválido: ${idConta}`);
 }
 const followingRes = await axios.get(
-  `${API_URL}/user-following?unique_id=${idConta}`
+  `${API_URL}/user-following?id_conta=${idConta}`
 );
           const followingData = followingRes.data;
           if (followingData.code === 0 && followingData.data?.followings?.length) {
