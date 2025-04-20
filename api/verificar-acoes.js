@@ -1,6 +1,5 @@
 import pkg from "mongodb";
 import { z } from "zod";
-import jwt from "jsonwebtoken";
 import axios from "axios";
 
 const { MongoClient, ObjectId } = pkg;
@@ -29,9 +28,9 @@ const ActionSchema = z.object({
   id_conta: z.string().min(1),
   url_dir: z.string().min(1),
   quantidade_pontos: z.number(),
-  valor_confirmacao: z.union([z.string(), z.number()]), // aceita string ou número
+  valor_confirmacao: z.union([z.string(), z.number()]),
   tipo_acao: z.string().min(1),
-  user_id: z.string().min(1).optional(), // opcional
+  user_id: z.string().min(1).optional(),
 });
 
 export default async function handler(req, res) {
@@ -43,8 +42,8 @@ export default async function handler(req, res) {
     console.log("▶ verificar-acoes chamado em", new Date().toISOString());
 
     const db = await connectToDatabase();
-    console.log("✔ Conectado ao MongoDB");
     const colecao = db.collection("actionhistories");
+    const usuarios = db.collection("usuarios");
 
     console.log("Buscando ações pendentes em 'actionhistories'…");
     const acoes = await colecao.find({ acao_validada: null })
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
       try {
         const valid = ActionSchema.parse(acao);
         console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
-        
+
         // 1. Obtemos o ID do usuário no TikTok
         let tiktokUserId;
         try {
@@ -76,6 +75,10 @@ export default async function handler(req, res) {
           tiktokUserId = userInfo.data.user.id;
         } catch (e) {
           console.error("   ✗ Falha em /user-info:", e.message);
+          await colecao.updateOne(
+            { _id: new ObjectId(valid._id) },
+            { $set: { acao_validada: false, verificada_em: new Date() } }
+          );
           continue;
         }
 
@@ -95,32 +98,41 @@ export default async function handler(req, res) {
           }
         } catch (e) {
           console.error("   ✗ Falha em /user-following:", e.message);
+          await colecao.updateOne(
+            { _id: new ObjectId(valid._id) },
+            { $set: { acao_validada: false, verificada_em: new Date() } }
+          );
           continue;
         }
 
-        const statusAcao = accountFound ? "confirmada" : "falhou";
+        const valor = typeof valid.valor_confirmacao === "string"
+          ? parseFloat(valid.valor_confirmacao)
+          : valid.valor_confirmacao;
 
+        // Atualiza ação como confirmada ou falhou
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
-          { $set: { status: statusAcao, verificada_em: new Date() } }
+          {
+            $set: {
+              acao_validada: accountFound,
+              verificada_em: new Date(),
+            }
+          }
         );
 
-        if (accountFound) {
-          const valor = typeof valid.valor_confirmacao === "string"
-  ? parseFloat(valid.valor_confirmacao)
-  : valid.valor_confirmacao;
-
+        // Se confirmada, incrementa saldo do usuário
+        if (accountFound && valid.user_id) {
           await usuarios.updateOne(
             { _id: new ObjectId(valid.user_id) },
             { $inc: { saldo: valor } }
           );
         }
 
-        console.log(`   ✓ Ação ${valid._id} atualizada como ${statusAcao}`);
+        console.log(`   ✓ Ação ${valid._id} ${accountFound ? "confirmada" : "rejeitada"}`);
         processadas++;
 
       } catch (err) {
-        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err.message);
+        console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err);
       }
     }
 
