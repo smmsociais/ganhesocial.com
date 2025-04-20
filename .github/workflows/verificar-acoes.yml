@@ -1,15 +1,15 @@
-name: Verificar Ações Pendentes
+# .github/workflows/verificar-acoes.yml
+name: Verificar ações pendentes
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # A cada 5 minutos
-  workflow_dispatch: # permite rodar manualmente também
+    - cron: '*/1 * * * *' # A cada 1 minuto
+  workflow_dispatch:
 
 jobs:
-  call-api:
+  verificar:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Chamar a rota de verificação de ações
-        run: |
-          curl -X GET "https://ganhesocial.com/api/verificar-acoes"
+      - name: Verificar ações pendentes
+        run: curl -X GET "https://ganhesocial.com/api/verificar-acoes"
+
