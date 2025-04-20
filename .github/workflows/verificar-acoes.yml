@@ -1,0 +1,14 @@
+name: Verificar Ações Pendentes
+
+on:
+  schedule:
+    - cron: '*/1 * * * *' # a cada 1 minuto
+  workflow_dispatch:
+
+jobs:
+  ping-verificacao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar requisição para verificar ações
+        run: |
+          curl -X GET "https://ganhesocial.com/api/verificar-acoes"
