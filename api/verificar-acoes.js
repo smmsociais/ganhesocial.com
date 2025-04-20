@@ -10,11 +10,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ message: 'Token não fornecido' });
-  }
-
   let userId;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
