@@ -502,20 +502,23 @@
                     document.getElementById("actionUrl").href = url;
 
                     try {
-                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                        const userInfo = await resUserInfo.json();
+    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+    const userInfo = await resUserInfo.json();
 
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            const profileImg = document.getElementById("profileImage");
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
-                        } else {
-                            document.getElementById("profileImage").style.display = "none";
-                        }
-                    } catch (e) {
-                        console.error("Erro ao carregar avatar:", e);
-                        document.getElementById("profileImage").style.display = "none";
-                    }
+    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+        const profileImg = document.getElementById("profileImage");
+        profileImg.src = userInfo.data.user.avatarLarger;
+        profileImg.style.display = "block";
+
+        // Armazena o unique_id para evitar chamadas repetidas
+        localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+    } else {
+        document.getElementById("profileImage").style.display = "none";
+    }
+} catch (e) {
+    console.error("Erro ao carregar avatar:", e);
+    document.getElementById("profileImage").style.display = "none";
+}
 
                     const pontos = parseFloat(data.quantidade_pontos);
                     const valorBruto = pontos / 1000;
