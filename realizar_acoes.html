@@ -703,33 +703,7 @@ try {
             if (!token) {
                 console.error("Token de autenticação não encontrado.");
                 return;
-            }
-
-            try {
-                const response = await fetch("/api/validar_acao", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        token,
-                        nome_usuario,
-                        id_pedido,
-                        id_conta,
-                        url_dir,
-                        acao_validada,
-                        valor_confirmacao,
-                        quantidade_pontos: Number(quantidade_pontos),
-                        tipo_acao
-                    })
-                });
-
-                const data = await response.json();
-            } catch (error) {
-                console.error("Erro ao registrar ação:", error);
-            }
-        }
+            }}
 
         async function registrarAcaoPendente(acao) {
             try {
