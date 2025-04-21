@@ -45,6 +45,7 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 status: "sucess",
                 id_tiktok,
+                id_pedido: data.id_pedido, // ✅ adicionado aqui
                 url: data.url_dir,
                 id_perfil: data.id_alvo,
                 nome_usuario: data.nome_usuario,
