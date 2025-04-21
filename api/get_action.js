@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     // Obter parâmetros da query
     const { token, id_tiktok } = req.query;
 
-    if (!token || !nome_usuario) {
+    if (!token || !id_tiktok) {
         return res.status(400).json({ error: "Os parâmetros 'token' e 'id_tiktok' são obrigatórios." });
     }
 
