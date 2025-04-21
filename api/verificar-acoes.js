@@ -6,7 +6,6 @@ import jwt from 'jsonwebtoken';
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
-const vercelJwt = req.headers['x-vercel-oidc-token'];
 
 let cachedClient = null;
 let cachedDb = null;
@@ -42,7 +41,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
-    if (!vercelJwt) {
+  const vercelJwt = req.headers['x-vercel-oidc-token'];
+
+  if (!vercelJwt) {
     return res.status(403).json({ error: 'Authorization token missing' });
   }
 
@@ -55,7 +56,6 @@ export default async function handler(req, res) {
       throw new Error('Invalid token');
     }
 
-  try {
     console.log("▶ verificar-acoes chamado em", new Date().toISOString());
 
     const db = await connectToDatabase();
