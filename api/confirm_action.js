@@ -3,6 +3,16 @@ import connectDB from "./db.js";
 import { User } from "./User.js";
 import { ActionHistory } from "./User.js";
 
+function reverterIdAction(idAction) {
+  return idAction
+    .split('')
+    .map(char => {
+      if (char === '0') return '0';
+      return String(parseInt(char) + 1);
+    })
+    .join('');
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -10,9 +20,9 @@ export default async function handler(req, res) {
 
   await connectDB();
 
-  const { token, nome_usuario, id_pedido, id_conta, url_dir } = req.body;
+  const { token, nome_usuario, id_action, id_tiktok } = req.body;
 
-  if (!token || !nome_usuario || !id_pedido || !id_conta || !url_dir) {
+  if (!token || !nome_usuario || !id_action || !id_tiktok) {
     return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
   }
 
@@ -23,56 +33,17 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // 🔹 Extrair unique_id da URL
-    let extractedUsername = url_dir.split("/").pop();
-    if (extractedUsername.startsWith("@")) {
-      extractedUsername = extractedUsername.slice(1);
-    }
-
-    let acaoValida = false;
-
-    // 🔹 Chamar API user/info para obter ID do usuário TikTok
-    let userId;
-    try {
-      const userInfoResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/info", {
-        params: { unique_id: nome_usuario },
-        headers: {
-          'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-          'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-        }
-      });
-      userId = userInfoResponse.data?.data?.user?.id || null;
-    } catch (error) {
-      console.error("Erro ao chamar user/info:", error.message);
-    }
-
-    if (userId) {
-      // 🔹 Chamar API user/following para verificar se segue o perfil alvo
-      try {
-        const userFollowingResponse = await axios.get("https://tiktok-scraper7.p.rapidapi.com/user/following", {
-          params: { user_id: userId, count: "200", time: "0" },
-          headers: {
-            'x-rapidapi-key': 'f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319',
-            'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com'
-          }
-        });
-
-        const followingList = userFollowingResponse.data?.data?.followings || [];
-        acaoValida = followingList.some(following => following.unique_id.toLowerCase() === extractedUsername.toLowerCase());
-      } catch (error) {
-        console.error("Erro ao chamar user/following:", error.message);
-      }
-    }
-
     // 🔹 Confirmar ação na API externa
     const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
+    const idPedidoOriginal = reverterIdAction(id_action);
+
     const payload = {
-      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+      token: "a03f2bba-55a0-49c5-b4e1-28a6d1ae0876",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-      id_conta: id_conta,
-      id_pedido: id_pedido,
+      id_conta: id_tiktok,
+      id_pedido: idPedidoOriginal,
       is_tiktok: "1"
-    };
+    };    
 
     let confirmData = { valor: "0.000" }; // 🔹 Definir um valor padrão
     let valorConfirmacao = 0;
@@ -85,27 +56,15 @@ export default async function handler(req, res) {
       console.error("Erro ao confirmar ação:", error.response?.data || error.message);
     }
 
-    // 🔹 Ajustar o valor da confirmação (subtrair 0.001)
-    if (confirmData.valor) {
-      let valorAtual = parseFloat(confirmData.valor);
-      if (!isNaN(valorAtual)) {
-        valorConfirmacao = (valorAtual - 0.001).toFixed(3); // Mantém 3 casas decimais
-      }
-    }
-
     // 🔹 Salvar ação no MongoDB
     try {
       const newAction = new ActionHistory({
-        user: usuario._id,
         token,
         nome_usuario,
-        id_pedido: String(id_pedido),
-        id_conta,
-        url_dir,
-        unique_id_verificado: extractedUsername,
+        id_action: String(idPedidoOriginal), // salva o original
         acao_validada: acaoValida,
-        valor_confirmacao: valorConfirmacao, // 🔹 Agora com o valor ajustado
-      });
+        valor_confirmacao: valorConfirmacao,
+      });      
 
       const savedAction = await newAction.save();
       usuario.historico_acoes.push(savedAction._id);
@@ -120,7 +79,7 @@ export default async function handler(req, res) {
       status: "sucesso",
       message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
       acaoValida: acaoValida,
-      valorConfirmacao, // 🔹 Agora o frontend pode ver o valor ajustado
+      valorConfirmacao,
       dados: confirmData
     });
 
