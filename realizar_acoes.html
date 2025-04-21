@@ -503,25 +503,25 @@
 
                     let currentUserId = null; // variável para armazenar o ID da conta
 
-                    try {
-                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                        const userInfo = await resUserInfo.json();
+try {
+    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+    const userInfo = await resUserInfo.json();
 
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            const profileImg = document.getElementById("profileImage");
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
+    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+        const profileImg = document.getElementById("profileImage");
+        profileImg.src = userInfo.data.user.avatarLarger;
+        profileImg.style.display = "block";
 
-                            // Armazena o unique_id e o id da conta TikTok
-                            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-                            currentUserId = userInfo.data.user.id; // ← salva o ID para usar depois
-                        } else {
-                            document.getElementById("profileImage").style.display = "none";
-                        }
-                    } catch (e) {
-                        console.error("Erro ao carregar avatar:", e);
-                        document.getElementById("profileImage").style.display = "none";
-                    }
+        // Armazena o unique_id e o id da conta TikTok
+        localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+        currentUserId = userInfo.data.user.id; // ← salva o ID para usar depois
+    } else {
+        document.getElementById("profileImage").style.display = "none";
+    }
+} catch (e) {
+    console.error("Erro ao carregar avatar:", e);
+    document.getElementById("profileImage").style.display = "none";
+}
 
                     const pontos = parseFloat(data.quantidade_pontos);
                     const valorBruto = pontos / 1000;
@@ -587,6 +587,16 @@
                 return;
             }
 
+            await registrarAcaoPendente({
+                nome_usuario: selectedAccount,
+                id_pedido: currentActionData.id_pedido,
+                id_conta: localStorage.getItem("id_conta"),
+                url_dir: currentActionData.url_dir,
+                tipo_acao: currentActionData.tipo_acao,
+                quantidade_pontos: Number(currentActionData.quantidade_pontos),
+                valor_confirmacao: parseFloat(confirmData.valor),
+            });
+
             const accountFound = true; // ou qualquer lógica para determinar isso
 
             await salvarAcaoNoBanco({
@@ -626,17 +636,17 @@
                 }
 
                 await salvarAcaoNoBanco({
-                    nome_usuario: currentActionData.nome_usuario,
-                    id_pedido: currentActionData.id_pedido,
-                    id_conta: currentUserId, // ← id correto da conta
-                    url_dir: currentActionData.url_dir,
-                    acao_validada: false,
-                    valor_confirmacao: 0,
-                    quantidade_pontos: currentActionData.quantidade_pontos,
-                    tipo_acao: currentActionData.tipo_acao
-                });
+    nome_usuario: currentActionData.nome_usuario,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: currentUserId, // ← id correto da conta
+    url_dir: currentActionData.url_dir,
+    acao_validada: false,
+    valor_confirmacao: 0,
+    quantidade_pontos: currentActionData.quantidade_pontos,
+    tipo_acao: currentActionData.tipo_acao
+});
 
-            }
+}
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             fetchAction();
         }
