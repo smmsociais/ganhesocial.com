@@ -74,14 +74,6 @@ export default async function handler(req, res) {
       console.error("Erro ao salvar no MongoDB:", error.message);
     }
 
-    return res.status(200).json({
-      status: "sucesso",
-      message: acaoValida ? "Ação confirmada e validada!" : "Ação confirmada, mas usuário não segue o perfil.",
-      acaoValida: acaoValida,
-      valorConfirmacao,
-      dados: confirmData
-    });
-
   } catch (error) {
     console.error("Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
