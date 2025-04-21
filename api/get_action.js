@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         }
 
         // 🔹 Chamar a API bind_tk para obter o ID da conta
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
         const id_conta = bindData.id_conta;
 
         // 🔹 Chamar a API get_action para buscar as ações disponíveis
-        const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
+        const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
         const actionResponse = await axios.get(getActionUrl);
         const actionData = actionResponse.data;
 
