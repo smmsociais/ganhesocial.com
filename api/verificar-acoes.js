@@ -2,18 +2,6 @@ import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
 
-  // Verificação do token
-  const authHeader = req.headers.authorization;
-  const SECRET = process.env.VERIFICAR_ACOES_SECRET;
-
-  if (authHeader !== `Bearer ${SECRET}`) {
-    return res.status(403).json({ error: "Não autorizado" });
-  }
-
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido. Use GET." });
-  }
-
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
@@ -36,7 +24,7 @@ async function connectToDatabase() {
 // Schema mínimo para validar ação
 const ActionSchema = z.object({
   _id: z.any(),
-  user: z.any(),                // pega o ObjectId do campo `user`
+  user: z.any(),
   nome_usuario: z.string().min(1),
   id_pedido: z.string().min(1),
   id_conta: z.string().min(1),
@@ -44,6 +32,7 @@ const ActionSchema = z.object({
   quantidade_pontos: z.number(),
   valor_confirmacao: z.union([z.string(), z.number()]),
   tipo_acao: z.string().min(1),
+  token: z.string().min(1)
 });
 
 export default async function handler(req, res) {
@@ -51,12 +40,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
+  // ✅ Verificação do token DENTRO da função
+  const authHeader = req.headers.authorization;
+  const SECRET = process.env.VERIFICAR_ACOES_SECRET;
+
+  if (authHeader !== `Bearer ${SECRET}`) {
+    return res.status(403).json({ error: "Não autorizado" });
+  }
+
   try {
     console.log("▶ verificar-acoes chamado em", new Date().toISOString());
 
     const db = await connectToDatabase();
     const colecao = db.collection("actionhistories");
-    const usuarios = db.collection("users");       // ajuste para a coleção correta
+    const usuarios = db.collection("users");
 
     const acoes = await colecao.find({ acao_validada: null })
       .sort({ data: 1 })
@@ -76,50 +73,43 @@ export default async function handler(req, res) {
         const valid = ActionSchema.parse(acao);
         console.log(`— Processando _id=${valid._id}, usuário='${valid.nome_usuario}'`);
 
-// ...dentro do for, ao invés de usar unique_id ou id_conta:
-let accountFound = false;
-try {
-  // idConta é o string(valid.id_conta)
-  const idConta = String(valid.id_conta).trim();
-  if (!/^\d+$/.test(idConta)) {
-    throw new Error(`id_conta inválido: ${idConta}`);
-  }
+        let accountFound = false;
+        try {
+          const idConta = String(valid.id_conta).trim();
+          if (!/^\d+$/.test(idConta)) {
+            throw new Error(`id_conta inválido: ${idConta}`);
+          }
 
-  // CHAMADA CORRETA à sua rota de user-following
-  const followingRes = await axios.get(
-    `${API_URL}/user-following?userId=${idConta}`,
-    {
-      headers: {
-        // usa o token que você salvou junto com a action no banco
-        Authorization: `Bearer ${valid.token}`
-      }
-    }
-  );
+          const followingRes = await axios.get(
+            `${API_URL}/user-following?userId=${idConta}`,
+            {
+              headers: {
+                Authorization: `Bearer ${valid.token}`
+              }
+            }
+          );
 
-  const followingData = followingRes.data;
-  if (followingData.code === 0 && Array.isArray(followingData.data?.followings)) {
-    const followings = followingData.data.followings;
-    // extrai o username alvo da URL (ex: /@foo → foo)
-    let targetUsername = valid.url_dir.toLowerCase();
-    const match = targetUsername.match(/@([\w_.]+)/);
-    targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
+          const followingData = followingRes.data;
+          if (followingData.code === 0 && Array.isArray(followingData.data?.followings)) {
+            const followings = followingData.data.followings;
+            let targetUsername = valid.url_dir.toLowerCase();
+            const match = targetUsername.match(/@([\w_.]+)/);
+            targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
 
-    accountFound = followings.some(f =>
-      f.unique_id?.toLowerCase() === targetUsername
-    );
-  }
-} catch (e) {
-  console.error("   ✗ Falha em /user-following:", e.message);
-  continue;
-}
+            accountFound = followings.some(f =>
+              f.unique_id?.toLowerCase() === targetUsername
+            );
+          }
+        } catch (e) {
+          console.error("   ✗ Falha em /user-following:", e.message);
+          continue;
+        }
 
-        // 2. Atualiza acao_validada
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
           { $set: { acao_validada: accountFound, verificada_em: new Date() } }
         );
 
-        // 3. Se validada, soma ao saldo do usuário
         if (accountFound) {
           const valor = parseFloat(valid.valor_confirmacao);
           if (!isNaN(valor) && valor > 0) {
@@ -129,10 +119,7 @@ try {
             );
             console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
           } else {
-            console.warn(
-              `   ⚠ valor_confirmacao inválido para ação ${valid._id}:`,
-              valid.valor_confirmacao
-            );
+            console.warn(`   ⚠ valor_confirmacao inválido para ação ${valid._id}:`, valid.valor_confirmacao);
           }
         }
 
