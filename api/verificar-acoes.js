@@ -42,6 +42,7 @@ export default async function handler(req, res) {
 
   // ✅ Verificação do token DENTRO da função
 const authHeader = req.headers['authorization'];
+  console.log("🧾 Todos os headers recebidos:", req.headers);
   const SECRET = process.env.VERIFICAR_ACOES_SECRET;
 
   if (authHeader !== `Bearer ${SECRET}`) {
