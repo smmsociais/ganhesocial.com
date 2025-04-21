@@ -24,9 +24,9 @@ export default async function handler(req, res) {
 
         const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
         const actionResponse = await axios.get(getActionUrl);
-        const actionData = actionResponse.data;
+        const data = actionResponse.data;
 
-        if (actionData.status === "CONTA_INEXISTENTE") {
+        if (data.status === "CONTA_INEXISTENTE") {
             return res.status(200).json({
                 status: "fail",
                 id_tiktok,
@@ -34,15 +34,22 @@ export default async function handler(req, res) {
             });
         }
 
-        if (actionData.status === "ENCONTRADA") {
+        if (data.status === "ENCONTRADA") {
+            const pontos = parseFloat(data.quantidade_pontos);
+            const valorBruto = pontos / 1000;
+            const valorDescontado = (valorBruto > 0.004)
+                ? valorBruto - 0.001
+                : valorBruto;
+            const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
             return res.status(200).json({
                 status: "sucess",
                 id_tiktok,
-                url: actionData.url_dir,
-                id_perfil: actionData.id_alvo,
-                nome_usuario: actionData.nome_usuario,
-                tipo_acao: actionData.tipo_acao,
-                valor: actionData.quantidade_pontos
+                url: data.url_dir,
+                id_perfil: data.id_alvo,
+                nome_usuario: data.nome_usuario,
+                tipo_acao: data.tipo_acao,
+                valor: valorFinal
             });
         }
 
