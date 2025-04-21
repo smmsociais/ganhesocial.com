@@ -1,10 +1,26 @@
 import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
+import jwt from 'jsonwebtoken'; 
 
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
+
+const vercelJwt = req.headers['x-vercel-oidc-token'];
+
+  if (!vercelJwt) {
+    return res.status(403).json({ error: 'Authorization token missing' });
+  }
+
+  try {
+    // Decodificando o token para verificar a autenticidade
+    const decoded = jwt.decode(vercelJwt);
+
+    // Verificando se o token é válido (opcional, dependendo das verificações que deseja)
+    if (!decoded || decoded.aud !== 'https://vercel.com' || decoded.iss !== 'https://vercel.com') {
+      throw new Error('Invalid token');
+    }
 
 let cachedClient = null;
 let cachedDb = null;
@@ -38,15 +54,6 @@ const ActionSchema = z.object({
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
-  }
-
-  // ✅ Verificação do token DENTRO da função
-const authHeader = req.headers['authorization'];
-  console.log("🧾 Todos os headers recebidos:", req.headers);
-  const SECRET = process.env.VERIFICAR_ACOES_SECRET;
-
-  if (authHeader !== `Bearer ${SECRET}`) {
-    return res.status(403).json({ error: "Não autorizado" });
   }
 
   try {
