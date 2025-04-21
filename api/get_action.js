@@ -26,7 +26,6 @@ export default async function handler(req, res) {
         const actionResponse = await axios.get(getActionUrl);
         const actionData = actionResponse.data;
 
-        // 🔸 Verifica se a conta não existe
         if (actionData.status === "CONTA_INEXISTENTE") {
             return res.status(200).json({
                 status: "fail",
@@ -35,12 +34,19 @@ export default async function handler(req, res) {
             });
         }
 
-        // 🔹 Retornar ações normalmente
-        return res.status(200).json({
-            message: "Ações obtidas com sucesso!",
-            id_tiktok,
-            acoes: actionData
-        });
+        if (actionData.status === "ENCONTRADA") {
+            return res.status(200).json({
+                status: "sucess",
+                id_tiktok,
+                url: actionData.url_dir,
+                id_perfil: actionData.id_alvo,
+                nome_usuario: actionData.nome_usuario,
+                tipo_acao: actionData.tipo_acao,
+                valor: actionData.quantidade_pontos
+            });
+        }
+
+        return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
 
     } catch (error) {
         console.error("Erro ao processar requisição:", error);
