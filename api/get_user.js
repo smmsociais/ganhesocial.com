@@ -32,11 +32,29 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
     }
 
-    // 🔹 Caso seja um usuário inválido (WRONG_USER), apenas retorne status success
+    // 🔹 Tratar caso específico de WRONG_USER
     if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+      const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
+      const novaConta = {
+        nomeConta: nome_usuario,
+        id_conta: null,
+        id_tiktok: null,
+        s: null,
+        status: "Pendente",
+      };
+
+      if (contaIndex !== -1) {
+        usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
+      } else {
+        usuario.contas.push(novaConta);
+      }
+
+      await usuario.save();
+
       return res.status(200).json({ status: "success" });
     }
 
+    // 🔹 Tratar caso geral: sucesso ou ausência de id_conta
     const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
     const novaConta = {
       nomeConta: nome_usuario,
