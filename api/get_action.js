@@ -11,10 +11,10 @@ export default async function handler(req, res) {
     await connectDB();
 
     // Obter parâmetros da query
-    const { token, nome_usuario } = req.query;
+    const { token, id_tiktok } = req.query;
 
     if (!token || !nome_usuario) {
-        return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
+        return res.status(400).json({ error: "Os parâmetros 'token' e 'id_tiktok' são obrigatórios." });
     }
 
     try {
