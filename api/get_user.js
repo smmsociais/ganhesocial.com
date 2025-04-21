@@ -37,10 +37,7 @@ export default async function handler(req, res) {
       const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
       const novaConta = {
         nomeConta: nome_usuario,
-        id_conta: null,
         id_tiktok: null,
-        s: null,
-        status: "Pendente",
       };
 
       if (contaIndex !== -1) {
@@ -58,10 +55,7 @@ export default async function handler(req, res) {
     const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
     const novaConta = {
       nomeConta: nome_usuario,
-      id_conta: bindData.id_conta || null,
       id_tiktok: bindData.id_tiktok || null,
-      s: bindData.s || null,
-      status: bindData.id_conta ? "Vinculada" : "Pendente",
     };
 
     if (contaIndex !== -1) {
