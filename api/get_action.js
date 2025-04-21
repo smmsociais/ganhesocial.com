@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         // Retornar as ações obtidas
         return res.status(200).json({
             message: "Ações obtidas com sucesso!",
-            id_conta,
+            id_tiktok,
             acoes: actionData
         });
 
