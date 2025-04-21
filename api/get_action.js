@@ -42,10 +42,17 @@ export default async function handler(req, res) {
                 : valorBruto;
             const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
+            // Subtrai 1 de cada dígito do id_pedido (exceto 0)
+            const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
+            const idPedidoModificado = idPedidoOriginal
+                .split('')
+                .map(digito => digito === '0' ? '0' : String(Number(digito) - 1))
+                .join('');
+
             return res.status(200).json({
                 status: "sucess",
                 id_tiktok,
-                id_pedido: data.id_pedido, // ✅ adicionado aqui
+                id_pedido: idPedidoModificado,
                 url: data.url_dir,
                 id_perfil: data.id_alvo,
                 nome_usuario: data.nome_usuario,
