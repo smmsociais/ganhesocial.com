@@ -60,7 +60,6 @@ export default async function handler(req, res) {
     try {
       const newAction = new ActionHistory({
         token,
-        nome_usuario,
         id_action: String(idPedidoOriginal), // salva o original
         acao_validada: acaoValida,
         valor_confirmacao: valorConfirmacao,
