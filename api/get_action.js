@@ -25,17 +25,6 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        // 🔹 Chamar a API bind_tk para obter o ID da conta
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${id_tiktok}`;
-        const bindResponse = await axios.get(bindTkUrl);
-        const bindData = bindResponse.data;
-
-        if (bindData.status !== "success" || !bindData.id_tiktok) {
-            return res.status(400).json({ error: "Erro ao obter ID da conta." });
-        }
-
-        const id_tiktok = bindData.id_tiktok;
-
         // 🔹 Chamar a API get_action para buscar as ações disponíveis
         const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
         const actionResponse = await axios.get(getActionUrl);
