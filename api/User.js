@@ -3,9 +3,7 @@ import mongoose from "mongoose";
 // 🔹 Schema para Contas Vinculadas
 const ContaSchema = new mongoose.Schema({
   nomeConta: { type: String, required: true },
-  id_conta: { type: String }, // já é opcional por padrão
   id_tiktok: { type: String },
-  s: { type: String }
 });
 
 // 🔹 Schema para Histórico de Ações
