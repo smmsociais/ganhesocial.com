@@ -49,16 +49,16 @@ export default async function handler(req, res) {
                 .map(digito => digito === '0' ? '0' : String(Number(digito) - 1))
                 .join('');
 
-            return res.status(200).json({
-                status: "sucess",
-                id_tiktok,
-                id_pedido: idPedidoModificado,
-                url: data.url_dir,
-                id_perfil: data.id_alvo,
-                nome_usuario: data.nome_usuario,
-                tipo_acao: data.tipo_acao,
-                valor: valorFinal
-            });
+return res.status(200).json({
+    status: "sucess",
+    id_tiktok,
+    id_action: idPedidoModificado,  // <- novo nome aqui
+    url: data.url_dir,
+    id_perfil: data.id_alvo,
+    nome_usuario: data.nome_usuario,
+    tipo_acao: data.tipo_acao,
+    valor: valorFinal
+});
         }
 
         return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
