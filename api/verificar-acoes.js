@@ -42,6 +42,7 @@ export default async function handler(req, res) {
   }
 
   const vercelJwt = req.headers['x-vercel-oidc-token'];
+  console.log("Token JWT:", vercelJwt); // Depuração
 
   if (!vercelJwt) {
     return res.status(403).json({ error: 'Authorization token missing' });
@@ -50,9 +51,11 @@ export default async function handler(req, res) {
   try {
     // Decodificando o token para verificar a autenticidade
     const decoded = jwt.decode(vercelJwt);
+    console.log("Token Decodificado:", decoded); // Depuração
 
     // Verificando se o token é válido (opcional, dependendo das verificações que deseja)
     if (!decoded || decoded.aud !== 'https://vercel.com' || decoded.iss !== 'https://vercel.com') {
+      console.log("Token inválido:", decoded); // Depuração
       throw new Error('Invalid token');
     }
 
