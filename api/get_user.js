@@ -32,12 +32,14 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
     }
 
-    // 🔹 Tratar caso específico de WRONG_USER
+    const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
+
+    // Caso: WRONG_USER
     if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-      const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
       const novaConta = {
         nomeConta: nome_usuario,
         id_tiktok: null,
+        status: "Pendente",
       };
 
       if (contaIndex !== -1) {
@@ -47,15 +49,14 @@ export default async function handler(req, res) {
       }
 
       await usuario.save();
-
       return res.status(200).json({ status: "success" });
     }
 
-    // 🔹 Tratar caso geral: sucesso ou ausência de id_conta
-    const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
+    // Caso sucesso
     const novaConta = {
       nomeConta: nome_usuario,
       id_tiktok: bindData.id_tiktok || null,
+      status: bindData.id_tiktok ? "Vinculada" : "Pendente",
     };
 
     if (contaIndex !== -1) {
@@ -66,7 +67,10 @@ export default async function handler(req, res) {
 
     await usuario.save();
 
-    return res.status(200).json(bindData);
+    return res.status(200).json({
+      status: "success",
+      ...(bindData.id_tiktok && { id_tiktok: bindData.id_tiktok })
+    });
 
   } catch (error) {
     console.error("Erro ao processar requisição:", error.response?.data || error.message);
