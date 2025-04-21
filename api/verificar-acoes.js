@@ -2,7 +2,6 @@ import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
 
-export default async function handler(req, res) {
   // Verificação do token
   const authHeader = req.headers.authorization;
   const SECRET = process.env.VERIFICAR_ACOES_SECRET;
