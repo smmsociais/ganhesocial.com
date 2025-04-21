@@ -20,9 +20,9 @@ export default async function handler(req, res) {
 
   await connectDB();
 
-  const { token, nome_usuario, id_action, id_tiktok } = req.body;
+  const { token, id_action, id_tiktok } = req.body;
 
-  if (!token || !nome_usuario || !id_action || !id_tiktok) {
+  if (!token|| !id_action || !id_tiktok) {
     return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
   }
 
