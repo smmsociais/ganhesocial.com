@@ -2,6 +2,19 @@ import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
 
+export default async function handler(req, res) {
+  // Verificação do token
+  const authHeader = req.headers.authorization;
+  const SECRET = process.env.VERIFICAR_ACOES_SECRET;
+
+  if (authHeader !== `Bearer ${SECRET}`) {
+    return res.status(403).json({ error: "Não autorizado" });
+  }
+
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido. Use GET." });
+  }
+
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
 const API_URL = "https://ganhesocial.com/api";
