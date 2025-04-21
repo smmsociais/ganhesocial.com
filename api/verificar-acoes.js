@@ -54,10 +54,10 @@ export default async function handler(req, res) {
     console.log("Token Decodificado:", decoded); // Depuração
 
     // Verificando se o token é válido (opcional, dependendo das verificações que deseja)
-    if (!decoded || decoded.aud !== 'https://vercel.com' || decoded.iss !== 'https://vercel.com') {
-      console.log("Token inválido:", decoded); // Depuração
-      throw new Error('Invalid token');
-    }
+if (!decoded || decoded.aud !== 'https://vercel.com/ganhesocialcom' || decoded.iss !== 'https://oidc.vercel.com/ganhesocialcom') {
+  console.log("Token inválido:", decoded); // Depuração
+  throw new Error('Invalid token');
+}
 
     console.log("▶ verificar-acoes chamado em", new Date().toISOString());
 
