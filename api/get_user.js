@@ -32,7 +32,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
     }
 
-    // 🔹 Se id_conta estiver ausente, vincular mesmo assim com status "Pendente"
+    // 🔹 Caso seja um usuário inválido (WRONG_USER), apenas retorne status success
+    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+      return res.status(200).json({ status: "success" });
+    }
+
     const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
     const novaConta = {
       nomeConta: nome_usuario,
@@ -43,16 +47,13 @@ export default async function handler(req, res) {
     };
 
     if (contaIndex !== -1) {
-      // Atualiza a conta existente
       usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
     } else {
-      // Adiciona nova conta
       usuario.contas.push(novaConta);
     }
 
     await usuario.save();
 
-    // 🔹 Sempre retorna o bindData completo
     return res.status(200).json(bindData);
 
   } catch (error) {
