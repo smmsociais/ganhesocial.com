@@ -56,22 +56,13 @@ export default async function handler(req, res) {
       console.error("Erro ao confirmar ação:", error.response?.data || error.message);
     }
 
-    // 🔹 Salvar ação no MongoDB
-    try {
-      const newAction = new ActionHistory({
-        token,
-        id_action: String(idPedidoOriginal), // salva o original
-        valor_confirmacao: valorConfirmacao,
-      });      
+
 
       const savedAction = await newAction.save();
       usuario.historico_acoes.push(savedAction._id);
       await usuario.save();
 
-      console.log("Histórico de ação salvo no MongoDB!");
-    } catch (error) {
-      console.error("Erro ao salvar no MongoDB:", error.message);
-    }
+
 
   } catch (error) {
     console.error("Erro ao processar requisição:", error.message);
