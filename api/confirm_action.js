@@ -56,14 +56,6 @@ export default async function handler(req, res) {
       console.error("Erro ao confirmar ação:", error.response?.data || error.message);
     }
 
-
-
-      const savedAction = await newAction.save();
-      usuario.historico_acoes.push(savedAction._id);
-      await usuario.save();
-
-
-
   } catch (error) {
     console.error("Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
