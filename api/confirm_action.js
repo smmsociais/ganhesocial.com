@@ -3,6 +3,7 @@ import connectDB from "./db.js";
 import { User } from "./User.js";
 import { ActionHistory } from "./User.js";
 
+// Função para reverter a ofuscação do id_action
 function reverterIdAction(idAction) {
   return idAction
     .split('')
@@ -23,18 +24,21 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Verifica o usuário com o token fornecido
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // 🔹 Preparar payload para API externa
+    // 🔹 Reverter o id_action para id_pedido
     const idPedidoOriginal = reverterIdAction(id_action);
+
+    // 🔹 Preparar payload para API externa com id_pedido revertido
     const payload = {
       token: "a03f2bba-55a0-49c5-b4e1-28a6d1ae0876",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
       id_conta: id_tiktok,
-      id_pedido: idPedidoOriginal,
+      id_pedido: idPedidoOriginal,  // Usando o id_pedido original
       is_tiktok: "1"
     };
 
@@ -50,33 +54,32 @@ export default async function handler(req, res) {
       console.log("Resposta da API confirmar ação:", confirmData);
     } catch (err) {
       console.error("Erro ao confirmar ação (externa):", err.response?.data || err.message);
-      // Podemos escolher falhar logo aqui ou prosseguir com dados vazios
       return res.status(502).json({ error: "Falha na confirmação externa." });
     }
 
-    // 🔹 Salvar histórico
+    // 🔹 Salvar histórico da ação
     const acaoValida = confirmData.status === "success";
     const valorConfirmacao = parseFloat(confirmData.valor || 0);
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.nome,
-      tipo_acao: confirmData.tipo_acao || 'seguir', // exemplo
-      quantidade_pontos: parseFloat(confirmData.valor || 0), // ou ajuste conforme lógica do seu sistema
-      url_dir: confirmData.url || '', // se vier da API externa
+      tipo_acao: confirmData.tipo_acao || 'seguir',  // exemplo
+      quantidade_pontos: valorConfirmacao,  // ou ajuste conforme lógica do seu sistema
+      url_dir: confirmData.url || '',
       id_conta: id_tiktok,
-      id_pedido: idPedidoOriginal,
+      id_pedido: idPedidoOriginal,  // Usando o id_pedido original
       user: usuario._id,
-      acao_validada: confirmData.status === 'success',
-      valor_confirmacao: parseFloat(confirmData.valor || 0),
+      acao_validada: acaoValida,
+      valor_confirmacao: valorConfirmacao,
       data: new Date()
     });
-    
+
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
     await usuario.save();
 
-    // 🔹 **Resposta final para o cliente**!
+    // 🔹 Resposta final para o cliente
     return res.status(200).json({
       status: "sucesso",
       message: acaoValida
