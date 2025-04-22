@@ -20,8 +20,8 @@ export default async function handler(req, res) {
 
   await connectDB();
 
-  const { token, id_action, id_tiktok, nome_usuario } = req.body;
-  if (!token || !id_action || !id_tiktok || !nome_usuario) {
+  const { token, id_action, id_tiktok } = req.body;
+  if (!token || !id_action || !id_tiktok) {
     return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
   }
 
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
 
     const newAction = new ActionHistory({
       token,
-      nome_usuario,
+      nome_usuario: usuario.nome,
       tipo_acao: confirmData.tipo_acao || 'Seguir', // exemplo
       quantidade_pontos: parseFloat(confirmData.valor || 0), // ou ajuste conforme lógica do seu sistema
       url_dir: confirmData.url || '', // se vier da API externa
