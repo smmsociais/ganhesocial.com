@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     // 🔹 Preparar payload para API externa
     const idPedidoOriginal = reverterIdAction(id_action);
     const payload = {
-      token: "a03f2bba-55a0-49c5-b4e1-28a6d1ae0876",
+      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
