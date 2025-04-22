@@ -6,7 +6,7 @@ import { ActionHistory } from "./User.js";
 function reverterIdAction(idAction) {
   return idAction
     .split('')
-    .map(char => char === '0' ? '0' : String(parseInt(char) + 1))
+    .map(char => String(parseInt(char) + 1))
     .join('');
 }
 
