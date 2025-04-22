@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=a03f2bba-55a0-49c5-b4e1-28a6d1ae0876&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
+        const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
         const actionResponse = await axios.get(getActionUrl);
         const data = actionResponse.data;
 
