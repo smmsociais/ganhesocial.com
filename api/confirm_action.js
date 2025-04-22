@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
       quantidade_pontos: valorConfirmacao,
-      url_dir: redisData?.url || '',
+      url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
