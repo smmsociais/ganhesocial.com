@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     // 🔹 Preparar payload para API externa
     const idPedidoOriginal = reverterIdAction(id_action);
     const payload = {
-      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+      token: "a03f2bba-55a0-49c5-b4e1-28a6d1ae0876",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
@@ -67,17 +67,17 @@ export default async function handler(req, res) {
 
     const newAction = new ActionHistory({
       token,
-      nome_usuario: usuario.nome,
-      tipo_acao: confirmData.tipo_acao || 'seguir', // exemplo
-      quantidade_pontos: parseFloat(confirmData.valor || 0), // ou ajuste conforme lógica do seu sistema
-      url_dir: confirmData.url || '', // se vier da API externa
+      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
+      tipo_acao: confirmData.tipo_acao || 'Seguir',
+      quantidade_pontos: parseFloat(confirmData.valor || 0),
+      url_dir: confirmData.url || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: confirmData.status === 'success',
       valor_confirmacao: parseFloat(confirmData.valor || 0),
       data: new Date()
-    });
+    });      
     
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
