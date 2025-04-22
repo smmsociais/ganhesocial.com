@@ -8,8 +8,8 @@ function reverterIdAction(idAction) {
   return idAction
     .split('')
     .map(c => {
-      if (c === 'a') return '0';                
-      return String(Number(c) + 1);             
+      if (c === 'a') return '0';
+      return String(Number(c) + 1);
     })
     .join('');
 }
@@ -35,15 +35,24 @@ export default async function handler(req, res) {
     // 🔄 Reverter ID da ação para obter o ID original
     const idPedidoOriginal = reverterIdAction(id_action);
 
-// 🔐 Recuperar dados do Redis
-let redisData = null;
-try {
-  const cache = await redis.get(`action:${id_tiktok}`);
-  console.log("📦 Conteúdo bruto do Redis:", cache);  // <-- Aqui está o novo log
-  redisData = cache ? JSON.parse(cache) : null;
-} catch (redisErr) {
-  console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
-}
+    // 🔐 Recuperar dados do Redis
+    let redisData = null;
+    try {
+      const cache = await redis.get(`action:${id_tiktok}`);
+      console.log("📦 Conteúdo bruto do Redis:", cache);
+      if (cache) {
+        try {
+          redisData = JSON.parse(cache);
+          console.log("📦 Dados do Redis parseados com sucesso:", redisData);
+        } catch (parseErr) {
+          console.error("❌ Erro ao fazer JSON.parse dos dados do Redis:", parseErr);
+        }
+      } else {
+        console.log("ℹ️ Nenhum dado encontrado no Redis para essa chave.");
+      }
+    } catch (redisErr) {
+      console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
+    }
 
     // 🔹 Preparar payload para API externa
     const payload = {
@@ -88,7 +97,7 @@ try {
       acao_validada: null,
       valor_confirmacao: valorConfirmacao,
       data: new Date()
-    });    
+    });
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
