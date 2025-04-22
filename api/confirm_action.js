@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || 'Seguir',
       quantidade_pontos: parseFloat(confirmData.valor || 0),
-      url_dir: confirmData.url || '',
+      url_dir: url || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
