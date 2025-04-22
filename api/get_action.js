@@ -55,18 +55,20 @@ export default async function handler(req, res) {
 
             try {
                 // 🔐 Guardar no Redis por 5 minutos (TTL = 300s)
-                await redis.setex(
-                    `action:${id_tiktok}`,
-                    300,
-                    JSON.stringify({
-                        url: data.url_dir,
-                        nome_usuario: data.nome_usuario,
-                        tipo_acao: data.tipo_acao,
-                        valor: valorFinal,
-                        id_perfil: data.id_alvo,
-                        id_pedido: data.id_pedido
-                    })
-                );
+// em vez de redis.setex(...)
+await redis.set(
+  `action:${id_tiktok}`,
+  JSON.stringify({
+    url: data.url_dir,
+    nome_usuario: data.nome_usuario,
+    tipo_acao: data.tipo_acao,
+    valor: valorFinal,
+    id_perfil: data.id_alvo,
+    id_pedido: data.id_pedido
+  }),
+  { ex: 300 } // expira em 300 segundos
+);
+
 
                 console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
 
