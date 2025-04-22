@@ -8,19 +8,19 @@ const ContaSchema = new mongoose.Schema({
 
 // 🔹 Schema para Histórico de Ações
 const ActionHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  token: { type: String, required: true },
-  nome_usuario: { type: String, required: true },
-  id_pedido: { type: String, required: true },
-  id_conta: { type: String, required: true },
-  url_dir: { type: String, required: true },
-  acao_validada: { type: Boolean, default: null }, // valor inicial pode ser null (pendente)
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // removido required
+  token: { type: String },                                     // removido required
+  nome_usuario: { type: String },                              // removido required
+  id_pedido: { type: String },                                 // removido required
+  id_conta: { type: String },                                  // removido required
+  url_dir: { type: String },                                   // ✅ agora é opcional
+  acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
-  quantidade_pontos: { type: Number, required: true },
-  tipo_acao: { type: String, required: true },
+  quantidade_pontos: { type: Number },                         // removido required
+  tipo_acao: { type: String },                                 // removido required
   data: { type: Date, default: Date.now },
-  rede_social: { type: String, default: "TikTok" }, // compatível com seu frontend
-  tipo: { type: String, default: "Seguir" }          // idem
+  rede_social: { type: String, default: "TikTok" },
+  tipo: { type: String, default: "Seguir" }
 });
 
 // 🔹 Schema para Histórico de Saques
