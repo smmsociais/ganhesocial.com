@@ -53,21 +53,27 @@ export default async function handler(req, res) {
                 .map(d => d === '0' ? 'a' : String(Number(d) - 1))
                 .join('');
 
-            // 🔐 Guardar no Redis por 5 minutos (TTL = 300s)
-            await redis.setex(
-                `action:${id_tiktok}`,
-                300,
-                JSON.stringify({
-                    url: data.url_dir,
-                    nome_usuario: data.nome_usuario,
-                    tipo_acao: data.tipo_acao,
-                    valor: valorFinal,
-                    id_perfil: data.id_alvo,
-                    id_pedido: data.id_pedido
-                })
-            );
+            try {
+                // 🔐 Guardar no Redis por 5 minutos (TTL = 300s)
+                await redis.setex(
+                    `action:${id_tiktok}`,
+                    300,
+                    JSON.stringify({
+                        url: data.url_dir,
+                        nome_usuario: data.nome_usuario,
+                        tipo_acao: data.tipo_acao,
+                        valor: valorFinal,
+                        id_perfil: data.id_alvo,
+                        id_pedido: data.id_pedido
+                    })
+                );
 
-            console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
+                console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
+
+            } catch (error) {
+                console.error("💥 Erro ao salvar no Redis:", error);
+                return res.status(500).json({ error: "Erro ao salvar dados no Redis." });
+            }
 
             return res.status(200).json({
                 status: "sucess",
