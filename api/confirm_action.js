@@ -6,7 +6,10 @@ import { ActionHistory } from "./User.js";
 function reverterIdAction(idAction) {
   return idAction
     .split('')
-    .map(char => char === '0' ? '0' : String(Number(char) + 1))
+    .map(c => {
+      if (c === 'a') return '0';                // volta o zero original
+      return String(Number(c) + 1);             // soma 1 nos dígitos 0–8
+    })
     .join('');
 }
 
