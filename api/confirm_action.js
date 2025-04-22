@@ -2,7 +2,7 @@ import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
 import { ActionHistory } from "./User.js";
-import redis from "./redis.js"; // ⬅️ Importa o Redis
+import redis from "./redis.js";
 
 function reverterIdAction(idAction) {
   return idAction
@@ -80,14 +80,14 @@ export default async function handler(req, res) {
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
       quantidade_pontos: valorConfirmacao,
-      url_dir: redisData?.url_dir || '',
+      url_dir: redisData?.url || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
       valor_confirmacao: valorConfirmacao,
       data: new Date()
-    });
+    });    
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
