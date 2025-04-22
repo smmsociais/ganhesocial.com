@@ -67,17 +67,17 @@ export default async function handler(req, res) {
 
     const newAction = new ActionHistory({
       token,
-      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-      tipo_acao: confirmData.tipo_acao || 'Seguir',
-      quantidade_pontos: parseFloat(confirmData.valor || 0),
-      url_dir: confirmData.url || '',
+      nome_usuario: nome_usuario,
+      tipo_acao: confirmData.tipo_acao || 'seguir', // exemplo
+      quantidade_pontos: parseFloat(confirmData.valor || 0), // ou ajuste conforme lógica do seu sistema
+      url_dir: confirmData.url || '', // se vier da API externa
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: confirmData.status === 'success',
       valor_confirmacao: parseFloat(confirmData.valor || 0),
       data: new Date()
-    });      
+    });
     
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
