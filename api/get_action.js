@@ -47,10 +47,15 @@ export default async function handler(req, res) {
             const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
             const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
-            const idPedidoModificado = idPedidoOriginal
-                .split('')
-                .map(digito => digito === '0' ? '0' : String(Number(digito) - 1))
-                .join('');
+
+const idPedidoModificado = idPedidoOriginal
+  .split('')
+  .map(d => {
+    if (d === '0')       return 'a';            // placeholder para “zero original”
+    return String(Number(d) - 1);               // subtrai 1 dos dígitos 1–9
+  })
+  .join('');
+
 
             // 🧩 Logs importantes para depuração:
             console.log("✅ ID Pedido Original:", idPedidoOriginal);
