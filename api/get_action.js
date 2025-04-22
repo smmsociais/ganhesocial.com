@@ -61,14 +61,14 @@ export default async function handler(req, res) {
 await redis.set(
   `action:${id_tiktok}`,
   JSON.stringify({
-    url: data.url_dir,
+    url_dir: data.url_dir,
     nome_usuario: data.nome_usuario,
-    tipo_acao: data.tipo_acao,
-    valor: valorFinal,
-    id_perfil: data.id_alvo,
-    id_pedido: data.id_pedido
+    tipo_acao:   data.tipo_acao,
+    valor:       valorFinal,
+    id_perfil:   data.id_alvo,
+    id_pedido:   data.id_pedido
   }),
-  { ex: 300 } // expira em 300 segundos
+  { ex: 300 }
 );
 console.log("🔍 URL recebida da API externa:", data.url_dir);
 
