@@ -67,7 +67,7 @@ export default async function handler(req, res) {
 
     const newAction = new ActionHistory({
       token,
-      nome_usuario: usuario.nome,
+      nome_usuario: nome_usuario,
       tipo_acao: confirmData.tipo_acao || 'seguir', // exemplo
       quantidade_pontos: parseFloat(confirmData.valor || 0), // ou ajuste conforme lógica do seu sistema
       url_dir: confirmData.url || '', // se vier da API externa
