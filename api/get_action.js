@@ -10,6 +10,8 @@ export default async function handler(req, res) {
 
     await connectDB();
 
+ 
+    
     const { token, id_tiktok } = req.query;
 
     if (!token || !id_tiktok) {
@@ -88,6 +90,10 @@ await redis.set(
                 valor: valorFinal
             });
         }
+
+console.log("🔑 Redis URL:", process.env.UPSTASH_REDIS_REST_URL);
+console.log("🔑 Redis TOKEN:", process.env.UPSTASH_REDIS_REST_TOKEN?.slice(0, 8) + "...");
+
 
         console.log("⚠️ Nenhuma ação disponível no momento.");
         return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
