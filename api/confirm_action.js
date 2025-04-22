@@ -2,7 +2,7 @@ import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
 import { ActionHistory } from "./User.js";
-import redis from "./redis.js";
+import redis from "./redis.js"; // ⬅️ Importa o Redis
 
 function reverterIdAction(idAction) {
   return idAction
@@ -35,14 +35,15 @@ export default async function handler(req, res) {
     // 🔄 Reverter ID da ação para obter o ID original
     const idPedidoOriginal = reverterIdAction(id_action);
 
-    // 🔐 Recuperar dados do Redis
-    let redisData = null;
-    try {
-      const cache = await redis.get(`action:${id_tiktok}`);
-      redisData = cache ? JSON.parse(cache) : null;
-    } catch (redisErr) {
-      console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
-    }
+// 🔐 Recuperar dados do Redis
+let redisData = null;
+try {
+  const cache = await redis.get(`action:${id_tiktok}`);
+  console.log("📦 Conteúdo bruto do Redis:", cache);  // <-- Aqui está o novo log
+  redisData = cache ? JSON.parse(cache) : null;
+} catch (redisErr) {
+  console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
+}
 
     // 🔹 Preparar payload para API externa
     const payload = {
