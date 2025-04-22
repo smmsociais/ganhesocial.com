@@ -1,6 +1,7 @@
 import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
+import redis from "./redis.js";
 
 export default async function handler(req, res) {
     if (req.method !== "GET") {
@@ -47,21 +48,26 @@ export default async function handler(req, res) {
             const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
             const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
+            const idPedidoModificado = idPedidoOriginal
+                .split('')
+                .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+                .join('');
 
-const idPedidoModificado = idPedidoOriginal
-  .split('')
-  .map(d => {
-    if (d === '0')       return 'a';            // placeholder para “zero original”
-    return String(Number(d) - 1);               // subtrai 1 dos dígitos 1–9
-  })
-  .join('');
+            // 🔐 Guardar no Redis por 5 minutos (TTL = 300s)
+            await redis.setex(
+                `action:${id_tiktok}`,
+                300,
+                JSON.stringify({
+                    url: data.url_dir,
+                    nome_usuario: data.nome_usuario,
+                    tipo_acao: data.tipo_acao,
+                    valor: valorFinal,
+                    id_perfil: data.id_alvo,
+                    id_pedido: data.id_pedido
+                })
+            );
 
-
-            // 🧩 Logs importantes para depuração:
-            console.log("✅ ID Pedido Original:", idPedidoOriginal);
-            console.log("🔐 ID Pedido Ofuscado para o frontend:", idPedidoModificado);
-            console.log("👤 Nome do usuário da ação:", data.nome_usuario);
-            console.log("🎯 ID do perfil alvo:", data.id_alvo);
+            console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
 
             return res.status(200).json({
                 status: "sucess",
