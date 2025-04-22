@@ -1,10 +1,9 @@
 import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
-import { createClient } from 'redis';
+import { Redis } from '@upstash/redis';
 
-const redis = createClient({ url: process.env.REDIS_URL });
-await redis.connect();
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
     if (req.method !== "GET") {
