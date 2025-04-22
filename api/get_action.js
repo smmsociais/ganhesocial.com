@@ -70,6 +70,7 @@ await redis.set(
   }),
   { ex: 300 } // expira em 300 segundos
 );
+console.log("🔍 URL recebida da API externa:", data.url_dir);
 
 
                 console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
