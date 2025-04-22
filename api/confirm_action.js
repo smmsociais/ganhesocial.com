@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
-      acao_validada: confirmData.status === 'success',
+      acao_validada: null,
       valor_confirmacao: parseFloat(confirmData.valor || 0),
       data: new Date()
     });    
