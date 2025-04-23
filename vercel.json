@@ -16,16 +16,12 @@
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
     { "source": "/api/confirmar_acao", "destination": "/api/handler.js" },
+    { "source": "/api/get_user", "destination": "/api/handler.js" },
+    { "source": "/api/get_action", "destination": "/api/handler.js" },
+    { "source": "/api/confirm_action", "destination": "/api/handler.js" },
     { "source": "/api/contas", "destination": "/api/handler.js" },
-    { "source": "/api/realizar_acoes", "destination": "/api/handler.js" },
-    { "source": "/api/adicionar_conta", "destination": "/api/handler.js" },
-    { "source": "/api/gerenciar_contas", "destination": "/api/handler.js" },
-    { "source": "/api/historico_acoes", "destination": "/api/handler.js" },
+    { "source": "/api/get_saldo", "destination": "/api/handler.js" },
     { "source": "/api/withdraw", "destination": "/api/handler.js" },
-    { "source": "/api/verificar-acoes", "destination": "/api/handler.js" },
-    { "source": "/api/user-info", "destination": "/api/handler.js" },
-    { "source": "/api/user-following", "destination": "/api/handler.js" },
-    { "source": "/api/login", "destination": "/api/handler.js" },
-    { "source": "/api/signup", "destination": "/api/handler.js" }
+    { "source": "/api/historico_acoes", "destination": "/api/handler.js" }
   ]
 }
