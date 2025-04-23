@@ -8,8 +8,8 @@ function reverterIdAction(idAction) {
   return idAction
     .split('')
     .map(c => {
-      if (c === 'a') return '0';
-      return String(Number(c) + 1);
+      if (c === 'a') return '0';                
+      return String(Number(c) + 1);             
     })
     .join('');
 }
@@ -40,15 +40,21 @@ export default async function handler(req, res) {
     try {
       const cache = await redis.get(`action:${id_tiktok}`);
       console.log("📦 Conteúdo bruto do Redis:", cache);
+
       if (cache) {
-        try {
-          redisData = JSON.parse(cache);
-          console.log("📦 Dados do Redis parseados com sucesso:", redisData);
-        } catch (parseErr) {
-          console.error("❌ Erro ao fazer JSON.parse dos dados do Redis:", parseErr);
+        if (typeof cache === "string") {
+          try {
+            redisData = JSON.parse(cache);
+            console.log("📦 Dados do Redis (parseados):", redisData);
+          } catch (parseErr) {
+            console.error("❌ Erro ao fazer JSON.parse dos dados do Redis:", parseErr);
+          }
+        } else if (typeof cache === "object") {
+          redisData = cache;
+          console.log("📦 Dados do Redis (objeto direto):", redisData);
+        } else {
+          console.warn("⚠️ Formato inesperado do cache Redis:", typeof cache);
         }
-      } else {
-        console.log("ℹ️ Nenhum dado encontrado no Redis para essa chave.");
       }
     } catch (redisErr) {
       console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
@@ -90,14 +96,14 @@ export default async function handler(req, res) {
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
       quantidade_pontos: valorConfirmacao,
-      url_dir: redisData?.url || '',
+      url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
       valor_confirmacao: valorConfirmacao,
       data: new Date()
-    });
+    });    
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
