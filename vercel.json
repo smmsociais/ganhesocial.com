@@ -21,6 +21,7 @@
     { "source": "/api/confirm_action", "destination": "/api/handler.js" },
     { "source": "/api/contas", "destination": "/api/handler.js" },
     { "source": "/api/get_saldo", "destination": "/api/handler.js" },
+    { "source": "/api/profile", "destination": "/api/handler.js" },
     { "source": "/api/withdraw", "destination": "/api/handler.js" },
     { "source": "/api/historico_acoes", "destination": "/api/handler.js" },
     { "source": "/api/get_historico", "destination": "/api/handler.js" }
