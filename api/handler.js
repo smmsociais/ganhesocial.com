@@ -1,4 +1,5 @@
 import axios from "axios";
+import connectDB from "./db.js";
 
 export default async function handler(req, res) {
     const { method, url } = req;
