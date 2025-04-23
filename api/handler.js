@@ -615,3 +615,7 @@ if (url.startsWith("/api/historico_acoes")) {
     return res.status(500).json({ error: "Erro ao buscar histórico de ações." });
   }
 }
+
+    // Rota não encontrada
+    return res.status(404).json({ error: "Rota não encontrada." });
+}
