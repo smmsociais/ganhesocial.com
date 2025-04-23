@@ -8,8 +8,8 @@ function reverterIdAction(idAction) {
   return idAction
     .split('')
     .map(c => {
-      if (c === 'a') return '0';                
-      return String(Number(c) + 1);             
+      if (c === 'a') return '0';
+      return String(Number(c) + 1);
     })
     .join('');
 }
@@ -32,10 +32,8 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // 🔄 Reverter ID da ação para obter o ID original
     const idPedidoOriginal = reverterIdAction(id_action);
 
-    // 🔐 Recuperar dados do Redis
     let redisData = null;
     try {
       const cache = await redis.get(`action:${id_tiktok}`);
@@ -60,7 +58,6 @@ export default async function handler(req, res) {
       console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
     }
 
-    // 🔹 Preparar payload para API externa
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
@@ -72,7 +69,6 @@ export default async function handler(req, res) {
     console.log("🛡️ ID recebido (ofuscado):", id_action);
     console.log("🔓 ID revertido (original):", idPedidoOriginal);
 
-    // 🔹 Chamar API externa com timeout de 5s
     let confirmData = {};
     try {
       const confirmResponse = await axios.post(
@@ -88,22 +84,28 @@ export default async function handler(req, res) {
     }
 
     const acaoValida = confirmData.status === "success";
-    const valorConfirmacao = parseFloat(confirmData.valor || 0);
 
-    // 🔹 Salvar histórico da ação
+    // 🧮 Calcular valor confirmado com base na lógica fornecida
+    const pontos = parseFloat(confirmData.valor || redisData?.valor || 0);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
+    const valorFinal = parseFloat(
+      Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3)
+    );
+
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
-      quantidade_pontos: valorConfirmacao,
+      quantidade_pontos: pontos,
       url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
-      valor_confirmacao: valorConfirmacao,
+      valor_confirmacao: valorFinal,
       data: new Date()
-    });    
+    });
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
@@ -115,7 +117,7 @@ export default async function handler(req, res) {
         ? "Ação confirmada e validada!"
         : "Ação confirmada, mas não validada.",
       acaoValida,
-      valorConfirmacao,
+      valorConfirmacao: valorFinal,
       dadosExternos: confirmData
     });
 
