@@ -51,9 +51,6 @@ export default async function handler(req, res) {
       is_tiktok: "1"
     };
 
-    console.log("🛡️ ID recebido (ofuscado):", id_action);
-    console.log("🔓 ID revertido (original):", idPedidoOriginal);
-
     let confirmData = {};
     try {
       const confirmResponse = await axios.post(
@@ -68,25 +65,21 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Falha na confirmação externa." });
     }
 
-    const acaoValida = confirmData.status === "success";
-
-    // 🔢 Calcular valor final com base na lógica de desconto
     const valorOriginal = parseFloat(confirmData.valor || redisData?.valor || 0);
     const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
     const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-    const valorConfirmacao = valorFinal;
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
-      quantidade_pontos: valorConfirmacao,
+      quantidade_pontos: valorFinal,
       url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
-      valor_confirmacao: valorConfirmacao,
+      valor_confirmacao: valorFinal,
       data: new Date()
     });
 
@@ -95,13 +88,9 @@ export default async function handler(req, res) {
     await usuario.save();
 
     return res.status(200).json({
-      status: "sucesso",
-      message: acaoValida
-        ? "Ação confirmada e validada!"
-        : "Ação confirmada, mas não validada.",
-      acaoValida,
-      valorConfirmacao,
-      dadosExternos: confirmData
+      status: 'sucess',
+      message: 'ação confirmada com sucesso',
+      valor: valorFinal
     });
 
   } catch (error) {
