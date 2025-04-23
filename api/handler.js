@@ -29,10 +29,6 @@ export default async function handler(req, res) {
         }
     }
 
-    // Rota não encontrada
-    return res.status(404).json({ error: "Rota não encontrada." });
-}
-
     // Rota: /api/buscar_acao (GET)
     if (url.startsWith("/api/buscar_acao") && method === "GET") {
         const { id_conta } = req.query;
@@ -668,4 +664,8 @@ if (url.startsWith("/api/get_historico")) {
         console.error("Erro ao obter histórico de ganhos:", error);
         res.status(500).json({ error: "Erro ao buscar histórico de ganhos." });
     }
+}
+
+    // Rota não encontrada
+    return res.status(404).json({ error: "Rota não encontrada." });
 }
