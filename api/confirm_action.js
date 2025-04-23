@@ -88,20 +88,27 @@ export default async function handler(req, res) {
     }
 
     const acaoValida = confirmData.status === "success";
-    const valorConfirmacao = parseFloat(confirmData.valor || 0);
+
+    // 🧮 Cálculo do valor final baseado em pontos
+    const pontos = parseFloat(confirmData.valor || redisData?.valor || 0);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004)
+      ? valorBruto - 0.001
+      : valorBruto;
+    const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
 
     // 🔹 Salvar histórico da ação
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
-      quantidade_pontos: valorConfirmacao,
+      quantidade_pontos: valorFinal,
       url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
-      valor_confirmacao: valorConfirmacao,
+      valor_confirmacao: valorFinal,
       data: new Date()
     });    
 
@@ -115,7 +122,7 @@ export default async function handler(req, res) {
         ? "Ação confirmada e validada!"
         : "Ação confirmada, mas não validada.",
       acaoValida,
-      valorConfirmacao,
+      valorConfirmacao: valorFinal,
       dadosExternos: confirmData
     });
 
