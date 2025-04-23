@@ -13,6 +13,7 @@
     { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" },
     { "source": "/historico_saques", "destination": "/historico_saques.html" },
     
+    { "source": "/api/contas", "destination": "/api/handler.js" },
     { "source": "/api/realizar_acoes", "destination": "/api/handler.js" },
     { "source": "/api/adicionar_conta", "destination": "/api/handler.js" },
     { "source": "/api/gerenciar_contas", "destination": "/api/handler.js" },
