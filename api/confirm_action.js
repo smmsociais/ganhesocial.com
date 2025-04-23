@@ -2,7 +2,7 @@ import axios from "axios";
 import connectDB from "./db.js";
 import { User } from "./User.js";
 import { ActionHistory } from "./User.js";
-import redis from "./redis.js"; // ⬅️ Importa o Redis
+import redis from "./redis.js";
 
 function reverterIdAction(idAction) {
   return idAction
@@ -38,22 +38,7 @@ export default async function handler(req, res) {
     try {
       const cache = await redis.get(`action:${id_tiktok}`);
       console.log("📦 Conteúdo bruto do Redis:", cache);
-
-      if (cache) {
-        if (typeof cache === "string") {
-          try {
-            redisData = JSON.parse(cache);
-            console.log("📦 Dados do Redis (parseados):", redisData);
-          } catch (parseErr) {
-            console.error("❌ Erro ao fazer JSON.parse dos dados do Redis:", parseErr);
-          }
-        } else if (typeof cache === "object") {
-          redisData = cache;
-          console.log("📦 Dados do Redis (objeto direto):", redisData);
-        } else {
-          console.warn("⚠️ Formato inesperado do cache Redis:", typeof cache);
-        }
-      }
+      redisData = typeof cache === "object" ? cache : JSON.parse(cache);
     } catch (redisErr) {
       console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
     }
@@ -85,25 +70,23 @@ export default async function handler(req, res) {
 
     const acaoValida = confirmData.status === "success";
 
-    // 🧮 Calcular valor confirmado com base na lógica fornecida
-    const pontos = parseFloat(confirmData.valor || redisData?.valor || 0);
-    const valorBruto = pontos / 1000;
-    const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
-    const valorFinal = parseFloat(
-      Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3)
-    );
+    // 🔢 Calcular valor final com base na lógica de desconto
+    const valorOriginal = parseFloat(confirmData.valor || redisData?.valor || 0);
+    const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
+    const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+    const valorConfirmacao = valorFinal;
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
       tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
-      quantidade_pontos: pontos,
+      quantidade_pontos: valorConfirmacao,
       url_dir: redisData?.url_dir || '',
       id_conta: id_tiktok,
       id_pedido: idPedidoOriginal,
       user: usuario._id,
       acao_validada: null,
-      valor_confirmacao: valorFinal,
+      valor_confirmacao: valorConfirmacao,
       data: new Date()
     });
 
@@ -117,7 +100,7 @@ export default async function handler(req, res) {
         ? "Ação confirmada e validada!"
         : "Ação confirmada, mas não validada.",
       acaoValida,
-      valorConfirmacao: valorFinal,
+      valorConfirmacao,
       dadosExternos: confirmData
     });
 
