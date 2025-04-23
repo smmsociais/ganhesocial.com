@@ -14,6 +14,8 @@
     { "source": "/historico_saques", "destination": "/historico_saques.html" },
     
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
+    { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
+    { "source": "/api/confirmar_acao", "destination": "/api/handler.js" },
     { "source": "/api/contas", "destination": "/api/handler.js" },
     { "source": "/api/realizar_acoes", "destination": "/api/handler.js" },
     { "source": "/api/adicionar_conta", "destination": "/api/handler.js" },
