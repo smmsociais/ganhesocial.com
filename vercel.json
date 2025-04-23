@@ -3,14 +3,26 @@
     { "source": "/", "destination": "/index.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/login", "destination": "/login.html" },
-    { "source": "/signup", "destination": "/signup.html" },   
+    { "source": "/signup", "destination": "/signup.html" },
     { "source": "/realizar_acoes", "destination": "/realizar_acoes.html" },
     { "source": "/adicionar_conta", "destination": "/adicionar_conta.html" },
-    { "source": "/adicionar_conta_tiktok", "destination": "/adicionar_conta_tiktok.html" },    
+    { "source": "/adicionar_conta_tiktok", "destination": "/adicionar_conta_tiktok.html" },
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
     { "source": "/historico_acoes", "destination": "/historico_acoes.html" },
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" },
-    { "source": "/historico_saques", "destination": "/historico_saques.html" }   
+    { "source": "/historico_saques", "destination": "/historico_saques.html" },
+
+    // Rewrites de API para o handler central
+    { "source": "/api/realizar_acoes", "destination": "/api/handler.js" },
+    { "source": "/api/adicionar_conta", "destination": "/api/handler.js" },
+    { "source": "/api/gerenciar_contas", "destination": "/api/handler.js" },
+    { "source": "/api/historico_acoes", "destination": "/api/handler.js" },
+    { "source": "/api/withdraw", "destination": "/api/handler.js" },
+    { "source": "/api/verificar-acoes", "destination": "/api/handler.js" },
+    { "source": "/api/user-info", "destination": "/api/handler.js" },
+    { "source": "/api/user-following", "destination": "/api/handler.js" },
+    { "source": "/api/login", "destination": "/api/handler.js" },
+    { "source": "/api/signup", "destination": "/api/handler.js" }
   ]
 }
