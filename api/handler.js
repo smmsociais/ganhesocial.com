@@ -1,6 +1,6 @@
 import axios from "axios";
-import connectDB from "./db.js";
-import { User, ActionHistory } from "./User.js";
+import connectDB from "./api/db.js";
+import { User, ActionHistory } from "./api/User.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
@@ -440,9 +440,11 @@ if (url.startsWith("/api/get_saldo")) {
         }
 
         return res.status(200).json({
-            saldo,
+            saldo_disponivel: saldo,
+            saldo_pendente: 0, // Ou calcule conforme sua lógica
             pix_key: usuario.pix_key
         });
+        
     } catch (error) {
         console.error("💥 Erro ao obter saldo:", error);
         return res.status(500).json({ error: "Erro ao buscar saldo." });
