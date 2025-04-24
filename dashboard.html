@@ -14,7 +14,6 @@
             --positive-color: #2ecc71;
             --negative-color: #e74c3c;
             --neutral-color: #3498db;
-            --pending-color: #f39c12;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
@@ -23,7 +22,6 @@
             --positive-color-dark: #27ae60;
             --negative-color-dark: #c0392b;
             --neutral-color-dark: #2980b9;
-            --pending-color-dark: #d35400;
         }
 
         body {
@@ -46,35 +44,16 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .saldos-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            width: 90%;
-            max-width: 800px;
-            margin: 30px auto 15px auto;
-        }
-
-        .saldo-box {
+        .saldo-container {
             background: var(--container-light);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            flex: 1;
-            min-width: 250px;
+            width: 90%;
+            max-width: 500px;
+            margin: 15px auto;
             transition: background 0.3s;
-        }
-
-        .saldo-disponivel-box {
-            background-color: #2d8f2d;
-            color: white;
-        }
-
-        .saldo-pendente-box {
-            background-color: #f39c12;
-            color: white;
         }
 
         .historico-container {
@@ -92,6 +71,14 @@
             font-size: 24px;
             font-weight: bold;
             margin: 20px 0;
+        }
+
+        .saldo-disponivel {
+            color: #1a6b1a; /* Verde mais escuro */
+        }
+
+        .saldo-pendente {
+            color: #b38f00; /* Amarelo dourado */
         }
 
         .ganho-hoje {
@@ -281,18 +268,10 @@
             }
 
             .header,
-            .saldo-box,
+            .saldo-container,
             .historico-container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-            }
-
-            .saldo-disponivel-box {
-                background-color: var(--positive-color-dark);
-            }
-
-            .saldo-pendente-box {
-                background-color: var(--pending-color-dark);
             }
 
             .menu-toggle span {
@@ -331,6 +310,14 @@
                 border-right: 1px solid #444;
             }
 
+            .saldo-disponivel {
+                color: var(--positive-color-dark);
+            }
+
+            .saldo-pendente {
+                color: #d4b300; /* Amarelo mais vibrante no modo escuro */
+            }
+
             .chart-bar {
                 background-color: var(--positive-color-dark);
             }
@@ -356,13 +343,12 @@
         <div style="width: 30px;"></div>
     </div>
 
-    <div class="saldos-container">
-        <div class="saldo-box saldo-disponivel-box">
-            <p class="saldo" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
-        </div>
-        <div class="saldo-box saldo-pendente-box">
-            <p class="saldo" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
-        </div>
+    <div class="saldo-container">
+        <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
+    </div>
+
+    <div class="saldo-container">
+        <p class="saldo saldo-pendente" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
     </div>
 
     <div class="historico-container">
