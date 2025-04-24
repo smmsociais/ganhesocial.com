@@ -1,6 +1,6 @@
 import axios from "axios";
-import connectDB from "./api/db.js";
-import { User, ActionHistory } from "./api/User.js";
+import connectDB from "./db.js";
+import { User, ActionHistory } from "./User.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
