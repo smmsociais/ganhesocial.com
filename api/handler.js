@@ -1,6 +1,6 @@
 import axios from "axios";
-import connectDB from "./db.js";
-import { User, ActionHistory } from "./User.js";
+import connectDB from "./api/db.js";
+import { User, ActionHistory } from "./api/User.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
@@ -415,42 +415,6 @@ if (url.startsWith("/api/contas")) {
     }
 }
 
-// Rota: /api/get_saldo (GET)
-if (url.startsWith("/api/get_saldo")) {
-    if (method !== "GET") {
-        return res.status(405).json({ error: "Método não permitido." });
-    }
-
-    await connectDB();
-
-    const { token } = req.query;
-    if (!token) {
-        return res.status(400).json({ error: "Token obrigatório." });
-    }
-
-    try {
-        const usuario = await User.findOne({ token }).select("saldo pix_key");
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado." });
-        }
-
-        let saldo = usuario.saldo;
-        if (typeof saldo !== "number" || isNaN(saldo)) {
-            saldo = 0;
-        }
-
-        return res.status(200).json({
-            saldo_disponivel: saldo,
-            saldo_pendente: 0, // Ou calcule conforme sua lógica
-            pix_key: usuario.pix_key
-        });
-        
-    } catch (error) {
-        console.error("💥 Erro ao obter saldo:", error);
-        return res.status(500).json({ error: "Erro ao buscar saldo." });
-    }
-}
-
 // Rota: /api/profile (GET ou PUT)
 if (url.startsWith("/api/profile")) {
   if (method !== "GET" && method !== "PUT") {
@@ -682,6 +646,45 @@ if (url.startsWith("/api/get_historico")) {
     } catch (error) {
         console.error("Erro ao obter histórico de ganhos:", error);
         res.status(500).json({ error: "Erro ao buscar histórico de ganhos." });
+    }
+}
+
+// Rota: /api/get_saldo (GET)
+if (url.startsWith("/api/get_saldo")) {
+    if (method !== "GET") {
+        return res.status(405).json({ error: "Método não permitido." });
+    }
+
+    await connectDB();
+
+    const { token } = req.query;
+    if (!token) {
+        return res.status(400).json({ error: "Token obrigatório." });
+    }
+
+    try {
+        const usuario = await User.findOne({ token }).select("saldo pix_key _id");
+        if (!usuario) {
+            return res.status(403).json({ error: "Acesso negado." });
+        }
+        
+        // calcula o saldo pendente com base nas ações ainda não validadas
+        const pendentes = await ActionHistory.find({
+            user: usuario._id,
+            acao_validada: null
+        }).select("valor_confirmacao");
+        
+        const saldo_pendente = pendentes.reduce((soma, acao) => soma + (acao.valor_confirmacao || 0), 0);
+        
+        return res.status(200).json({
+            saldo_disponivel: typeof usuario.saldo === "number" ? usuario.saldo : 0,
+            saldo_pendente,
+            pix_key: usuario.pix_key
+        });
+        
+    } catch (error) {
+        console.error("💥 Erro ao obter saldo:", error);
+        return res.status(500).json({ error: "Erro ao buscar saldo." });
     }
 }
 
