@@ -14,6 +14,7 @@
             --positive-color: #2ecc71;
             --negative-color: #e74c3c;
             --neutral-color: #3498db;
+            --pending-color: #f39c12;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
@@ -22,6 +23,7 @@
             --positive-color-dark: #27ae60;
             --negative-color-dark: #c0392b;
             --neutral-color-dark: #2980b9;
+            --pending-color-dark: #d35400;
         }
 
         body {
@@ -56,6 +58,17 @@
             transition: background 0.3s;
         }
 
+        .saldo-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+
+        .saldo-item {
+            flex: 1;
+            padding: 10px;
+        }
+
         .historico-container {
             background: var(--container-light);
             padding: 20px;
@@ -74,7 +87,11 @@
         }
 
         .saldo-disponivel {
-            color: #2d8f2d;
+            color: var(--positive-color);
+        }
+
+        .saldo-pendente {
+            color: var(--pending-color);
         }
 
         .ganho-hoje {
@@ -310,6 +327,10 @@
                 color: var(--positive-color-dark);
             }
 
+            .saldo-pendente {
+                color: var(--pending-color-dark);
+            }
+
             .chart-bar {
                 background-color: var(--positive-color-dark);
             }
@@ -336,7 +357,16 @@
     </div>
 
     <div class="saldo-container">
-        <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
+        <div class="saldo-row">
+            <div class="saldo-item">
+                <p class="saldo saldo-disponivel" id="saldoDisponivel">R$ 0,00</p>
+                <p>Disponível</p>
+            </div>
+            <div class="saldo-item">
+                <p class="saldo saldo-pendente" id="saldoPendente">R$ 0,00</p>
+                <p>Pendente</p>
+            </div>
+        </div>
     </div>
 
     <div class="historico-container">
@@ -422,10 +452,15 @@
                 if (!response.ok) {
                     throw new Error(data.error || "Erro ao buscar saldo.");
                 }
-                const saldo = parseFloat(data.saldo);
-                // Atualiza localStorage se desejar manter o valor
-                localStorage.setItem("saldoDisponivel", saldo);
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
+                const saldoPendente = parseFloat(data.saldo_pendente || 0);
+                
+                // Atualiza localStorage se desejar manter os valores
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
+                localStorage.setItem("saldoPendente", saldoPendente);
+                
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
