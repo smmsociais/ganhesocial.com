@@ -86,11 +86,13 @@
         }
 
         .saldo-disponivel {
-            color: #1a6b1a; /* Verde mais escuro */
+            color: #1a6b1a;
+            /* Verde mais escuro */
         }
 
         .saldo-pendente {
-            color: #b38f00; /* Amarelo dourado */
+            color: #b38f00;
+            /* Amarelo dourado */
         }
 
         .ganho-hoje {
@@ -292,7 +294,7 @@
 
         .telegram-image {
             max-width: 70px;
-            margin-bottom: 10px;
+            margin-bottom: -5px;
         }
 
         .telegram-link {
@@ -333,10 +335,10 @@
 
             .menu-footer {
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background-color: var(--container-dark);
-            position: sticky;
-            bottom: 0;
-        }
+                background-color: var(--container-dark);
+                position: sticky;
+                bottom: 0;
+            }
 
             .ganho-hoje {
                 color: var(--text-dark);
@@ -346,7 +348,8 @@
                 border-bottom: 1px solid #444;
             }
 
-            .chart-label, .chart-value {
+            .chart-label,
+            .chart-value {
                 color: var(--text-dark);
             }
 
@@ -359,7 +362,8 @@
             }
 
             .saldo-pendente {
-                color: #d4b300; /* Amarelo mais vibrante no modo escuro */
+                color: #d4b300;
+                /* Amarelo mais vibrante no modo escuro */
             }
 
             .chart-bar {
@@ -390,7 +394,8 @@
                 <span></span>
             </div>
             <a href="dashboard" class="logo-container">
-                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png" alt="Logo GanheSocial" class="logo">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
@@ -414,9 +419,11 @@
 
     <!-- Conteúdo adicionado -->
     <div class="telegram-container">
-        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745529700422.png" alt="Telegram" class="telegram-image">
+        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745529700422.png" alt="Telegram"
+            class="telegram-image">
         <p>
-            <a href="https://t.me/ganhesocialoficial" class="telegram-link" target="_blank">Grupo Oficial do Telegram: t.me/ganhesocialoficial</a>
+            <a href="https://t.me/ganhesocialoficial" class="telegram-link" target="_blank">Grupo Oficial do Telegram:
+                t.me/ganhesocialoficial</a>
         </p>
     </div>
 
@@ -442,8 +449,8 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                window.location.href = "dashboard";
-            }
+             window.location.href = "dashboard";
+         }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -501,7 +508,7 @@
                 // Atualiza localStorage se desejar manter os valores
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
-                
+
                 document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } catch (error) {
@@ -555,7 +562,7 @@
 
                 // Prepara dados para o gráfico
                 const chartData = datasValidas.map(dateObj => {
-                    const itemHistorico = historico.find(item => 
+                    const itemHistorico = historico.find(item =>
                         item.data.toLocaleDateString("pt-BR") === dateObj.dateStr
                     );
                     return {
@@ -576,7 +583,7 @@
             const chart = document.getElementById('dailyChart');
             const chartAxisY = document.getElementById('chartAxisY');
             const tooltip = document.getElementById('chartTooltip');
-            
+
             chart.innerHTML = '';
             chartAxisY.innerHTML = '';
 
@@ -586,13 +593,13 @@
             const values = data.map(item => item.value);
             const maxValue = Math.max(...values, 0.1); // Pelo menos 0.1 para evitar divisão por zero
             const minValue = Math.min(...values, 0);
-            
+
             // Cria eixos Y
             const yAxisSteps = 5;
             for (let i = 0; i <= yAxisSteps; i++) {
                 const value = (maxValue / yAxisSteps) * i;
                 const yPos = 100 - (i * (100 / yAxisSteps));
-                
+
                 const axisLabel = document.createElement('div');
                 axisLabel.className = 'chart-axis-y-label';
                 axisLabel.style.top = `${yPos}%`;
@@ -604,26 +611,26 @@
             data.forEach((item, index) => {
                 const barHeight = (item.value / maxValue) * 100;
                 const barValue = item.value.toFixed(2);
-                
+
                 const barContainer = document.createElement('div');
                 barContainer.className = 'chart-line';
-                
+
                 const bar = document.createElement('div');
                 bar.className = 'chart-bar';
                 if (item.value > 0) bar.className += ' positive';
                 else if (item.value < 0) bar.className += ' negative';
                 else bar.className += ' neutral';
-                
+
                 bar.style.height = `${Math.max(1, barHeight)}%`;
-                
+
                 const valueLabel = document.createElement('div');
                 valueLabel.className = 'chart-value';
                 valueLabel.textContent = barValue;
-                
+
                 const dateLabel = document.createElement('div');
                 dateLabel.className = 'chart-label';
                 dateLabel.textContent = item.displayDate;
-                
+
                 barContainer.appendChild(bar);
                 barContainer.appendChild(valueLabel);
                 barContainer.appendChild(dateLabel);
@@ -674,9 +681,9 @@
             window.location.href = "solicitar_saque";
         }
 
-         function goToWithdrawHistory() {
+        function goToWithdrawHistory() {
             window.location.href = "historico_saques";
-        }          
+        }
 
         function logout() {
             localStorage.removeItem("authToken");
