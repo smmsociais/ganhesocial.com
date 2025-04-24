@@ -46,27 +46,35 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .saldo-container {
+        .saldos-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 90%;
+            max-width: 800px;
+            margin: 30px auto 15px auto;
+        }
+
+        .saldo-box {
             background: var(--container-light);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 90%;
-            max-width: 500px;
-            margin: 30px auto 15px auto;
+            flex: 1;
+            min-width: 250px;
             transition: background 0.3s;
         }
 
-        .saldo-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
+        .saldo-disponivel-box {
+            background-color: #2d8f2d;
+            color: white;
         }
 
-        .saldo-item {
-            flex: 1;
-            padding: 10px;
+        .saldo-pendente-box {
+            background-color: #f39c12;
+            color: white;
         }
 
         .historico-container {
@@ -84,14 +92,6 @@
             font-size: 24px;
             font-weight: bold;
             margin: 20px 0;
-        }
-
-        .saldo-disponivel {
-            color: var(--positive-color);
-        }
-
-        .saldo-pendente {
-            color: var(--pending-color);
         }
 
         .ganho-hoje {
@@ -281,10 +281,18 @@
             }
 
             .header,
-            .saldo-container,
+            .saldo-box,
             .historico-container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            }
+
+            .saldo-disponivel-box {
+                background-color: var(--positive-color-dark);
+            }
+
+            .saldo-pendente-box {
+                background-color: var(--pending-color-dark);
             }
 
             .menu-toggle span {
@@ -323,14 +331,6 @@
                 border-right: 1px solid #444;
             }
 
-            .saldo-disponivel {
-                color: var(--positive-color-dark);
-            }
-
-            .saldo-pendente {
-                color: var(--pending-color-dark);
-            }
-
             .chart-bar {
                 background-color: var(--positive-color-dark);
             }
@@ -356,16 +356,12 @@
         <div style="width: 30px;"></div>
     </div>
 
-    <div class="saldo-container">
-        <div class="saldo-row">
-            <div class="saldo-item">
-                <p class="saldo saldo-disponivel" id="saldoDisponivel">R$ 0,00</p>
-                <p>Disponível</p>
-            </div>
-            <div class="saldo-item">
-                <p class="saldo saldo-pendente" id="saldoPendente">R$ 0,00</p>
-                <p>Pendente</p>
-            </div>
+    <div class="saldos-container">
+        <div class="saldo-box saldo-disponivel-box">
+            <p class="saldo" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
+        </div>
+        <div class="saldo-box saldo-pendente-box">
+            <p class="saldo" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
         </div>
     </div>
 
@@ -459,8 +455,8 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
                 
-                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
