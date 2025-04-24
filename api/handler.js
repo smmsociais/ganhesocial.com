@@ -2,6 +2,23 @@ import axios from "axios";
 import connectDB from "./db.js";
 import { User, ActionHistory } from "./User.js";
 
+function getBrasiliaMidnightDate() {
+    const now = new Date();
+    const brasiliaMidnight = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    brasiliaMidnight.setUTCHours(3, 0, 0, 0);
+    return brasiliaMidnight;
+}
+
+function formatarDataBrasilia(data) {
+    const dataUTC = new Date(data.getTime() - 3 * 60 * 60 * 1000);
+    const dia = String(dataUTC.getUTCDate()).padStart(2, "0");
+    const mes = String(dataUTC.getUTCMonth() + 1).padStart(2, "0");
+    const ano = dataUTC.getUTCFullYear();
+    return `${dia}/${mes}/${ano}`;
+}
+
 export default async function handler(req, res) {
     const { method, url } = req;
 
