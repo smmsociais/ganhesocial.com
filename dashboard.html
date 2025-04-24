@@ -434,9 +434,10 @@
                 if (!response.ok) {
                     throw new Error(data.error || "Erro ao buscar saldo.");
                 }
+
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
-                const saldoPendente = 0;
-                
+                const saldoPendente = parseFloat(data.saldo_pendente || 0);
+
                 // Atualiza localStorage se desejar manter os valores
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
