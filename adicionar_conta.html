@@ -88,6 +88,19 @@
             margin-bottom: 20px;
         }
 
+        .social-networks {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .network-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         /* Estilos do menu hamburguer */
         .menu-toggle {
             width: 30px;
@@ -233,9 +246,20 @@
     <div class="container">
         <h2>Selecione a Rede Social</h2>
         <p class="subtext">Selecione a rede social que você deseja adicionar a nova conta.</p>
-        <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png" alt="TikTok"
-            class="network-logo" onclick="redirectToAccountSelection()">
-        <p>TikTok</p>
+        
+        <div class="social-networks">
+            <div class="network-item">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png" alt="TikTok"
+                    class="network-logo" onclick="redirectToTikTokAccountSelection()">
+                <p>TikTok</p>
+            </div>
+            
+            <div class="network-item">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745610836636.png" alt="Instagram"
+                    class="network-logo" onclick="redirectToInstagramAccountSelection()">
+                <p>Instagram</p>
+            </div>
+        </div>
     </div>
 
     <!-- Menu Overlay e Conteúdo -->
@@ -284,8 +308,12 @@
             window.location.href = "suporte";
         }
 
-        function redirectToAccountSelection() {
+        function redirectToTikTokAccountSelection() {
             window.location.href = "adicionar_conta_tiktok";
+        }
+
+        function redirectToInstagramAccountSelection() {
+            window.location.href = "adicionar_conta_instagram";
         }
 
         function logout() {
