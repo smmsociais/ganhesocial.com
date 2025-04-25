@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -213,7 +214,7 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
@@ -288,6 +289,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <div class="left-header">
@@ -305,7 +307,7 @@
 
     <div class="container">
         <h2>Adicionar Conta TikTok</h2>
-        
+
         <div class="requirements-box">
             <h3>Requisitos:</h3>
             <ul>
@@ -344,7 +346,7 @@
             messageBox.textContent = message;
             messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
             messageBox.style.display = 'block';
-            
+
             // Rolagem suave para a mensagem
             messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -358,7 +360,7 @@
             const inputField = document.getElementById('accountName');
             let accountName = inputField.value.trim();
             const messageBox = document.getElementById('messageBox');
-            
+
             // Esconder mensagem anterior
             messageBox.style.display = 'none';
 
@@ -374,7 +376,7 @@
             const token = localStorage.getItem('authToken');
             if (!token) {
                 showMessage("Você precisa estar logado para adicionar uma conta.", true);
-                window.location.href = "/login"; 
+                window.location.href = "/login";
                 return;
             }
 
@@ -385,7 +387,7 @@
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         nomeConta: accountName,
                         plataforma: "tiktok"
                     })
@@ -411,14 +413,12 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
-            if (!token) {
-                window.location.href = "dashboard";
-            }
+
 
             // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
                 e.preventDefault();
                 logout();
             });
@@ -428,7 +428,7 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function() {
+            menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -446,7 +446,7 @@
             });
 
             // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function() {
+            menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
@@ -457,4 +457,5 @@
         });
     </script>
 </body>
+
 </html>
