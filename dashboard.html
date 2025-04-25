@@ -264,11 +264,8 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
-            position: sticky;
-            bottom: 0;
-            background-color: inherit;
         }
 
         .menu-logout {
@@ -449,8 +446,8 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-             window.location.href = "dashboard";
-         }
+                window.location.href = "dashboard";
+            }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -651,38 +648,6 @@
                     tooltip.style.display = 'none';
                 });
             });
-        }
-
-        function goToDashboard() {
-            window.location.href = "dashboard";
-        }
-
-        function goToSelectAccount() {
-            window.location.href = "realizar_acoes";
-        }
-
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
-
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
-
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
-
-        function goToAccount() {
-            window.location.href = "profile";
-        }
-
-        function goToWithdraw() {
-            window.location.href = "solicitar_saque";
-        }
-
-        function goToWithdrawHistory() {
-            window.location.href = "historico_saques";
         }
 
         function logout() {
