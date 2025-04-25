@@ -52,11 +52,11 @@
 
         .container {
             background: var(--container-light);
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 500px;
+            max-width: 350px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -64,36 +64,41 @@
         .requirements-box {
             background-color: #fff8e1;
             border-left: 4px solid var(--warning-color);
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
             text-align: left;
             border-radius: 4px;
+            font-size: 14px;
         }
 
         .requirements-box h3 {
             margin-top: 0;
             color: var(--warning-color);
+            font-size: 15px;
+            margin-bottom: 10px;
         }
 
         .requirements-box ul {
             padding-left: 20px;
             margin-bottom: 0;
+            margin-top: 0;
         }
 
         .requirements-box li {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .input-box {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
+            padding: 10px;
+            margin: 8px 0;
             border-radius: 5px;
             border: 1px solid #ddd;
             background: var(--container-light);
             color: var(--text-light);
             transition: all 0.3s;
             box-sizing: border-box;
+            font-size: 14px;
         }
 
         .input-box:focus {
@@ -104,13 +109,13 @@
 
         .add-button {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
+            padding: 10px;
+            margin: 8px 0;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             transition: background-color 0.3s;
             background-color: var(--primary-color);
@@ -121,10 +126,11 @@
         }
 
         .message-box {
-            padding: 12px;
-            margin: 15px 0;
+            padding: 10px;
+            margin: 12px 0;
             border-radius: 5px;
             display: none;
+            font-size: 14px;
         }
 
         .error-message {
@@ -277,7 +283,7 @@
         @media (max-width: 768px) {
             .container {
                 width: 95%;
-                padding: 20px;
+                padding: 15px;
             }
         }
     </style>
@@ -305,7 +311,7 @@
             <ul>
                 <li>A sua conta do TikTok deve estar como pública.</li>
                 <li>A sua conta deve ser real e ter no mínimo 2 publicações e foto de perfil.</li>
-                <strong> Conecte perfis de qualidade para receber mais ações.
+                <strong> Conecte perfis de qualidade para receber mais ações.</strong>
             </ul>
         </div>
 
@@ -323,9 +329,9 @@
         <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
         <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
         <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
-        <a class="menu-item" href="suporte">Suporte</a>
-
         <div class="menu-footer">
             <a class="menu-logout" href="#" id="logoutLink">Sair</a>
         </div>
@@ -349,56 +355,56 @@
         }
 
         async function addAccount() {
-    const inputField = document.getElementById('accountName');
-    let accountName = inputField.value.trim();
-    const messageBox = document.getElementById('messageBox');
-    
-    // Esconder mensagem anterior
-    messageBox.style.display = 'none';
+            const inputField = document.getElementById('accountName');
+            let accountName = inputField.value.trim();
+            const messageBox = document.getElementById('messageBox');
+            
+            // Esconder mensagem anterior
+            messageBox.style.display = 'none';
 
-    if (!accountName) {
-        showMessage("Por favor, insira o nome de usuário do TikTok.", true);
-        inputField.value = ""; // Limpa o campo em caso de erro
-        return;
-    }
+            if (!accountName) {
+                showMessage("Por favor, insira o nome de usuário do TikTok.", true);
+                inputField.value = ""; // Limpa o campo em caso de erro
+                return;
+            }
 
-    // Remover @ do início do nome de usuário, se existir
-    accountName = formatUsername(accountName);
+            // Remover @ do início do nome de usuário, se existir
+            accountName = formatUsername(accountName);
 
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        showMessage("Você precisa estar logado para adicionar uma conta.", true);
-        window.location.href = "/login"; 
-        return;
-    }
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage("Você precisa estar logado para adicionar uma conta.", true);
+                window.location.href = "/login"; 
+                return;
+            }
 
-    try {
-        const response = await fetch("https://ganhesocial.com/api/contas", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ 
-                nomeConta: accountName,
-                plataforma: "tiktok"
-            })
-        });
+            try {
+                const response = await fetch("https://ganhesocial.com/api/contas", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        nomeConta: accountName,
+                        plataforma: "tiktok"
+                    })
+                });
 
-        const data = await response.json();
+                const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao adicionar conta");
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao adicionar conta");
+                }
+
+                showMessage(`Conta "${accountName}" adicionada com sucesso!`);
+                inputField.value = ""; // Limpa o campo após sucesso
+
+            } catch (error) {
+                showMessage(error.message, true);
+                inputField.value = ""; // Limpa o campo após erro
+            }
         }
-
-        showMessage(`Conta "${accountName}" adicionada com sucesso!`);
-        inputField.value = ""; // Limpa o campo após sucesso
-
-    } catch (error) {
-        showMessage(error.message, true);
-        inputField.value = ""; // Limpa o campo após erro
-    }
-}
 
         function logout() {
             localStorage.removeItem("authToken");
