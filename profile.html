@@ -60,7 +60,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 500px;
+            max-width: 400px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -209,7 +209,7 @@
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 300px;
             height: 100%;
             background: var(--container-light);
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
@@ -243,7 +243,7 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
@@ -386,7 +386,7 @@
             <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
             <input type="password" id="confirmPassword" class="input-box">
         </div>
-    
+
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
     </div>
 
@@ -413,7 +413,7 @@
             if (!token) {
                 showMessage("Você precisa estar logado para acessar esta página.", true);
                 setTimeout(() => {
-                    window.location.href = "/login";
+
                 }, 2000);
                 return;
             }
@@ -444,7 +444,7 @@
         function showMessage(message, isError = false) {
             const errorElement = document.getElementById("errorMessage");
             const successElement = document.getElementById("successMessage");
-            
+
             if (isError) {
                 errorElement.textContent = message;
                 errorElement.style.display = "block";
@@ -454,7 +454,7 @@
                 successElement.style.display = "block";
                 errorElement.style.display = "none";
             }
-            
+
             setTimeout(() => {
                 errorElement.style.display = "none";
                 successElement.style.display = "none";
@@ -464,10 +464,10 @@
         function copyTokenToClipboard() {
             const tokenInput = document.getElementById('authToken');
             const copyNotification = document.getElementById('copyNotification');
-            
+
             tokenInput.select();
             document.execCommand('copy');
-            
+
             // Show notification
             copyNotification.style.opacity = '1';
             setTimeout(() => {
@@ -526,7 +526,7 @@
                 showMessage("Perfil atualizado com sucesso!", false);
                 document.getElementById('newPassword').value = "";
                 document.getElementById('confirmPassword').value = "";
-                
+
             } catch (error) {
                 showMessage(error.message, true);
             }
@@ -541,12 +541,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('authToken');
             const copyIcon = document.getElementById('copyIcon');
-            
+
             tokenInput.addEventListener('click', copyTokenToClipboard);
             copyIcon.addEventListener('click', copyTokenToClipboard);
 
             // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
                 e.preventDefault();
                 logout();
             });
@@ -556,7 +556,7 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function() {
+            menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -574,7 +574,7 @@
             });
 
             // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function() {
+            menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
@@ -587,4 +587,5 @@
         window.onload = loadProfile;
     </script>
 </body>
+
 </html>
