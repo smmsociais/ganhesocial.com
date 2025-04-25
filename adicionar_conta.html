@@ -29,25 +29,43 @@
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--container-light);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Garante que ocupe toda a largura */
+    box-sizing: border-box; /* Inclui padding no cálculo da largura */
+    position: relative; /* Para garantir z-index funciona corretamente */
+    z-index: 10; /* Mantém acima de outros elementos */
+}
 
-        .left-header {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
+/* Adicione esta media query no final do seu CSS */
+@media (max-width: 480px) {
+    .header {
+        padding: 12px 15px; /* Reduz o padding em telas muito pequenas */
+    }
+    
+    .left-header {
+        gap: 15px; /* Reduz o espaçamento entre itens */
+    }
+    
+    .logo {
+        height: 25px; /* Reduz um pouco o tamanho da logo */
+    }
+}
 
-        .logo {
-            height: 30px;
-            margin-right: 10px;
-        }
-
+@media (max-width: 360px) {
+    .menu-toggle {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .logo {
+        height: 22px;
+    }
+}
         .container {
             background: var(--container-light);
             padding: 25px;
@@ -224,7 +242,7 @@
             .subtext {
                 color: #aaa;
             }
-            
+
             .coming-soon {
                 color: #777;
             }
@@ -247,7 +265,7 @@
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard.html" class="logo-container">
+            <a href="dashboard" class="logo-container">
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
@@ -257,17 +275,17 @@
     <div class="container">
         <h2>Selecione a Rede Social</h2>
         <p class="subtext">Selecione a rede social que você deseja adicionar a nova conta.</p>
-        
+
         <div class="social-networks">
             <div class="network-item">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png" alt="TikTok"
-                    class="network-logo" onclick="redirectToTikTokAccountSelection()">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png"
+                    alt="TikTok" class="network-logo" onclick="redirectToTikTokAccountSelection()">
                 <p>TikTok</p>
             </div>
-            
+
             <div class="network-item">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745610836636.png" alt="Instagram"
-                    class="network-logo" onclick="redirectToInstagramAccountSelection()">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745610836636.png"
+                    alt="Instagram" class="network-logo">
                 <p>Instagram</p>
                 <span class="coming-soon">(Em breve)</span>
             </div>
@@ -285,6 +303,7 @@
         <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
         <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="suporte">Suporte</a>
 
         <div class="menu-footer">
             <a class="menu-logout" href="#" id="logoutLink">Sair</a>
@@ -325,19 +344,25 @@
             window.location.href = "profile";
         }
 
+        function goToSupport() {
+            window.location.href = "suporte";
+        }
+
+        function redirectToTikTokAccountSelection() {
+            window.location.href = "adicionar_conta_tiktok";
+        }
+
         function logout() {
             localStorage.removeItem("authToken");
             window.location.href = "https://ganhesocial.com";
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
-            if (!token) {
-                window.location.href = "dashboard";
-            }
+
 
             // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
                 e.preventDefault();
                 logout();
             });
@@ -347,7 +372,7 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function() {
+            menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -365,7 +390,7 @@
             });
 
             // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function() {
+            menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
@@ -376,4 +401,5 @@
         });
     </script>
 </body>
+
 </html>
