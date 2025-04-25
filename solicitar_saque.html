@@ -471,7 +471,7 @@
 
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
-                document.getElementById("availableBalance").textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById("availableBalance").textContent = saldoDisponivel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
                 // Carrega chave PIX salva se existir e for CPF
                 if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
