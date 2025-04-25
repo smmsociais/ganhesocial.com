@@ -29,43 +29,25 @@
         }
 
         .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    background-color: var(--container-light);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 100%; /* Garante que ocupe toda a largura */
-    box-sizing: border-box; /* Inclui padding no cálculo da largura */
-    position: relative; /* Para garantir z-index funciona corretamente */
-    z-index: 10; /* Mantém acima de outros elementos */
-}
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
 
-/* Adicione esta media query no final do seu CSS */
-@media (max-width: 480px) {
-    .header {
-        padding: 12px 15px; /* Reduz o padding em telas muito pequenas */
-    }
-    
-    .left-header {
-        gap: 15px; /* Reduz o espaçamento entre itens */
-    }
-    
-    .logo {
-        height: 25px; /* Reduz um pouco o tamanho da logo */
-    }
-}
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
 
-@media (max-width: 360px) {
-    .menu-toggle {
-        width: 25px;
-        height: 25px;
-    }
-    
-    .logo {
-        height: 22px;
-    }
-}
+        .logo {
+            height: 30px;
+            margin-right: 10px;
+        }
+
         .container {
             background: var(--container-light);
             padding: 25px;
@@ -265,7 +247,7 @@
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
+            <a href="dashboard.html" class="logo-container">
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
@@ -303,8 +285,6 @@
         <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
         <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
-        <a class="menu-item" href="suporte">Suporte</a>
-
         <div class="menu-footer">
             <a class="menu-logout" href="#" id="logoutLink">Sair</a>
         </div>
@@ -342,10 +322,6 @@
 
         function goToAccount() {
             window.location.href = "profile";
-        }
-
-        function goToSupport() {
-            window.location.href = "suporte";
         }
 
         function redirectToTikTokAccountSelection() {
