@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selecionar Rede Social</title>
     <style>
         :root {
@@ -16,17 +16,6 @@
             --border-dark: #30363d;
             --primary-color: #007BFF;
             --primary-dark: #1f6feb;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body, html {
-            width: 100%;
-            overflow-x: hidden;
         }
 
         body {
@@ -46,105 +35,206 @@
             padding: 15px 20px;
             background-color: var(--container-light);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            position: relative;
-            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
             gap: 30px;
-            width: 100%;
         }
 
         .logo {
             height: 30px;
-            max-width: 100%;
+            margin-right: 10px;
         }
 
         .container {
             background: var(--container-light);
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 400px;
+            max-width: 350px;
             margin: 30px auto;
             transition: background 0.3s;
             text-align: center;
         }
 
-        /* ... (mantenha todos os outros estilos existentes) ... */
+        .network-logo {
+            width: 60px;
+            height: auto;
+            margin-bottom: 5px;
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .network-logo:hover {
+            transform: scale(1.05);
+        }
+
+        .network-logo:active {
+            transform: scale(0.95);
+        }
+
+        p {
+            margin-top: 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .subtext {
+            font-size: 12px;
+            color: gray;
+            margin-bottom: 15px;
+        }
+
+        .social-networks {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .network-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+        }
+
+        .coming-soon {
+            font-size: 10px;
+            color: #888;
+            margin-top: -5px;
+            font-style: italic;
+        }
+
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .header,
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .subtext {
+                color: #aaa;
+            }
+
+            .coming-soon {
+                color: #777;
+            }
+        }
 
         @media (max-width: 768px) {
-            .header {
-                padding: 12px 15px;
-            }
-            
-            .left-header {
-                gap: 20px;
-            }
-            
-            .logo {
-                height: 25px;
-            }
-            
             .container {
                 width: 95%;
-                padding: 20px;
-                margin: 20px auto;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 10px 12px;
-            }
-            
-            .left-header {
-                gap: 15px;
-            }
-            
-            .logo {
-                height: 22px;
-            }
-            
-            .menu-toggle {
-                width: 25px;
-                height: 25px;
-            }
-            
-            .network-logo {
-                width: 80px;
-            }
-            
-            .social-networks {
-                gap: 20px;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .header {
-                padding: 8px 10px;
-            }
-            
-            .logo {
-                height: 20px;
-            }
-            
-            .menu-toggle {
-                width: 22px;
-                height: 22px;
-            }
-            
-            .network-logo {
-                width: 70px;
-            }
-            
-            .social-networks {
-                gap: 15px;
-                flex-direction: column;
+                padding: 15px;
             }
         }
     </style>
