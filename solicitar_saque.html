@@ -469,8 +469,8 @@
                     throw new Error(data.error || "Erro ao buscar saldo.");
                 }
 
-                const saldo = parseFloat(data.saldo);
-                localStorage.setItem("saldoDisponivel", saldo);
+                const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 document.getElementById("availableBalance").textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
                 // Carrega chave PIX salva se existir e for CPF
