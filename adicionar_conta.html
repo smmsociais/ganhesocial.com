@@ -101,6 +101,13 @@
             align-items: center;
         }
 
+        .coming-soon {
+            font-size: 12px;
+            color: #888;
+            margin-top: -10px;
+            font-style: italic;
+        }
+
         /* Estilos do menu hamburguer */
         .menu-toggle {
             width: 30px;
@@ -217,6 +224,10 @@
             .subtext {
                 color: #aaa;
             }
+            
+            .coming-soon {
+                color: #777;
+            }
         }
 
         @media (max-width: 768px) {
@@ -258,6 +269,7 @@
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745610836636.png" alt="Instagram"
                     class="network-logo" onclick="redirectToInstagramAccountSelection()">
                 <p>Instagram</p>
+                <span class="coming-soon">(Em breve)</span>
             </div>
         </div>
     </div>
@@ -270,6 +282,8 @@
         <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
         <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
         <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
         <a class="menu-item" href="suporte">Suporte</a>
 
@@ -300,6 +314,14 @@
             window.location.href = "historico_acoes";
         }
 
+        function goToWithdraw() {
+            window.location.href = "solicitar_saque";
+        }
+
+        function goToWithdrawHistory() {
+            window.location.href = "historico_saques";
+        }
+
         function goToAccount() {
             window.location.href = "profile";
         }
@@ -313,7 +335,9 @@
         }
 
         function redirectToInstagramAccountSelection() {
-            window.location.href = "adicionar_conta_instagram";
+            // Temporariamente desativado enquanto "Em breve"
+            // window.location.href = "adicionar_conta_instagram";
+            alert("Instagram estará disponível em breve!");
         }
 
         function logout() {
