@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,7 +56,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 500px;
+            max-width: 350px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -184,7 +185,7 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
@@ -253,6 +254,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <div class="left-header">
@@ -261,7 +263,7 @@
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard.html" class="logo-container">
+            <a href="dashboard" class="logo-container">
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
@@ -270,7 +272,7 @@
 
     <div class="container">
         <h2>Gerenciar Contas TikTok</h2>
-        
+
         <div id="messageBox" class="message-box" style="display: none;"></div>
 
         <ul id="accountList" class="account-list"></ul>
@@ -279,13 +281,14 @@
     <!-- Menu Overlay e Conteúdo -->
     <div class="menu-overlay" id="menuOverlay"></div>
     <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard.html">Página Inicial</a>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
         <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
         <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
         <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
         <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
-        <a class="menu-item" href="suporte">Suporte</a>
 
         <div class="menu-footer">
             <a class="menu-logout" href="#" id="logoutLink">Sair</a>
@@ -299,7 +302,7 @@
             messageBox.textContent = message;
             messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
             messageBox.style.display = 'block';
-            
+
             // Rolagem suave para a mensagem
             messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -311,7 +314,7 @@
 
             if (!token) {
                 showMessage("Você precisa estar logado para gerenciar contas.", true);
-                window.location.href = "login.html";
+
                 return;
             }
 
@@ -331,7 +334,7 @@
                 }
 
                 const accountList = document.getElementById("accountList");
-                accountList.innerHTML = ""; 
+                accountList.innerHTML = "";
 
                 if (!Array.isArray(accounts)) {
                     throw new Error("Dados retornados não são uma lista de contas.");
@@ -342,7 +345,7 @@
                     return;
                 }
 
-                accounts.forEach((account) => { 
+                accounts.forEach((account) => {
                     const li = document.createElement("li");
                     li.className = "account-item";
                     li.innerHTML = `
@@ -362,7 +365,7 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                showMessage("Você precisa estar logado para esta ação.", true);
+                window.location.href = "login";
                 return;
             }
 
@@ -370,7 +373,7 @@
                 const url = `https://ganhesocial.com/api/contas?nomeConta=${encodeURIComponent(accountName)}`;
                 console.log("🔹 Enviando requisição DELETE para:", url);
 
-                const response = await fetch(url, { 
+                const response = await fetch(url, {
                     method: "DELETE",
                     headers: {
                         "Authorization": `Bearer ${token}`,
@@ -390,7 +393,7 @@
                 // Remove a conta da interface
                 const listItem = button.parentElement;
                 listItem.remove();
-                
+
             } catch (error) {
                 console.error("❌ Erro ao desativar conta:", error);
                 showMessage("Erro ao desativar conta. Tente novamente.", true);
@@ -402,14 +405,12 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
-            if (!token) {
-                window.location.href = "dashboard.html";
-            }
+
 
             // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
                 e.preventDefault();
                 logout();
             });
@@ -419,7 +420,7 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function() {
+            menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -437,7 +438,7 @@
             });
 
             // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function() {
+            menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
@@ -451,4 +452,5 @@
         });
     </script>
 </body>
+
 </html>
