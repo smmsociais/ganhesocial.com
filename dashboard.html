@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saldo Disponível</title>
+    <title>GanheSocial - Dashboard</title>
     <style>
         :root {
             --bg-light: #ffffff;
@@ -274,11 +274,6 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            width: 100%;
-            box-sizing: border-box;
         }
 
         /* Estilos para o conteúdo adicionado */
@@ -419,7 +414,7 @@
         <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745529700422.png" alt="Telegram"
             class="telegram-image">
         <p>
-            <a href="https://t.me/ganhesocialoficial" class="telegram-link" target="_blank">Grupo Oficial do Telegram:
+            <a href="https://t.me/ganhesocialoficial" class="telegram-link" target="_blank">Grupo Oficial no Telegram:
                 t.me/ganhesocialoficial</a>
         </p>
     </div>
@@ -445,9 +440,6 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
-            if (!token) {
-                window.location.href = "dashboard";
-            }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
