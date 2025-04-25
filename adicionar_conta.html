@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Selecionar Rede Social</title>
     <style>
         :root {
@@ -18,12 +18,21 @@
             --primary-dark: #1f6feb;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -32,36 +41,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 12px 15px;
             background-color: var(--container-light);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .logo {
-            height: 30px;
+            height: 28px;
             margin-right: 10px;
         }
 
         .container {
             background: var(--container-light);
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
+            width: 94%;
             max-width: 400px;
-            margin: 30px auto;
+            margin: 25px auto;
             transition: background 0.3s;
             text-align: center;
         }
 
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
         .network-logo {
-            width: 100px;
+            width: 80px;
             height: auto;
             margin-bottom: 5px;
             transition: transform 0.2s ease-in-out;
@@ -91,27 +108,29 @@
         .social-networks {
             display: flex;
             justify-content: center;
-            gap: 30px;
+            gap: 20px;
             flex-wrap: wrap;
+            margin-top: 15px;
         }
 
         .network-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-width: 100px;
         }
 
         .coming-soon {
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
-            margin-top: -10px;
+            margin-top: -8px;
             font-style: italic;
         }
 
         /* Estilos do menu hamburguer */
         .menu-toggle {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -162,10 +181,10 @@
         }
 
         .menu-item {
-            padding: 15px 25px;
+            padding: 14px 20px;
             cursor: pointer;
             color: var(--text-light);
-            font-size: 16px;
+            font-size: 15px;
             text-decoration: none;
             transition: background-color 0.2s;
         }
@@ -176,15 +195,15 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 12px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .menu-logout {
-            padding: 15px 25px;
+            padding: 14px 20px;
             cursor: pointer;
             color: #dc3545;
-            font-size: 16px;
+            font-size: 15px;
             text-decoration: none;
         }
 
@@ -230,10 +249,62 @@
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+            
+            .left-header {
+                gap: 15px;
+            }
+            
+            .logo {
+                height: 24px;
+            }
+            
             .container {
-                width: 95%;
-                padding: 20px;
+                padding: 18px;
+                width: 96%;
+                margin: 20px auto;
+            }
+            
+            .network-logo {
+                width: 70px;
+            }
+            
+            .social-networks {
+                gap: 15px;
+            }
+            
+            .network-item {
+                min-width: 80px;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .menu-toggle {
+                width: 25px;
+                height: 25px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .social-networks {
+                gap: 10px;
+            }
+            
+            .network-logo {
+                width: 60px;
+            }
+            
+            .network-item {
+                min-width: 70px;
+            }
+            
+            .coming-soon {
+                font-size: 10px;
             }
         }
     </style>
@@ -336,7 +407,6 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
-
             // Configurar evento de logout
             document.getElementById('logoutLink').addEventListener('click', function (e) {
                 e.preventDefault();
@@ -377,5 +447,4 @@
         });
     </script>
 </body>
-
 </html>
