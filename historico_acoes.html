@@ -406,7 +406,6 @@
                         <th>Tipo</th>
                         <th>Valor</th>
                         <th>Status</th>
-                        <th>Ação</th>
                     </tr>
                 </thead>
                 <tbody id="historyList">
@@ -581,22 +580,22 @@
                     }
 
                     const statusText = action.status;
-                    
+
 const actionLink = (action.status === "Inválida" && action.url_dir) ?
     `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
 row.innerHTML = `
+    <td>${new Date(action.data).toLocaleString()}</td>
+    <td>${action.nome_usuario}</td>  
+    <td>${action.tipo}</td>          
     <td>${action.rede_social}</td>
-    <td>${action.tipo}</td>
-    <td>${action.nome_usuario}</td>
+    <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
     <td>
         <div style="display: flex; flex-direction: column; gap: 4px;">
             <span class="${statusClass}">${statusText}</span>
-            ${actionLink}  <!-- Removido o || '' pois já estamos retornando string vazia -->
+            ${actionLink}
         </div>
     </td>
-    <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
-    <td>${new Date(action.data).toLocaleString()}</td>
     <td></td>
 `;
                     historyList.appendChild(row);
