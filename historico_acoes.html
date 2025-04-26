@@ -424,13 +424,14 @@
     <!-- Menu Overlay e Conteúdo -->
     <div class="menu-overlay" id="menuOverlay"></div>
     <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard.html">Página Inicial</a>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
         <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
         <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
         <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
         <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
         <a class="menu-item" href="profile">Minha Conta</a>
-        <a class="menu-item" href="suporte">Suporte</a>
 
         <div class="menu-footer">
             <a class="menu-logout" href="#" id="logoutLink">Sair</a>
@@ -438,34 +439,6 @@
     </div>
 
     <script>
-        // Funções de navegação globais
-        function goToDashboard() {
-            window.location.href = "dashboard.html";
-        }
-
-        function goToSelectAccount() {
-            window.location.href = "realizar_acoes";
-        }
-
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
-
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
-
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
-
-        function goToAccount() {
-            window.location.href = "profile";
-        }
-
-        function goToSupport() {
-            window.location.href = "suporte";
-        }
 
         function logout() {
             localStorage.removeItem("authToken");
