@@ -582,6 +582,9 @@
 
                     const statusText = action.status;
 
+                    const actionLink = !action.acao_validada && action.url_dir ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
+
                         row.innerHTML = `
     <td>${action.rede_social}</td>
     <td>${action.tipo}</td>
