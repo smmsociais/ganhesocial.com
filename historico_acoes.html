@@ -586,12 +586,12 @@ const statusText = action.status;
                 `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
             
             row.innerHTML = `
+              <td>${new Date(action.data).toLocaleString()}</td>                        
                 <td>${action.rede_social}</td>
+                <td>${action.nome_usuario}</td>                  
                 <td>${action.tipo}</td>
-                <td>${action.nome_usuario}</td>
-                <td><span class="${statusClass}">${statusText}</span></td>
                 <td>R$ ${action.valor_confirmacao.toFixed(3)}</td>
-                <td>${new Date(action.data).toLocaleString()}</td>
+                <td><span class="${statusClass}">${statusText}</span></td>
                 <td>${actionLink}</td>
             `;
             historyList.appendChild(row);
