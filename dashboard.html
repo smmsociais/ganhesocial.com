@@ -461,7 +461,9 @@
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
-            <div id="pagina" style="display: none;">            
+            <div id="saldoDisponivel" style="display: none;"></div>
+            <div id="saldoPendente" style="display: none;"></div>
+            <div id="pagina" style="display: none;">
         </div>
     </div>
 
@@ -528,8 +530,16 @@
                 localStorage.setItem("saldoPendente", saldoPendente);
 
                 document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("pagina").style.display = "block";
+document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Agora sim, mostra os saldos
+document.getElementById("saldoDisponivel").style.display = "block";
+document.getElementById("saldoPendente").style.display = "block";
+
+// E mostra também o resto da página
+document.getElementById("pagina").style.display = "block";
+document.getElementById("loading").style.display = "none";
+
 
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
