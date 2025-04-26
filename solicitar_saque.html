@@ -371,52 +371,49 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
+document.addEventListener("DOMContentLoaded", async function () {
+    const token = localStorage.getItem("authToken");
 
-            if (!token) {
-                window.location.href = "dashboard.html";
-            }
+    // Verifica se há uma mensagem de sucesso para exibir
+    const successMessage = localStorage.getItem("withdrawSuccess");
+    if (successMessage) {
+        showAlert(successMessage, 'success');
+        localStorage.removeItem("withdrawSuccess");
+    }
 
-            // Verifica se há uma mensagem de sucesso para exibir
-            const successMessage = localStorage.getItem("withdrawSuccess");
-            if (successMessage) {
-                showAlert(successMessage, 'success');
-                localStorage.removeItem("withdrawSuccess"); // Remove a mensagem após exibir
-            }
+    // Controle do menu hamburguer
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuContent = document.getElementById('menuContent');
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
+    menuToggle.addEventListener('click', function () {
+        menuContent.classList.toggle('active');
+        menuOverlay.classList.toggle('active');
 
-            menuToggle.addEventListener('click', function () {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+        const spans = menuToggle.querySelectorAll('span');
+        if (menuContent.classList.contains('active')) {
+            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+            spans[1].style.opacity = '0';
+            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+        } else {
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
+        }
+    });
 
-                // Anima os spans do menu hamburguer
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            });
+    menuOverlay.addEventListener('click', function () {
+        menuContent.classList.remove('active');
+        menuOverlay.classList.remove('active');
+        const spans = menuToggle.querySelectorAll('span');
+        spans[0].style.transform = 'none';
+        spans[1].style.opacity = '1';
+        spans[2].style.transform = 'none';
+    });
 
-            // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            });
-        });
+    await loadWithdrawData();
+    document.body.classList.add('loaded');
+});
 
         function logout() {
             localStorage.removeItem("authToken");
@@ -451,7 +448,6 @@
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 document.getElementById("availableBalance").textContent = saldoDisponivel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                document.getElementById("pagina").style.display = "block";
 
                 // Carrega chave PIX salva se existir e for CPF
                 if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
