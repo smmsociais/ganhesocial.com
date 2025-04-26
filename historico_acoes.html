@@ -585,15 +585,20 @@
                     const actionLink = !action.acao_validada && action.url_dir ?
                         `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
 
-                    row.innerHTML = `
-              <td>${new Date(action.data).toLocaleString()}</td>                        
-                <td>${action.rede_social}</td>
-                <td>${action.nome_usuario}</td>                  
-                <td>${action.tipo}</td>
-                <td>R$ ${action.valor_confirmacao.toFixed(3)}</td>
-                <td><span class="${statusClass}">${statusText}</span></td>
-                <td>${actionLink}</td>
-            `;
+                        row.innerHTML = `
+    <td>${action.rede_social}</td>
+    <td>${action.tipo}</td>
+    <td>${action.nome_usuario}</td>
+    <td>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span class="${statusClass}">${statusText}</span>
+            ${actionLink}
+        </div>
+    </td>
+    <td>${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+    <td>${new Date(action.data).toLocaleString()}</td>
+    <td></td> <!-- Célula vazia pois movemos o actionLink -->
+`;
                     historyList.appendChild(row);
                 });
             }
