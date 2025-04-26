@@ -15,6 +15,7 @@
             --border-dark: #30363d;
             --valid-color: #28a745;
             --invalid-color: #dc3545;
+            --pending-color: #ffc107;
             --primary-color: #007BFF;
             --primary-dark: #1f6feb;
             --header-bg-light: #f8f9fa;
@@ -112,6 +113,11 @@
             color: var(--invalid-color);
             font-weight: bold;
         }
+
+        .status-pendente {
+    color: var(--pending-color);
+    font-weight: bold;
+}     
 
         .action-link {
             color: var(--primary-color);
@@ -271,6 +277,11 @@
                 border: 1px solid var(--border-dark);
             }
 
+            .status-pendente {
+        color: var(--pending-color); 
+    }
+}            
+
             .history-table th {
                 background-color: var(--header-bg-dark);
                 color: var(--header-text-dark);
@@ -339,7 +350,6 @@
             .menu-footer {
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
-        }
 
         @media (max-width: 768px) {
             .container {
@@ -562,9 +572,13 @@ document.addEventListener("DOMContentLoaded", function() {
         pageActions.forEach(action => {
             const row = document.createElement("tr");
             let statusClass;
-if (action.status === "Válida") statusClass = "status-valid";
-else if (action.status === "Inválida") statusClass = "status-invalid";
-else statusClass = "status-pendente";
+if (action.status === "Válida") {
+    statusClass = "status-valid";
+} else if (action.status === "Inválida") {
+    statusClass = "status-invalid";
+} else {
+    statusClass = "status-pendente"; // Esta linha já está correta no seu código
+}
 
 const statusText = action.status;
 
