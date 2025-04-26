@@ -293,6 +293,10 @@
 
     <script>
 
+        function redirectToTikTokAccountSelection() {
+            window.location.href = "adicionar_conta_tiktok";
+        }        
+
         function logout() {
             localStorage.removeItem("authToken");
             window.location.href = "https://ganhesocial.com";
