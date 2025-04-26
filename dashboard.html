@@ -461,6 +461,7 @@
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
+            <div id="pagina" style="display: none;">            
         </div>
     </div>
 
@@ -528,6 +529,8 @@
 
                 document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("pagina").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
