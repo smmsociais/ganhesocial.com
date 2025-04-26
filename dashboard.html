@@ -400,13 +400,17 @@
                 transition: background 0.3s;
             }
         }
+
+        body {
+    visibility: hidden;
+}
+body.loaded {
+    visibility: visible;
+}        
     </style>
 </head>
 
-<body>   
-</div>
-</div>   
-    <div id="pagina" style="display: none;"></div>     
+<body>      
     <div class="header">
 
         <div class="left-header">
@@ -421,6 +425,7 @@
             </a>
         </div>
     </div>
+    <div id="pagina"></div>   
     <div class="saldos-container">
         <div class="saldo-container">
             <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
@@ -468,46 +473,46 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
+document.addEventListener("DOMContentLoaded", async function () {
+    const token = localStorage.getItem("authToken");
 
+    // Controle do menu hamburguer
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuContent = document.getElementById('menuContent');
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
+    menuToggle.addEventListener('click', function () {
+        menuContent.classList.toggle('active');
+        menuOverlay.classList.toggle('active');
 
-            menuToggle.addEventListener('click', function () {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+        const spans = menuToggle.querySelectorAll('span');
+        if (menuContent.classList.contains('active')) {
+            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+            spans[1].style.opacity = '0';
+            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+        } else {
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
+        }
+    });
 
-                // Anima os spans do menu hamburguer
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            });
+    menuOverlay.addEventListener('click', function () {
+        menuContent.classList.remove('active');
+        menuOverlay.classList.remove('active');
+        const spans = menuToggle.querySelectorAll('span');
+        spans[0].style.transform = 'none';
+        spans[1].style.opacity = '1';
+        spans[2].style.transform = 'none';
+    });
 
-            // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            });
+    // Carrega dados iniciais e espera terminar
+    await carregarSaldos();
+    await carregarHistorico();
 
-            // Carrega dados iniciais
-            carregarSaldos();
-            carregarHistorico();
-        });
+    // Agora mostra o conteúdo
+    document.body.classList.add('loaded');
+});
 
         async function carregarSaldos() {
             const token = localStorage.getItem("authToken");
@@ -528,11 +533,7 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);               
 
-document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-document.getElementById("saldoDisponivel").style.display = "block";
-document.getElementById("saldoPendente").style.display = "block";
-document.getElementById("pagina").style.display = "block";
+                document.body.classList.add('loaded');
 
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
