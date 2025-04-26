@@ -582,17 +582,18 @@
 
                     const statusText = action.status;
 
-                    const actionLink = !action.acao_validada && action.url_dir ?
-                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "-";
+// Modificado para retornar string vazia em vez de "-"
+const actionLink = !action.acao_validada && action.url_dir ?
+    `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
-                        row.innerHTML = `
+row.innerHTML = `
     <td>${action.rede_social}</td>
     <td>${action.tipo}</td>
     <td>${action.nome_usuario}</td>
     <td>
         <div style="display: flex; flex-direction: column; gap: 4px;">
             <span class="${statusClass}">${statusText}</span>
-            ${actionLink || ''}  <!-- Isso garante que nada será exibido se actionLink for vazio -->
+            ${actionLink}  <!-- Removido o || '' pois já estamos retornando string vazia -->
         </div>
     </td>
     <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
