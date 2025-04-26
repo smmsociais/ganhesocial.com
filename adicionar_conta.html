@@ -177,11 +177,8 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
-            position: sticky;
-            bottom: 0;
-            background-color: inherit;
         }
 
         .menu-logout {
@@ -236,8 +233,8 @@
 
         @media (max-width: 768px) {
             .container {
-                width: 95%;
-                padding: 15px;
+                width: 88%;
+                padding: 20px;
             }
         }
     </style>
@@ -251,7 +248,7 @@
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard.html" class="logo-container">
+            <a href="dashboard" class="logo-container">
                 <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
@@ -295,42 +292,6 @@
     </div>
 
     <script>
-        // Funções de navegação globais
-        function goToDashboard() {
-            window.location.href = "dashboard";
-        }
-
-        function goToSelectAccount() {
-            window.location.href = "realizar_acoes";
-        }
-
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
-
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
-
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
-
-        function goToWithdraw() {
-            window.location.href = "solicitar_saque";
-        }
-
-        function goToWithdrawHistory() {
-            window.location.href = "historico_saques";
-        }
-
-        function goToAccount() {
-            window.location.href = "profile";
-        }
-
-        function redirectToTikTokAccountSelection() {
-            window.location.href = "adicionar_conta_tiktok";
-        }
 
         function logout() {
             localStorage.removeItem("authToken");
