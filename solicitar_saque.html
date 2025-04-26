@@ -290,6 +290,14 @@
                 border: 1px solid #2c5c30;
             }
         }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }        
     </style>
 </head>
 
@@ -307,7 +315,7 @@
             </a>
         </div>
     </div>
-
+    <div id="pagina"></div>
     <div class="container">
         <h2>Solicitar Saque</h2>
 
@@ -443,6 +451,7 @@
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 document.getElementById("availableBalance").textContent = saldoDisponivel.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById("pagina").style.display = "block";
 
                 // Carrega chave PIX salva se existir e for CPF
                 if (data.pix_key && /^\d{11}$/.test(data.pix_key)) {
