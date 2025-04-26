@@ -461,8 +461,6 @@
 
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()">Sair</a>
-            <div id="saldoDisponivel" style="display: none;"></div>
-            <div id="saldoPendente" style="display: none;"></div>
             <div id="pagina" style="display: none;">
         </div>
     </div>
@@ -529,17 +527,15 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
 
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const saldoDisponivelLocal = localStorage.getItem("saldoDisponivel");
+const saldoPendenteLocal = localStorage.getItem("saldoPendente");
 
-// Agora sim, mostra os saldos
+if (saldoDisponivelLocal !== null && saldoPendenteLocal !== null) {
+    document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${parseFloat(saldoDisponivelLocal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${parseFloat(saldoPendenteLocal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 document.getElementById("saldoDisponivel").style.display = "block";
 document.getElementById("saldoPendente").style.display = "block";
-
-// E mostra também o resto da página
-document.getElementById("pagina").style.display = "block";
-document.getElementById("loading").style.display = "none";
-
 
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
