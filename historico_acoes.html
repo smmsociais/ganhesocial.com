@@ -398,12 +398,12 @@
             <table class="history-table" id="historyTable">
                 <thead>
                     <tr>
+                        <th>Data</th>                        
                         <th>Rede Social</th>
+                        <th>Usuário</th>                        
                         <th>Tipo</th>
-                        <th>Usuário</th>
+                        <th>Valor</th>
                         <th>Status</th>
-                        <th>Valor (R$)</th>
-                        <th>Data</th>
                         <th>Ação</th>
                     </tr>
                 </thead>
@@ -577,7 +577,7 @@ if (action.status === "Válida") {
 } else if (action.status === "Inválida") {
     statusClass = "status-invalid";
 } else {
-    statusClass = "status-pendente"; // Esta linha já está correta no seu código
+    statusClass = "status-pendente";
 }
 
 const statusText = action.status;
@@ -590,7 +590,7 @@ const statusText = action.status;
                 <td>${action.tipo}</td>
                 <td>${action.nome_usuario}</td>
                 <td><span class="${statusClass}">${statusText}</span></td>
-                <td>${action.valor_confirmacao.toFixed(3)}</td>
+                <td>R$ ${action.valor_confirmacao.toFixed(3)}</td>
                 <td>${new Date(action.data).toLocaleString()}</td>
                 <td>${actionLink}</td>
             `;
