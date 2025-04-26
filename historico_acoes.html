@@ -354,7 +354,7 @@
 
         @media (max-width: 768px) {
             .container {
-                width: 70%;
+                width: 80%;
                 padding: 15px;
             }
 
@@ -581,10 +581,10 @@
 
                     const statusText = action.status;
 
-const actionLink = (action.status === "Inválida" && action.url_dir) ?
-    `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
+                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
-row.innerHTML = `
+                    row.innerHTML = `
     <td>${new Date(action.data).toLocaleString()}</td>
     <td>${action.rede_social}</td>    
     <td>${action.nome_usuario}</td>  
