@@ -56,6 +56,26 @@
             margin-right: 10px;
         }
 
+        .saldos-container {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            max-width: 1000px;
+            /* Ajuste este valor para aumentar a largura máxima */
+            margin: 15px auto;
+            gap: 15px;
+        }
+
+
+
+        /* Media query para desktop */
+        @media (min-width: 768px) {
+            .saldos-container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
         .saldo-container {
             background: var(--container-light);
             padding: 20px;
@@ -63,9 +83,13 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 90%;
-            max-width: 500px;
-            margin: 15px auto;
             transition: background 0.3s;
+        }
+
+        @media (min-width: 768px) {
+            .saldo-container {
+                width: 48%;
+            }
         }
 
         .historico-container {
@@ -74,13 +98,13 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 800px;
+            max-width: 300px;
             margin: 15px auto 30px auto;
             transition: background 0.3s;
         }
 
         .saldo {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             margin: 20px 0;
         }
@@ -325,13 +349,6 @@
                 background-color: rgba(255, 255, 255, 0.05);
             }
 
-            .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                background-color: var(--container-dark);
-                position: sticky;
-                bottom: 0;
-            }
-
             .ganho-hoje {
                 color: var(--text-dark);
             }
@@ -375,12 +392,17 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
+        @media (min-width: 480px) {
+            .historico-container {
                 padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                width: 90%;
+                max-width: 960px;
+                margin: 15px auto 30px auto;
+                transition: background 0.3s;
             }
-        }        
+        }
     </style>
 </head>
 
@@ -399,12 +421,14 @@
         </div>
     </div>
 
-    <div class="saldo-container">
-        <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
-    </div>
+    <div class="saldos-container">
+        <div class="saldo-container">
+            <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
+        </div>
 
-    <div class="saldo-container">
-        <p class="saldo saldo-pendente" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
+        <div class="saldo-container">
+            <p class="saldo saldo-pendente" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
+        </div>
     </div>
 
     <div class="historico-container">
