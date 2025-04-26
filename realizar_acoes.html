@@ -179,11 +179,8 @@
 
         .menu-footer {
             margin-top: auto;
-            padding: 15px 0;
+            padding: 25px 0;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
-            position: sticky;
-            bottom: 0;
-            background-color: inherit;
         }
 
         .menu-logout {
@@ -192,19 +189,6 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Estilos responsivos para o botão sair */
-        @media (max-width: 480px) {
-            .menu-logout {
-                padding: 20px 25px;
-                font-size: 18px;
-            }
         }
 
         /* Estilos padronizados para todos os botões */
@@ -326,6 +310,13 @@
             gap: 30px;
             /* Espaço entre menu e logo */
         }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 88%;
+                padding: 20px;
+            }
+        }        
     </style>
 </head>
 
@@ -735,39 +726,6 @@ try {
             } catch (error) {
                 console.error("❌ Erro ao registrar ação pendente:", error);
             }
-        }
-
-        // Funções do menu
-        function goToDashboard() {
-            window.location.href = "dashboard";
-        }
-
-        function goToSelectAccount() {
-            window.location.href = "realizar_acoes";
-        }
-
-        function goToAddAccount() {
-            window.location.href = "adicionar_conta";
-        }
-
-        function goToManageAccounts() {
-            window.location.href = "gerenciar_contas";
-        }
-
-        function goToHistory() {
-            window.location.href = "historico_acoes";
-        }
-
-        function goToWithdraw() {
-            window.location.href = "solicitar_saque";
-        }
-
-        function goToWithdrawHistory() {
-            window.location.href = "historico_saques";
-        }
-
-        function goToAccount() {
-            window.location.href = "profile";
         }
 
         function logout() {
