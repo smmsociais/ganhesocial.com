@@ -334,6 +334,15 @@
                 padding: 20px;
             }
         }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+
     </style>
 </head>
 
@@ -351,7 +360,7 @@
             </a>
         </div>
     </div>
-
+    <div id="pagina"></div>
     <div class="container">
         <h2 class="page-title">Seu Perfil</h2>
 
@@ -585,7 +594,16 @@
             });
         });
 
-        window.onload = loadProfile;
+window.onload = async () => {
+    try {
+        await loadProfile();
+    } catch (error) {
+        console.error('Erro ao carregar o perfil:', error);
+    } finally {
+        document.body.classList.add('loaded');
+    }
+};
+
     </script>
 </body>
 
