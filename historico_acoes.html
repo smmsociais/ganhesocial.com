@@ -376,6 +376,17 @@
                 font-size: 0.8em;
             }
         }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+
+</style>
+
     </style>
 </head>
 
@@ -393,7 +404,7 @@
             </a>
         </div>
     </div>
-
+    <div id="pagina"></div>
     <div class="container">
         <h2>Histórico de Ações</h2>
         <div class="table-container">
@@ -616,7 +627,10 @@
             }
 
             // Inicializar carregando a primeira página
-            loadData(1);
+loadData(1).then(() => {
+    document.body.classList.add('loaded');
+});
+
         });
     </script>
 
