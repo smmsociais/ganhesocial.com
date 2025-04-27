@@ -271,9 +271,12 @@
         }
 
         .withdrawal-table {
-                display: block;
-                overflow-x: auto;
-            }       
+    display: table; /* Mantém como tabela para alinhamento correto */
+    overflow-x: auto;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+}    
 
         body {
             visibility: hidden;
