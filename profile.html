@@ -60,7 +60,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 30px;
+            width: 300px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -342,7 +342,6 @@
         body.loaded {
             visibility: visible;
         }
-
     </style>
 </head>
 
@@ -594,15 +593,15 @@
             });
         });
 
-window.onload = async () => {
-    try {
-        await loadProfile();
-    } catch (error) {
-        console.error('Erro ao carregar o perfil:', error);
-    } finally {
-        document.body.classList.add('loaded');
-    }
-};
+        window.onload = async () => {
+            try {
+                await loadProfile();
+            } catch (error) {
+                console.error('Erro ao carregar o perfil:', error);
+            } finally {
+                document.body.classList.add('loaded');
+            }
+        };
 
     </script>
 </body>
