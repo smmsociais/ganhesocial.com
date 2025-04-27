@@ -261,6 +261,15 @@
                 }
             }
         }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+
     </style>
 </head>
 
@@ -321,10 +330,15 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("authToken");
 
-
+            // Verifica se há uma mensagem de sucesso para exibir
+            const successMessage = localStorage.getItem("withdrawSuccess");
+            if (successMessage) {
+                showAlert(successMessage, 'success');
+                localStorage.removeItem("withdrawSuccess");
+            }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -335,7 +349,6 @@
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
-                // Anima os spans do menu hamburguer
                 const spans = menuToggle.querySelectorAll('span');
                 if (menuContent.classList.contains('active')) {
                     spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
@@ -348,7 +361,6 @@
                 }
             });
 
-            // Fechar menu ao clicar no overlay
             menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
@@ -358,8 +370,8 @@
                 spans[2].style.transform = 'none';
             });
 
-            // Carrega o histórico de saques
-            loadWithdrawals();
+            await loadWithdrawals();
+            document.body.classList.add('loaded');
         });
 
         function logout() {
