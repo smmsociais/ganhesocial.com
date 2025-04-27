@@ -297,8 +297,8 @@
                 <thead>
                     <tr>
                         <th>Data</th>
-                        <th>Valor</th>
                         <th>Método</th>
+                        <th>Valor</th>                        
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -466,11 +466,11 @@
 
                 row.innerHTML = `
                     <td>${formattedDate}</td>
-                    <td>${formattedValue}</td>
                     <td>${(withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey))
                         ? withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
                         : (withdrawal.pixKey || withdrawal.method || '-')
                     }</td>
+                    <td>${formattedValue}</td>
                     <td class="${statusClass}">${statusText}</td>
                 `;
 
