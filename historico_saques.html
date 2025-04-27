@@ -256,7 +256,7 @@
 
             @media (max-width: 768px) {
                 .container {
-                    width: 88%;
+                    width: 70%;
                     padding: 20px;
                 }
             }
@@ -269,7 +269,6 @@
         body.loaded {
             visibility: visible;
         }
-
     </style>
 </head>
 
@@ -298,7 +297,7 @@
                     <tr>
                         <th>Data</th>
                         <th>Método</th>
-                        <th>Valor</th>                        
+                        <th>Valor</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -383,7 +382,7 @@
             const token = localStorage.getItem("authToken");
 
             if (!token) {
-                window.location.href = "/login";
+
                 return;
             }
 
