@@ -263,6 +263,27 @@
             }
         }
 
+        .image-top {
+            width: 45%;
+            height: auto;
+            position: absolute;
+            top: -20%;
+            right: 0;
+            transform: translateY(-50%);
+            animation: moveUpDown 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+        }
+
+        @media (max-width: 768px) {
+            .image-top {
+                width: min(120%, 100vw);
+                top: -35vh;
+                right: 0;
+                max-width: 100%;
+                object-fit: cover;
+            }
+        }
+
         @media (max-width: 480px) {
             .logo {
                 height: 3vh;
@@ -579,6 +600,9 @@
 <body>
     <img class="logo" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png"
         alt="Ganhe Social">
+
+    <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
+        alt="Logo Ganhe Social">
 
     <div class="hamburger-menu" id="hamburgerMenu">
         <div class="hamburger-icon"></div>
