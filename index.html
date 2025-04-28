@@ -97,9 +97,9 @@
 
         .logo {
             position: absolute;
-            top: -610px;
-            left: 100px;
-            height: 260px;
+            top: -550px;
+            left: 140px;
+            height: 40px;
             width: auto;
             z-index: 10;
         }
@@ -199,7 +199,7 @@
             }
 
             .logo {
-                height: 70px;
+                height: 2px;
                 left: 20px;
             }
 
@@ -243,9 +243,9 @@
 
         @media (max-width: 480px) {
             .logo {
-                height: 25vh;
-                top: -100vh;
-                left: -2vw;
+                height: 3vh;
+                top: -95vh;
+                left: 5vw;
             }
 
             .buttons-below {
@@ -527,10 +527,18 @@
             }
 
             .footer-logo,
-            .footer-navigation,
-            .footer-contact {
+            .footer-navigation {
                 min-width: 100%;
                 text-align: center;
+            }
+
+            .footer-contact {
+                align-items: center;
+                /* Centraliza tudo na vertical */
+                text-align: center;
+                /* Centraliza o texto */
+                width: 100%;
+                /* Ocupa toda a largura */
             }
 
             .footer-logo {
