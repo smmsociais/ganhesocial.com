@@ -21,9 +21,11 @@
             font-family: 'Montserrat', sans-serif;
             min-height: 100vh;
             margin: 0;
+            padding: 0;
             transition: background-color 0.3s, color 0.3s;
             overflow-x: hidden;
             position: relative;
+            width: 100%;
         }
 
         .text-content {
@@ -146,9 +148,7 @@
         .features-section h2 {
             font-size: 1.8rem;
             font-family: 'Arial', sans-serif;
-            /* Reduz de 2.5rem para 2rem */
             margin-bottom: 20px;
-            /* Ajuste opcional para reduzir espaço abaixo */
         }
 
         .feature-item {
@@ -290,13 +290,22 @@
             }
         }
 
-
+        .image-top {
+            width: 45%;
+            height: auto;
+            position: absolute;
+            top: -20%;
+            right: 0;
+            transform: translateY(-50%);
+            animation: moveUpDown 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+        }
 
         @media (max-width: 768px) {
             .image-top {
                 width: min(120%, 100vw);
                 top: -35vh;
-                right: 0vw;
+                right: 0;
                 max-width: 100%;
                 object-fit: cover;
             }
@@ -448,6 +457,8 @@
             background-color: #000;
             padding: 30px 0;
             color: white;
+            width: 100%;
+            overflow: hidden;
         }
 
         .footer-content {
@@ -458,6 +469,8 @@
             margin: 0 auto;
             padding: 0 20px;
             gap: 40px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .footer-logo {
@@ -534,15 +547,12 @@
                 gap: 20px;
             }
 
-            /* Estilo base da logo no footer */
             .footer-logo {
                 flex: 1;
                 min-width: 200px;
                 display: flex;
                 align-items: flex-start;
-                /* Alinha a logo no topo da div */
                 padding-top: 30px;
-                /* Espaço mínimo de 30px acima da logo */
             }
 
             .footer-logo img {
@@ -556,11 +566,8 @@
 
             .footer-contact {
                 align-items: center;
-                /* Centraliza tudo na vertical */
                 text-align: center;
-                /* Centraliza o texto */
                 width: 100%;
-                /* Ocupa toda a largura */
             }
 
             .footer-logo {
@@ -610,7 +617,8 @@
         </div>
     </div>
 
-
+    <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
+        alt="Logo Ganhe Social">
 
     <div class="features-section" id="como-funciona">
         <h2>Como funciona o Ganhe Social?</h2>
@@ -687,6 +695,7 @@
             <p class="info-description">Pagamos R$ 0.004 á R$ 0.01 com ações de seguir, enquanto para curtir,
                 pagamos o valor de R$ 0.001. Esses valores são variáveis, pois podem sofrer alterações a
                 qualquer momento.</p>
+
         </div>
 
         <div class="info-item">
