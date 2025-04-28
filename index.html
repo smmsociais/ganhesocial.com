@@ -569,7 +569,7 @@
         }
 
         .footer-image {
-            width: 30px;
+            width: 20px;
             height: auto;
         }
     </style>
@@ -605,7 +605,7 @@
     <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
         alt="Logo Ganhe Social">
 
-    <div class="features-section">
+    <div class="features-section" id="como-funciona">
         <h2>Como funciona o Ganhe Social?</h2>
 
         <div class="feature-item">
@@ -631,7 +631,9 @@
             <p class="feature-text">Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor
                 por PIX. Os pagamentos são instantâneos!</p>
         </div>
+    </div>
 
+    <div class="features-section" id="vantagens">
         <h2>Quais as vantagens de utilizar o Ganhe Social?</h2>
 
         <div class="feature-item">
@@ -658,7 +660,7 @@
         </div>
     </div>
 
-    <div class="info-section">
+    <div class="info-section" id="duvidas">
         <div class="info-item">
             <h2 class="info-title">Dúvidas Frequentes</h2>
         </div>
@@ -722,9 +724,9 @@
             <div class="footer-navigation">
                 <h3>Navegação</h3>
                 <ul>
-                    <li><a href="#">Como funciona o Ganhe Social?</a></li>
-                    <li><a href="#">Quais as vantagens de utilizar o Ganhe Social?</a></li>
-                    <li><a href="#">Dúvidas Frequentes</a></li>
+                    <li><a href="#como-funciona">Como funciona o Ganhe Social?</a></li>
+                    <li><a href="#vantagens">Quais as vantagens de utilizar o Ganhe Social?</a></li>
+                    <li><a href="#duvidas">Dúvidas Frequentes</a></li>
                 </ul>
             </div>
 
@@ -737,6 +739,7 @@
                     <p class="footer-email">contato@ganhesocial.com</p>
                 </div>
             </div>
+        </div>
     </footer>
 
     <script>
@@ -774,6 +777,17 @@
                 icons[1].style.opacity = '1';
                 icons[2].style.transform = 'none';
             }
+        });
+
+        // Scroll suave para todos os links âncora
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
         });
     </script>
 </body>
