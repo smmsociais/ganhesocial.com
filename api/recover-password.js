@@ -1,5 +1,5 @@
-import { connectToDatabase } from '../../utils/mongodb'; // ajustar se seu caminho for diferente
-import { sendRecoveryEmail } from '../../utils/mailer'; // função para enviar email
+import connectDB from "./db.js";
+import { sendRecoveryEmail } from './mailer.js'; // função para enviar email
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
