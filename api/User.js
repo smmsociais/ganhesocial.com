@@ -40,7 +40,7 @@ const GanhosPorDiaSchema = new mongoose.Schema({
 
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
-  nome: { type: String, required: true },
+  nome: { type: String, required: false },
   email: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
   token: { type: String, required: true },
