@@ -1,23 +1,19 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-// Carrega as variáveis de ambiente do arquivo .env
-dotenv.config();
 
 export async function sendRecoveryEmail(email, link) {
-  // Configuração do transporte SMTP (Outlook)
+  // Configuração do transporte SMTP (Outlook) com credenciais diretas
   const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST, // smtp.office365.com
-    port: process.env.MAIL_PORT, // 587
-    secure: false, // Usamos TLS
+    host: 'smtp.office365.com', // Servidor SMTP do Outlook
+    port: 587, // Porta para TLS
+    secure: false, // Usamos TLS (não SSL)
     auth: {
-      user: process.env.MAIL_USER, // contato@ganhesocial.com
-      pass: process.env.MAIL_PASS, // senha do email
+      user: 'contato@ganhesocial.com', // Seu email
+      pass: 'reno4769!', // Sua senha de aplicativo ou senha normal
     },
   });
 
   const mailOptions = {
-    from: `"${process.env.MAIL_NAME}" <${process.env.MAIL_FROM}>`, // Remetente
+    from: '"GanheSocial" <contato@ganhesocial.com>', // Remetente
     to: email, // Destinatário
     subject: 'Recuperação de Senha', // Assunto do email
     html: `
