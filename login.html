@@ -58,6 +58,22 @@
             box-sizing: border-box;
         }
 
+        .forgot-password {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .forgot-password a {
+            color: var(--link-color);
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
         .button {
             width: 100%;
             padding: 10px;
@@ -116,6 +132,10 @@
                 border-color: var(--border-dark);
             }
 
+            .forgot-password a {
+                color: var(--button-dark);
+            }
+
             .signup-link {
                 color: var(--button-dark);
             }
@@ -148,6 +168,9 @@
             <div class="input-group">
                 <input type="password" id="senha" placeholder="Senha" required>
             </div>
+            <div class="forgot-password">
+                <a href="https://ganhesocial.com/recover-password">Esqueceu a senha?</a>
+            </div>
             <button type="submit" class="button">Entrar</button>
         </form>
 
@@ -159,7 +182,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             document.body.classList.add('loaded');
-
+            
             // Redireciona o usuário para o dashboard se ele já estiver logado
             const token = localStorage.getItem("authToken");
             if (token) {
