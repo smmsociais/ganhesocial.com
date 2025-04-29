@@ -9,18 +9,13 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    const { nome, email, senha } = req.body;
+    const { email, senha } = req.body;
 
-    if (!nome || !email || !senha) {
+    if (!email || !senha) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios." });
     }
 
     try {
-        // Verificar se nome de usuário ou e-mail já existem
-        const usuarioExiste = await User.findOne({ nome });
-        if (usuarioExiste) {
-            return res.status(400).json({ error: "Nome de usuário já está em uso." });
-        }
 
         const emailExiste = await User.findOne({ email });
         if (emailExiste) {
