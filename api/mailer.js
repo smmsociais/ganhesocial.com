@@ -7,13 +7,13 @@ export async function sendRecoveryEmail(email, link) {
     port: 587, // Porta para TLS
     secure: false, // Usamos TLS (não SSL)
     auth: {
-      user: 'rennissonn@hotmail.com', // Seu email
+      user: 'contato@ganhesocial.com', // Seu email
       pass: 'reno4769!', // Sua senha de aplicativo ou senha normal
     },
   });
 
   const mailOptions = {
-    from: '"Renisson Santos" <rennissonn@hotmail.com>', // Remetente
+    from: '"GanheSocial" <contato@ganhesocial.com>', // Remetente
     to: email, // Destinatário
     subject: 'Recuperação de Senha', // Assunto do email
     html: `
