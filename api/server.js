@@ -5,7 +5,9 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import buscarAcaoRouter from "./buscar_acao.js"; // Importando corretamente o router
+import buscarAcaoRouter from "./buscar_acao.js";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
