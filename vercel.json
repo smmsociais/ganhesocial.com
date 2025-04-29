@@ -12,7 +12,7 @@
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" },
     { "source": "/historico_saques", "destination": "/historico_saques.html" },
-    { "source": "/recover-password", "destination": "/recover-password.html" }
+    { "source": "/recover-password", "destination": "/recover-password.html" },
     
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
