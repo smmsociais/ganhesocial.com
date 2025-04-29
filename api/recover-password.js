@@ -1,47 +1,37 @@
+// api/recover-password.js
 import connectDB from "./db.js";
-import { sendRecoveryEmail } from './mailer.js'; // função para enviar email
-import crypto from 'crypto';
+import { User } from "./User.js";
+import { sendRecoveryEmail } from "./mailer.js";
+import crypto from "crypto";
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
-  }
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Método não permitido" });
 
   const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ error: 'Email é obrigatório' });
-  }
+  if (!email)
+    return res.status(400).json({ error: "Email é obrigatório" });
 
   try {
-    const { db } = await connectDB();
+    await connectDB();                     // só garante a conexão
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user)
+      return res.status(404).json({ error: "Email não encontrado" });
 
-    // Verifica se o usuário existe
-    const user = await db.collection('users').findOne({ email: email.toLowerCase() });
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = Date.now() + 3600_000; // milissegundos
 
-    if (!user) {
-      return res.status(404).json({ error: 'Email não encontrado' });
-    }
+    // Salva no documento Mongoose
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(expires);
+    await user.save();
 
-    // Gera um token seguro
-    const token = crypto.randomBytes(32).toString('hex');
-    const tokenExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hora a partir de agora
+    const link = `https://ganhesocial.com/reset-password?token=${token}`;
+    await sendRecoveryEmail(email, link);
 
-    // Atualiza o usuário com o token e expiração
-    await db.collection('users').updateOne(
-      { _id: user._id },
-      { $set: { resetPasswordToken: token, resetPasswordExpires: tokenExpiration } }
-    );
-
-    // Monta o link de recuperação
-    const recoveryLink = `https://ganhesocial.com/reset-password?token=${token}`;
-
-    // Envia o email
-    await sendRecoveryEmail(email, recoveryLink);
-
-    return res.status(200).json({ message: 'Link de recuperação enviado com sucesso' });
-  } catch (error) {
-    console.error('Erro em recover-password:', error);
-    return res.status(500).json({ error: 'Erro interno no servidor' });
+    return res.status(200).json({ message: "Link enviado com sucesso" });
+  } catch (err) {
+    console.error("Erro em recover-password:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
