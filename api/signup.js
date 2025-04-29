@@ -25,7 +25,7 @@ const handler = async (req, res) => {
         // Gerar token único
         const token = crypto.randomBytes(32).toString("hex");
 
-        const novoUsuario = new User({ nome, email, senha, token });
+        const novoUsuario = new User({ email, senha, token });
         await novoUsuario.save();
 
         return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
