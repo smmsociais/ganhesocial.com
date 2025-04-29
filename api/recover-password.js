@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const tokenExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hora a partir de agora
 
     // Atualiza o usuário com o token e expiração
-    await db.collection('usuarios').updateOne(
+    await db.collection('users').updateOne(
       { _id: user._id },
       { $set: { resetPasswordToken: token, resetPasswordExpires: tokenExpiration } }
     );
