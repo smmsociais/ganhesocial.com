@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { db } = await connectToDatabase();
+    const { db } = await connectDB();
 
     // Verifica se o usuário existe
     const user = await db.collection('usuarios').findOne({ email: email.toLowerCase() });
