@@ -1,6 +1,5 @@
 import connectDB from "./db.js";
 import { User } from "./User.js";
-import jwt from "jsonwebtoken";
 
 const handler = async (req, res) => {
     if (req.method !== "POST") {
@@ -9,42 +8,37 @@ const handler = async (req, res) => {
 
     try {
         await connectDB();
+        console.log("Conectado ao MongoDB via Mongoose");
 
-        const { novaSenha } = req.body;
-        const authHeader = req.headers.authorization;
-
+        const authHeader = req.headers.authorization || "";
         console.log("📩 Cabeçalho Authorization recebido:", authHeader);
 
-        if (!novaSenha || novaSenha.length < 6) {
-            console.log("❌ Nova senha inválida.");
-            return res.status(400).json({ error: "A nova senha deve ter ao menos 6 caracteres" });
-        }
-
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            console.log("❌ Token ausente ou malformado:", authHeader);
-            return res.status(401).json({ error: "Token de autenticação ausente ou inválido" });
-        }
-
-        const token = authHeader.split(" ")[1];
+        const token = authHeader.replace("Bearer ", "").trim();
         console.log("🔐 Token extraído:", token);
 
-        // Verifica e decodifica o token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("✅ Token decodificado:", decoded);
+        if (!token) {
+            return res.status(401).json({ error: "Token ausente" });
+        }
 
-        const userId = decoded.id;
+        // Agora buscamos o usuário com esse token simples
+        const usuario = await User.findOne({ token });
 
-        const usuario = await User.findById(userId);
         if (!usuario) {
-            console.log("❌ Usuário não encontrado para ID:", userId);
-            return res.status(404).json({ error: "Usuário não encontrado" });
+            console.log("❌ Token inválido ou usuário não encontrado!");
+            return res.status(401).json({ error: "Token inválido" });
+        }
+
+        const { novaSenha } = req.body;
+
+        if (!novaSenha) {
+            return res.status(400).json({ error: "Nova senha é obrigatória" });
         }
 
         usuario.senha = novaSenha;
         await usuario.save();
 
-        console.log("🟢 Senha alterada com sucesso para o usuário:", usuario.email);
-        return res.status(200).json({ message: "Senha alterada com sucesso" });
+        console.log("✅ Senha alterada com sucesso para o usuário:", usuario.email);
+        return res.json({ message: "Senha alterada com sucesso!" });
 
     } catch (error) {
         console.error("❌ Erro ao alterar senha:", error);
