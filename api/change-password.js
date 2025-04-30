@@ -29,7 +29,7 @@ const handler = async (req, res) => {
         }
 
         // (Opcional) Validar se o token expirou
-        const expiracao = usuario.tokenExpiracao ? new Date(usuario.tokenExpiracao) : null;
+        const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
         if (expiracao && expiracao < new Date()) {
             console.log("❌ Token expirado!");
             return res.status(401).json({ error: "Token expirado" });
