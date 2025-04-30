@@ -20,12 +20,19 @@ const handler = async (req, res) => {
             return res.status(401).json({ error: "Token ausente" });
         }
 
-        // Agora buscamos o usuário com esse token simples
+        // Buscar o usuário com o token
         const usuario = await User.findOne({ token });
 
         if (!usuario) {
             console.log("❌ Token inválido ou usuário não encontrado!");
             return res.status(401).json({ error: "Token inválido" });
+        }
+
+        // (Opcional) Validar se o token expirou
+        const expiracao = usuario.tokenExpiracao ? new Date(usuario.tokenExpiracao) : null;
+        if (expiracao && expiracao < new Date()) {
+            console.log("❌ Token expirado!");
+            return res.status(401).json({ error: "Token expirado" });
         }
 
         const { novaSenha } = req.body;
@@ -34,7 +41,13 @@ const handler = async (req, res) => {
             return res.status(400).json({ error: "Nova senha é obrigatória" });
         }
 
+        // Alterar a senha
         usuario.senha = novaSenha;
+
+        // Limpar o token após a redefinição da senha
+        usuario.token = null;
+        usuario.tokenExpiracao = null;
+
         await usuario.save();
 
         console.log("✅ Senha alterada com sucesso para o usuário:", usuario.email);
