@@ -44,6 +44,8 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   senha: { type: String, required: true },
   token: { type: String, required: true },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   saldo: { type: Number, default: 0 },
   pix_key:      { type: String, default: null },
   pix_key_type: { type: String, default: null },
