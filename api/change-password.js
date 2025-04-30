@@ -21,7 +21,7 @@ const handler = async (req, res) => {
         }
 
         // Buscar o usuário com o token
-        const usuario = await User.findOne({ token });
+        const usuario = await User.findOne({ resetPasswordToken: token });
 
         if (!usuario) {
             console.log("❌ Token inválido ou usuário não encontrado!");
@@ -45,8 +45,8 @@ const handler = async (req, res) => {
         usuario.senha = novaSenha;
 
         // Limpar o token após a redefinição da senha
-        usuario.token = null;
-        usuario.tokenExpiracao = null;
+usuario.resetPasswordToken = null;
+usuario.resetPasswordExpires = null;
 
         await usuario.save();
 
