@@ -532,7 +532,7 @@
 
         }
         document.addEventListener('DOMContentLoaded', function () {
-  const menuToggle = document.getElementById('menu-toggle');
+            const menuToggle = document.getElementById('menuToggle');
   const sidebar = document.getElementById('sidebar');
 
   menuToggle.addEventListener('click', () => {
@@ -617,7 +617,7 @@
                     document.getElementById('userName').textContent = 'Carregando...';
 
                     // Buscar dados do usuário
-                    const userResponse = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${page}`, {
+                    const userResponse = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${currentPage}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
