@@ -17,7 +17,7 @@ const handler = async (req, res) => {
         const usuario = await User.findOne({ resetPasswordToken: token });
 
         if (!usuario) {
-            return res.status(401).json({ error: "Token inválido" });
+            return res.status(401).json({ error: "Link inválido ou expirado" });
         }
 
         const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
