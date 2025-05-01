@@ -44,8 +44,8 @@ const handler = async (req, res) => {
         console.log("Expiração em milissegundos:", expiracaoMs);
         console.log("Agora em milissegundos:", agoraMs);
 
-        // Se o token expirou (com base na data de expiração armazenada)
-        if (expiracaoMs < agoraMs) {
+        // Se a data atual for maior que a data de expiração, o token expirou
+        if (agoraMs > expiracaoMs) {
             console.log("Token expirado, expirado antes de agora.");
             return res.status(401).json({ error: "Token expirado" });
         }
