@@ -569,13 +569,13 @@
                         `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
                     row.innerHTML = `
-    <td>${new Date(action.data).toLocaleString()}</td>
-    <td>${action.rede_social}</td>    
-<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(acao.nome_usuario)}">${acao.nome_usuario}</a></td> 
-    <td>Seguir</td>       
-    <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
-    <td>
-        <div style="display: flex; flex-direction: column; gap: 4px;">
+<td>${new Date(action.data).toLocaleString()}</td>
+<td>${action.rede_social}</td>    
+<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
+<td>Seguir</td>       
+<td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+<td>
+<div style="display: flex; flex-direction: column; gap: 4px;">
             <span class="${statusClass}">${statusText}</span>
             ${actionLink}
         </div>
