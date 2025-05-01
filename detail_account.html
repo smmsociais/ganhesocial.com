@@ -697,97 +697,71 @@
 
             // Carregar ações do usuário
             async function loadUserActions(page = 1) {
-                try {
-                    currentPage = page;
-                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Carregando...</td></tr>';
+    try {
+        currentPage = page;
+        historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Carregando...</td></tr>';
 
-                    // Se ainda não carregamos todos os dados, buscar da API
-                    if (userActions.length === 0) {
-                        const response = await fetch(`/api/user_actions?id=${userId}&rede=${socialNetwork}`, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Erro ao carregar ações do usuário');
-                        }
-
-                        const actionsData = await response.json();
-                        userActions = actionsData.sort((a, b) => new Date(b.data) - new Date(a.data));
-                        updateStats(userActions);
-                    }
-
-                    // Calcular total de páginas
-                    totalPages = Math.min(Math.ceil(userActions.length / itemsPerPage), maxPages);
-
-                    // Atualizar informações de paginação
-                    updatePaginationInfo();
-
-                    // Gerar paginação
-                    generatePagination();
-
-                    // Exibir itens da página atual
-                    displayPageItems();
-
-                } catch (error) {
-                    console.error("Erro ao carregar ações do usuário:", error);
-                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-                }
+        const response = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${page}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao carregar ações do usuário');
+        }
+
+        const result = await response.json();
+        const actionsData = result.historico || [];
+
+        userActions = actionsData;
+        totalPages = result.totalPages || 1;
+
+        updateStats(userActions);
+        updatePaginationInfo();
+        generatePagination();
+        displayPageItems();
+    } catch (error) {
+        console.error("Erro ao carregar ações do usuário:", error);
+        historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+    }
+}
 
             // Atualizar estatísticas com base nas ações
             function updateStats(actions) {
-                const total = actions.length;
-                const valid = actions.filter(a => a.status === "Válida").length;
-                const pending = actions.filter(a => a.status === "Pendente").length;
-                const earned = actions.reduce((sum, a) => sum + (a.status === "Válida" ? a.valor_confirmacao : 0), 0);
+    const total = actions.length;
+    const valid = actions.filter(a => a.status === "Válida").length;
+    const pending = actions.filter(a => a.status === "Pendente").length;
+    const earned = actions.reduce((sum, a) => sum + (a.status === "Válida" ? a.valor : 0), 0);
 
-                document.getElementById('totalActions').textContent = total;
-                document.getElementById('validActions').textContent = valid;
-                document.getElementById('pendingActions').textContent = pending;
-                document.getElementById('earnedValue').textContent =
-                    `R$ ${earned.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
-            }
+    document.getElementById('totalActions').textContent = total;
+    document.getElementById('validActions').textContent = valid;
+    document.getElementById('pendingActions').textContent = pending;
+    document.getElementById('earnedValue').textContent = `R$ ${earned.toFixed(3)}`;
+}
 
             // Exibir itens da página atual
             function displayPageItems() {
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = Math.min(startIndex + itemsPerPage, userActions.length);
-                const pageActions = userActions.slice(startIndex, endIndex);
+    const tbody = document.getElementById('historyList');
+    tbody.innerHTML = '';
 
-                if (pageActions.length === 0) {
-                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
-                    return;
-                }
+    if (userActions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+        return;
+    }
 
-                historyList.innerHTML = '';
-                pageActions.forEach(action => {
-                    const row = document.createElement("tr");
-                    let statusClass;
-                    if (action.status === "Válida") {
-                        statusClass = "status-valid";
-                    } else if (action.status === "Inválida") {
-                        statusClass = "status-invalid";
-                    } else {
-                        statusClass = "status-pendente";
-                    }
-
-                    const statusText = action.status;
-
-                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
-                        `<a href="${action.url_dir}" class="action-link" target="_blank">Verificar</a>` : "";
-
-                    row.innerHTML = `
-                        <td>${new Date(action.data).toLocaleString()}</td>
-                        <td>${action.tipo_acao || "Seguir"}</td>
-                        <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
-                        <td class="${statusClass}">${statusText}</td>
-                        <td>${actionLink}</td>
-                    `;
-                    historyList.appendChild(row);
-                });
-            }
+    userActions.forEach(action => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${formatDate(action.data)}</td>
+            <td>${action.tipo || '-'}</td>
+            <td>R$ ${(action.valor || 0).toFixed(3)}</td>
+            <td>${action.status}</td>
+            <td>${action.verificado ? '✅' : '⏳'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
 
             // Atualizar informações de paginação
             function updatePaginationInfo() {
