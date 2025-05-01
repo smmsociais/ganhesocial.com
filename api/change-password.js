@@ -25,7 +25,7 @@ const handler = async (req, res) => {
 
         if (!usuario) {
             console.log("❌ Token inválido ou usuário não encontrado!");
-            return res.status(401).json({ error: "Link inválido ou expirado" });
+            return res.status(401).json({ error: "Token inválido" });
         }
 
         // (Opcional) Validar se o token expirou
