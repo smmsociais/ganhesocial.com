@@ -13,13 +13,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Email é obrigatório" });
 
   try {
-    await connectDB();                     // só garante a conexão
+    await connectDB(); // só garante a conexão
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user)
       return res.status(404).json({ error: "Email não encontrado" });
 
     const token = crypto.randomBytes(32).toString("hex");
-    const expires = Date.now() + 3600_000; // milissegundos
+
+    // Definir expiração para 1 minuto (60 * 1000 milissegundos)
+    const expires = Date.now() + 60 * 1000; // 1 minuto de validade
 
     // Salva no documento Mongoose
     user.resetPasswordToken = token;
