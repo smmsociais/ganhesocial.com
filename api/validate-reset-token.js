@@ -20,18 +20,18 @@ const handler = async (req, res) => {
             return res.status(401).json({ error: "Link inválido ou expirado" });
         }
 
-        // Obter a data de expiração, convertendo de milissegundos (se necessário)
-        const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
-        const agora = new Date();
+        // Obter a data de expiração em UTC
+        const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires).toISOString() : null;
+        const agora = new Date().toISOString(); // Garantir que a hora seja no formato UTC
 
         // Se a data de expiração não for válida ou o token expirou
-        if (expiracao && expiracao < agora) {
+        if (expiracao && new Date(expiracao) < new Date(agora)) {
             return res.status(401).json({ error: "Token expirado" });
         }
 
         // Se o token ainda estiver dentro do prazo de 1 minuto (para teste)
         const umMinuto = 1 * 60 * 1000; // 1 minuto em milissegundos
-        const tempoDecorrido = agora - expiracao;
+        const tempoDecorrido = new Date(agora) - new Date(expiracao);
 
         // Verifica se o token expirou após 1 minuto
         if (tempoDecorrido > umMinuto) {
