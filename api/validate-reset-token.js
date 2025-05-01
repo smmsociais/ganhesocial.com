@@ -23,7 +23,7 @@ const handler = async (req, res) => {
         // Verifica a expiração do token, definindo 30 minutos de validade
         const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
         const agora = new Date();
-        const trintaMinutos = 30 * 60 * 1000; // 30 minutos em milissegundos
+        const umMinuto = 1 * 60 * 1000; // 1 minuto em milissegundos
 
         // Se a data de expiração não for válida ou o token expirou
         if (expiracao && expiracao < agora) {
