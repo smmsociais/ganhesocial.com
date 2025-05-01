@@ -597,23 +597,39 @@
             localStorage.removeItem("authToken");
 
         }
+        document.addEventListener('DOMContentLoaded', function () {
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.getElementById('sidebar');
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('id');
-            const socialNetwork = urlParams.get('rede');
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+  });
 
-            if (!userId || !socialNetwork) {
+  // 🛠️ Aceita /detail_account e /detail_account.html
+  if (
+    window.location.pathname === '/detail_account' ||
+    window.location.pathname === '/detail_account.html'
+  ) {
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const usuarioParam = urlParams.get('usuario');
 
-                return;
-            }
+    if (!token) {
+      window.location.href = '/login.html';
+    }
 
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
+    if (!usuarioParam) {
+      alert('Parâmetro "usuario" não encontrado na URL.');
+      return;
+    }
+
+    fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => response.json())
+    .then((data) => {
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -654,6 +670,14 @@
             let totalPages = 1;
             let userActions = [];
             let userData = null;
+
+        })
+    .catch((error) => {
+      console.error('Erro ao buscar histórico de ações:', error);
+    });
+  }
+});
+
 
             // Carregar dados do usuário e suas ações
             async function loadUserData() {
@@ -807,7 +831,6 @@
             loadUserData().then(() => {
                 document.body.classList.add('loaded');
             });
-        });
     </script>
 </body>
 
