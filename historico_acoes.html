@@ -571,7 +571,7 @@
                     row.innerHTML = `
     <td>${new Date(action.data).toLocaleString()}</td>
     <td>${action.rede_social}</td>    
-    <td>${action.nome_usuario}</td>  
+<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(acao.nome_usuario)}">${acao.nome_usuario}</a></td> 
     <td>Seguir</td>       
     <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
     <td>
