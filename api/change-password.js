@@ -32,7 +32,7 @@ const handler = async (req, res) => {
         const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
         if (expiracao && expiracao < new Date()) {
             console.log("❌ Token expirado!");
-            return res.status(401).json({ error: "Token expirado" });
+            return res.status(401).json({ error: "Link expirado" });
         }
 
         const { novaSenha } = req.body;
