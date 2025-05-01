@@ -182,8 +182,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             document.body.classList.add('loaded');
-            
-            // Redireciona o usuário para o dashboard se ele já estiver logado
+
             const token = localStorage.getItem("authToken");
             if (token) {
                 window.location.href = "/dashboard";
@@ -203,9 +202,6 @@
                 return;
             }
 
-            statusMessage.textContent = "Autenticando...";
-            statusMessage.style.color = "#007BFF";
-
             try {
                 const response = await fetch("https://ganhesocial.com/api/login", {
                     method: "POST",
@@ -216,8 +212,6 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    statusMessage.textContent = "Login realizado com sucesso!";
-                    statusMessage.style.color = "#5cb85c";
                     localStorage.setItem("authToken", data.token);
 
                     // Redireciona para o dashboard após 1 segundo
