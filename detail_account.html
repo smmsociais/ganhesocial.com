@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Ações do Usuário</title>
+    <style>
+        :root {
+            --bg-light: #ffffff;
+            --text-light: #24292e;
+            --container-light: #f6f8fa;
+            --bg-dark: #0d1117;
+            --text-dark: #c9d1d9;
+            --container-dark: #161b22;
+            --border-dark: #30363d;
+            --valid-color: #28a745;
+            --invalid-color: #dc3545;
+            --pending-color: #e6ad03;
+            --primary-color: #e0e0e0;
+            --primary-dark: #1f6feb;
+            --header-bg-light: #f8f9fa;
+            --header-text-light: #212529;
+            --header-bg-dark: #212529;
+            --header-text-dark: #f8f9fa;
+            --pagination-active: #007bff;
+            --pagination-hover: #e9ecef;
+            --user-card-bg: #f1f8ff;
+            --user-card-border: #c8e1ff;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .logo {
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1700px;
+            margin: 30px auto;
+            transition: background 0.3s;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text-light);
+        }
+
+        .user-card {
+            background-color: var(--user-card-bg);
+            border: 1px solid var(--user-card-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .user-name {
+            font-size: 1.5em;
+            margin: 0 0 5px 0;
+            color: var(--text-light);
+        }
+
+        .user-detail {
+            display: flex;
+            margin-bottom: 5px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: var(--text-light);
+        }
+
+        .detail-value {
+            color: var(--text-light);
+        }
+
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .history-table th {
+            background-color: var(--header-bg-light);
+            color: var(--header-text-light);
+            text-align: left;
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .history-table tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .status-valid {
+            color: var(--valid-color);
+            font-weight: bold;
+        }
+
+        .status-invalid {
+            color: var(--invalid-color);
+            font-weight: bold;
+        }
+
+        .status-pendente {
+            color: var(--pending-color);
+            font-weight: bold;
+        }
+
+        .action-link {
+            color: var(--primary-dark);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-actions {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: var(--text-light);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover {
+            background-color: var(--pagination-hover);
+        }
+
+        .pagination button.active {
+            background-color: var(--pagination-active);
+            color: white;
+            border-color: var(--pagination-active);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 25px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .header,
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .user-card {
+                background-color: #1a2a3a;
+                border-color: #2a3a4a;
+            }
+
+            .user-name, .detail-label, .detail-value {
+                color: var(--text-dark);
+            }
+
+            .stat-card {
+                background-color: var(--container-dark);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            }
+
+            .stat-label {
+                color: #aaa;
+            }
+
+            .status-pendente {
+                color: var(--pending-color);
+            }
+        }
+
+        .history-table th {
+            background-color: var(--header-bg-dark);
+            color: var(--header-text-dark);
+            border-bottom: 2px solid var(--border-dark);
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: var(--container-dark);
+        }
+
+        .history-table tr:hover {
+            background-color: #343a40;
+        }
+
+        .history-table td {
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        .action-link {
+            color: var(--primary-dark);
+        }
+
+        .no-actions {
+            color: #aaa;
+        }
+
+        .table-container {
+            border: 1px solid var(--border-dark);
+        }
+
+        .pagination button {
+            background-color: var(--container-dark);
+            color: var(--text-dark);
+            border-color: var(--border-dark);
+        }
+
+        .pagination button:hover {
+            background-color: #343a40;
+        }
+
+        .pagination button.active {
+            background-color: var(--primary-dark);
+            color: white;
+        }
+
+        .pagination-info {
+            color: #aaa;
+        }
+
+        .menu-toggle span {
+            background-color: var(--text-dark);
+        }
+
+        .menu-content {
+            background: var(--container-dark);
+        }
+
+        .menu-item {
+            color: var(--text-dark);
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 15px;
+            }
+
+            .user-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .user-detail {
+                flex-direction: column;
+            }
+
+            .detail-label {
+                min-width: auto;
+                margin-bottom: 2px;
+            }
+
+            .history-table {
+                font-size: 0.8em;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 8px 10px;
+            }
+
+            .pagination {
+                gap: 3px;
+            }
+
+            .pagination button {
+                padding: 6px 8px;
+                font-size: 0.8em;
+            }
+        }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <a href="dashboard" class="logo-container">
+                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+    <div id="pagina"></div>
+    <div class="container">
+        <h2>Histórico de Ações do Usuário</h2>
+        
+        <div class="user-card" id="userCard">
+            <img src="https://via.placeholder.com/80" alt="Avatar do Usuário" class="user-avatar" id="userAvatar">
+            <div class="user-info">
+                <h3 class="user-name" id="userName">Carregando...</h3>
+                <div class="user-detail">
+                    <span class="detail-label">Rede Social:</span>
+                    <span class="detail-value" id="socialNetwork">-</span>
+                </div>
+                <div class="user-detail">
+                    <span class="detail-label">ID do Usuário:</span>
+                    <span class="detail-value" id="userId">-</span>
+                </div>
+                <div class="user-detail">
+                    <span class="detail-label">Seguidores:</span>
+                    <span class="detail-value" id="followersCount">-</span>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalActions">0</div>
+                    <div class="stat-label">Ações</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="validActions">0</div>
+                    <div class="stat-label">Válidas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingActions">0</div>
+                    <div class="stat-label">Pendentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="earnedValue">R$ 0,000</div>
+                    <div class="stat-label">Ganhos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="history-table" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Verificação</th>
+                    </tr>
+                </thead>
+                <tbody id="historyList">
+                    <!-- Os itens serão adicionados dinamicamente aqui -->
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-info" id="paginationInfo">
+            Carregando...
+        </div>
+        <div class="pagination" id="pagination">
+            <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
+        </div>
+    </div>
+
+    <!-- Menu Overlay e Conteúdo -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-content" id="menuContent">
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            localStorage.removeItem("authToken");
+            window.location.href = "https://ganhesocial.com";
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            const socialNetwork = urlParams.get('rede');
+
+            if (!userId || !socialNetwork) {
+                window.location.href = 'historico_acoes';
+                return;
+            }
+
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
+                e.preventDefault();
+                logout();
+            });
+
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
+
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
+
+            // Configurações de paginação
+            const itemsPerPage = 20;
+            const maxPages = 50;
+            let currentPage = 1;
+            let totalPages = 1;
+            let userActions = [];
+            let userData = null;
+
+            // Carregar dados do usuário e suas ações
+            async function loadUserData() {
+                try {
+                    document.getElementById('userName').textContent = 'Carregando...';
+                    
+                    // Buscar dados do usuário
+                    const userResponse = await fetch(`/api/user_details?id=${userId}&rede=${socialNetwork}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (!userResponse.ok) {
+                        throw new Error('Erro ao carregar dados do usuário');
+                    }
+                    
+                    userData = await userResponse.json();
+                    updateUserCard(userData);
+                    
+                    // Buscar ações do usuário
+                    await loadUserActions();
+                } catch (error) {
+                    console.error("Erro ao carregar dados do usuário:", error);
+                    document.getElementById('userName').textContent = 'Erro ao carregar';
+                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+                }
+            }
+
+            // Atualizar o cartão do usuário com os dados recebidos
+            function updateUserCard(data) {
+                document.getElementById('userName').textContent = data.nome || data.username || "Usuário desconhecido";
+                document.getElementById('socialNetwork').textContent = data.rede_social || socialNetwork;
+                document.getElementById('userId').textContent = userId;
+                document.getElementById('followersCount').textContent = data.seguidores ? data.seguidores.toLocaleString() : "-";
+                
+                if (data.avatar_url) {
+                    document.getElementById('userAvatar').src = data.avatar_url;
+                }
+            }
+
+            // Carregar ações do usuário
+            async function loadUserActions(page = 1) {
+                try {
+                    currentPage = page;
+                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Carregando...</td></tr>';
+
+                    // Se ainda não carregamos todos os dados, buscar da API
+                    if (userActions.length === 0) {
+                        const response = await fetch(`/api/user_actions?id=${userId}&rede=${socialNetwork}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Erro ao carregar ações do usuário');
+                        }
+                        
+                        const actionsData = await response.json();
+                        userActions = actionsData.sort((a, b) => new Date(b.data) - new Date(a.data));
+                        updateStats(userActions);
+                    }
+
+                    // Calcular total de páginas
+                    totalPages = Math.min(Math.ceil(userActions.length / itemsPerPage), maxPages);
+
+                    // Atualizar informações de paginação
+                    updatePaginationInfo();
+
+                    // Gerar paginação
+                    generatePagination();
+
+                    // Exibir itens da página atual
+                    displayPageItems();
+
+                } catch (error) {
+                    console.error("Erro ao carregar ações do usuário:", error);
+                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+                }
+            }
+
+            // Atualizar estatísticas com base nas ações
+            function updateStats(actions) {
+                const total = actions.length;
+                const valid = actions.filter(a => a.status === "Válida").length;
+                const pending = actions.filter(a => a.status === "Pendente").length;
+                const earned = actions.reduce((sum, a) => sum + (a.status === "Válida" ? a.valor_confirmacao : 0), 0);
+                
+                document.getElementById('totalActions').textContent = total;
+                document.getElementById('validActions').textContent = valid;
+                document.getElementById('pendingActions').textContent = pending;
+                document.getElementById('earnedValue').textContent = 
+                    `R$ ${earned.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+            }
+
+            // Exibir itens da página atual
+            function displayPageItems() {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, userActions.length);
+                const pageActions = userActions.slice(startIndex, endIndex);
+
+                if (pageActions.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
+                    return;
+                }
+
+                historyList.innerHTML = '';
+                pageActions.forEach(action => {
+                    const row = document.createElement("tr");
+                    let statusClass;
+                    if (action.status === "Válida") {
+                        statusClass = "status-valid";
+                    } else if (action.status === "Inválida") {
+                        statusClass = "status-invalid";
+                    } else {
+                        statusClass = "status-pendente";
+                    }
+
+                    const statusText = action.status;
+
+                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Verificar</a>` : "";
+
+                    row.innerHTML = `
+                        <td>${new Date(action.data).toLocaleString()}</td>
+                        <td>${action.tipo_acao || "Seguir"}</td>
+                        <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td>${actionLink}</td>
+                    `;
+                    historyList.appendChild(row);
+                });
+            }
+
+            // Atualizar informações de paginação
+            function updatePaginationInfo() {
+                const startItem = (currentPage - 1) * itemsPerPage + 1;
+                const endItem = Math.min(currentPage * itemsPerPage, userActions.length);
+                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${userActions.length} ações`;
+            }
+
+            // Gerar controles de paginação
+            function generatePagination() {
+                pagination.innerHTML = '';
+
+                // Botão Anterior
+                const prevButton = document.createElement("button");
+                prevButton.innerHTML = "&laquo; Anterior";
+                prevButton.disabled = currentPage === 1;
+                prevButton.addEventListener("click", () => loadUserActions(currentPage - 1));
+                pagination.appendChild(prevButton);
+
+                // Números das páginas
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, startPage + 4);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement("button");
+                    pageButton.textContent = i;
+                    if (i === currentPage) {
+                        pageButton.classList.add("active");
+                    }
+                    pageButton.addEventListener("click", () => loadUserActions(i));
+                    pagination.appendChild(pageButton);
+                }
+
+                // Botão Próximo
+                const nextButton = document.createElement("button");
+                nextButton.innerHTML = "Próximo &raquo;";
+                nextButton.disabled = currentPage === totalPages;
+                nextButton.addEventListener("click", () => loadUserActions(currentPage + 1));
+                pagination.appendChild(nextButton);
+            }
+
+            // Inicializar carregando os dados do usuário
+            loadUserData().then(() => {
+                document.body.classList.add('loaded');
+            });
+        });
+    </script>
+</body>
+</html>
