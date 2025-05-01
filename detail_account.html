@@ -661,7 +661,7 @@
                     document.getElementById('userName').textContent = 'Carregando...';
 
                     // Buscar dados do usuário
-                    const userResponse = await fetch(`/api/user_details?id=${userId}&rede=${socialNetwork}`, {
+                    const userResponse = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${page}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
