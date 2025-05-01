@@ -19,9 +19,8 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Email não encontrado" });
 
     const token = crypto.randomBytes(32).toString("hex");
-
-    // Definir expiração para 1 minuto (60 * 1000 milissegundos)
-    const expires = Date.now() + 60 * 1000; // 1 minuto de validade
+    
+    const expires = Date.now() + 30 * 60 * 1000; // 30 minutos em milissegundos
 
     // Salva no documento Mongoose
     user.resetPasswordToken = token;
