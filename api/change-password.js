@@ -25,14 +25,14 @@ const handler = async (req, res) => {
 
         if (!usuario) {
             console.log("❌ Token inválido ou usuário não encontrado!");
-            return res.status(401).json({ error: "Link expirado" });
+            return res.status(401).json({ error: "Token inválido" });
         }
 
         // (Opcional) Validar se o token expirou
         const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
         if (expiracao && expiracao < new Date()) {
             console.log("❌ Token expirado!");
-            return res.status(401).json({ error: "Link expirado" });
+            return res.status(401).json({ error: "Token expirado" });
         }
 
         const { novaSenha } = req.body;
