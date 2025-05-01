@@ -12,7 +12,7 @@ export async function sendRecoveryEmail(email, link) {
   });
 
   const mailOptions = {
-    from: '"GanhSocial" <contato@ganhesocial.com>',
+    from: '"GanheSocial" <contato@ganhesocial.com>',
     to: email,
     subject: 'Recuperação de Senha',
     html: `
