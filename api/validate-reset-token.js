@@ -30,7 +30,7 @@ const handler = async (req, res) => {
         // Log para ver a data de expiração
         console.log("Data de expiração do token:", expiracao);
 
-        // Data atual em UTC (forçar para UTC)
+        // Data atual em UTC
         const agora = new Date().toISOString();
 
         // Log para ver a data atual
@@ -46,24 +46,11 @@ const handler = async (req, res) => {
 
         // Se a data atual for maior que a data de expiração, o token expirou
         if (agoraMs > expiracaoMs) {
-            console.log("Token expirado, expirado antes de agora.");
+            console.log("Token expirado.");
             return res.status(401).json({ error: "Token expirado" });
         }
 
-        // Para teste: token expira em 1 minuto
-        const umMinuto = 1 * 60 * 1000; // 1 minuto em milissegundos
-        const tempoDecorrido = agoraMs - expiracaoMs;
-
-        // Log para ver o tempo decorrido
-        console.log("Tempo decorrido desde a expiração:", tempoDecorrido);
-
-        // Verifica se o token expirou após 1 minuto
-        if (tempoDecorrido > umMinuto) {
-            console.log("Token expirado após 1 minuto.");
-            return res.status(401).json({ error: "Token expirado após 1 minuto" });
-        }
-
-        // Se o token estiver dentro do prazo de validade
+        // Se o token ainda estiver dentro do prazo de validade
         return res.json({ valid: true });
 
     } catch (error) {
