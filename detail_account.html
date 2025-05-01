@@ -58,17 +58,6 @@
             margin-right: 10px;
         }
 
-        .container {
-            background: var(--container-light);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 1700px;
-            margin: 30px auto;
-            transition: background 0.3s;
-        }
-
         h2 {
             text-align: center;
             margin-bottom: 25px;
@@ -477,19 +466,19 @@
         </div>
     </div>
     <div id="pagina"></div>
-    <div class="container">
         <h2>Histórico de Ações do Usuário</h2>
 
         <div class="user-card" id="userCard">
             <div class="user-info">
                 <h3 class="user-name" id="userName">Carregando...</h3>
                 <div class="user-detail">
+                    <div class="user-detail">
+                        <span class="detail-label">Nome de Usuário:</span>
+                        <span class="detail-value" id="userId">-</span>                    
                     <span class="detail-label">Rede Social:</span>
                     <span class="detail-value" id="socialNetwork">-</span>
                 </div>
-                <div class="user-detail">
-                    <span class="detail-label">Nome de Usuário:</span>
-                    <span class="detail-value" id="userId">-</span>
+
                 </div>
             </div>
                 </div>
