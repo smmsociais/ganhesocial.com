@@ -20,11 +20,17 @@ const handler = async (req, res) => {
             return res.status(401).json({ error: "Link inválido ou expirado" });
         }
 
+        // Verifica a expiração do token, definindo 30 minutos de validade
         const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
-        if (expiracao && expiracao < new Date()) {
-            return res.status(401).json({ error: "Token expirado" });
+        const agora = new Date();
+        const trintaMinutos = 30 * 60 * 1000; // 30 minutos em milissegundos
+
+        // Se a data de expiração não for válida ou o token expirou
+        if (expiracao && expiracao < agora) {
+            return res.status(401).json({ error: "Link inválido ou expirado" });
         }
 
+        // Se o token ainda estiver dentro do prazo de 30 minutos
         return res.json({ valid: true });
 
     } catch (error) {
