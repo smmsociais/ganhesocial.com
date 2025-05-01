@@ -489,12 +489,8 @@
                     <span class="detail-value" id="socialNetwork">-</span>
                 </div>
                 <div class="user-detail">
-                    <span class="detail-label">ID do Usuário:</span>
+                    <span class="detail-label">Nome de Usuário:</span>
                     <span class="detail-value" id="userId">-</span>
-                </div>
-                <div class="user-detail">
-                    <span class="detail-label">Seguidores:</span>
-                    <span class="detail-value" id="followersCount">-</span>
                 </div>
             </div>
                 </div>
@@ -686,7 +682,6 @@
         historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
     }
 }
-
             // Atualizar estatísticas com base nas ações
             function updateStats(actions) {
     const total = actions.length;
@@ -697,9 +692,7 @@
     document.getElementById('totalActions').textContent = total;
     document.getElementById('validActions').textContent = valid;
     document.getElementById('pendingActions').textContent = pending;
-    document.getElementById('earnedValue').textContent = `R$ ${earned.toFixed(3)}`;
 }
-
             // Exibir itens da página atual
             function displayPageItems() {
     const tbody = document.getElementById('historyList');
