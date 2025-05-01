@@ -25,8 +25,7 @@
             --header-text-dark: #f8f9fa;
             --pagination-active: #007bff;
             --pagination-hover: #e9ecef;
-            --user-card-bg: #f1f8ff;
-            --user-card-border: #c8e1ff;
+
         }
 
         body {
@@ -126,26 +125,6 @@
             flex-wrap: wrap;
             gap: 15px;
             margin-top: 15px;
-        }
-
-        .stat-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            min-width: 120px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: var(--primary-dark);
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: #666;
         }
 
         .history-table {
@@ -352,24 +331,12 @@
                 border: 1px solid var(--border-dark);
             }
 
-            .user-card {
-                background-color: #1a2a3a;
-                border-color: #2a3a4a;
-            }
+
 
             .user-name,
             .detail-label,
             .detail-value {
                 color: var(--text-dark);
-            }
-
-            .stat-card {
-                background-color: var(--container-dark);
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            }
-
-            .stat-label {
-                color: #aaa;
             }
 
             .status-pendente {
@@ -530,23 +497,6 @@
                     <span class="detail-value" id="followersCount">-</span>
                 </div>
             </div>
-
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalActions">0</div>
-                    <div class="stat-label">Ações</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="validActions">0</div>
-                    <div class="stat-label">Válidas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="pendingActions">0</div>
-                    <div class="stat-label">Pendentes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="earnedValue">R$ 0,000</div>
-                    <div class="stat-label">Ganhos</div>
                 </div>
             </div>
         </div>
@@ -677,8 +627,6 @@
     });
   }
 });
-
-
             // Carregar dados do usuário e suas ações
             async function loadUserData() {
                 try {
@@ -704,18 +652,6 @@
                     console.error("Erro ao carregar dados do usuário:", error);
                     document.getElementById('userName').textContent = 'Erro ao carregar';
                     historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-                }
-            }
-
-            // Atualizar o cartão do usuário com os dados recebidos
-            function updateUserCard(data) {
-                document.getElementById('userName').textContent = data.nome || data.username || "Usuário desconhecido";
-                document.getElementById('socialNetwork').textContent = data.rede_social || socialNetwork;
-                document.getElementById('userId').textContent = userId;
-                document.getElementById('followersCount').textContent = data.seguidores ? data.seguidores.toLocaleString() : "-";
-
-                if (data.avatar_url) {
-                    document.getElementById('userAvatar').src = data.avatar_url;
                 }
             }
 
