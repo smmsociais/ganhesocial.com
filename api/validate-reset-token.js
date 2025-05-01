@@ -47,7 +47,7 @@ const handler = async (req, res) => {
         // Se a data atual for maior que a data de expiração, o token expirou
         if (agoraMs > expiracaoMs) {
             console.log("Token expirado.");
-            return res.status(401).json({ error: "Token expirado" });
+            return res.status(401).json({ error: "Link inválido ou expirado" });
         }
 
         // Se o token ainda estiver dentro do prazo de validade
