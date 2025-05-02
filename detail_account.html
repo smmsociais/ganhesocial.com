@@ -531,34 +531,26 @@
 
         }
         document.addEventListener('DOMContentLoaded', function () {
-            const menuToggle = document.getElementById('menuToggle');
+  const menuToggle = document.getElementById('menuToggle');
   const sidebar = document.getElementById('sidebar');
+  const token = localStorage.getItem('token'); // <-- MOVA PARA CÁ
 
   menuToggle.addEventListener('click', () => {
     sidebar.classList.toggle('-translate-x-full');
   });
 
-  // 🛠️ Aceita /detail_account e /detail_account.html
-  if (
-    window.location.pathname === '/detail_account' ||
-    window.location.pathname === '/detail_account.html'
-  ) {
-    const token = localStorage.getItem('token');
-    const urlParams = new URLSearchParams(window.location.search);
+  const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
 
-}
+  if (!usuarioParam) {
+    alert('Parâmetro "usuario" não encontrado na URL.');
+    return;
+  }
 
-const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
+  fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
 
-if (!usuarioParam) {
-  alert('Parâmetro "usuario" não encontrado na URL.');
-  return;
-}
-
-fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
+    },
 })
 
     .then((response) => response.json())
