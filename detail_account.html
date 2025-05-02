@@ -570,7 +570,9 @@
             }
 })
 
-    document.body.classList.add('loaded'); // Ainda mostra a página mesmo com erro
+window.onload = function () {
+        document.body.classList.add('loaded');
+    };
 
     </script>
 </body>
