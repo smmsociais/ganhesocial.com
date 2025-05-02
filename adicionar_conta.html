@@ -312,7 +312,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
     // Configurar evento de logout
     document.getElementById('logoutLink').addEventListener('click', function (e) {
