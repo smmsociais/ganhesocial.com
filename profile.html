@@ -417,7 +417,7 @@
 
     <script>
         async function loadProfile() {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
             if (!token) {
                 showMessage("Você precisa estar logado para acessar esta página.", true);
