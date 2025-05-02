@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico de Ações do Usuário</title>
+    <title>Histórico de Ações</title>
     <style>
         :root {
             --bg-light: #ffffff;
@@ -25,7 +25,6 @@
             --header-text-dark: #f8f9fa;
             --pagination-active: #007bff;
             --pagination-hover: #e9ecef;
-
         }
 
         body {
@@ -58,62 +57,21 @@
             margin-right: 10px;
         }
 
+        .container {
+            background: var(--container-light);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1700x;
+            margin: 30px auto;
+            transition: background 0.3s;
+        }
+
         h2 {
             text-align: center;
             margin-bottom: 25px;
-            color: var(--text-light);
-        }
-
-        .user-card {
-            background-color: var(--user-card-bg);
-            border: 1px solid var(--user-card-border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .user-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .user-info {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .user-name {
-            font-size: 1.5em;
-            margin: 0 0 5px 0;
-            color: var(--text-light);
-        }
-
-        .user-detail {
-            display: flex;
-            margin-bottom: 5px;
-        }
-
-        .detail-label {
-            font-weight: bold;
-            min-width: 120px;
-            color: var(--text-light);
-        }
-
-        .detail-value {
-            color: var(--text-light);
-        }
-
-        .stats-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
+            color: var(--primary-color);
         }
 
         .history-table {
@@ -163,7 +121,7 @@
         }
 
         .action-link {
-            color: var(--primary-dark);
+            color: var(--primary-color);
             text-decoration: none;
             font-weight: bold;
         }
@@ -179,7 +137,7 @@
         }
 
         .table-container {
-            max-height: 60vh;
+            max-height: 70vh;
             overflow-y: auto;
             border-radius: 8px;
             border: 1px solid #dee2e6;
@@ -199,7 +157,7 @@
             padding: 8px 12px;
             border: 1px solid #dee2e6;
             background-color: white;
-            color: var(--text-light);
+            color: var(--primary-color);
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s;
@@ -320,14 +278,6 @@
                 border: 1px solid var(--border-dark);
             }
 
-
-
-            .user-name,
-            .detail-label,
-            .detail-value {
-                color: var(--text-dark);
-            }
-
             .status-pendente {
                 color: var(--pending-color);
             }
@@ -365,7 +315,7 @@
 
         .pagination button {
             background-color: var(--container-dark);
-            color: var(--text-dark);
+            color: var(--primary-dark);
             border-color: var(--border-dark);
         }
 
@@ -408,20 +358,6 @@
                 padding: 15px;
             }
 
-            .user-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .user-detail {
-                flex-direction: column;
-            }
-
-            .detail-label {
-                min-width: auto;
-                margin-bottom: 2px;
-            }
-
             .history-table {
                 font-size: 0.8em;
             }
@@ -448,6 +384,9 @@
         body.loaded {
             visibility: visible;
         }
+
+</style>
+
     </style>
 </head>
 
@@ -466,30 +405,15 @@
         </div>
     </div>
     <div id="pagina"></div>
-        <h2>Histórico de Ações do Usuário</h2>
-
-        <div class="user-card" id="userCard">
-            <div class="user-info">
-                <h3 class="user-name" id="userName">Carregando...</h3>
-                <div class="user-detail">
-                    <div class="user-detail">
-                        <span class="detail-label">Nome de Usuário:</span>
-                        <span class="detail-value" id="userId">-</span>                    
-                    <span class="detail-label">Rede Social:</span>
-                    <span class="detail-value" id="socialNetwork">-</span>
-                </div>
-
-                </div>
-            </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="container">
+        <h2>Histórico de Ações</h2>
         <div class="table-container">
             <table class="history-table" id="historyTable">
                 <thead>
                     <tr>
                         <th>Data</th>
+                        <th>Rede Social</th>
+                        <th>Usuário</th>
                         <th>Tipo</th>
                         <th>Valor</th>
                         <th>Status</th>
@@ -526,255 +450,147 @@
     </div>
 
     <script>
+
         function logout() {
             localStorage.removeItem("authToken");
-
+            window.location.href = "https://ganhesocial.com";
         }
-        document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
 
-    }
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
 
-    // puxar histórico DO PRÓPRIO USUÁRIO via token
-    fetch('/api/historico_acoes', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Não autorizado');
-      return res.json();
-    })
-    .then(data => {
-      userActions = data;
-      // Atualiza header/carrossel de usuário com o primeiro registro
-      if (data.length) updateUserCard(data[0]);
-      updateStats(data);
-      updatePaginationInfo();
-      generatePagination();
-      displayPageItems();
-      document.body.classList.add('loaded');
-    })
-    .catch(err => {
-      console.error('Erro ao buscar histórico:', err);
-      alert('Não foi possível carregar seu histórico.');
-    });
-  });
 
-  // mover para escopo global:
-  let userActions = [];
-  let currentPage = 1;
-  const itemsPerPage = 20;
-  const totalPages = () => Math.ceil(userActions.length / itemsPerPage);
-
-  function updateUserCard(action) {
-    document.getElementById('userName').textContent = action.nome_usuario;
-    document.getElementById('socialNetwork').textContent = action.rede_social;
-  }
-
-  function updateStats(actions) {
-    document.getElementById('totalActions').textContent = actions.length;
-    document.getElementById('validActions').textContent = actions.filter(a => a.status==='Válida').length;
-    document.getElementById('pendingActions').textContent = actions.filter(a => a.status==='Pendente').length;
-    const earned = actions.reduce((sum,a)=> sum + (a.status==='Válida'?a.valor_confirmacao:0), 0);
-    document.getElementById('earnedValue').textContent = `R$ ${earned.toLocaleString('pt-BR',{minimumFractionDigits:3})}`;
-  }
-
-  function displayPageItems() {
-    const start = (currentPage-1)*itemsPerPage;
-    const page = userActions.slice(start, start+itemsPerPage);
-    const tbody = document.getElementById('historyList');
-    tbody.innerHTML = '';
-    if (!page.length) {
-      return tbody.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada.</td></tr>';
-    }
-    page.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${new Date(a.data).toLocaleString()}</td>
-        <td>${a.tipo}</td>
-        <td>R$ ${a.valor_confirmacao.toLocaleString('pt-BR',{minimumFractionDigits:3})}</td>
-        <td class="status-${a.status.toLowerCase()}">${a.status}</td>
-        <td>${a.url_dir?`<a href="${a.url_dir}" target="_blank">Ver</a>`:''}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function updatePaginationInfo() {
-    const start = (currentPage-1)*itemsPerPage+1;
-    const end = Math.min(currentPage*itemsPerPage, userActions.length);
-    document.getElementById('paginationInfo').textContent = 
-      `Mostrando ${start}-${end} de ${userActions.length} ações`;
-  }
-
-  function generatePagination() {
-    const p = document.getElementById('pagination');
-    p.innerHTML = '';
-    ['Anterior', ...Array(totalPages()).keys(), 'Próximo'].forEach((label,i)=>{
-      const btn = document.createElement('button');
-      if (label === 'Anterior') btn.innerHTML='&laquo;';
-      else if (label === 'Próximo') btn.innerHTML='&raquo;';
-      else btn.textContent = i;
-      btn.disabled = (label==='Anterior'&&currentPage===1)||(label==='Próximo'&&currentPage===totalPages())||(label===currentPage);
-      btn.addEventListener('click', ()=> {
-        if (label==='Anterior') currentPage--;
-        else if (label==='Próximo') currentPage++;
-        else currentPage=label;
-        displayPageItems();
-        updatePaginationInfo();
-        generatePagination();
-      });
-      p.appendChild(btn);
-    });
-  }
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
+                e.preventDefault();
+                logout();
+            });
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
-  const menuOverlay = document.getElementById('menuOverlay');
-  const menuContent = document.getElementById('menuContent');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
 
-  menuToggle.addEventListener('click', function () {
-    menuContent.classList.toggle('active');
-    menuOverlay.classList.toggle('active');
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-    const spans = menuToggle.querySelectorAll('span');
-    if (menuContent.classList.contains('active')) {
-      spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-      spans[1].style.opacity = '0';
-      spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-    } else {
-      spans[0].style.transform = 'none';
-      spans[1].style.opacity = '1';
-      spans[2].style.transform = 'none';
-    }
-  });
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
 
-  menuOverlay.addEventListener('click', function () {
-    menuContent.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    const spans = menuToggle.querySelectorAll('span');
-    spans[0].style.transform = 'none';
-    spans[1].style.opacity = '1';
-    spans[2].style.transform = 'none';
-  });
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
 
             // Configurações de paginação
-let userData = null;
+            const itemsPerPage = 50;
+            const maxPages = 50;
+            let currentPage = 1;
+            let totalPages = 1;
+            let allActions = [];
 
-let userId = null;
-let socialNetwork = null;
-let token = localStorage.getItem('token');
-            // Carregar dados do usuário e suas ações
-            async function loadUserData() {
+            // Carregar dados da API
+            async function loadData(page = 1) {
                 try {
-                    document.getElementById('userName').textContent = 'Carregando...';
+                    currentPage = page;
+                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Carregando...</td></tr>';
 
-                    // Buscar dados do usuário
-                    const userResponse = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${currentPage}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (!userResponse.ok) {
-                        throw new Error('Erro ao carregar dados do usuário');
+                    // Se ainda não carregamos todos os dados, buscar da API
+                    if (allActions.length === 0) {
+                        const response = await fetch("/api/historico_acoes", {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const historyData = await response.json();
+                        allActions = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
                     }
 
-                    userData = await userResponse.json();
-                    updateUserCard(userData);
+                    // Calcular total de páginas
+                    totalPages = Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages);
 
-                    // Buscar ações do usuário
-                    await loadUserActions();
+                    // Atualizar informações de paginação
+                    updatePaginationInfo();
+
+                    // Gerar paginação
+                    generatePagination();
+
+                    // Exibir itens da página atual
+                    displayPageItems();
+
                 } catch (error) {
-                    console.error("Erro ao carregar dados do usuário:", error);
-                    document.getElementById('userName').textContent = 'Erro ao carregar';
-                    historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+                    console.error("Erro ao carregar histórico:", error);
+                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
                 }
             }
 
-            // Carregar ações do usuário
-            async function loadUserActions(page = 1) {
-    try {
-        currentPage = page;
-        historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Carregando...</td></tr>';
-
-        const response = await fetch(`/api/historico_acoes?id=${userId}&rede=${socialNetwork}&page=${page}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Erro ao carregar ações do usuário');
-        }
-
-        const result = await response.json();
-        const actionsData = result.historico || [];
-
-        userActions = actionsData;
-        totalPages = result.totalPages || 1;
-
-        updateStats(userActions);
-        updatePaginationInfo();
-        generatePagination();
-        displayPageItems();
-    } catch (error) {
-        console.error("Erro ao carregar ações do usuário:", error);
-        historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-    }
-}
-
-function updateUserCard(action) {
-  const userNameElement = document.querySelector("#user-name");
-  const socialNetworkElement = document.querySelector("#social-network");
-
-  if (userNameElement) {
-    userNameElement.textContent = action.nome_usuario || "Usuário";
-  }
-
-  if (socialNetworkElement) {
-    socialNetworkElement.textContent = action.rede_social || "TikTok";
-  }
-}
-
-            // Atualizar estatísticas com base nas ações
-            function updateStats(actions) {
-    const total = actions.length;
-    const valid = actions.filter(a => a.status === "Válida").length;
-    const pending = actions.filter(a => a.status === "Pendente").length;
-    const earned = actions.reduce((sum, a) => sum + (a.status === "Válida" ? a.valor : 0), 0);
-
-    document.getElementById('totalActions').textContent = total;
-    document.getElementById('validActions').textContent = valid;
-    document.getElementById('pendingActions').textContent = pending;
-}
             // Exibir itens da página atual
             function displayPageItems() {
-    const tbody = document.getElementById('historyList');
-    tbody.innerHTML = '';
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
+                const pageActions = allActions.slice(startIndex, endIndex);
 
-    if (userActions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada.</td></tr>';
-        return;
-    }
+                if (pageActions.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+                    return;
+                }
 
-    userActions.forEach(action => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${formatDate(action.data)}</td>
-            <td>${action.tipo || '-'}</td>
-            <td>R$ ${(action.valor || 0).toFixed(3)}</td>
-            <td>${action.status}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
+                historyList.innerHTML = '';
+                pageActions.forEach(action => {
+                    const row = document.createElement("tr");
+                    let statusClass;
+                    if (action.status === "Válida") {
+                        statusClass = "status-valid";
+                    } else if (action.status === "Inválida") {
+                        statusClass = "status-invalid";
+                    } else {
+                        statusClass = "status-pendente";
+                    }
+
+                    const statusText = action.status;
+
+                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
+
+                    row.innerHTML = `
+<td>${new Date(action.data).toLocaleString()}</td>
+<td>${action.rede_social}</td>    
+<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
+<td>Seguir</td>       
+<td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+<td>
+<div style="display: flex; flex-direction: column; gap: 4px;">
+            <span class="${statusClass}">${statusText}</span>
+            ${actionLink}
+        </div>
+    </td>
+    <td></td>
+`;
+                    historyList.appendChild(row);
+                });
+            }
 
             // Atualizar informações de paginação
             function updatePaginationInfo() {
                 const startItem = (currentPage - 1) * itemsPerPage + 1;
-                const endItem = Math.min(currentPage * itemsPerPage, userActions.length);
-                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${userActions.length} ações`;
+                const endItem = Math.min(currentPage * itemsPerPage, allActions.length);
+                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${allActions.length} ações`;
             }
 
             // Gerar controles de paginação
@@ -785,7 +601,7 @@ function updateUserCard(action) {
                 const prevButton = document.createElement("button");
                 prevButton.innerHTML = "&laquo; Anterior";
                 prevButton.disabled = currentPage === 1;
-                prevButton.addEventListener("click", () => loadUserActions(currentPage - 1));
+                prevButton.addEventListener("click", () => loadData(currentPage - 1));
                 pagination.appendChild(prevButton);
 
                 // Números das páginas
@@ -798,7 +614,7 @@ function updateUserCard(action) {
                     if (i === currentPage) {
                         pageButton.classList.add("active");
                     }
-                    pageButton.addEventListener("click", () => loadUserActions(i));
+                    pageButton.addEventListener("click", () => loadData(i));
                     pagination.appendChild(pageButton);
                 }
 
@@ -806,15 +622,18 @@ function updateUserCard(action) {
                 const nextButton = document.createElement("button");
                 nextButton.innerHTML = "Próximo &raquo;";
                 nextButton.disabled = currentPage === totalPages;
-                nextButton.addEventListener("click", () => loadUserActions(currentPage + 1));
+                nextButton.addEventListener("click", () => loadData(currentPage + 1));
                 pagination.appendChild(nextButton);
             }
 
-            // Inicializar carregando os dados do usuário
-            loadUserData().then(() => {
-                document.body.classList.add('loaded');
-            });
+            // Inicializar carregando a primeira página
+loadData(1).then(() => {
+    document.body.classList.add('loaded');
+});
+
+        });
     </script>
+
 </body>
 
 </html>
