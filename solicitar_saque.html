@@ -372,7 +372,7 @@
 
     <script>
 document.addEventListener("DOMContentLoaded", async function () {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("token");
 
     // Verifica se há uma mensagem de sucesso para exibir
     const successMessage = localStorage.getItem("withdrawSuccess");
@@ -416,7 +416,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
@@ -429,7 +429,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
         async function loadWithdrawData() {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
 
             if (!token) {
                 setTimeout(() => {
