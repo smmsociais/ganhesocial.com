@@ -458,6 +458,15 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("authToken");
 
+                // 🔹 Extrai o parâmetro `usuario` da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const nomeUsuario = urlParams.get('usuario');
+
+    // 🔹 Atualiza o título da página
+    const titulo = document.querySelector("h2");
+    if (nomeUsuario && titulo) {
+        titulo.textContent = `Histórico de Ações de @${nomeUsuario}`;
+    
 
             // Configurar evento de logout
             document.getElementById('logoutLink').addEventListener('click', function (e) {
@@ -503,6 +512,7 @@
             let currentPage = 1;
             let totalPages = 1;
             let allActions = [];
+           
 
 // Função auxiliar para formatar data
 function formatarData(dataISO) {
@@ -682,7 +692,7 @@ fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
                 document.body.classList.add('loaded');
             });
 
-        });
+        }});
     </script>
 
 </body>
