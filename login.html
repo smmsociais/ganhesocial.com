@@ -191,42 +191,52 @@
         });
 
         document.getElementById("loginForm").addEventListener("submit", async function (event) {
-            event.preventDefault();
+    event.preventDefault();
 
-            const email = document.getElementById("email").value.trim();
-            const senha = document.getElementById("senha").value.trim();
-            const statusMessage = document.getElementById("statusMessage");
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value.trim();
+    const statusMessage = document.getElementById("statusMessage");
+    const submitButton = document.querySelector(".button");
 
-            if (!email || !senha) {
-                statusMessage.textContent = "Preencha todos os campos!";
-                statusMessage.style.color = "#d9534f";
-                return;
-            }
+    if (!email || !senha) {
+        statusMessage.textContent = "Preencha todos os campos!";
+        statusMessage.style.color = "#d9534f";
+        return;
+    }
 
-            try {
-                const response = await fetch("https://ganhesocial.com/api/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, senha })
-                });
+    // Feedback imediato ao usuário:
+    submitButton.disabled = true;
+    submitButton.textContent = "Entrando...";
+    submitButton.style.opacity = "0.8";
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem("authToken", data.token);
-                 
-                    window.location.replace("/dashboard");
-
-                } else {
-                    statusMessage.textContent = data.error || "Erro ao fazer login";
-                    statusMessage.style.color = "#d9534f";
-                }
-            } catch (error) {
-                statusMessage.textContent = "Erro ao conectar-se ao servidor";
-                statusMessage.style.color = "#d9534f";
-                console.error("Erro na requisição:", error);
-            }
+    try {
+        const response = await fetch("https://ganhesocial.com/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, senha })
         });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem("authToken", data.token);
+            window.location.replace("/dashboard");
+        } else {
+            statusMessage.textContent = data.error || "Erro ao fazer login";
+            statusMessage.style.color = "#d9534f";
+        }
+    } catch (error) {
+        statusMessage.textContent = "Erro ao conectar-se ao servidor";
+        statusMessage.style.color = "#d9534f";
+        console.error("Erro na requisição:", error);
+    }
+
+    // Reabilita o botão apenas se o login falhar
+    submitButton.disabled = false;
+    submitButton.textContent = "Entrar";
+    submitButton.style.opacity = "1";
+});
+
     </script>
 </body>
 
