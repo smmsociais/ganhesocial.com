@@ -545,22 +545,27 @@
   ) {
     const token = localStorage.getItem('token');
     const urlParams = new URLSearchParams(window.location.search);
-    const usuarioParam = urlParams.get('usuario');
 
     if (!token) {
+    alert('Você precisa estar logado.');
+    window.location.href = 'index.html';
+    return;
+}
 
-    }
 
     if (!usuarioParam) {
       alert('Parâmetro "usuario" não encontrado na URL.');
       return;
     }
 
-    fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
+
+fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+
     .then((response) => response.json())
     .then((data) => {
 
