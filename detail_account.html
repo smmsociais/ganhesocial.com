@@ -448,118 +448,212 @@
         }
 
         function formatarData(dataISO) {
-      const data = new Date(dataISO);
-      return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
-    }
-    document.addEventListener("DOMContentLoaded", () => {
-      const token = localStorage.getItem("authToken");
-      const urlParams = new URLSearchParams(window.location.search);
-      const nomeUsuario = urlParams.get('usuario');
+            const data = new Date(dataISO);
+            return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
+        }
 
-      const historyList    = document.getElementById("historyList");
-      const paginationInfo = document.getElementById("paginationInfo");
-      const pageTitle      = document.getElementById("pageTitle");
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("authToken");
+            const urlParams = new URLSearchParams(window.location.search);
+            const nomeUsuario = urlParams.get('usuario');
 
-      // Ajusta título
-      if (nomeUsuario) {
-        pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
-      }
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
+                e.preventDefault();
+                logout();
+            });
 
-      // Logout
-      document.getElementById('logoutLink')
-        .addEventListener('click', e => { e.preventDefault(); logout(); });
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
 
-        // Controle do menu hamburguer
-        const menuToggle = document.getElementById('menuToggle');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const menuContent = document.getElementById('menuContent');
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-        menuToggle.addEventListener('click', function () {
-            menuContent.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
+                // Anima os spans do menu hamburguer
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
 
-            // Anima os spans do menu hamburguer
-            const spans = menuToggle.querySelectorAll('span');
-            if (menuContent.classList.contains('active')) {
-                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-            } else {
+            // Fechar menu ao clicar no overlay
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
+            });
+
+            // Configurações de paginação
+            const itemsPerPage = 50;
+            const maxPages = 50;
+            let currentPage = 1;
+            let totalPages = 1;
+            let allActions = [];
+            const historyList = document.getElementById("historyList");
+            const paginationInfo = document.getElementById("paginationInfo");
+            const pageTitle = document.getElementById("pageTitle");
+
+            // Ajusta título
+            if (nomeUsuario) {
+                pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
             }
+
+            // Se não tem usuario, já mostra com a mensagem
+            if (!nomeUsuario) {
+                historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
+                paginationInfo.textContent = "Usuário não especificado";
+                document.body.classList.add('loaded');
+                return;
+            }
+
+            // Carregar dados da API
+            async function loadData(page = 1) {
+                try {
+                    currentPage = page;
+                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Carregando...</td></tr>';
+
+                    // Se ainda não carregamos todos os dados, buscar da API
+                    if (allActions.length === 0) {
+                        const response = await fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Erro ao carregar histórico');
+                        }
+                        
+                        const historyData = await response.json();
+                        allActions = Array.isArray(historyData) ? historyData : [];
+                    }
+
+                    // Calcular total de páginas
+                    totalPages = Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages);
+
+                    // Atualizar informações de paginação
+                    updatePaginationInfo();
+
+                    // Gerar paginação
+                    generatePagination();
+
+                    // Exibir itens da página atual
+                    displayPageItems();
+
+                    document.body.classList.add('loaded');
+
+                } catch (error) {
+                    console.error("Erro ao carregar histórico:", error);
+                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+                    paginationInfo.textContent = "Erro ao carregar dados";
+                    document.body.classList.add('loaded');
+                }
+            }
+
+            // Exibir itens da página atual
+            function displayPageItems() {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
+                const pageActions = allActions.slice(startIndex, endIndex);
+
+                if (pageActions.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
+                    return;
+                }
+
+                historyList.innerHTML = '';
+                pageActions.forEach(action => {
+                    const row = document.createElement("tr");
+                    let statusClass;
+                    if (action.status === "Válida") {
+                        statusClass = "status-valid";
+                    } else if (action.status === "Inválida") {
+                        statusClass = "status-invalid";
+                    } else {
+                        statusClass = "status-pendente";
+                    }
+
+                    const statusText = action.status;
+
+                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
+
+                    const valorFormatado = parseFloat(action.valor_confirmacao)
+                        .toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+                    row.innerHTML = `
+                        <td>${formatarData(action.data)}</td>
+                        <td>${action.rede_social}</td>
+                        <td>${action.nome_usuario}</td>
+                        <td>Seguir</td>
+                        <td>R$ ${valorFormatado}</td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span class="${statusClass}">${statusText}</span>
+                                ${actionLink}
+                            </div>
+                        </td>
+                    `;
+                    historyList.appendChild(row);
+                });
+            }
+
+            // Atualizar informações de paginação
+            function updatePaginationInfo() {
+                const startItem = (currentPage - 1) * itemsPerPage + 1;
+                const endItem = Math.min(currentPage * itemsPerPage, allActions.length);
+                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${allActions.length} ações`;
+            }
+
+            // Gerar controles de paginação
+            function generatePagination() {
+                const pagination = document.getElementById("pagination");
+                pagination.innerHTML = '';
+
+                // Botão Anterior
+                const prevButton = document.createElement("button");
+                prevButton.innerHTML = "&laquo; Anterior";
+                prevButton.disabled = currentPage === 1;
+                prevButton.addEventListener("click", () => loadData(currentPage - 1));
+                pagination.appendChild(prevButton);
+
+                // Números das páginas
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, startPage + 4);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement("button");
+                    pageButton.textContent = i;
+                    if (i === currentPage) {
+                        pageButton.classList.add("active");
+                    }
+                    pageButton.addEventListener("click", () => loadData(i));
+                    pagination.appendChild(pageButton);
+                }
+
+                // Botão Próximo
+                const nextButton = document.createElement("button");
+                nextButton.innerHTML = "Próximo &raquo;";
+                nextButton.disabled = currentPage === totalPages;
+                nextButton.addEventListener("click", () => loadData(currentPage + 1));
+                pagination.appendChild(nextButton);
+            }
+
+            // Inicializar carregando a primeira página
+            loadData(1);
         });
-
-        // Fechar menu ao clicar no overlay
-        menuOverlay.addEventListener('click', function () {
-            menuContent.classList.remove('active');
-            menuOverlay.classList.remove('active');
-            const spans = menuToggle.querySelectorAll('span');
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        });
-
-        function mostrarPagina() {
-        document.body.classList.add('loaded');
-      }
-      
-        // Se não tem usuario, já mostra com a mensagem
-        if (!nomeUsuario) {
-        historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
-        paginationInfo.textContent = "Usuário não especificado";
-        return mostrarPagina();
-      }
-      
-      // Se tem usuario, faz o fetch
-      fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(resp => {
-        if (!resp.ok) throw new Error('Erro ao carregar histórico');
-        return resp.json();
-      })
-      .then(data => {
-        historyList.innerHTML = "";
-        if (!Array.isArray(data) || data.length === 0) {
-          historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
-          paginationInfo.textContent = "Nenhuma ação encontrada";
-        } else {
-          data.forEach(action => {
-            const row = document.createElement("tr");
-            let statusClass = action.status === "Válida"
-              ? "status-valid"
-              : action.status === "Inválida"
-                ? "status-invalid"
-                : "status-pendente";
-
-            const valorFormatado = parseFloat(action.valor_confirmacao)
-              .toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-
-            row.innerHTML = `
-              <td>${formatarData(action.data)}</td>
-              <td>${action.rede_social}</td>
-              <td>${action.nome_usuario}</td>
-              <td>Seguir</td>
-              <td>R$ ${valorFormatado}</td>
-              <td class="${statusClass}">${action.status}</td>
-            `;
-            historyList.appendChild(row);
-          });
-          paginationInfo.textContent = `Total de ${data.length} ações`;
-        }
-        mostrarPagina();
-      })
-      .catch(err => {
-        console.error("Erro:", err);
-        historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-        paginationInfo.textContent = "Erro ao carregar dados";
-        mostrarPagina();
-
-    });
-});        
-
     </script>
 </body>
 </html>
