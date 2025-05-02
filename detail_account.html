@@ -546,9 +546,6 @@
     const token = localStorage.getItem('token');
     const urlParams = new URLSearchParams(window.location.search);
 
-    if (!token) {
-    window.location.href = '';
-    return;
 }
 
 
@@ -604,7 +601,7 @@ fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
       console.error('Erro ao buscar histórico de ações:', error);
     });
   }
-});
+);
 
             // Configurações de paginação
 let currentPage = 1;
