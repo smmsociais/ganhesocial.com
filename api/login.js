@@ -8,7 +8,9 @@ const handler = async (req, res) => {
     }
 
     try {
-        await connectDB(); // Aguarda a conexão com o MongoDB
+        console.time("⏱️ Tempo total de login");
+        await connectDB();
+        console.timeLog("⏱️ Tempo total de login", "✔️ Conectado ao MongoDB");
 
         const { email, senha } = req.body;
 
@@ -18,6 +20,7 @@ const handler = async (req, res) => {
 
         console.log("🔍 Buscando usuário no banco de dados...");
         const usuario = await User.findOne({ email });
+        console.timeLog("⏱️ Tempo total de login", "✔️ Usuário buscado");
 
         if (!usuario) {
             console.log("🔴 Usuário não encontrado!");
@@ -34,11 +37,13 @@ const handler = async (req, res) => {
             token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
             usuario.token = token;
             await usuario.save({ validateBeforeSave: false });
+            console.timeLog("⏱️ Tempo total de login", "✔️ Token gerado e salvo");
 
             console.log("🟢 Novo token gerado e salvo.");
         } else {
             console.log("🟢 Token já existente mantido.");
         }
+        console.timeEnd("⏱️ Tempo total de login");
 
         console.log("🔹 Token gerado para usuário:", token);
         return res.json({ message: "Login bem-sucedido!", token });
@@ -47,6 +52,7 @@ const handler = async (req, res) => {
         console.error("❌ Erro ao realizar login:", error);
         return res.status(500).json({ error: "Erro ao realizar login" });
     }
+    
 };
 
 export default handler;
