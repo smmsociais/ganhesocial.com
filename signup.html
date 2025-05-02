@@ -223,12 +223,12 @@ const statusMessage = document.getElementById("statusMessage");
                 const data = await response.json();
 
                 if (response.ok) {
-
-                        window.location.href = "/dashboard";
-                } else {
-                    statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
-                    statusMessage.style.color = "#d9534f";
-                }
+    localStorage.setItem("token", data.token);
+    window.location.href = "/dashboard";
+} else {
+    statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
+    statusMessage.style.color = "#d9534f";
+}
             } catch (error) {
                 console.error("Erro na requisição:", error);
                 statusMessage.textContent = "Erro ao conectar-se ao servidor.";
