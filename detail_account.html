@@ -569,15 +569,15 @@
                 document.getElementById("paginationInfo").textContent = "Usuário não especificado";
             }
 
-            document.body.classList.add('loaded');
+            document.body.classList.add('loaded'); // Só mostra quando os dados foram carregados
 })
 .catch(error => {
     console.error("Erro:", error);
     historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
     document.getElementById("paginationInfo").textContent = "Erro ao carregar dados";
-    document.body.classList.add('loaded');
-});
-
+    document.body.classList.add('loaded'); // Ainda mostra a página mesmo com erro
+    
+        });
     </script>
 </body>
 </html>
