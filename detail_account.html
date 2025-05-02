@@ -530,74 +530,136 @@
             localStorage.removeItem("authToken");
 
         }
-        document.addEventListener('DOMContentLoaded', function () {
-  const menuToggle = document.getElementById('menuToggle');
-  const sidebar = document.getElementById('sidebar');
-  const token = localStorage.getItem('token'); // <-- MOVA PARA CÁ
+        document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Sessão expirada, faça login.');
+      return window.location.href = '/login.html';
+    }
 
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
+    // puxar histórico DO PRÓPRIO USUÁRIO via token
+    fetch('/api/historico_acoes', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Não autorizado');
+      return res.json();
+    })
+    .then(data => {
+      userActions = data;
+      // Atualiza header/carrossel de usuário com o primeiro registro
+      if (data.length) updateUserCard(data[0]);
+      updateStats(data);
+      updatePaginationInfo();
+      generatePagination();
+      displayPageItems();
+      document.body.classList.add('loaded');
+    })
+    .catch(err => {
+      console.error('Erro ao buscar histórico:', err);
+      alert('Não foi possível carregar seu histórico.');
+    });
   });
 
-  const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
+  // mover para escopo global:
+  let userActions = [];
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  const totalPages = () => Math.ceil(userActions.length / itemsPerPage);
 
-  if (!usuarioParam) {
-    alert('Parâmetro "usuario" não encontrado na URL.');
-    return;
+  function updateUserCard(action) {
+    document.getElementById('userName').textContent = action.nome_usuario;
+    document.getElementById('socialNetwork').textContent = action.rede_social;
   }
 
-  fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  function updateStats(actions) {
+    document.getElementById('totalActions').textContent = actions.length;
+    document.getElementById('validActions').textContent = actions.filter(a => a.status==='Válida').length;
+    document.getElementById('pendingActions').textContent = actions.filter(a => a.status==='Pendente').length;
+    const earned = actions.reduce((sum,a)=> sum + (a.status==='Válida'?a.valor_confirmacao:0), 0);
+    document.getElementById('earnedValue').textContent = `R$ ${earned.toLocaleString('pt-BR',{minimumFractionDigits:3})}`;
+  }
 
-    },
-})
+  function displayPageItems() {
+    const start = (currentPage-1)*itemsPerPage;
+    const page = userActions.slice(start, start+itemsPerPage);
+    const tbody = document.getElementById('historyList');
+    tbody.innerHTML = '';
+    if (!page.length) {
+      return tbody.innerHTML = '<tr><td colspan="5" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+    }
+    page.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${new Date(a.data).toLocaleString()}</td>
+        <td>${a.tipo}</td>
+        <td>R$ ${a.valor_confirmacao.toLocaleString('pt-BR',{minimumFractionDigits:3})}</td>
+        <td class="status-${a.status.toLowerCase()}">${a.status}</td>
+        <td>${a.url_dir?`<a href="${a.url_dir}" target="_blank">Ver</a>`:''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-    .then((response) => response.json())
-    .then((data) => {
+  function updatePaginationInfo() {
+    const start = (currentPage-1)*itemsPerPage+1;
+    const end = Math.min(currentPage*itemsPerPage, userActions.length);
+    document.getElementById('paginationInfo').textContent = 
+      `Mostrando ${start}-${end} de ${userActions.length} ações`;
+  }
+
+  function generatePagination() {
+    const p = document.getElementById('pagination');
+    p.innerHTML = '';
+    ['Anterior', ...Array(totalPages()).keys(), 'Próximo'].forEach((label,i)=>{
+      const btn = document.createElement('button');
+      if (label === 'Anterior') btn.innerHTML='&laquo;';
+      else if (label === 'Próximo') btn.innerHTML='&raquo;';
+      else btn.textContent = i;
+      btn.disabled = (label==='Anterior'&&currentPage===1)||(label==='Próximo'&&currentPage===totalPages())||(label===currentPage);
+      btn.addEventListener('click', ()=> {
+        if (label==='Anterior') currentPage--;
+        else if (label==='Próximo') currentPage++;
+        else currentPage=label;
+        displayPageItems();
+        updatePaginationInfo();
+        generatePagination();
+      });
+      p.appendChild(btn);
+    });
+  }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function () {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+  menuToggle.addEventListener('click', function () {
+    menuContent.classList.toggle('active');
+    menuOverlay.classList.toggle('active');
 
-                // Anima os spans do menu hamburguer
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            });
+    const spans = menuToggle.querySelectorAll('span');
+    if (menuContent.classList.contains('active')) {
+      spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+      spans[1].style.opacity = '0';
+      spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+    } else {
+      spans[0].style.transform = 'none';
+      spans[1].style.opacity = '1';
+      spans[2].style.transform = 'none';
+    }
+  });
 
-            // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            });
-        })
-    .catch((error) => {
-      console.error('Erro ao buscar histórico de ações:', error);
-    });
-  }
-);
+  menuOverlay.addEventListener('click', function () {
+    menuContent.classList.remove('active');
+    menuOverlay.classList.remove('active');
+    const spans = menuToggle.querySelectorAll('span');
+    spans[0].style.transform = 'none';
+    spans[1].style.opacity = '1';
+    spans[2].style.transform = 'none';
+  });
 
             // Configurações de paginação
-let currentPage = 1;
-let totalPages = 1;
-let userActions = [];
 let userData = null;
 
 let userId = null;
