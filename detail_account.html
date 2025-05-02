@@ -456,9 +456,9 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("authToken");
 
-                // 🔹 Extrai o parâmetro `usuario` da URL
+    // 🔹 Extrai o parâmetro `usuario` da URL
     const urlParams = new URLSearchParams(window.location.search);
     const nomeUsuario = urlParams.get('usuario');
 
@@ -466,6 +466,7 @@
     const titulo = document.querySelector("h2");
     if (nomeUsuario && titulo) {
         titulo.textContent = `Histórico de Ações de @${nomeUsuario}`;
+    }
     
 
             // Configurar evento de logout
@@ -513,16 +514,11 @@
             let totalPages = 1;
             let allActions = [];
            
-
 // Função auxiliar para formatar data
 function formatarData(dataISO) {
     const data = new Date(dataISO);
     return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
 }
-
-// Pega o nome do usuário da URL
-const urlParams = new URLSearchParams(window.location.search);
-const nomeUsuario = urlParams.get('usuario');
 
 if (!nomeUsuario) {
     document.getElementById("paginationInfo").textContent = "Usuário não especificado na URL.";
@@ -692,7 +688,7 @@ fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
                 document.body.classList.add('loaded');
             });
 
-        }});
+        });
     </script>
 
 </body>
