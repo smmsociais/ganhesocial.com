@@ -182,10 +182,12 @@
         document.getElementById("cadastroForm").addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            const email = document.getElementById("email").value.trim();
-            const senha = document.getElementById("senha").value.trim();
-            const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
-            const statusMessage = document.getElementById("statusMessage");
+            document.querySelector(".container").style.display = "none";
+
+const email = document.getElementById("email").value.trim();
+const senha = document.getElementById("senha").value.trim();
+const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
+const statusMessage = document.getElementById("statusMessage");
 
             // Validações
             if (!email || !senha || !confirmarSenha) {
@@ -206,9 +208,6 @@
                 return;
             }
 
-            statusMessage.textContent = "Processando cadastro...";
-            statusMessage.style.color = "#007BFF";
-
             try {
                 const response = await fetch("https://ganhesocial.com/api/signup", {
                     method: "POST",
@@ -224,12 +223,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    statusMessage.textContent = "Cadastro realizado com sucesso!";
-                    statusMessage.style.color = "#5cb85c";
-                    // Redirecionar após 2 segundos
-                    setTimeout(() => {
+
                         window.location.href = "https://ganhesocial.com/login";
-                    }, 2000);
                 } else {
                     statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
                     statusMessage.style.color = "#d9534f";
