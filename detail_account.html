@@ -570,7 +570,14 @@
             }
 
             document.body.classList.add('loaded');
-        });
+})
+.catch(error => {
+    console.error("Erro:", error);
+    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+    document.getElementById("paginationInfo").textContent = "Erro ao carregar dados";
+    document.body.classList.add('loaded');
+});
+
     </script>
 </body>
 </html>
