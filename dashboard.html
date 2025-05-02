@@ -520,10 +520,13 @@
         });
 
         async function carregarSaldos() {
-            const token = localStorage.getItem("authToken");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
+            console.log(localStorage);
+const token = localStorage.getItem("authToken");
+if (!token) {
+    console.error("Token não encontrado.");
+    return;
+}
+
             }
             try {
                 const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
@@ -549,7 +552,6 @@
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
-        }
         async function carregarHistorico() {
             const token = localStorage.getItem("authToken");
             if (!token) {
