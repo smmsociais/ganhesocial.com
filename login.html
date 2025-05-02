@@ -213,11 +213,8 @@
 
                 if (response.ok) {
                     localStorage.setItem("authToken", data.token);
-
-                    // Redireciona para o dashboard após 1 segundo
-                    setTimeout(() => {
+                 
                         window.location.href = "/dashboard";
-                    }, 1000);
                 } else {
                     statusMessage.textContent = data.error || "Erro ao fazer login";
                     statusMessage.style.color = "#d9534f";
