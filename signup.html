@@ -226,7 +226,10 @@ console.log("Resposta da API:", data);
 
                 if (response.ok) {
     localStorage.setItem("token", data.token);
+    setTimeout(() => {   
     window.location.href = "/dashboard";
+}, 15000);
+
 } else {
     statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
     statusMessage.style.color = "#d9534f";
