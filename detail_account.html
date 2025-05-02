@@ -504,6 +504,58 @@
             let totalPages = 1;
             let allActions = [];
 
+// Função auxiliar para formatar data
+function formatarData(dataISO) {
+    const data = new Date(dataISO);
+    return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
+}
+
+// Pega o nome do usuário da URL
+const urlParams = new URLSearchParams(window.location.search);
+const nomeUsuario = urlParams.get('usuario');
+
+if (!nomeUsuario) {
+    document.getElementById("paginationInfo").textContent = "Usuário não especificado na URL.";
+    return;
+}
+
+// Buscar dados da API com base no nome de usuário
+fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
+    headers: {
+        Authorization: `Bearer ${token}`
+    }
+})
+.then(res => res.json())
+.then(data => {
+    const historyList = document.getElementById("historyList");
+    historyList.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("paginationInfo").textContent = "Nenhum histórico encontrado para este usuário.";
+        return;
+    }
+
+    data.forEach(action => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${formatarData(action.data)}</td>
+            <td>${action.rede_social}</td>
+            <td>${action.nome_usuario}</td>
+            <td>${action.tipo}</td>
+            <td>${action.valor_confirmacao.toFixed(3)} pts</td>
+            <td>${action.status}</td>
+        `;
+        historyList.appendChild(row);
+    });
+
+    document.getElementById("paginationInfo").textContent = `Total de ações: ${data.length}`;
+})
+.catch(err => {
+    console.error("Erro ao buscar histórico:", err);
+    document.getElementById("paginationInfo").textContent = "Erro ao carregar histórico.";
+});
+
+
             // Carregar dados da API
             async function loadData(page = 1) {
                 try {
