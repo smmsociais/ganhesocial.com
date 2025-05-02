@@ -221,6 +221,8 @@ const statusMessage = document.getElementById("statusMessage");
                 });
 
                 const data = await response.json();
+console.log("Resposta da API:", data);
+
 
                 if (response.ok) {
     localStorage.setItem("token", data.token);
