@@ -317,7 +317,7 @@
         }
 
         async function loadAccounts() {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
             const messageBox = document.getElementById('messageBox');
             messageBox.style.display = 'none';
 
@@ -371,7 +371,7 @@
         }
 
         async function disableAccount(accountName, button) {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
 
             if (!token) {
                 window.location.href = "login";
@@ -410,12 +410,13 @@
         }
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
         document.addEventListener("DOMContentLoaded", async function () {
-    const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
+
 
     // Configurar evento de logout
     document.getElementById('logoutLink').addEventListener('click', function (e) {
