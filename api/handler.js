@@ -571,6 +571,35 @@ if (url.startsWith("/api/historico_acoes")) {
     return res.status(401).json({ error: "Usuário não autenticado." });
   }
 
+  const nomeUsuarioParam = req.query.usuario;
+
+  if (nomeUsuarioParam) {
+    // Busca diretamente pelo nome de usuário, ignorando o token
+    const historico = await ActionHistory
+      .find({ nome_usuario: nomeUsuarioParam })
+      .sort({ data: -1 });
+  
+    const formattedData = historico.map(action => {
+      let status;
+      if (action.acao_validada === true) status = "Válida";
+      else if (action.acao_validada === false) status = "Inválida";
+      else status = "Pendente";
+  
+      return {
+        nome_usuario: action.nome_usuario,
+        acao_validada: action.acao_validada,
+        valor_confirmacao: action.valor_confirmacao,
+        data: action.data,
+        rede_social: action.rede_social || "TikTok",
+        tipo: action.tipo || "Seguir",
+        url_dir: action.url_dir || null,
+        status
+      };
+    });
+  
+    return res.status(200).json(formattedData);
+  }  
+
   try {
     const historico = await ActionHistory
       .find({ user: usuario._id })
@@ -592,7 +621,7 @@ if (url.startsWith("/api/historico_acoes")) {
         url_dir: action.url_dir || null,
         status
       };
-    });
+    });    
 
     return res.status(200).json(formattedData);
   } catch (error) {
