@@ -533,8 +533,7 @@
         document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Sessão expirada, faça login.');
-      return window.location.href = '/login.html';
+
     }
 
     // puxar histórico DO PRÓPRIO USUÁRIO via token
