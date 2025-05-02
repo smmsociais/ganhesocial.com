@@ -155,6 +155,29 @@
         body.loaded {
             visibility: visible;
         }
+
+        .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: #0366d6;
+}
+
+@media (prefers-color-scheme: dark) {
+    .loading-overlay {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #58a6ff;
+    }
+}
+
     </style>
 </head>
 
@@ -178,6 +201,9 @@
 
         <p id="statusMessage" class="status-message"></p>
     </div>
+    <div id="loadingOverlay" class="loading-overlay">
+        Carregando...
+    </div>       
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -197,6 +223,7 @@
     const senha = document.getElementById("senha").value.trim();
     const statusMessage = document.getElementById("statusMessage");
     const submitButton = document.querySelector(".button");
+    const overlay = document.getElementById("loadingOverlay");
 
     if (!email || !senha) {
         statusMessage.textContent = "Preencha todos os campos!";
@@ -204,37 +231,38 @@
         return;
     }
 
-    // Feedback imediato ao usuário:
+    // Feedback imediato + carregamento falso
     submitButton.disabled = true;
-    submitButton.textContent = "Entrando...";
-    submitButton.style.opacity = "0.8";
+    overlay.style.display = "flex";
 
-    try {
-        const response = await fetch("https://ganhesocial.com/api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, senha })
-        });
+    // Aguarda um pequeno tempo para "carregamento falso"
+    setTimeout(async () => {
+        try {
+            const response = await fetch("https://ganhesocial.com/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, senha })
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            localStorage.setItem("authToken", data.token);
-            window.location.replace("/dashboard");
-        } else {
-            statusMessage.textContent = data.error || "Erro ao fazer login";
+            if (response.ok) {
+                localStorage.setItem("authToken", data.token);
+                window.location.replace("/dashboard");
+            } else {
+                overlay.style.display = "none";
+                statusMessage.textContent = data.error || "Erro ao fazer login";
+                statusMessage.style.color = "#d9534f";
+                submitButton.disabled = false;
+            }
+        } catch (error) {
+            overlay.style.display = "none";
+            statusMessage.textContent = "Erro ao conectar-se ao servidor";
             statusMessage.style.color = "#d9534f";
+            console.error("Erro na requisição:", error);
+            submitButton.disabled = false;
         }
-    } catch (error) {
-        statusMessage.textContent = "Erro ao conectar-se ao servidor";
-        statusMessage.style.color = "#d9534f";
-        console.error("Erro na requisição:", error);
-    }
-
-    // Reabilita o botão apenas se o login falhar
-    submitButton.disabled = false;
-    submitButton.textContent = "Entrar";
-    submitButton.style.opacity = "1";
+    }, 300);
 });
 
     </script>
