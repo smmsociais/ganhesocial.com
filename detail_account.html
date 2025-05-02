@@ -457,16 +457,15 @@
 
         document.addEventListener("DOMContentLoaded", function () {
     const token = localStorage.getItem("authToken");
-
-    // 🔹 Extrai o parâmetro `usuario` da URL
     const urlParams = new URLSearchParams(window.location.search);
     const nomeUsuario = urlParams.get('usuario');
 
-    // 🔹 Atualiza o título da página
-    const titulo = document.querySelector("h2");
-    if (nomeUsuario && titulo) {
+    const historyList = document.getElementById("historyList");
+
+    if (nomeUsuario) {
+        // Atualiza o título
+        const titulo = document.querySelector("h2");
         titulo.textContent = `Histórico de Ações de @${nomeUsuario}`;
-    }
     
 
             // Configurar evento de logout
@@ -525,42 +524,45 @@ if (!nomeUsuario) {
     return;
 }
 
-// Buscar dados da API com base no nome de usuário
-fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
-    headers: {
-        Authorization: `Bearer ${token}`
+        // Buscar apenas ações desse usuário
+        fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            historyList.innerHTML = "";
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById("paginationInfo").textContent = "Nenhum histórico encontrado para este usuário.";
+                return;
+            }
+
+            data.forEach(action => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${formatarData(action.data)}</td>
+                    <td>${action.rede_social}</td>
+                    <td>${action.nome_usuario}</td>
+                    <td>${action.tipo}</td>
+                    <td>${action.valor_confirmacao.toFixed(3)} pts</td>
+                    <td>${action.status}</td>
+                `;
+                historyList.appendChild(row);
+            });
+
+            document.getElementById("paginationInfo").textContent = `Total de ações: ${data.length}`;
+        })
+        .catch(err => {
+            console.error("Erro ao buscar histórico:", err);
+            document.getElementById("paginationInfo").textContent = "Erro ao carregar histórico.";
+        });
+
+    } else {
+        // Caso não tenha um nome de usuário, carregar todos
+        loadData(); // sua função paginada
     }
-})
-.then(res => res.json())
-.then(data => {
-    const historyList = document.getElementById("historyList");
-    historyList.innerHTML = "";
-
-    if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById("paginationInfo").textContent = "Nenhum histórico encontrado para este usuário.";
-        return;
-    }
-
-    data.forEach(action => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${formatarData(action.data)}</td>
-            <td>${action.rede_social}</td>
-            <td>${action.nome_usuario}</td>
-            <td>${action.tipo}</td>
-            <td>${action.valor_confirmacao.toFixed(3)} pts</td>
-            <td>${action.status}</td>
-        `;
-        historyList.appendChild(row);
-    });
-
-    document.getElementById("paginationInfo").textContent = `Total de ações: ${data.length}`;
-})
-.catch(err => {
-    console.error("Erro ao buscar histórico:", err);
-    document.getElementById("paginationInfo").textContent = "Erro ao carregar histórico.";
 });
-
 
             // Carregar dados da API
             async function loadData(page = 1) {
@@ -688,7 +690,6 @@ fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
                 document.body.classList.add('loaded');
             });
 
-        });
     </script>
 
 </body>
