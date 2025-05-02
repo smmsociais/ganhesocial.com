@@ -373,7 +373,7 @@
             // Remover @ do início do nome de usuário, se existir
             accountName = formatUsername(accountName);
 
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
             if (!token) {
                 showMessage("Você precisa estar logado para adicionar uma conta.", true);
                 window.location.href = "/login";
@@ -409,13 +409,12 @@
         }
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
-
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
             // Configurar evento de logout
             document.getElementById('logoutLink').addEventListener('click', function (e) {
