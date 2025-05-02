@@ -458,116 +458,118 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
-            const urlParams = new URLSearchParams(window.location.search);
-            const nomeUsuario = urlParams.get('usuario');
+        document.body.classList.add('loaded');
+        
+        const token = localStorage.getItem("authToken");
+        const urlParams = new URLSearchParams(window.location.search);
+        const nomeUsuario = urlParams.get('usuario');
 
-            const historyList = document.getElementById("historyList");
-            const pageTitle = document.getElementById("pageTitle");
+        const historyList = document.getElementById("historyList");
+        const pageTitle = document.getElementById("pageTitle");
 
-            if (nomeUsuario) {
-                pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
-            }
+        if (nomeUsuario) {
+            pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
+        }
 
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
+        // Configurar evento de logout
+        document.getElementById('logoutLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            logout();
+        });
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
+        // Controle do menu hamburguer
+        const menuToggle = document.getElementById('menuToggle');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuContent = document.getElementById('menuContent');
 
-            menuToggle.addEventListener('click', function () {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+        menuToggle.addEventListener('click', function () {
+            menuContent.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
 
-                // Anima os spans do menu hamburguer
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            });
-
-            // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
+            // Anima os spans do menu hamburguer
+            const spans = menuToggle.querySelectorAll('span');
+            if (menuContent.classList.contains('active')) {
+                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                spans[1].style.opacity = '0';
+                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+            } else {
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
+        });
 
-            // Buscar ações do usuário específico
-            if (nomeUsuario) {
-                fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao carregar histórico');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    historyList.innerHTML = "";
+        // Fechar menu ao clicar no overlay
+        menuOverlay.addEventListener('click', function () {
+            menuContent.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            const spans = menuToggle.querySelectorAll('span');
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
+        });
+
+        // Buscar ações do usuário específico
+        if (nomeUsuario) {
+            fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar histórico');
+                }
+                return response.json();
+            })
+            .then(data => {
+                historyList.innerHTML = "";
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
+                    document.getElementById("paginationInfo").textContent = "Nenhuma ação encontrada";
+                    return;
+                }
+
+                data.forEach(action => {
+                    const row = document.createElement("tr");
                     
-                    if (!Array.isArray(data) || data.length === 0) {
-                        historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
-                        document.getElementById("paginationInfo").textContent = "Nenhuma ação encontrada";
-                        return;
+                    // Determinar classe de status
+                    let statusClass = "status-pendente";
+                    if (action.status === "Válida") {
+                        statusClass = "status-valid";
+                    } else if (action.status === "Inválida") {
+                        statusClass = "status-invalid";
                     }
 
-                    data.forEach(action => {
-                        const row = document.createElement("tr");
-                        
-                        // Determinar classe de status
-                        let statusClass = "status-pendente";
-                        if (action.status === "Válida") {
-                            statusClass = "status-valid";
-                        } else if (action.status === "Inválida") {
-                            statusClass = "status-invalid";
-                        }
-
-                        // Formatar valor para R$ 0,005
-                        const valorFormatado = parseFloat(action.valor_confirmacao).toLocaleString('pt-BR', {
-                            minimumFractionDigits: 3,
-                            maximumFractionDigits: 3
-                        });
-
-                        row.innerHTML = `
-                            <td>${formatarData(action.data)}</td>
-                            <td>${action.rede_social}</td>
-                            <td>${action.nome_usuario}</td>
-                            <td>Seguir</td>
-                            <td>R$ ${valorFormatado}</td>
-                            <td class="${statusClass}">${action.status}</td>
-                        `;
-                        historyList.appendChild(row);
+                    // Formatar valor para R$ 0,005
+                    const valorFormatado = parseFloat(action.valor_confirmacao).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3
                     });
 
-                    document.getElementById("paginationInfo").textContent = `Total de ${data.length} ações`;
-                })
-                .catch(error => {
-                    console.error("Erro:", error);
-                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-                    document.getElementById("paginationInfo").textContent = "Erro ao carregar dados";
+                    row.innerHTML = `
+                        <td>${formatarData(action.data)}</td>
+                        <td>${action.rede_social}</td>
+                        <td>${action.nome_usuario}</td>
+                        <td>Seguir</td>
+                        <td>R$ ${valorFormatado}</td>
+                        <td class="${statusClass}">${action.status}</td>
+                    `;
+                    historyList.appendChild(row);
                 });
-            } else {
-                historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
-                document.getElementById("paginationInfo").textContent = "Usuário não especificado";
-            }
+
+                document.getElementById("paginationInfo").textContent = `Total de ${data.length} ações`;
+            })
+            .catch(error => {
+                console.error("Erro:", error);
+                historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+                document.getElementById("paginationInfo").textContent = "Erro ao carregar dados";
+            });
+        } else {
+            historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
+            document.getElementById("paginationInfo").textContent = "Usuário não especificado";
+        }
 })
 
 window.onload = function () {
