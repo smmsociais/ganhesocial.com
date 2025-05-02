@@ -221,19 +221,15 @@ const statusMessage = document.getElementById("statusMessage");
                 });
 
                 const data = await response.json();
-console.log("Resposta da API:", data);
 
-
-                if (response.ok) {
+if (response.ok) {
     localStorage.setItem("token", data.token);
-    setTimeout(() => {   
-    window.location.href = "/dashboard";
-}, 15000);
-
+    window.location.href = "/dashboard"; // Redirecionamento imediato
 } else {
     statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
     statusMessage.style.color = "#d9534f";
 }
+
             } catch (error) {
                 console.error("Erro na requisição:", error);
                 statusMessage.textContent = "Erro ao conectar-se ao servidor.";
