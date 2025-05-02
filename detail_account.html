@@ -384,8 +384,7 @@
         body.loaded {
             visibility: visible;
         }
-
-</style>
+    </style>
 
     </style>
 </head>
@@ -571,7 +570,7 @@
                     row.innerHTML = `
 <td>${new Date(action.data).toLocaleString()}</td>
 <td>${action.rede_social}</td>    
-<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
+<td>${action.nome_usuario}</td>  
 <td>Seguir</td>       
 <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
 <td>
@@ -627,9 +626,9 @@
             }
 
             // Inicializar carregando a primeira página
-loadData(1).then(() => {
-    document.body.classList.add('loaded');
-});
+            loadData(1).then(() => {
+                document.body.classList.add('loaded');
+            });
 
         });
     </script>
