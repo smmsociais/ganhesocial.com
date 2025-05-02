@@ -548,13 +548,12 @@
 
 }
 
+const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
 
-    if (!usuarioParam) {
-      alert('Parâmetro "usuario" não encontrado na URL.');
-      return;
-    }
-
-    const usuarioParam = new URLSearchParams(window.location.search).get("usuario");
+if (!usuarioParam) {
+  alert('Parâmetro "usuario" não encontrado na URL.');
+  return;
+}
 
 fetch(`/api/historico_acoes?usuario=${usuarioParam}`, {
   headers: {
@@ -671,6 +670,20 @@ let token = localStorage.getItem('token');
         historyList.innerHTML = '<tr><td colspan="5" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
     }
 }
+
+function updateUserCard(action) {
+  const userNameElement = document.querySelector("#user-name");
+  const socialNetworkElement = document.querySelector("#social-network");
+
+  if (userNameElement) {
+    userNameElement.textContent = action.nome_usuario || "Usuário";
+  }
+
+  if (socialNetworkElement) {
+    socialNetworkElement.textContent = action.rede_social || "TikTok";
+  }
+}
+
             // Atualizar estatísticas com base nas ações
             function updateStats(actions) {
     const total = actions.length;
