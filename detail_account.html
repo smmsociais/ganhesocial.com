@@ -377,13 +377,8 @@
             }
         }
 
-        body {
-            visibility: hidden;
-        }
-
-        body.loaded {
-            visibility: visible;
-        }
+        body { visibility: hidden; }
+        body.loaded { visibility: visible; }
     </style>
 </head>
 
@@ -453,29 +448,26 @@
         }
 
         function formatarData(dataISO) {
-            const data = new Date(dataISO);
-            return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
-        }
+      const data = new Date(dataISO);
+      return data.toLocaleDateString("pt-BR") + ' ' + data.toLocaleTimeString("pt-BR");
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("authToken");
+      const urlParams = new URLSearchParams(window.location.search);
+      const nomeUsuario = urlParams.get('usuario');
 
-        document.addEventListener("DOMContentLoaded", function () {
-        document.body.classList.add('loaded');
-        
-        const token = localStorage.getItem("authToken");
-        const urlParams = new URLSearchParams(window.location.search);
-        const nomeUsuario = urlParams.get('usuario');
+      const historyList    = document.getElementById("historyList");
+      const paginationInfo = document.getElementById("paginationInfo");
+      const pageTitle      = document.getElementById("pageTitle");
 
-        const historyList = document.getElementById("historyList");
-        const pageTitle = document.getElementById("pageTitle");
+      // Ajusta título
+      if (nomeUsuario) {
+        pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
+      }
 
-        if (nomeUsuario) {
-            pageTitle.textContent = `Histórico de Ações de @${nomeUsuario}`;
-        }
-
-        // Configurar evento de logout
-        document.getElementById('logoutLink').addEventListener('click', function (e) {
-            e.preventDefault();
-            logout();
-        });
+      // Logout
+      document.getElementById('logoutLink')
+        .addEventListener('click', e => { e.preventDefault(); logout(); });
 
         // Controle do menu hamburguer
         const menuToggle = document.getElementById('menuToggle');
@@ -509,72 +501,64 @@
             spans[2].style.transform = 'none';
         });
 
-        // Buscar ações do usuário específico
-        if (nomeUsuario) {
-            fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar histórico');
-                }
-                return response.json();
-            })
-            .then(data => {
-                historyList.innerHTML = "";
-                
-                if (!Array.isArray(data) || data.length === 0) {
-                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
-                    document.getElementById("paginationInfo").textContent = "Nenhuma ação encontrada";
-                    return;
-                }
-
-                data.forEach(action => {
-                    const row = document.createElement("tr");
-                    
-                    // Determinar classe de status
-                    let statusClass = "status-pendente";
-                    if (action.status === "Válida") {
-                        statusClass = "status-valid";
-                    } else if (action.status === "Inválida") {
-                        statusClass = "status-invalid";
-                    }
-
-                    // Formatar valor para R$ 0,005
-                    const valorFormatado = parseFloat(action.valor_confirmacao).toLocaleString('pt-BR', {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3
-                    });
-
-                    row.innerHTML = `
-                        <td>${formatarData(action.data)}</td>
-                        <td>${action.rede_social}</td>
-                        <td>${action.nome_usuario}</td>
-                        <td>Seguir</td>
-                        <td>R$ ${valorFormatado}</td>
-                        <td class="${statusClass}">${action.status}</td>
-                    `;
-                    historyList.appendChild(row);
-                });
-
-                document.getElementById("paginationInfo").textContent = `Total de ${data.length} ações`;
-            })
-            .catch(error => {
-                console.error("Erro:", error);
-                historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
-                document.getElementById("paginationInfo").textContent = "Erro ao carregar dados";
-            });
-        } else {
-            historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
-            document.getElementById("paginationInfo").textContent = "Usuário não especificado";
-        }
-})
-
-window.onload = function () {
+        function mostrarPagina() {
         document.body.classList.add('loaded');
-    };
+      }
+      
+        // Se não tem usuario, já mostra com a mensagem
+        if (!nomeUsuario) {
+        historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Usuário não especificado.</td></tr>';
+        paginationInfo.textContent = "Usuário não especificado";
+        return mostrarPagina();
+      }
+      
+      // Se tem usuario, faz o fetch
+      fetch(`/api/historico_acoes?usuario=${encodeURIComponent(nomeUsuario)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(resp => {
+        if (!resp.ok) throw new Error('Erro ao carregar histórico');
+        return resp.json();
+      })
+      .then(data => {
+        historyList.innerHTML = "";
+        if (!Array.isArray(data) || data.length === 0) {
+          historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
+          paginationInfo.textContent = "Nenhuma ação encontrada";
+        } else {
+          data.forEach(action => {
+            const row = document.createElement("tr");
+            let statusClass = action.status === "Válida"
+              ? "status-valid"
+              : action.status === "Inválida"
+                ? "status-invalid"
+                : "status-pendente";
+
+            const valorFormatado = parseFloat(action.valor_confirmacao)
+              .toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+            row.innerHTML = `
+              <td>${formatarData(action.data)}</td>
+              <td>${action.rede_social}</td>
+              <td>${action.nome_usuario}</td>
+              <td>Seguir</td>
+              <td>R$ ${valorFormatado}</td>
+              <td class="${statusClass}">${action.status}</td>
+            `;
+            historyList.appendChild(row);
+          });
+          paginationInfo.textContent = `Total de ${data.length} ações`;
+        }
+        mostrarPagina();
+      })
+      .catch(err => {
+        console.error("Erro:", err);
+        historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+        paginationInfo.textContent = "Erro ao carregar dados";
+        mostrarPagina();
+
+    });
+});        
 
     </script>
 </body>
