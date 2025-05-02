@@ -493,7 +493,6 @@
                         <th>Tipo</th>
                         <th>Valor</th>
                         <th>Status</th>
-                        <th>Verificação</th>
                     </tr>
                 </thead>
                 <tbody id="historyList">
@@ -598,12 +597,14 @@
             });
 
             // Configurações de paginação
-            const itemsPerPage = 20;
-const maxPages = 50;
-let currentPage = 1;
+            let currentPage = 1;
 let totalPages = 1;
 let userActions = [];
 let userData = null;
+
+let userId = null;
+let socialNetwork = null;
+let token = localStorage.getItem('token');
 
         })
     .catch((error) => {
@@ -698,7 +699,6 @@ let userData = null;
             <td>${action.tipo || '-'}</td>
             <td>R$ ${(action.valor || 0).toFixed(3)}</td>
             <td>${action.status}</td>
-            <td>${action.verificado ? '✅' : '⏳'}</td>
         `;
         tbody.appendChild(row);
     });
