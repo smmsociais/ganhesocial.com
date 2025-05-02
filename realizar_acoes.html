@@ -314,7 +314,6 @@
         body.loaded {
             visibility: visible;
         }
-        
     </style>
 </head>
 
@@ -389,51 +388,51 @@
     </div>
 
     <script>
-document.addEventListener("DOMContentLoaded", async function () {
-    const token = localStorage.getItem("authToken");
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
-    if (!token) {
-        window.location.href = "dashboard";
-        return;
-    }
+            if (!token) {
+                window.location.href = "login";
+                return;
+            }
 
-    const menuToggle = document.getElementById('menuToggle');
-    const menuOverlay = document.getElementById('menuOverlay');
-    const menuContent = document.getElementById('menuContent');
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
 
-    menuToggle.addEventListener('click', function () {
-        menuContent.classList.toggle('active');
-        menuOverlay.classList.toggle('active');
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-        const spans = menuToggle.querySelectorAll('span');
-        if (menuContent.classList.contains('active')) {
-            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-            spans[1].style.opacity = '0';
-            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-        } else {
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        }
-    });
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
 
-    menuOverlay.addEventListener('click', function () {
-        menuContent.classList.remove('active');
-        menuOverlay.classList.remove('active');
-        const spans = menuToggle.querySelectorAll('span');
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
-    });
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
 
-    try {
-        await loadAccounts();
-    } catch (error) {
-        console.error('Erro ao carregar contas:', error);
-    }
+            try {
+                await loadAccounts();
+            } catch (error) {
+                console.error('Erro ao carregar contas:', error);
+            }
 
-    document.body.classList.add('loaded');
-});
+            document.body.classList.add('loaded');
+        });
 
         let currentActionData = null;
 
@@ -446,7 +445,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify({ nomeUsuario: selectedAccount })
                 });
@@ -479,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
 
@@ -559,7 +558,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+                        "Authorization": `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify({
                         id_conta: localStorage.getItem("id_conta"),
@@ -645,7 +644,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function loadAccounts() {
             try {
-                const token = localStorage.getItem('authToken');
+                const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
                 if (!token) {
                     throw new Error("Token não encontrado. Faça login novamente.");
                 }
@@ -691,7 +690,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             quantidade_pontos,
             tipo_acao
         }) {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
             if (!token) {
                 console.error("Token de autenticação não encontrado.");
                 return;
@@ -712,7 +711,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+                        "Authorization": `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify(acao)
                 });
@@ -731,7 +730,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }   
     </script>
