@@ -595,9 +595,15 @@
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             });
+        })
+    .catch((error) => {
+      console.error('Erro ao buscar histórico de ações:', error);
+    });
+  }
+});
 
             // Configurações de paginação
-            let currentPage = 1;
+let currentPage = 1;
 let totalPages = 1;
 let userActions = [];
 let userData = null;
@@ -605,13 +611,6 @@ let userData = null;
 let userId = null;
 let socialNetwork = null;
 let token = localStorage.getItem('token');
-
-        })
-    .catch((error) => {
-      console.error('Erro ao buscar histórico de ações:', error);
-    });
-  }
-});
             // Carregar dados do usuário e suas ações
             async function loadUserData() {
                 try {
