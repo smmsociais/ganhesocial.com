@@ -384,8 +384,7 @@
         body.loaded {
             visibility: visible;
         }
-
-</style>
+    </style>
 
     </style>
 </head>
@@ -500,7 +499,7 @@
 
             // Configurações de paginação
             const itemsPerPage = 1;
-            const maxPages = 50;
+            const maxPages = 100;
             let currentPage = 1;
             let totalPages = 1;
             let allActions = [];
@@ -606,15 +605,15 @@
 
                 // Números das páginas
                 const maxPageButtons = 5;
-const half = Math.floor(maxPageButtons / 2);
+                const half = Math.floor(maxPageButtons / 2);
 
-let startPage = Math.max(1, currentPage - half);
-let endPage = startPage + maxPageButtons - 1;
+                let startPage = Math.max(1, currentPage - half);
+                let endPage = startPage + maxPageButtons - 1;
 
-if (endPage > totalPages) {
-    endPage = totalPages;
-    startPage = Math.max(1, endPage - maxPageButtons + 1);
-}
+                if (endPage > totalPages) {
+                    endPage = totalPages;
+                    startPage = Math.max(1, endPage - maxPageButtons + 1);
+                }
 
                 for (let i = startPage; i <= endPage; i++) {
                     const pageButton = document.createElement("button");
@@ -635,9 +634,9 @@ if (endPage > totalPages) {
             }
 
             // Inicializar carregando a primeira página
-loadData(1).then(() => {
-    document.body.classList.add('loaded');
-});
+            loadData(1).then(() => {
+                document.body.classList.add('loaded');
+            });
 
         });
     </script>
