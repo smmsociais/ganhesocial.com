@@ -603,9 +603,25 @@
     prevButton.addEventListener("click", () => loadData(currentPage - 1));
     pagination.appendChild(prevButton);
 
-    // Números das páginas - mostrar 5 à frente da página atual (inclusive a atual)
+    // Botão fixo para página 1
+    const pageOneButton = document.createElement("button");
+    pageOneButton.textContent = "1";
+    if (currentPage === 1) {
+        pageOneButton.classList.add("active");
+    }
+    pageOneButton.addEventListener("click", () => loadData(1));
+    pagination.appendChild(pageOneButton);
+
+    // Separador se necessário
+    if (currentPage > 6) {
+        const dots = document.createElement("span");
+        dots.textContent = "...";
+        pagination.appendChild(dots);
+    }
+
+    // Botões de páginas após a página 1
     const maxPageButtons = 5;
-    let startPage = currentPage;
+    let startPage = Math.max(2, currentPage); // começa no mínimo da página 2
     let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
     for (let i = startPage; i <= endPage; i++) {
