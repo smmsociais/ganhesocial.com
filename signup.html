@@ -182,12 +182,10 @@
         document.getElementById("cadastroForm").addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            document.querySelector(".container").style.display = "none";
-
-const email = document.getElementById("email").value.trim();
-const senha = document.getElementById("senha").value.trim();
-const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
-const statusMessage = document.getElementById("statusMessage");
+            const email = document.getElementById("email").value.trim();
+            const senha = document.getElementById("senha").value.trim();
+            const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
+            const statusMessage = document.getElementById("statusMessage");
 
             // Validações
             if (!email || !senha || !confirmarSenha) {
@@ -222,14 +220,16 @@ const statusMessage = document.getElementById("statusMessage");
 
                 const data = await response.json();
 
-if (response.ok) {
+                if (response.ok) {
     localStorage.setItem("token", data.token);
-    window.location.href = "/dashboard"; // Redirecionamento imediato
-} else {
-    statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
-    statusMessage.style.color = "#d9534f";
-}
+    window.location.href = "/dashboard";
 
+                        window.location.href = "https://ganhesocial.com/login";
+    
+                } else {
+                    statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
+                    statusMessage.style.color = "#d9534f";
+                }
             } catch (error) {
                 console.error("Erro na requisição:", error);
                 statusMessage.textContent = "Erro ao conectar-se ao servidor.";
