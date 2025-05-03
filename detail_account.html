@@ -377,8 +377,13 @@
             }
         }
 
-        body { visibility: hidden; }
-        body.loaded { visibility: visible; }
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
     </style>
 </head>
 
@@ -496,7 +501,7 @@
             });
 
             // Configurações de paginação
-            const itemsPerPage = 50;
+            const itemsPerPage = 1;
             const maxPages = 50;
             let currentPage = 1;
             let totalPages = 1;
@@ -531,11 +536,11 @@
                                 'Authorization': `Bearer ${token}`
                             }
                         });
-                        
+
                         if (!response.ok) {
                             throw new Error('Erro ao carregar histórico');
                         }
-                        
+
                         const historyData = await response.json();
                         allActions = Array.isArray(historyData) ? historyData : [];
                     }
@@ -656,4 +661,5 @@
         });
     </script>
 </body>
+
 </html>
