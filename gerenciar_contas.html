@@ -52,11 +52,11 @@
 
         .container {
             background: var(--container-light);
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 350px;
+            text-align: center;
+            width: 300px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -260,7 +260,6 @@
         body.loaded {
             visibility: visible;
         }
-
     </style>
 </head>
 
@@ -418,46 +417,46 @@
             const token = localStorage.getItem("token");
 
 
-    // Configurar evento de logout
-    document.getElementById('logoutLink').addEventListener('click', function (e) {
-        e.preventDefault();
-        logout();
-    });
+            // Configurar evento de logout
+            document.getElementById('logoutLink').addEventListener('click', function (e) {
+                e.preventDefault();
+                logout();
+            });
 
-    // Controle do menu hamburguer
-    const menuToggle = document.getElementById('menuToggle');
-    const menuOverlay = document.getElementById('menuOverlay');
-    const menuContent = document.getElementById('menuContent');
+            // Controle do menu hamburguer
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
 
-    menuToggle.addEventListener('click', function () {
-        menuContent.classList.toggle('active');
-        menuOverlay.classList.toggle('active');
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-        const spans = menuToggle.querySelectorAll('span');
-        if (menuContent.classList.contains('active')) {
-            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-            spans[1].style.opacity = '0';
-            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-        } else {
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        }
-    });
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
 
-    menuOverlay.addEventListener('click', function () {
-        menuContent.classList.remove('active');
-        menuOverlay.classList.remove('active');
-        const spans = menuToggle.querySelectorAll('span');
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
-    });
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            });
 
-    // Carregar contas e só então mostrar a página
-    await loadAccounts();
-    document.body.classList.add('loaded');
-});
+            // Carregar contas e só então mostrar a página
+            await loadAccounts();
+            document.body.classList.add('loaded');
+        });
 
     </script>
 </body>
