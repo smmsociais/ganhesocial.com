@@ -54,14 +54,22 @@
             margin-right: 10px;
         }
 
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: calc(100vh - 60px);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
-            margin: 30px auto;
+            width: 100%;
+            max-width: 500px;
             transition: background 0.3s;
         }
 
@@ -328,13 +336,6 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
-            }
-        }
-
         body {
             visibility: hidden;
         }
@@ -360,42 +361,45 @@
         </div>
     </div>
     <div id="pagina"></div>
-    <div class="container">
-        <h2 class="page-title">Seu Perfil</h2>
+    
+    <div class="main-container">
+        <div class="container">
+            <h2 class="page-title">Seu Perfil</h2>
 
-        <div id="errorMessage" class="message error-message"></div>
-        <div id="successMessage" class="message success-message"></div>
+            <div id="errorMessage" class="message error-message"></div>
+            <div id="successMessage" class="message success-message"></div>
 
-        <div class="form-group">
-            <label for="name" class="form-label">Nome</label>
-            <input type="text" id="name" class="input-box" readonly>
-        </div>
-
-        <div class="form-group">
-            <label for="email" class="form-label">E-mail</label>
-            <input type="email" id="email" class="input-box" readonly>
-        </div>
-
-        <div class="form-group">
-            <label for="authToken" class="form-label">Token de Autenticação</label>
-            <div class="token-container">
-                <input type="text" id="authToken" class="input-box" readonly>
-                <span id="copyIcon" class="copy-icon" title="Copiar token">⎘</span>
-                <span id="copyNotification" class="copy-notification">Copiado!</span>
+            <div class="form-group">
+                <label for="name" class="form-label">Nome</label>
+                <input type="text" id="name" class="input-box">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="newPassword" class="form-label">Nova Senha</label>
-            <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
-        </div>
+            <div class="form-group">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" id="email" class="input-box" readonly>
+            </div>
 
-        <div class="form-group">
-            <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
-            <input type="password" id="confirmPassword" class="input-box">
-        </div>
+            <div class="form-group">
+                <label for="authToken" class="form-label">Token de Autenticação</label>
+                <div class="token-container">
+                    <input type="text" id="authToken" class="input-box" readonly>
+                    <span id="copyIcon" class="copy-icon" title="Copiar token">⎘</span>
+                    <span id="copyNotification" class="copy-notification">Copiado!</span>
+                </div>
+            </div>
 
-        <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
+            <div class="form-group">
+                <label for="newPassword" class="form-label">Nova Senha</label>
+                <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
+                <input type="password" id="confirmPassword" class="input-box">
+            </div>
+
+            <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
+        </div>
     </div>
 
     <!-- Menu Overlay e Conteúdo -->
