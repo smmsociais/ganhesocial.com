@@ -520,50 +520,50 @@
         });
 
         async function carregarSaldos() {
-    const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
-    if (!token) {
-        console.error("Token não encontrado.");
-        return;
-    }
-    try {
-        const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao buscar saldo.");
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
+            }
+            try {
+                const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar saldo.");
+                }
+
+                const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
+                const saldoPendente = parseFloat(data.saldo_pendente || 0);
+
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
+                localStorage.setItem("saldoPendente", saldoPendente);
+
+                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Mostra os saldos e a página depois de carregar
+                document.getElementById("saldoDisponivel").style.display = "block";
+                document.getElementById("saldoPendente").style.display = "block";
+                document.getElementById("pagina").style.display = "block";  // <<<<< ADICIONA ESSA LINHA
+
+            } catch (error) {
+                console.error("Erro ao carregar saldo:", error);
+            }
         }
 
-        const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
-        const saldoPendente = parseFloat(data.saldo_pendente || 0);
+        async function carregarHistorico() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
+            }
 
-        localStorage.setItem("saldoDisponivel", saldoDisponivel);
-        localStorage.setItem("saldoPendente", saldoPendente);
-
-        document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-        // Mostra os saldos e a página depois de carregar
-        document.getElementById("saldoDisponivel").style.display = "block";
-        document.getElementById("saldoPendente").style.display = "block";
-        document.getElementById("pagina").style.display = "block";  // <<<<< ADICIONA ESSA LINHA
-
-    } catch (error) {
-        console.error("Erro ao carregar saldo:", error);
-    }
-}
-
-async function carregarHistorico() {
-    const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
-    if (!token) {
-        console.error("Token não encontrado.");
-        return;
-    }
-
-    try {
-        const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao carregar histórico.");
-        }
+            try {
+                const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao carregar histórico.");
+                }
 
                 // Define "hoje" em UTC-3 (Brasília)
                 const agora = new Date();
@@ -689,7 +689,7 @@ async function carregarHistorico() {
         }
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
     </script>
