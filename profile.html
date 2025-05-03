@@ -54,20 +54,18 @@
             margin-right: 10px;
         }
 
-        .container {
-            background: var(--container-light);
+        .profile-form {
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
-            margin: 30px auto;
-            transition: background 0.3s;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .form-group {
             margin-bottom: 15px;
             text-align: left;
+            width: 100%;
         }
 
         .form-label {
@@ -261,8 +259,7 @@
                 color: var(--text-dark);
             }
 
-            .header,
-            .container {
+            .header {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
@@ -328,13 +325,6 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
-            }
-        }
-
         body {
             visibility: hidden;
         }
@@ -360,7 +350,8 @@
         </div>
     </div>
     <div id="pagina"></div>
-    <div class="container">
+    
+    <div class="profile-form">
         <h2 class="page-title">Seu Perfil</h2>
 
         <div id="errorMessage" class="message error-message"></div>
@@ -368,7 +359,7 @@
 
         <div class="form-group">
             <label for="name" class="form-label">Nome</label>
-            <input type="text" id="name" class="input-box" readonly>
+            <input type="text" id="name" class="input-box">
         </div>
 
         <div class="form-group">
