@@ -56,12 +56,11 @@
 
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 400x;
-            margin: 30px auto;
+            width: 100%;
+            max-width: 500px;
             transition: background 0.3s;
         }
 
@@ -330,28 +329,28 @@
 
         @media (max-width: 768px) {
             .container {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 380px;
-            margin: 30px auto;
-            transition: background 0.3s;
-        }   
-    }
-    
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 380px;
+                margin: 30px auto;
+                transition: background 0.3s;
+            }
+        }
 
-    @media (max-width: 420px) {
+
+        @media (max-width: 420px) {
             .container {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
-            margin: 30px auto;
-            transition: background 0.3s;
-        }   
-    }  
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 300px;
+                margin: 30px auto;
+                transition: background 0.3s;
+            }
+        }
 
         body {
             visibility: hidden;
