@@ -53,22 +53,32 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 700px;
+            width: 90%;
+            max-width: 700px;
             margin: 30px auto;
             transition: background 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h2 {
             text-align: center;
             margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .withdrawal-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
         }
 
         .withdrawal-table {
-    width: auto;
-    margin-top: 20px;
-    border-collapse: collapse;
-    text-align: center;
-}
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
 
         .withdrawal-table th,
         .withdrawal-table td {
@@ -102,6 +112,7 @@
             padding: 20px;
             font-style: italic;
             color: #6c757d;
+            width: 100%;
         }
 
         /* Estilos do menu hamburguer */
@@ -249,42 +260,6 @@
             }
         }
 
-        @media (max-width: 600px) {
-            .withdrawal-table {
-                display: block;
-            }
-        }
-
-        .withdrawal-table {
-            display: block;
-            overflow-x: auto;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                width: 380px;
-                margin: 30px auto;
-                transition: background 0.3s;
-            }
-        }
-
-
-        @media (max-width: 420px) {
-            .container {
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                width: 300px;
-                margin: 30px auto;
-                transition: background 0.3s;
-            }
-        }        
-
         body {
             visibility: hidden;
         }
@@ -315,19 +290,21 @@
 
         <div id="withdrawals-container">
             <!-- Conteúdo será carregado dinamicamente via JavaScript -->
-            <table class="withdrawal-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Método</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="withdrawals-list">
-                    <!-- Linhas serão adicionadas dinamicamente -->
-                </tbody>
-            </table>
+            <div class="withdrawal-table-container">
+                <table class="withdrawal-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Método</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawals-list">
+                        <!-- Linhas serão adicionadas dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
             <div id="no-withdrawals" class="no-withdrawals" style="display: none;">
                 Nenhum saque realizado ainda.
             </div>
