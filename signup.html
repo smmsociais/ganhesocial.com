@@ -221,11 +221,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-    localStorage.setItem("token", data.token);
-    window.location.href = "/dashboard";
+                    localStorage.setItem("token", data.token);
+                    window.location.href = "/dashboard";
 
-                        window.location.href = "https://ganhesocial.com/login";
-    
                 } else {
                     statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
                     statusMessage.style.color = "#d9534f";
