@@ -420,6 +420,10 @@
                 </tbody>
             </table>
         </div>
+        <div class="pagination-info" id="paginationInfo">
+            Carregando...
+        </div>
+        <div class="pagination" id="pagination">
             <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
         </div>
     </div>
@@ -532,14 +536,14 @@
                 }
             }
 
-            // Exibir itens da página atual
-            function displayPageItems() {
+             // Exibir itens da página atual
+             function displayPageItems() {
                 const startIndex = (currentPage - 1) * itemsPerPage;
                 const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
                 const pageActions = allActions.slice(startIndex, endIndex);
 
                 if (pageActions.length === 0) {
-                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+                    historyList.innerHTML = '<tr><td colspan="6" class="no-actions">Nenhuma ação encontrada para este usuário.</td></tr>';
                     return;
                 }
 
@@ -560,20 +564,22 @@
                     const actionLink = (action.status === "Inválida" && action.url_dir) ?
                         `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
+                    const valorFormatado = parseFloat(action.valor_confirmacao)
+                        .toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
                     row.innerHTML = `
-<td>${new Date(action.data).toLocaleString()}</td>
-<td>${action.rede_social}</td>    
-<td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
-<td>Seguir</td>       
-<td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
-<td>
-<div style="display: flex; flex-direction: column; gap: 4px;">
-            <span class="${statusClass}">${statusText}</span>
-            ${actionLink}
-        </div>
-    </td>
-    <td></td>
-`;
+                        <td>${formatarData(action.data)}</td>
+                        <td>${action.rede_social}</td>
+                        <td>${action.nome_usuario}</td>
+                        <td>Seguir</td>
+                        <td>R$ ${valorFormatado}</td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span class="${statusClass}">${statusText}</span>
+                                ${actionLink}
+                            </div>
+                        </td>
+                    `;
                     historyList.appendChild(row);
                 });
             }
