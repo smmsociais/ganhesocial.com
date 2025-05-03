@@ -296,28 +296,28 @@
 
         @media (max-width: 768px) {
             .container {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 380px;
-            margin: 30px auto;
-            transition: background 0.3s;
-        }   
-    }
-    
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 380px;
+                margin: 30px auto;
+                transition: background 0.3s;
+            }
+        }
 
-    @media (max-width: 420px) {
+
+        @media (max-width: 420px) {
             .container {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 300px;
-            margin: 30px auto;
-            transition: background 0.3s;
-        }   
-    }         
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 300px;
+                margin: 30px auto;
+                transition: background 0.3s;
+            }
+        }
 
         body {
             visibility: hidden;
@@ -326,7 +326,6 @@
         body.loaded {
             visibility: visible;
         }
-
     </style>
 </head>
 
@@ -532,7 +531,7 @@
             const rawAmount = document.getElementById('amount').value.replace(/\D/g, '');
             const amount = parseFloat(rawAmount) / 100; // valor em reais
             const pixKey = document.getElementById('pixKey').value.trim();
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
 
             if (!amount || amount < 10) {
                 showAlert("O valor mínimo para saque é de R$ 10,00.");
