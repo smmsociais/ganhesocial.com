@@ -443,7 +443,7 @@
 
     <script>
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
@@ -453,7 +453,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
             const urlParams = new URLSearchParams(window.location.search);
             const nomeUsuario = urlParams.get('usuario');
 
