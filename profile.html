@@ -417,7 +417,7 @@
 
     <script>
         async function loadProfile() {
-            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
+            const token = localStorage.getItem("token");
 
             if (!token) {
                 showMessage("Você precisa estar logado para acessar esta página.", true);
@@ -542,7 +542,7 @@
         }
 
         function logout() {
-            localStorage.removeItem("authToken");
+            localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
