@@ -523,7 +523,7 @@
                     }
 
                     // Calcular total de páginas
-                    totalPages = Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages);
+                    totalPages = Math.max(1, Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages));
 
                     // Atualizar informações de paginação
                     updatePaginationInfo();
