@@ -594,44 +594,37 @@
 
             // Gerar controles de paginação
             function generatePagination() {
-                pagination.innerHTML = '';
+    pagination.innerHTML = '';
 
-                // Botão Anterior
-                const prevButton = document.createElement("button");
-                prevButton.innerHTML = "&laquo; Anterior";
-                prevButton.disabled = currentPage === 1;
-                prevButton.addEventListener("click", () => loadData(currentPage - 1));
-                pagination.appendChild(prevButton);
+    const prevButton = document.createElement("button");
+    prevButton.innerHTML = "&laquo; Anterior";
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener("click", () => loadData(currentPage - 1));
+    pagination.appendChild(prevButton);
 
-                // Números das páginas
-                const maxPageButtons = 5;
-                const half = Math.floor(maxPageButtons / 2);
+    const maxPageButtons = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    let endPage = startPage + maxPageButtons - 1;
 
-                let startPage = Math.max(1, currentPage - half);
-                let endPage = startPage + maxPageButtons - 1;
+    if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxPageButtons + 1);
+    }
 
-                if (endPage > totalPages) {
-                    endPage = totalPages;
-                    startPage = Math.max(1, endPage - maxPageButtons + 1);
-                }
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = document.createElement("button");
+        pageButton.textContent = i;
+        if (i === currentPage) pageButton.classList.add("active");
+        pageButton.addEventListener("click", () => loadData(i));
+        pagination.appendChild(pageButton);
+    }
 
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = document.createElement("button");
-                    pageButton.textContent = i;
-                    if (i === currentPage) {
-                        pageButton.classList.add("active");
-                    }
-                    pageButton.addEventListener("click", () => loadData(i));
-                    pagination.appendChild(pageButton);
-                }
-
-                // Botão Próximo
-                const nextButton = document.createElement("button");
-                nextButton.innerHTML = "Próximo &raquo;";
-                nextButton.disabled = currentPage === totalPages;
-                nextButton.addEventListener("click", () => loadData(currentPage + 1));
-                pagination.appendChild(nextButton);
-            }
+    const nextButton = document.createElement("button");
+    nextButton.innerHTML = "Próximo &raquo;";
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener("click", () => loadData(currentPage + 1));
+    pagination.appendChild(nextButton);
+}
 
             // Inicializar carregando a primeira página
             loadData(1).then(() => {
