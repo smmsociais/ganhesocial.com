@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
@@ -157,7 +156,6 @@
             visibility: visible;
         }
     </style>
-
 </head>
 
 <body>
@@ -194,9 +192,6 @@
         document.getElementById("loginForm").addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            // Oculta todo o conteúdo imediatamente
-            document.querySelector('.container').style.display = 'none';
-
             const email = document.getElementById("email").value.trim();
             const senha = document.getElementById("senha").value.trim();
             const statusMessage = document.getElementById("statusMessage");
@@ -219,7 +214,8 @@
                 if (response.ok) {
                     localStorage.setItem("token", data.token);
 
-                    window.location.href = "/dashboard";
+                        window.location.href = "/dashboard";
+
                 } else {
                     statusMessage.textContent = data.error || "Erro ao fazer login";
                     statusMessage.style.color = "#d9534f";
@@ -231,7 +227,6 @@
             }
         });
     </script>
-
 </body>
 
 </html>
