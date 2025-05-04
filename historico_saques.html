@@ -81,7 +81,8 @@
         .withdrawal-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px; /* Largura mínima para garantir legibilidade */
+            min-width: 600px;
+            /* Largura mínima para garantir legibilidade */
         }
 
         .withdrawal-table th,
@@ -271,46 +272,54 @@
         }
 
         @media (max-width: 768px) {
-    .container {
-        padding: 15px;
-        margin: 20px auto;
-        width: calc(100% - 30px);
-    }
-    
-    .table-container {
-        min-width: 10%; /* Faz o container ocupar toda a largura disponível */
-    }
-    
-    .withdrawal-table {
-        min-width: 55px; /* Reduz a largura mínima da tabela */
-    }
-    
-    .withdrawal-table th,
-    .withdrawal-table td {
-        padding: 8px 6px; /* Reduz o padding das células */
-        font-size: 0.85rem; /* Reduz o tamanho da fonte */
-    }
-}
-
-        @media (max-width: 480px) {
             .container {
-                padding: 12px;
-                margin: 15px auto;
-                width: calc(100% - 24px);
+                padding: 15px;
+                margin: 20px auto;
+                width: calc(100% - 30px);
             }
-            
-            h2 {
-                margin-bottom: 15px;
+
+            .table-container {
+                min-width: 10%;
+                /* Faz o container ocupar toda a largura disponível */
             }
-            
+
+            .withdrawal-table {
+                min-width: 55px;
+                /* Reduz a largura mínima da tabela */
+            }
+
             .withdrawal-table th,
             .withdrawal-table td {
                 padding: 8px 6px;
+                /* Reduz o padding das células */
                 font-size: 0.85rem;
+                /* Reduz o tamanho da fonte */
             }
-            
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                margin: 20px auto;
+                width: calc(100% - 30px);
+            }
+
             .table-container {
-                margin-top: 15px;
+                min-width: 10%;
+                /* Faz o container ocupar toda a largura disponível */
+            }
+
+            .withdrawal-table {
+                min-width: 55px;
+                /* Reduz a largura mínima da tabela */
+            }
+
+            .withdrawal-table th,
+            .withdrawal-table td {
+                padding: 8px 6px;
+                /* Reduz o padding das células */
+                font-size: 0.85rem;
+                /* Reduz o tamanho da fonte */
             }
         }
 
