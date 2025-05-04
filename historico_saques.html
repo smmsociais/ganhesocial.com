@@ -272,11 +272,13 @@
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 159px;
-                margin: 209px auto;
-                width: calc(100% - 1090px);
-            }
+    .container {
+        width: calc(100% - 20px); /* Ocupa quase toda a largura */
+        max-width: 100%; /* Permite que o container cresça */
+        padding: 15px;
+        margin: 15px auto;
+    }
+
 
             .table-container {
                 min-width: 10%;
