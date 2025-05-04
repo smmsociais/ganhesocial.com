@@ -285,32 +285,21 @@
                 min-width: 90px; /* Aumente este valor para expandir a tabela */
             }
         }
-        
-        @media (max-width: 480px) {
-  .container {
-    width: 100%;
-    padding: 8px;
-    margin: 0 auto;
-    box-sizing: border-box;
-  }
-  
-  .table-container {
-    width: 100%;
-    overflow-x: auto;
-  }
-  
-  .withdrawal-table {
-    min-width: 100%;
-    font-size: 0.75rem;
-  }
-  
-  .withdrawal-table th,
-  .withdrawal-table td {
-    padding: 4px 2px;
-    white-space: nowrap;
-  }
-}
 
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                margin: 20px auto;
+                width: calc(100% - 30px);
+            }
+            
+            .withdrawal-table th,
+            .withdrawal-table td {
+                padding: 100px 8px;
+                font-size: 0.9rem;
+                min-width: 90px; /* Aumente este valor para expandir a tabela */
+            }
+        }
         body {
             visibility: hidden;
         }
