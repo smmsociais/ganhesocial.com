@@ -285,26 +285,30 @@
                 min-width: 90px; /* Aumente este valor para expandir a tabela */
             }
         }
+        
         @media (max-width: 480px) {
-    .container {
-        width: calc(100% - 10px); /* Margem mínima nas laterais */
-        padding: 10px;
-        margin: 5px auto;
-    }
-
-    .table-container {
-        width: 100%; /* Ocupa todo o container */
-    }
-
-    .withdrawal-table {
-        min-width: 90px; /* Largura mínima para celulares */
-        font-size: 0.8rem; /* Fonte menor */
-    }
-
-    .withdrawal-table th,
-    .withdrawal-table td {
-        padding: 6px 4px; /* Células mais compactas */
-    }
+  .container {
+    width: 100%;
+    padding: 8px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .withdrawal-table {
+    min-width: 100%;
+    font-size: 0.75rem;
+  }
+  
+  .withdrawal-table th,
+  .withdrawal-table td {
+    padding: 4px 2px;
+    white-space: nowrap;
+  }
 }
 
         body {
