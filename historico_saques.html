@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -65,19 +67,12 @@
         h2 {
             text-align: center;
             margin-bottom: 20px;
-            width: 100%;
-        }
-
-        .withdrawal-table-container {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 20px;
         }
 
         .withdrawal-table {
             width: 100%;
-            border-collapse: collapse;
-            margin: 0 auto;
+            border-collapse: center;
+            margin-top: 20px;
         }
 
         .withdrawal-table th,
@@ -112,7 +107,6 @@
             padding: 20px;
             font-style: italic;
             color: #6c757d;
-            width: 100%;
         }
 
         /* Estilos do menu hamburguer */
@@ -260,6 +254,17 @@
             }
         }
 
+        @media (max-width: 600px) {
+            .withdrawal-table {
+                display: block;
+            }
+        }
+
+        .withdrawal-table {
+            display: block;
+            overflow-x: auto;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -283,7 +288,7 @@
                 margin: 30px auto;
                 transition: background 0.3s;
             }
-        }    
+        }        
 
         body {
             visibility: hidden;
@@ -315,21 +320,19 @@
 
         <div id="withdrawals-container">
             <!-- Conteúdo será carregado dinamicamente via JavaScript -->
-            <div class="withdrawal-table-container">
-                <table class="withdrawal-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Método</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="withdrawals-list">
-                        <!-- Linhas serão adicionadas dinamicamente -->
-                    </tbody>
-                </table>
-            </div>
+            <table class="withdrawal-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Método</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="withdrawals-list">
+                    <!-- Linhas serão adicionadas dinamicamente -->
+                </tbody>
+            </table>
             <div id="no-withdrawals" class="no-withdrawals" style="display: none;">
                 Nenhum saque realizado ainda.
             </div>
