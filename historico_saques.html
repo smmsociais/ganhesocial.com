@@ -271,18 +271,26 @@
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-                margin: 20px auto;
-                width: calc(100% - 30px);
-            }
-            
-            .withdrawal-table th,
-            .withdrawal-table td {
-                padding: 10px 8px;
-                font-size: 0.9rem;
-            }
-        }
+    .container {
+        padding: 15px;
+        margin: 20px auto;
+        width: calc(100% - 30px);
+    }
+    
+    .table-container {
+        min-width: 100%; /* Faz o container ocupar toda a largura disponível */
+    }
+    
+    .withdrawal-table {
+        min-width: 550px; /* Reduz a largura mínima da tabela */
+    }
+    
+    .withdrawal-table th,
+    .withdrawal-table td {
+        padding: 8px 6px; /* Reduz o padding das células */
+        font-size: 0.85rem; /* Reduz o tamanho da fonte */
+    }
+}
 
         @media (max-width: 480px) {
             .container {
