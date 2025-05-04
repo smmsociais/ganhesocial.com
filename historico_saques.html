@@ -285,32 +285,27 @@
                 min-width: 90px; /* Aumente este valor para expandir a tabela */
             }
         }
-
         @media (max-width: 480px) {
     .container {
-        width: calc(100% - 1px); /* Quase sem margem lateral */
-        padding: 12px;
-        margin: 10px auto;
+        width: calc(100% - 10px); /* Margem mínima nas laterais */
+        padding: 10px;
+        margin: 5px auto;
     }
 
-            .table-container {
-                min-width: 5%;
-                /* Faz o container ocupar toda a largura disponível */
-            }
+    .table-container {
+        width: 100%; /* Ocupa todo o container */
+    }
 
-            .withdrawal-table {
-                min-width: 1px;
-                /* Reduz a largura mínima da tabela */
-            }
+    .withdrawal-table {
+        min-width: 300px; /* Largura mínima para celulares */
+        font-size: 0.8rem; /* Fonte menor */
+    }
 
-            .withdrawal-table th,
-            .withdrawal-table td {
-                padding: 8px 6px;
-                /* Reduz o padding das células */
-                font-size: 0.85rem;
-                /* Reduz o tamanho da fonte */
-            }
-        }
+    .withdrawal-table th,
+    .withdrawal-table td {
+        padding: 6px 4px; /* Células mais compactas */
+    }
+}
 
         body {
             visibility: hidden;
