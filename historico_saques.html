@@ -288,31 +288,25 @@
 
         @media (max-width: 480px) {
     .container {
-        width: calc(100%); /* Quase sem margem lateral */
+        width: 100%;
         padding: 15px;
         margin: 20px auto;
     }
 
-            .table-container {
-                min-width: 5%;
-                /* Faz o container ocupar toda a largura disponível */
-            }
+    .withdrawal-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
 
-            .withdrawal-table {
-                min-width: 1px;
-                /* Reduz a largura mínima da tabela */
-            }
-
-            .withdrawal-table th,
-            .withdrawal-table td {
-                padding: 8px 6px;
-                /* Reduz o padding das células */
-                font-size: 0.85rem;
-                /* Reduz o tamanho da fonte */
-                min-width: 90px;
-            }
-        }
-
+    .withdrawal-table th,
+    .withdrawal-table td {
+        padding: 6px 4px;
+        font-size: 0.75rem;
+        min-width: unset; /* Remover o limite mínimo */
+        white-space: nowrap; /* Evita quebras de linha */
+    }
+}
         body {
             visibility: hidden;
         }
