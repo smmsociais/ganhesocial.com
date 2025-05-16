@@ -2,7 +2,7 @@ import connectDB from './db.js';
 import { ActionHistory } from './User.js';
 
 const handler = async (req, res) => {
-    if (req.method !== "POST") {
+    if (req.method !== "GET") {
         return res.status(405).json({ error: "Método não permitido" });
     }
 
