@@ -34,6 +34,7 @@
     { "source": "/api/recover-password", "destination": "/api/handler.js" },
     { "source": "/api/validate-reset-token", "destination": "/api/handler.js" },
     { "source": "/api/mailer", "destination": "/api/handler.js" },
-    { "source": "/api/user-info", "destination": "/api/handler.js" }
+    { "source": "/api/user-info", "destination": "/api/handler.js" },
+    { "source": "/api/user-following", "destination": "/api/handler.js" }
   ]
 }
