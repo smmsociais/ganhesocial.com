@@ -28,6 +28,12 @@
     { "source": "/api/withdraw", "destination": "/api/handler.js" },
     { "source": "/api/historico_acoes", "destination": "/api/handler.js" },
     { "source": "/api/get_historico", "destination": "/api/handler.js" },
-    { "source": "/api/login", "destination": "/api/handler.js" }
+    { "source": "/api/login", "destination": "/api/handler.js" },
+    { "source": "/api/signup", "destination": "/api/handler.js" },
+    { "source": "/api/change-password", "destination": "/api/handler.js" },
+    { "source": "/api/recover-password", "destination": "/api/handler.js" },
+    { "source": "/api/validate-reset-token", "destination": "/api/handler.js" },
+    { "source": "/api/mailer", "destination": "/api/handler.js" },
+    { "source": "/api/user-info", "destination": "/api/handler.js" }
   ]
 }
