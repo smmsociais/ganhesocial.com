@@ -1,5 +1,8 @@
 import axios from "axios";
 import connectDB from "./db.js";
+import nodemailer from 'nodemailer';
+import { sendRecoveryEmail } from "./mailer.js";
+import crypto from "crypto";
 import { User, ActionHistory } from "./User.js";
 
 function getBrasiliaMidnightDate() {
@@ -770,6 +773,260 @@ if (url.startsWith("/api/login")) {
         }
         
     };
+
+// Rota: /api/signup
+if (url.startsWith("api/signup")) {
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Método não permitido." });
+        }
+    
+        await connectDB();
+    
+        const { email, senha } = req.body;
+    
+        if (!email || !senha) {
+            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        }
+    
+        try {
+    
+            const emailExiste = await User.findOne({ email });
+            if (emailExiste) {
+                return res.status(400).json({ error: "E-mail já está cadastrado." });
+            }
+    
+            // Gerar token único
+            const token = crypto.randomBytes(32).toString("hex");
+    
+            const novoUsuario = new User({ email, senha, token });
+            await novoUsuario.save();
+    
+            return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
+        } catch (error) {
+            console.error("Erro ao cadastrar usuário:", error);
+            return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
+        }
+    };
+
+// Rota: /api/change-password
+if (url.startsWith("api/change-password")) {
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Método não permitido" });
+        }
+    
+        try {
+            await connectDB();
+            console.log("Conectado ao MongoDB via Mongoose");
+    
+            const authHeader = req.headers.authorization || "";
+            console.log("📩 Cabeçalho Authorization recebido:", authHeader);
+    
+            const token = authHeader.replace("Bearer ", "").trim();
+            console.log("🔐 Token extraído:", token);
+    
+            if (!token) {
+                return res.status(401).json({ error: "Token ausente" });
+            }
+    
+            // Buscar o usuário com o token
+            const usuario = await User.findOne({ resetPasswordToken: token });
+    
+            if (!usuario) {
+                console.log("❌ Token inválido ou usuário não encontrado!");
+                return res.status(401).json({ error: "Token inválido" });
+            }
+    
+            // (Opcional) Validar se o token expirou
+            const expiracao = usuario.resetPasswordExpires ? new Date(usuario.resetPasswordExpires) : null;
+            if (expiracao && expiracao < new Date()) {
+                console.log("❌ Token expirado!");
+                return res.status(401).json({ error: "Token expirado" });
+            }
+    
+            const { novaSenha } = req.body;
+    
+            if (!novaSenha) {
+                return res.status(400).json({ error: "Nova senha é obrigatória" });
+            }
+    
+            // Alterar a senha
+            usuario.senha = novaSenha;
+    
+            // Limpar o token após a redefinição da senha
+    usuario.resetPasswordToken = null;
+    usuario.resetPasswordExpires = null;
+    
+            await usuario.save();
+    
+            console.log("✅ Senha alterada com sucesso para o usuário:", usuario.email);
+            return res.json({ message: "Senha alterada com sucesso!" });
+    
+        } catch (error) {
+            console.error("❌ Erro ao alterar senha:", error);
+            return res.status(500).json({ error: "Erro ao alterar senha" });
+        }
+    }; 
+
+ // Rota: /api/recover-password
+if (url.startsWith("api/recover-password")) { 
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Método não permitido" });
+
+  const { email } = req.body;
+  if (!email)
+    return res.status(400).json({ error: "Email é obrigatório" });
+
+  try {
+    await connectDB(); // só garante a conexão
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user)
+      return res.status(404).json({ error: "Email não encontrado" });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    
+    const expires = Date.now() + 30 * 60 * 1000; // 30 minutos em milissegundos
+
+    // Salva no documento Mongoose
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(expires);
+    await user.save();
+
+    const link = `https://ganhesocial.com/reset-password?token=${token}`;
+    await sendRecoveryEmail(email, link);
+
+    return res.status(200).json({ message: "Link enviado com sucesso" });
+  } catch (err) {
+    console.error("Erro em recover-password:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
+
+ // Rota: api/validate-reset-token
+ if (url.startsWith("api/validate-reset-token")) { 
+        if (req.method !== "GET") {
+            return res.status(405).json({ error: "Método não permitido" });
+        }
+    
+        try {
+            await connectDB();
+            const token = req.query.token;
+    
+            if (!token) {
+                return res.status(400).json({ error: "Token ausente" });
+            }
+    
+            const usuario = await User.findOne({ resetPasswordToken: token });
+    
+            if (!usuario) {
+                return res.status(401).json({ error: "Link inválido ou expirado" });
+            }
+    
+            // Obtenha a data de expiração de forma consistente
+            const expiracao = usuario.resetPasswordExpires;
+    
+            if (!expiracao) {
+                return res.status(401).json({ error: "Data de expiração não encontrada" });
+            }
+    
+            // Log para ver a data de expiração
+            console.log("Data de expiração do token:", expiracao);
+    
+            // Data atual em UTC
+            const agora = new Date().toISOString();
+    
+            // Log para ver a data atual
+            console.log("Data atual (agora):", agora);
+    
+            // Converter para milissegundos desde 1970
+            const expiracaoMs = new Date(expiracao).getTime();
+            const agoraMs = new Date(agora).getTime();
+    
+            // Log para ver as datas em milissegundos
+            console.log("Expiração em milissegundos:", expiracaoMs);
+            console.log("Agora em milissegundos:", agoraMs);
+    
+            // Se a data atual for maior que a data de expiração, o token expirou
+            if (agoraMs > expiracaoMs) {
+                console.log("Token expirado.");
+                return res.status(401).json({ error: "Link inválido ou expirado" });
+            }
+    
+            // Se o token ainda estiver dentro do prazo de validade
+            return res.json({ valid: true });
+    
+        } catch (error) {
+            return res.status(500).json({ error: "Erro ao validar token" });
+        }
+    };
+    
+// Rota: /api/mailer
+if (url.startsWith("api/mailer")) {
+
+      const transporter = nodemailer.createTransport({
+        host: 'smtpout.secureserver.net',
+        port: 465,
+        secure: true, // Porta 465 exige SSL
+        auth: {
+          user: 'contato@ganhesocial.com',
+          pass: 'reno4769!', // sua senha real
+        },
+      });
+    
+      const mailOptions = {
+        from: '"GanheSocial" <contato@ganhesocial.com>',
+        to: email,
+        subject: 'Recuperação de Senha',
+        html: `
+          <p>Você solicitou a recuperação de senha.</p>
+          <p>Clique no link abaixo para redefinir sua senha:</p>
+          <p><a href="${link}">${link}</a></p>
+          <p>Se você não solicitou essa recuperação, ignore este email.</p>
+        `,
+      };
+    
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Link de recuperação enviado para ${email}`);
+      } catch (error) {
+        console.error('Erro ao enviar email:', error);
+        throw new Error('Erro ao enviar email de recuperação');
+      }
+    }
+    
+// Rota: /api/user-info
+if (url.startsWith("api/user-info")) { 
+        if (req.method !== "GET") {
+            return res.status(405).json({ error: "Método não permitido." });
+        }
+    
+        const { unique_id } = req.query;
+    
+        if (!unique_id) {
+            return res.status(400).json({ error: "Parâmetro 'unique_id' é obrigatório." });
+        }
+    
+        const url = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${unique_id}`;
+    
+        try {
+            const response = await axios.get(url, {
+                headers: {
+                    "x-rapidapi-key":  process.env.rapidapi_key,
+                    "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
+                },
+            });
+    
+            const data = response.data;
+    
+            if (!data || Object.keys(data).length === 0) {
+                return res.status(404).json({ error: "Nenhuma informação encontrada para esse usuário." });
+            }
+    
+            res.json(data);
+        } catch (error) {
+            console.error("Erro ao buscar dados do TikTok:", error);
+            res.status(500).json({ error: "Erro ao buscar dados do TikTok." });
+        }
+    }       
 
     // Rota não encontrada
     return res.status(404).json({ error: "Rota não encontrada." });
