@@ -1,5 +1,5 @@
 import connectDB from './db.js';
-import { ActionHistory } from './User.js';
+import { Action } from './Action.js';
 
 const handler = async (req, res) => {
     if (req.method !== "GET") {
@@ -9,8 +9,8 @@ const handler = async (req, res) => {
     try {
         await connectDB();
 
-        // Busca uma ação pendente, sem necessidade de id_conta
-        const acao = await ActionHistory.findOne({ status: "pendente" }).sort({ data_criacao: 1 });
+        // Busca uma ação disponível do tipo seguidores TikTok
+        const acao = await Action.findOne({ status: "disponível", rede: "tiktok", tipo: "seguidores" }).sort({ dataCriacao: 1 });
 
         if (!acao) {
             return res.json({ status: "NAO_ENCONTRADA" });
@@ -18,11 +18,11 @@ const handler = async (req, res) => {
 
         return res.json({
             status: "ENCONTRADA",
-            nome_usuario: acao.nome_usuario,
-            quantidade_pontos: acao.quantidade_pontos,
-            url_dir: acao.url_dir,
-            tipo_acao: acao.tipo_acao,
-            id_pedido: acao.id_pedido
+            nome_usuario: acao.link.split("@")[1] ?? "",  // extrai o nome de usuário do link
+            quantidade_pontos: acao.valor,
+            url_dir: acao.link,
+            tipo_acao: acao.tipo,
+            id_pedido: acao._id.toString()
         });
 
     } catch (error) {
