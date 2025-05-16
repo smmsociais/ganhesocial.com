@@ -7,27 +7,35 @@ const handler = async (req, res) => {
     }
 
     try {
-        await connectDB();
+        const response = await fetch('https://smmsociais.com/api/buscar_acao_disponivel', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer 123456'
+            }
+        });
 
-        // Busca uma ação disponível do tipo seguidores TikTok
-        const acao = await Action.findOne({ status: "disponível", rede: "tiktok", tipo: "seguidores" }).sort({ dataCriacao: 1 });
+        if (!response.ok) {
+            return res.status(500).json({ error: "Erro ao buscar dados do SMM" });
+        }
 
-        if (!acao) {
+        const acao = await response.json();
+
+        if (!acao || !acao.link) {
             return res.json({ status: "NAO_ENCONTRADA" });
         }
 
         return res.json({
             status: "ENCONTRADA",
-            nome_usuario: acao.link.split("@")[1] ?? "",  // extrai o nome de usuário do link
+            nome_usuario: acao.link.split("@")[1] ?? "",
             quantidade_pontos: acao.valor,
             url_dir: acao.link,
             tipo_acao: acao.tipo,
-            id_pedido: acao._id.toString()
+            id_pedido: acao._id
         });
 
     } catch (error) {
-        console.error("Erro ao buscar ação SMM:", error);
-        return res.status(500).json({ error: "Erro interno ao buscar ação SMM" });
+        console.error("Erro ao buscar ação do smmsociais.com:", error);
+        return res.status(500).json({ error: "Erro interno" });
     }
 };
 
