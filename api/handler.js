@@ -1065,14 +1065,15 @@ if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
   return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
 }
 
-// Verifica quantas ações pendentes já existem localmente para esse pedido
-const acoesPendentes = await ActionHistory.countDocuments({
+// Verifica quantas ações já foram executadas ou estão pendentes para esse pedido
+const acoesTotais = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: null
+  acao_validada: { $in: [null, "true"] } // pendentes e validadas
 });
 
 // Se já atingiu o limite, não registra
-if (acoesPendentes >= dadosSMM.quantidade) {
+if (acoesTotais >= dadosSMM.quantidade) {
+
   return res.status(403).json({
     status: "limite",
     message: "Limite de ações pendentes atingido. Aguarde validação."
