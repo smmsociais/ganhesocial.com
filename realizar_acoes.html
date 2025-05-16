@@ -467,76 +467,88 @@
         }
 
         async function fetchAction() {
-            const id_conta = localStorage.getItem("id_conta");
-            if (!id_conta) return;
+    const id_conta = localStorage.getItem("id_conta");
+    if (!id_conta) return;
 
-            // Esconde o conteúdo da ação enquanto busca nova ação
-            document.getElementById("actionContent").style.opacity = "0";
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+    document.getElementById("actionContent").style.opacity = "0";
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+
+    try {
+        let data = null;
+
+        // 1. Tenta buscar da rota prioritária: /api/smm_acao
+        const smmResponse = await fetch(`/api/smm_acao?id_conta=${id_conta}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        data = await smmResponse.json();
+
+        // 2. Se não encontrar ação SMM, tenta buscar da rota padrão: /api/buscar_acao
+        if (data.status !== "ENCONTRADA") {
+            const defaultResponse = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            data = await defaultResponse.json();
+        }
+
+        // 3. Se encontrar alguma ação (em qualquer uma das rotas), exibe normalmente
+        if (data.status === "ENCONTRADA") {
+            document.getElementById("statusMessage").textContent = "";
+            document.getElementById("username").textContent = data.nome_usuario;
+
+            const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+            const url = `https://www.tiktok.com/@${tiktokUsername}`;
+            document.getElementById("actionUrl").href = url;
+
+            let currentUserId = null;
 
             try {
-                const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+                const userInfo = await resUserInfo.json();
 
-                const data = await response.json();
+                if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                    const profileImg = document.getElementById("profileImage");
+                    profileImg.src = userInfo.data.user.avatarLarger;
+                    profileImg.style.display = "block";
 
-                if (data.status === "ENCONTRADA") {
-                    document.getElementById("statusMessage").textContent = "";
-                    document.getElementById("username").textContent = data.nome_usuario;
-
-                    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-                    const url = `https://www.tiktok.com/@${tiktokUsername}`;
-                    document.getElementById("actionUrl").href = url;
-
-                    let currentUserId = null; // variável para armazenar o ID da conta
-
-                    try {
-                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                        const userInfo = await resUserInfo.json();
-
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            const profileImg = document.getElementById("profileImage");
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
-
-                            // Armazena o unique_id e o id da conta TikTok
-                            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-                            currentUserId = userInfo.data.user.id; // ← salva o ID para usar depois
-                        } else {
-                            document.getElementById("profileImage").style.display = "none";
-                        }
-                    } catch (e) {
-                        console.error("Erro ao carregar avatar:", e);
-                        document.getElementById("profileImage").style.display = "none";
-                    }
-
-                    const pontos = parseFloat(data.quantidade_pontos);
-                    const valorBruto = pontos / 1000;
-                    let valorDescontado = (valorBruto > 0.004)
-                        ? valorBruto - 0.001
-                        : valorBruto;
-
-                    // Garante que o valor fique entre 0.004 e 0.006
-                    let valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-
-                    document.getElementById("points").textContent = `R$ ${valorFinal}`;
-                    document.getElementById("confirmButton").style.display = "none";
-                    currentActionData = data;
-
-                    // Mostra o conteúdo da ação com animação
-                    document.getElementById("actionContent").style.opacity = "1";
+                    localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+                    currentUserId = userInfo.data.user.id;
                 } else {
-                    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-                    setTimeout(fetchAction, 3000);
+                    document.getElementById("profileImage").style.display = "none";
                 }
-            } catch (error) {
-                document.getElementById("actionContent").style.opacity = "1";
+            } catch (e) {
+                console.error("Erro ao carregar avatar:", e);
+                document.getElementById("profileImage").style.display = "none";
             }
+
+            const pontos = parseFloat(data.quantidade_pontos);
+            const valorBruto = pontos / 1000;
+            let valorDescontado = (valorBruto > 0.004)
+                ? valorBruto - 0.001
+                : valorBruto;
+
+            let valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
+            document.getElementById("points").textContent = `R$ ${valorFinal}`;
+            document.getElementById("confirmButton").style.display = "none";
+            currentActionData = data;
+
+            document.getElementById("actionContent").style.opacity = "1";
+        } else {
+            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
+            setTimeout(fetchAction, 3000);
         }
+    } catch (error) {
+        console.error("Erro ao buscar ações:", error);
+        document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
+        document.getElementById("actionContent").style.opacity = "1";
+    }
+}
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
