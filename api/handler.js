@@ -993,74 +993,75 @@ if (url.startsWith("api/mailer")) {
       }
     }
     
-// Rota: /api/user-info
-if (url.startsWith("api/user-info")) { 
-        if (req.method !== "GET") {
-            return res.status(405).json({ error: "Método não permitido." });
-        }
+// Rota: /api/registrar_acao_pendente
+if (url.startsWith("api/registrar_acao_pendente")) { 
+      if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
+      }
     
-        const { unique_id } = req.query;
+      await connectDB();
     
-        if (!unique_id) {
-            return res.status(400).json({ error: "Parâmetro 'unique_id' é obrigatório." });
-        }
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ error: "Token não fornecido." });
+      }
     
-        const url = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${unique_id}`;
+      const token = authHeader.replace("Bearer ", "");
+      const usuario = await User.findOne({ token });
+      if (!usuario) {
+        return res.status(401).json({ error: "Token inválido." });
+      }
     
-        try {
-            const response = await axios.get(url, {
-                headers: {
-                    "x-rapidapi-key":  process.env.rapidapi_key,
-                    "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
-                },
-            });
+      const {
+        id_conta,
+        id_pedido,
+        nome_usuario,
+        url_dir,
+        unique_id_verificado,
+        tipo_acao,
+        quantidade_pontos
+      } = req.body;
     
-            const data = response.data;
+      if (!id_conta || !id_pedido || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+        return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+      }
     
-            if (!data || Object.keys(data).length === 0) {
-                return res.status(404).json({ error: "Nenhuma informação encontrada para esse usuário." });
-            }
+      try {
+        // 🔢 Lógica para calcular valor final baseado nos pontos
+        const pontos = parseFloat(quantidade_pontos);
+        const valorBruto = pontos / 1000;
+        const valorDescontado = (valorBruto > 0.004)
+          ? valorBruto - 0.001
+          : valorBruto;
+        const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
     
-            res.json(data);
-        } catch (error) {
-            console.error("Erro ao buscar dados do TikTok:", error);
-            res.status(500).json({ error: "Erro ao buscar dados do TikTok." });
-        }
-    }
+        const novaAcao = new ActionHistory({
+          user: usuario._id,
+          token: usuario.token,
+          nome_usuario,
+          id_pedido,
+          id_conta,
+          url_dir,
+          tipo_acao,
+          quantidade_pontos,
+          tipo: tipo_acao || "Seguir",
+          rede_social: "TikTok",
+          valor_confirmacao: valorFinal, // ✅ valor calculado aqui
+          acao_validada: null,
+          data: new Date()
+        });
     
-// Rota: /api/user-following
-if (url.startsWith("api/user-following")) { 
-        if (req.method !== "GET") {
-            return res.status(405).json({ error: "Método não permitido." });
-        }
+        await novaAcao.save();
     
-        const { userId } = req.query;
-    
-        if (!userId) {
-            return res.status(400).json({ error: "Parâmetro 'userId' é obrigatório." });
-        }
-    
-        const userFollowingUrl = `https://tiktok-scraper7.p.rapidapi.com/user/following?user_id=${userId}&count=200&time=0`;
-    
-        try {
-            const response = await axios.get(userFollowingUrl, {
-                headers: {
-                    "x-rapidapi-key":  process.env.rapidapi_key,
-                    "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com"
-                }
-            });
-    
-            const data = response.data;
-    
-            if (!data || Object.keys(data).length === 0) {
-                return res.status(404).json({ error: "Nenhuma informação de seguidores encontrada." });
-            }
-    
-            res.json(data);
-        } catch (error) {
-            console.error("Erro ao buscar seguidores:", error);
-            res.status(500).json({ error: "Erro ao buscar seguidores." });
-        }
+        res.status(201).json({
+          status: "success",
+          id_acao: novaAcao._id,
+          message: "Ação registrada como pendente."
+        });
+      } catch (error) {
+        console.error("Erro ao registrar ação pendente:", error);
+        res.status(500).json({ error: "Erro ao registrar ação." });
+      }
     }    
 
     // Rota não encontrada
