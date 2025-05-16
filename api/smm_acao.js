@@ -2,7 +2,7 @@ import connectDB from './db.js';
 import { ActionHistory } from './User.js';
 
 const handler = async (req, res) => {
-    if (req.method !== "GET") {
+    if (req.method !== "POST") {
         return res.status(405).json({ error: "Método não permitido" });
     }
 
@@ -47,5 +47,6 @@ const handler = async (req, res) => {
         return res.status(500).json({ error: "Erro interno ao adicionar ação" });
     }
 };
+
 
 export default handler;
