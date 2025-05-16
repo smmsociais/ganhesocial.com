@@ -1071,12 +1071,13 @@ const acoesTotais = await ActionHistory.countDocuments({
   acao_validada: { $in: [null, "true"] } // pendentes e validadas
 });
 
-// Se já atingiu o limite, não registra
-if (acoesTotais >= dadosSMM.quantidade) {
+const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
 
+// Se já atingiu o limite, não registra
+if (acoesTotais >= limiteQuantidade) {
   return res.status(403).json({
     status: "limite",
-    message: "Limite de ações pendentes atingido. Aguarde validação."
+    message: "Limite de ações atingido para esse pedido."
   });
 }
       await novaAcao.save();
