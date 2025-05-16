@@ -1050,7 +1050,34 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
         acao_validada: null,
         data: new Date()
       });
-  
+
+// Buscar os dados da ação no smmsociais.com
+const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.js`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${process.env.SMM_API_KEY}`
+  }
+});
+
+const dadosSMM = await resposta.json();
+
+if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
+  return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
+}
+
+// Verifica quantas ações pendentes já existem localmente para esse pedido
+const acoesPendentes = await ActionHistory.countDocuments({
+  id_pedido,
+  acao_validada: null
+});
+
+// Se já atingiu o limite, não registra
+if (acoesPendentes >= dadosSMM.quantidade) {
+  return res.status(403).json({
+    status: "limite",
+    message: "Limite de ações pendentes atingido. Aguarde validação."
+  });
+}
       await novaAcao.save();
   
       return res.status(201).json({
