@@ -9,12 +9,7 @@ const handler = async (req, res) => {
     try {
         await connectDB();
 
-        const { id_conta } = req.query;
-        if (!id_conta) {
-            return res.status(400).json({ error: "ID da conta não fornecido" });
-        }
-
-        // Busca uma ação pendente do SMM (por enquanto, sem filtro por id_conta)
+        // Busca uma ação pendente, sem necessidade de id_conta
         const acao = await ActionHistory.findOne({ status: "pendente" }).sort({ data_criacao: 1 });
 
         if (!acao) {
