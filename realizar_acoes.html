@@ -477,7 +477,7 @@
                 let data = null;
 
                 // 1. Tenta buscar da rota prioritária: /api/smm_acao
-                const smmResponse = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}`, {
+                const smmResponse = await fetch(`/api/buscar_acao_smm`, {
     method: 'GET',
     headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
