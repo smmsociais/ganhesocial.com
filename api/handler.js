@@ -775,7 +775,7 @@ if (url.startsWith("/api/login")) {
     };
 
 // Rota: /api/signup
-if (url.startsWith("api/signup")) {
+if (url.startsWith("/api/signup")) {
         if (req.method !== "POST") {
             return res.status(405).json({ error: "Método não permitido." });
         }
@@ -809,7 +809,7 @@ if (url.startsWith("api/signup")) {
     };
 
 // Rota: /api/change-password
-if (url.startsWith("api/change-password")) {
+if (url.startsWith("/api/change-password")) {
         if (req.method !== "POST") {
             return res.status(405).json({ error: "Método não permitido" });
         }
@@ -868,7 +868,7 @@ if (url.startsWith("api/change-password")) {
     }; 
 
  // Rota: /api/recover-password
-if (url.startsWith("api/recover-password")) { 
+if (url.startsWith("/api/recover-password")) { 
   if (req.method !== "POST")
     return res.status(405).json({ error: "Método não permitido" });
 
@@ -902,7 +902,7 @@ if (url.startsWith("api/recover-password")) {
 }
 
  // Rota: api/validate-reset-token
- if (url.startsWith("api/validate-reset-token")) { 
+ if (url.startsWith("/api/validate-reset-token")) { 
         if (req.method !== "GET") {
             return res.status(405).json({ error: "Método não permitido" });
         }
@@ -960,7 +960,7 @@ if (url.startsWith("api/recover-password")) {
     };
     
 // Rota: /api/mailer
-if (url.startsWith("api/mailer")) {
+if (url.startsWith("/api/mailer")) {
 
       const transporter = nodemailer.createTransport({
         host: 'smtpout.secureserver.net',
@@ -994,75 +994,75 @@ if (url.startsWith("api/mailer")) {
     }
     
 // Rota: /api/registrar_acao_pendente
-if (url.startsWith("api/registrar_acao_pendente")) { 
-      if (req.method !== "POST") {
-        return res.status(405).json({ error: "Método não permitido." });
-      }
-    
-      await connectDB();
-    
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: "Token não fornecido." });
-      }
-    
-      const token = authHeader.replace("Bearer ", "");
-      const usuario = await User.findOne({ token });
-      if (!usuario) {
-        return res.status(401).json({ error: "Token inválido." });
-      }
-    
-      const {
-        id_conta,
-        id_pedido,
+if (url.startsWith("/api/registrar_acao_pendente")) { 
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Método não permitido." });
+    }
+  
+    await connectDB();
+  
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: "Token não fornecido." });
+    }
+  
+    const token = authHeader.replace("Bearer ", "");
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(401).json({ error: "Token inválido." });
+    }
+  
+    const {
+      id_conta,
+      id_pedido,
+      nome_usuario,
+      url_dir,
+      unique_id_verificado,
+      tipo_acao,
+      quantidade_pontos
+    } = req.body;
+  
+    if (!id_conta || !id_pedido || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+      return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+    }
+  
+    try {
+      // Cálculo de valor
+      const pontos = parseFloat(quantidade_pontos);
+      const valorBruto = pontos / 1000;
+      const valorDescontado = (valorBruto > 0.004)
+        ? valorBruto - 0.001
+        : valorBruto;
+      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  
+      const novaAcao = new ActionHistory({
+        user: usuario._id,
+        token: usuario.token,
         nome_usuario,
+        id_pedido,
+        id_conta,
         url_dir,
-        unique_id_verificado,
         tipo_acao,
-        quantidade_pontos
-      } = req.body;
-    
-      if (!id_conta || !id_pedido || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
-        return res.status(400).json({ error: "Campos obrigatórios ausentes." });
-      }
-    
-      try {
-        // 🔢 Lógica para calcular valor final baseado nos pontos
-        const pontos = parseFloat(quantidade_pontos);
-        const valorBruto = pontos / 1000;
-        const valorDescontado = (valorBruto > 0.004)
-          ? valorBruto - 0.001
-          : valorBruto;
-        const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-    
-        const novaAcao = new ActionHistory({
-          user: usuario._id,
-          token: usuario.token,
-          nome_usuario,
-          id_pedido,
-          id_conta,
-          url_dir,
-          tipo_acao,
-          quantidade_pontos,
-          tipo: tipo_acao || "Seguir",
-          rede_social: "TikTok",
-          valor_confirmacao: valorFinal, // ✅ valor calculado aqui
-          acao_validada: null,
-          data: new Date()
-        });
-    
-        await novaAcao.save();
-    
-        res.status(201).json({
-          status: "success",
-          id_acao: novaAcao._id,
-          message: "Ação registrada como pendente."
-        });
-      } catch (error) {
-        console.error("Erro ao registrar ação pendente:", error);
-        res.status(500).json({ error: "Erro ao registrar ação." });
-      }
-    }    
+        quantidade_pontos,
+        tipo: tipo_acao || "Seguir",
+        rede_social: "TikTok",
+        valor_confirmacao: valorFinal,
+        acao_validada: null,
+        data: new Date()
+      });
+  
+      await novaAcao.save();
+  
+      return res.status(201).json({
+        status: "success",
+        id_acao: novaAcao._id,
+        message: "Ação registrada como pendente."
+      });
+    } catch (error) {
+      console.error("Erro ao registrar ação pendente:", error);
+      return res.status(500).json({ error: "Erro ao registrar ação." });
+    }
+  }  
 
     // Rota não encontrada
     return res.status(404).json({ error: "Rota não encontrada." });
