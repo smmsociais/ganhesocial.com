@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const actionSchema = new mongoose.Schema({
+const PedidoSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     rede: String,
     tipo: String,
@@ -13,4 +13,4 @@ const actionSchema = new mongoose.Schema({
     dataCriacao: { type: Date, default: Date.now }
 });
 
-export const Action = mongoose.models.Action || mongoose.model("Action", actionSchema);
+export default mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
