@@ -1,6 +1,6 @@
 import connectDB from './db.js';
 import { ActionHistory } from './User.js';
-import Pedido from './Pedido.js'; // <- importa o schema correto
+import Pedido from './Pedido.js';
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -64,7 +64,7 @@ const handler = async (req, res) => {
     }
 
     // ✅ Criar Pedido (caso ainda não exista)
-    const pedidoExistente = await Pedido.findOne({ id_pedido });
+    const pedidoExistente = await Pedido.findOne({ _id: id_pedido });
     if (!pedidoExistente) {
       const novoPedido = new Pedido({
         _id: id_pedido,
@@ -90,11 +90,8 @@ const handler = async (req, res) => {
       quantidade_pontos: pontos,
       url_dir,
       id_pedido,
-      quantidade: qtd,
-      valor: val,
-      status: "pendente",
-      acao_validada: null,
       valor_confirmacao: 0,
+      acao_validada: null,
       rede_social: "TikTok",
       tipo: tipo_acao
     });
@@ -118,7 +115,6 @@ const handler = async (req, res) => {
     });
     return res.status(500).json({ error: "Erro interno ao adicionar ação" });
   }
-
 };
 
 export default handler;
