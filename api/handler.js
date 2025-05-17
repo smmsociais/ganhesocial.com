@@ -1068,10 +1068,20 @@ if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
 // Verifica quantas ações (exceto recusadas) já existem para o pedido
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: { $in: [null, true] }
+  $or: [
+    { acao_validada: null },
+    { acao_validada: true },
+    { acao_validada: "true" }
+  ]
 });
 
 const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
+
+console.log(
+  "[DEBUG] id_pedido =", id_pedido,
+  "limit =", limiteQuantidade,
+  "count valid+pendente =", acoesTotais
+);
 
 // Se já atingiu o limite, não registra
 if (acoesTotais >= limiteQuantidade) {
