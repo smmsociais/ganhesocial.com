@@ -1013,6 +1013,12 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     if (!usuario) {
       return res.status(401).json({ error: "Token inválido." });
     }
+
+// Gerar ID aleatório de 6 dígitos se não vier definido
+let pedidoIdFinal = id_pedido;
+if (!pedidoIdFinal) {
+  pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString(); // ex: "382741"
+}
   
     const {
       id_conta,
@@ -1037,26 +1043,26 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
         : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
   
-      const novaAcao = new ActionHistory({
-        user: usuario._id,
-        token: usuario.token,
-        nome_usuario,
-        id_pedido,
-        id_conta,
-        url_dir,
-        tipo_acao,
-        quantidade_pontos,
-        tipo: tipo_acao || "Seguir",
-        rede_social: "TikTok",
-        valor_confirmacao: valorFinal,
-        acao_validada: null,
-        data: new Date()
-      });
+const novaAcao = new ActionHistory({
+  user: usuario._id,
+  token: usuario.token,
+  nome_usuario,
+  id_pedido: pedidoIdFinal,
+  id_conta,
+  url_dir,
+  tipo_acao,
+  quantidade_pontos,
+  tipo: tipo_acao || "Seguir",
+  rede_social: "TikTok",
+  valor_confirmacao: valorFinal,
+  acao_validada: null,
+  data: new Date()
+});
 
 const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
 
 // Buscar o pedido localmente
-const pedido = await Pedido.findById(objectIdPedido); // Substitua 'Pedido' pelo seu model correto
+const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
 
 if (!pedido) {
   return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
@@ -1066,7 +1072,7 @@ const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
 // Buscar ações existentes para esse pedido
 const acoesTotais = await ActionHistory.countDocuments({
-  id_pedido: objectIdPedido,
+  id_pedido: pedidoIdFinal,
   $or: [
     { acao_validada: null },
     { acao_validada: true },
