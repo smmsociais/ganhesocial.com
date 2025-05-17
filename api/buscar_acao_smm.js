@@ -1,4 +1,4 @@
-import connectDB from './db.js'; // Pode remover se não for usar Mongo aqui
+import connectDB from './db.js';
 const SMM_API_KEY = process.env.SMM_API_KEY;
 
 const handler = async (req, res) => {
