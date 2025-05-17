@@ -1052,36 +1052,18 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
         data: new Date()
       });
 
-// Buscar os dados da ação no smmsociais.com
-const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.js?id=${id_pedido}`, {
-  method: 'GET',
-  headers: {
-    'Authorization': `Bearer ${process.env.SMM_API_KEY}`
-  }
-});
-
-const dadosSMM = await resposta.json();
-
 const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
 
-// Verifica se a ação no SMM é válida e corresponde ao pedido
-if (
-  dadosSMM.status !== 'ENCONTRADA' ||
-  String(dadosSMM._id) !== String(objectIdPedido)
-) {
-  return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
+// Buscar o pedido localmente
+const pedido = await Pedido.findById(objectIdPedido); // Substitua 'Pedido' pelo seu model correto
+
+if (!pedido) {
+  return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
 }
 
-// Buscar documentos existentes com o mesmo id_pedido
-const docs = await ActionHistory.find({ id_pedido: objectIdPedido });
+const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
-  _id: doc._id,
-  acao_validada: doc.acao_validada,
-  tipo: typeof doc.acao_validada
-})));
-
-// Contar quantas ações (exceto recusadas) já foram registradas para o pedido
+// Buscar ações existentes para esse pedido
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido: objectIdPedido,
   $or: [
@@ -1092,34 +1074,12 @@ const acoesTotais = await ActionHistory.countDocuments({
   ]
 });
 
-console.log("[DEBUG] Contando com id_pedido como ObjectId:", objectIdPedido);
-console.log("[DEBUG] Total de ações registradas (pendentes/validadas):", acoesTotais);
-
-// Limite de confirmações esperadas no SMM
-const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
-
-console.log(
-  "[DEBUG] id_pedido =", id_pedido,
-  "limit =", limiteQuantidade,
-  "count valid+pendente =", acoesTotais
-);
-
-// Se já atingiu o limite, não registra nova ação
 if (acoesTotais >= limiteQuantidade) {
   return res.status(403).json({
     status: "limite",
     message: "Limite de ações atingido para esse pedido."
   });
 }
-
-// Salvar nova ação como pendente
-await novaAcao.save();
-
-return res.status(201).json({
-  status: "success",
-  id_acao: novaAcao._id,
-  message: "Ação registrada como pendente."
-});
 
     } catch (error) {
       console.error("Erro ao registrar ação pendente:", error);
