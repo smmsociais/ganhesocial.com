@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
 const actionHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  token: { type: String, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
+  token: { type: String, required: false },
   nome_usuario: { type: String, required: true },
   id_pedido: { type: String, required: true }, // ALTERADO para string
-  id_conta: { type: String, required: true },
+  id_conta: { type: String, required: false },
   url_dir: { type: String, required: true },
   tipo_acao: { type: String, required: true },
   quantidade_pontos: { type: Number, required: true },
