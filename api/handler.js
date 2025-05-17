@@ -1065,13 +1065,21 @@ if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
   return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
 }
 
+const docs = await ActionHistory.find({ id_pedido });
+console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
+  _id: doc._id,
+  acao_validada: doc.acao_validada,
+  tipo: typeof doc.acao_validada
+})));
+
 // Verifica quantas ações (exceto recusadas) já existem para o pedido
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido,
   $or: [
     { acao_validada: null },
     { acao_validada: true },
-    { acao_validada: "true" }
+    { acao_validada: "true" },
+    { acao_validada: { $exists: false } }
   ]
 });
 
