@@ -1061,12 +1061,18 @@ const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.
 
 const dadosSMM = await resposta.json();
 
+const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
+
+// Verifica se a ação no SMM é válida e corresponde ao pedido
 if (
   dadosSMM.status !== 'ENCONTRADA' ||
-  String(dadosSMM._id) !== String(id_pedido)
+  String(dadosSMM._id) !== String(objectIdPedido)
 ) {
   return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
 }
+
+// Buscar documentos existentes com o mesmo id_pedido
+const docs = await ActionHistory.find({ id_pedido: objectIdPedido });
 
 console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
   _id: doc._id,
@@ -1074,12 +1080,7 @@ console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
   tipo: typeof doc.acao_validada
 })));
 
-// Verifica quantas ações (exceto recusadas) já existem para o pedido
-const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
-
-// Agora use objectIdPedido em todos os lugares:
-const docs = await ActionHistory.find({ id_pedido: objectIdPedido });
-
+// Contar quantas ações (exceto recusadas) já foram registradas para o pedido
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido: objectIdPedido,
   $or: [
@@ -1093,6 +1094,7 @@ const acoesTotais = await ActionHistory.countDocuments({
 console.log("[DEBUG] Contando com id_pedido como ObjectId:", objectIdPedido);
 console.log("[DEBUG] Total de ações registradas (pendentes/validadas):", acoesTotais);
 
+// Limite de confirmações esperadas no SMM
 const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
 
 console.log(
@@ -1101,20 +1103,23 @@ console.log(
   "count valid+pendente =", acoesTotais
 );
 
-// Se já atingiu o limite, não registra
+// Se já atingiu o limite, não registra nova ação
 if (acoesTotais >= limiteQuantidade) {
   return res.status(403).json({
     status: "limite",
     message: "Limite de ações atingido para esse pedido."
   });
 }
-      await novaAcao.save();
-  
-      return res.status(201).json({
-        status: "success",
-        id_acao: novaAcao._id,
-        message: "Ação registrada como pendente."
-      });
+
+// Salvar nova ação como pendente
+await novaAcao.save();
+
+return res.status(201).json({
+  status: "success",
+  id_acao: novaAcao._id,
+  message: "Ação registrada como pendente."
+});
+
     } catch (error) {
       console.error("Erro ao registrar ação pendente:", error);
       return res.status(500).json({ error: "Erro ao registrar ação." });
