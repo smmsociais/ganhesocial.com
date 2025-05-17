@@ -1058,12 +1058,11 @@ if (!pedidoIdFinal) {
     });
 
     // Buscar o pedido localmente
-const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+let pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
 console.log("Pedido encontrado?", pedido);
 
 if (!pedido) {
   console.warn(`Pedido com id_pedido=${pedidoIdFinal} não encontrado. Criando pedido temporário para teste.`);
-  // Cria um pedido temporário só para não travar
   const pedidoTemp = new Pedido({
     id_pedido: pedidoIdFinal,
     quantidade: 1000,
