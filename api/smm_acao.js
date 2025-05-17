@@ -7,11 +7,11 @@ const handler = async (req, res) => {
   }
 
   try {
-    // Validação do token Bearer
-    const authHeader = req.headers.authorization;
-    if (!authHeader || authHeader !== `Bearer ${process.env.JWT_SECRET}`) {
-      return res.status(401).json({ error: "Não autorizado" });
-    }
+        // Verificação da chave de API no cabeçalho
+        const { authorization } = req.headers;
+        if (!authorization || authorization !== `Bearer ${process.env.SMM_API_KEY}`) {
+            return res.status(401).json({ error: "Não autorizado" });
+        }
 
     await connectDB();
 
