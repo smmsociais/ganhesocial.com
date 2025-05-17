@@ -1,5 +1,6 @@
 import connectDB from './db.js';
 import { ActionHistory } from './User.js';
+import Pedido from './Pedido.js'; // <- importa o schema correto
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -56,13 +57,33 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    // 🔎 Verificar se ação já foi cadastrada
+    // 🔎 Verificar se ação já foi cadastrada (id_pedido é único)
     const jaExiste = await ActionHistory.findOne({ id_pedido });
     if (jaExiste) {
       return res.status(409).json({ error: "Ação já cadastrada" });
     }
 
-    // 📝 Registro da nova ação
+    // ✅ Criar Pedido (caso ainda não exista)
+    const pedidoExistente = await Pedido.findById(id_pedido);
+    if (!pedidoExistente) {
+      const novoPedido = new Pedido({
+        _id: id_pedido,
+        rede: "tiktok",
+        tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
+        nome: `Ação ${tipo_acao} - ${nome_usuario}`,
+        valor: val,
+        quantidade: qtd,
+        quantidadeExecutada: 0,
+        link: url_dir,
+        status: "pendente",
+        dataCriacao: new Date(),
+        userId: null
+      });
+
+      await novoPedido.save();
+    }
+
+    // 📝 Registro da nova ação no histórico
     const novaAcao = new ActionHistory({
       tipo_acao,
       nome_usuario,
@@ -73,7 +94,9 @@ const handler = async (req, res) => {
       valor: val,
       status: "pendente",
       acao_validada: null,
-      valor_confirmacao: 0
+      valor_confirmacao: 0,
+      rede_social: "TikTok",
+      tipo: tipo_acao
     });
 
     await novaAcao.save();
