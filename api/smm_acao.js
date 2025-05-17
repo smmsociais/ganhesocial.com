@@ -1,5 +1,5 @@
 import connectDB from './db.js';
-import { ActionHistory } from './User.js';
+import { ActionHistory } from './ActionHistory.js';  // Corrigido se necessário o nome do arquivo
 import Pedido from './Pedido.js';
 
 const handler = async (req, res) => {
@@ -8,7 +8,6 @@ const handler = async (req, res) => {
   }
 
   try {
-    // 🔐 Validação do token de API
     const { authorization } = req.headers;
     const token = authorization?.split(" ")[1];
 
@@ -18,7 +17,6 @@ const handler = async (req, res) => {
 
     await connectDB();
 
-    // 📦 Extração de dados
     const {
       tipo_acao,
       nome_usuario,
@@ -29,7 +27,6 @@ const handler = async (req, res) => {
       valor
     } = req.body;
 
-    // 📌 Verificação de campos obrigatórios
     if (
       !tipo_acao ||
       !nome_usuario ||
@@ -42,7 +39,6 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Dados incompletos" });
     }
 
-    // 🧮 Conversões e validações numéricas
     const pontos = parseFloat(quantidade_pontos);
     const qtd = parseInt(quantidade);
     const val = parseFloat(valor);
@@ -57,17 +53,15 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    // 🔎 Verificar se ação já foi cadastrada (id_pedido é único)
     const jaExiste = await ActionHistory.findOne({ id_pedido });
     if (jaExiste) {
       return res.status(409).json({ error: "Ação já cadastrada" });
     }
 
-    // ✅ Criar Pedido (caso ainda não exista)
-    const pedidoExistente = await Pedido.findOne({ _id: id_pedido });
+    const pedidoExistente = await Pedido.findOne({ id_pedido }); // pesquisa por id_pedido string
     if (!pedidoExistente) {
       const novoPedido = new Pedido({
-        _id: id_pedido,
+        id_pedido, // <-- USAR id_pedido normal, NÃO _id
         rede: "tiktok",
         tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
         nome: `Ação ${tipo_acao} - ${nome_usuario}`,
@@ -83,27 +77,24 @@ const handler = async (req, res) => {
       await novoPedido.save();
     }
 
-    // 📝 Registro da nova ação no histórico
     const novaAcao = new ActionHistory({
       tipo_acao,
       nome_usuario,
       quantidade_pontos: pontos,
       url_dir,
       id_pedido,
-      valor_confirmacao: 0,
+      quantidade: qtd,
+      valor: val,
+      status: "pendente",
       acao_validada: null,
+      valor_confirmacao: "0",
       rede_social: "TikTok",
       tipo: tipo_acao
     });
 
     await novaAcao.save();
 
-    console.log("✅ Nova ação registrada:", {
-      tipo_acao,
-      nome_usuario,
-      id_pedido,
-      pontos
-    });
+    console.log("✅ Nova ação registrada:", { tipo_acao, nome_usuario, id_pedido, pontos });
 
     return res.status(201).json({ message: "Ação adicionada com sucesso" });
 
