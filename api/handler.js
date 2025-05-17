@@ -1061,11 +1061,13 @@ const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.
 
 const dadosSMM = await resposta.json();
 
-if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
+if (
+  dadosSMM.status !== 'ENCONTRADA' ||
+  String(dadosSMM._id) !== String(id_pedido)
+) {
   return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
 }
 
-const docs = await ActionHistory.find({ id_pedido });
 console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
   _id: doc._id,
   acao_validada: doc.acao_validada,
@@ -1074,6 +1076,9 @@ console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
 
 // Verifica quantas ações (exceto recusadas) já existem para o pedido
 const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
+
+// Agora use objectIdPedido em todos os lugares:
+const docs = await ActionHistory.find({ id_pedido: objectIdPedido });
 
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido: objectIdPedido,
