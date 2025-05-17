@@ -478,11 +478,11 @@
 
                 // 1. Tenta buscar da rota prioritária: /api/smm_acao
                 const smmResponse = await fetch(`/api/buscar_acao_smm`, {
-    method: 'GET',
-    headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-    }
-});
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
                 data = await smmResponse.json();
 
                 // 3. Se encontrar alguma ação (em qualquer uma das rotas), exibe normalmente
@@ -525,7 +525,10 @@
 
                     document.getElementById("points").textContent = `R$ ${valorFinal}`;
                     document.getElementById("confirmButton").style.display = "none";
-                    currentActionData = data;
+                    currentActionData = {
+    ...data,
+    origem: 'smm'
+};
 
                     document.getElementById("actionContent").style.opacity = "1";
                 } else {
@@ -554,30 +557,37 @@
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
             let confirmData;
-            try {
-                const confirmResponse = await fetch("/api/confirmar_acao", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        id_conta: localStorage.getItem("id_conta"),
-                        id_pedido: currentActionData.id_pedido
-                    })
-                });
+try {
+    if (currentActionData.origem !== 'smm') {
+        const confirmResponse = await fetch("/api/confirmar_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                id_conta: localStorage.getItem("id_conta"),
+                id_pedido: currentActionData.id_pedido
+            })
+        });
 
-                confirmData = await confirmResponse.json();
+        confirmData = await confirmResponse.json();
 
-                if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
-                    throw new Error("Erro ao confirmar ação.");
-                }
+        if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
+            throw new Error("Erro ao confirmar ação.");
+        }
+    } else {
+        // Simula retorno básico para seguir com o restante da lógica
+        confirmData = {
+            valor: "0.005"
+        };
+    }
 
-            } catch (error) {
-                console.error("Erro ao confirmar ação:", error);
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
+} catch (error) {
+    console.error("Erro ao confirmar ação:", error);
+    document.getElementById("actionContent").style.opacity = "1";
+    return;
+}
 
             await registrarAcaoPendente({
                 nome_usuario: selectedAccount,
