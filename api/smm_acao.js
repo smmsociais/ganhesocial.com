@@ -7,11 +7,16 @@ const handler = async (req, res) => {
   }
 
   try {
-        // Verificação da chave de API no cabeçalho
-        const { authorization } = req.headers;
-        if (!authorization || authorization !== `Bearer ${process.env.SMM_API_KEY}`) {
-            return res.status(401).json({ error: "Não autorizado" });
-        }
+    // Verificação da chave de API no cabeçalho
+    const { authorization } = req.headers;
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Token não fornecido" });
+    }
+
+    const token = authorization.split(" ")[1];
+    if (token !== process.env.SMM_API_KEY) {
+      return res.status(401).json({ error: "Token inválido" });
+    }
 
     await connectDB();
 
@@ -25,7 +30,6 @@ const handler = async (req, res) => {
       valor
     } = req.body;
 
-    // Validação básica dos campos obrigatórios
     if (
       !tipo_acao ||
       !nome_usuario ||
@@ -38,7 +42,6 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Dados incompletos" });
     }
 
-    // Parsing e validação de números
     const pontos = parseFloat(quantidade_pontos);
     const qtd = parseInt(quantidade);
     const val = parseFloat(valor);
@@ -53,13 +56,11 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    // Verifica se a ação já existe pelo id_pedido
     const jaExiste = await ActionHistory.findOne({ id_pedido: id_pedido });
     if (jaExiste) {
       return res.status(409).json({ error: "Ação já cadastrada" });
     }
 
-    // Cria nova ação no histórico
     const novaAcao = new ActionHistory({
       tipo_acao,
       nome_usuario,
