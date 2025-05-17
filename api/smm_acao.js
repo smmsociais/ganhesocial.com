@@ -7,19 +7,17 @@ const handler = async (req, res) => {
   }
 
   try {
-    // Verificação da chave de API no cabeçalho
+    // 🔐 Validação do token de API
     const { authorization } = req.headers;
-    if (!authorization || !authorization.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Token não fornecido" });
-    }
+    const token = authorization?.split(" ")[1];
 
-    const token = authorization.split(" ")[1];
-    if (token !== process.env.SMM_API_KEY) {
-      return res.status(401).json({ error: "Token inválido" });
+    if (!token || token !== process.env.SMM_API_KEY) {
+      return res.status(401).json({ error: "Não autorizado" });
     }
 
     await connectDB();
 
+    // 📦 Extração de dados
     const {
       tipo_acao,
       nome_usuario,
@@ -30,6 +28,7 @@ const handler = async (req, res) => {
       valor
     } = req.body;
 
+    // 📌 Verificação de campos obrigatórios
     if (
       !tipo_acao ||
       !nome_usuario ||
@@ -42,6 +41,7 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Dados incompletos" });
     }
 
+    // 🧮 Conversões e validações numéricas
     const pontos = parseFloat(quantidade_pontos);
     const qtd = parseInt(quantidade);
     const val = parseFloat(valor);
@@ -56,11 +56,13 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    const jaExiste = await ActionHistory.findOne({ id_pedido: id_pedido });
+    // 🔎 Verificar se ação já foi cadastrada
+    const jaExiste = await ActionHistory.findOne({ id_pedido });
     if (jaExiste) {
       return res.status(409).json({ error: "Ação já cadastrada" });
     }
 
+    // 📝 Registro da nova ação
     const novaAcao = new ActionHistory({
       tipo_acao,
       nome_usuario,
@@ -75,6 +77,13 @@ const handler = async (req, res) => {
     });
 
     await novaAcao.save();
+
+    console.log("✅ Nova ação registrada:", {
+      tipo_acao,
+      nome_usuario,
+      id_pedido,
+      pontos
+    });
 
     return res.status(201).json({ message: "Ação adicionada com sucesso" });
 
