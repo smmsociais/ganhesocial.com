@@ -995,104 +995,104 @@ if (url.startsWith("/api/mailer")) {
       }
     }
     
-// Rota: /api/registrar_acao_pendente
+// Rota: /api/registrar_acao_pendente    
 if (url.startsWith("/api/registrar_acao_pendente")) { 
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Método não permitido." });
-    }
-  
-    await connectDB();
-  
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: "Token não fornecido." });
-    }
-  
-    const token = authHeader.replace("Bearer ", "");
-    const usuario = await User.findOne({ token });
-    if (!usuario) {
-      return res.status(401).json({ error: "Token inválido." });
-    }
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido." });
+  }
 
-// Gerar ID aleatório de 6 dígitos se não vier definido
-let pedidoIdFinal = id_pedido;
-if (!pedidoIdFinal) {
-  pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString(); // ex: "382741"
-}
-  
-    const {
-      id_conta,
-      id_pedido,
+  await connectDB();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não fornecido." });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const usuario = await User.findOne({ token });
+  if (!usuario) {
+    return res.status(401).json({ error: "Token inválido." });
+  }
+
+  const {
+    id_conta,
+    id_pedido,
+    nome_usuario,
+    url_dir,
+    unique_id_verificado,
+    tipo_acao,
+    quantidade_pontos
+  } = req.body;
+
+  // Gerar ID aleatório de 6 dígitos se não vier definido
+  let pedidoIdFinal = id_pedido;
+  if (!pedidoIdFinal) {
+    pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  if (!id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+  }
+
+  try {
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004)
+      ? valorBruto - 0.001
+      : valorBruto;
+    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
       nome_usuario,
+      id_pedido: pedidoIdFinal,
+      id_conta,
       url_dir,
-      unique_id_verificado,
       tipo_acao,
-      quantidade_pontos
-    } = req.body;
-  
-    if (!id_conta || !id_pedido || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
-      return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+      quantidade_pontos,
+      tipo: tipo_acao || "Seguir",
+      rede_social: "TikTok",
+      valor_confirmacao: valorFinal,
+      acao_validada: null,
+      data: new Date()
+    });
+
+    // Buscar o pedido localmente
+    const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
     }
-  
-    try {
-      // Cálculo de valor
-      const pontos = parseFloat(quantidade_pontos);
-      const valorBruto = pontos / 1000;
-      const valorDescontado = (valorBruto > 0.004)
-        ? valorBruto - 0.001
-        : valorBruto;
-      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-  
-const novaAcao = new ActionHistory({
-  user: usuario._id,
-  token: usuario.token,
-  nome_usuario,
-  id_pedido: pedidoIdFinal,
-  id_conta,
-  url_dir,
-  tipo_acao,
-  quantidade_pontos,
-  tipo: tipo_acao || "Seguir",
-  rede_social: "TikTok",
-  valor_confirmacao: valorFinal,
-  acao_validada: null,
-  data: new Date()
-});
 
-const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
+    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-// Buscar o pedido localmente
-const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+    const acoesTotais = await ActionHistory.countDocuments({
+      id_pedido: pedidoIdFinal,
+      $or: [
+        { acao_validada: null },
+        { acao_validada: true },
+        { acao_validada: "true" },
+        { acao_validada: { $exists: false } }
+      ]
+    });
 
-if (!pedido) {
-  return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-}
-
-const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
-
-// Buscar ações existentes para esse pedido
-const acoesTotais = await ActionHistory.countDocuments({
-  id_pedido: pedidoIdFinal,
-  $or: [
-    { acao_validada: null },
-    { acao_validada: true },
-    { acao_validada: "true" },
-    { acao_validada: { $exists: false } }
-  ]
-});
-
-if (acoesTotais >= limiteQuantidade) {
-  return res.status(403).json({
-    status: "limite",
-    message: "Limite de ações atingido para esse pedido."
-  });
-}
-
-    } catch (error) {
-      console.error("Erro ao registrar ação pendente:", error);
-      return res.status(500).json({ error: "Erro ao registrar ação." });
+    if (acoesTotais >= limiteQuantidade) {
+      return res.status(403).json({
+        status: "limite",
+        message: "Limite de ações atingido para esse pedido."
+      });
     }
-  }  
+
+    await novaAcao.save();
+
+    return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+
+  } catch (error) {
+    console.error("Erro ao registrar ação pendente:", error);
+    return res.status(500).json({ error: "Erro ao registrar ação." });
+  }
+}
 
     // Rota não encontrada
     return res.status(404).json({ error: "Rota não encontrada." });
