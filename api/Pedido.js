@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const PedidoSchema = new mongoose.Schema({
-  id_pedido: { type: String, required: true, unique: true }, // <- novo campo para vincular pedidos externos
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // <- pode ser nulo para pedidos SMM
+  id_pedido: { type: String, required: true, unique: true }, // campo string para o pedido externo
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   rede: String,
   tipo: String,
   nome: String,
