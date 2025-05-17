@@ -111,9 +111,14 @@ const handler = async (req, res) => {
     return res.status(201).json({ message: "Ação adicionada com sucesso" });
 
   } catch (error) {
-    console.error("❌ Erro ao adicionar ação:", error);
+    console.error("❌ Erro ao adicionar ação:", {
+      message: error.message,
+      stack: error.stack,
+      detalhes: error
+    });
     return res.status(500).json({ error: "Erro interno ao adicionar ação" });
   }
+
 };
 
 export default handler;
