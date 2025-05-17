@@ -1052,7 +1052,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       });
 
 // Buscar os dados da ação no smmsociais.com
-const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.js`, {
+const resposta = await fetch(`https://smmsociais.com/api/buscar_acao_disponivel.js?id=${id_pedido}`, {
   method: 'GET',
   headers: {
     'Authorization': `Bearer ${process.env.SMM_API_KEY}`
