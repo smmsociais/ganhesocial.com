@@ -1024,11 +1024,10 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     quantidade_pontos
   } = req.body;
 
-  // Gerar ID aleatório de 6 dígitos se não vier definido
-  let pedidoIdFinal = id_pedido;
-  if (!pedidoIdFinal) {
-    pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString();
-  }
+const pedidoIdFinal = id_pedido;
+if (!pedidoIdFinal) {
+  return res.status(400).json({ error: "id_pedido obrigatório para registrar ação pendente." });
+}
 
   if (!id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
@@ -1060,6 +1059,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 
     // Buscar o pedido localmente
     const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+    console.log("Pedido encontrado?", pedido);
 
     if (!pedido) {
       return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
