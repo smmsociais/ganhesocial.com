@@ -1073,8 +1073,10 @@ console.log('[DEBUG] Documentos encontrados:', docs.map(doc => ({
 })));
 
 // Verifica quantas ações (exceto recusadas) já existem para o pedido
+const objectIdPedido = mongoose.Types.ObjectId(id_pedido);
+
 const acoesTotais = await ActionHistory.countDocuments({
-  id_pedido,
+  id_pedido: objectIdPedido,
   $or: [
     { acao_validada: null },
     { acao_validada: true },
@@ -1082,6 +1084,9 @@ const acoesTotais = await ActionHistory.countDocuments({
     { acao_validada: { $exists: false } }
   ]
 });
+
+console.log("[DEBUG] Contando com id_pedido como ObjectId:", objectIdPedido);
+console.log("[DEBUG] Total de ações registradas (pendentes/validadas):", acoesTotais);
 
 const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
 
