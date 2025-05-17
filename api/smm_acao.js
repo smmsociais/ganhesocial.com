@@ -64,7 +64,7 @@ const handler = async (req, res) => {
     }
 
     // ✅ Criar Pedido (caso ainda não exista)
-    const pedidoExistente = await Pedido.findById(id_pedido);
+    const pedidoExistente = await Pedido.findOne({ id_pedido });
     if (!pedidoExistente) {
       const novoPedido = new Pedido({
         _id: id_pedido,
