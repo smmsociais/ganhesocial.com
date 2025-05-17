@@ -1065,10 +1065,10 @@ if (dadosSMM.status !== 'ENCONTRADA' || dadosSMM._id !== id_pedido) {
   return res.status(404).json({ error: "Pedido não encontrado ou inválido para execução." });
 }
 
-// Verifica quantas ações já foram executadas ou estão pendentes para esse pedido
+// Verifica quantas ações (exceto recusadas) já existem para o pedido
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: { $in: [null, "true"] } // pendentes e validadas
+  acao_validada: { $ne: "false" }
 });
 
 const limiteQuantidade = parseInt(dadosSMM.quantidade, 10) || 0;
