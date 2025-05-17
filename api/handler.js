@@ -1,5 +1,6 @@
 import axios from "axios";
 import connectDB from "./db.js";
+import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
