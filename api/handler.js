@@ -1024,10 +1024,11 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     quantidade_pontos
   } = req.body;
 
-const pedidoIdFinal = id_pedido;
-if (!pedidoIdFinal) {
-  return res.status(400).json({ error: "id_pedido obrigatório para registrar ação pendente." });
-}
+  // Gerar ID aleatório de 6 dígitos se não vier definido
+  let pedidoIdFinal = id_pedido;
+  if (!pedidoIdFinal) {
+    pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString();
+  }
 
   if (!id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
@@ -1058,21 +1059,11 @@ if (!pedidoIdFinal) {
     });
 
     // Buscar o pedido localmente
-let pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
-console.log("Pedido encontrado?", pedido);
+    const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
 
-if (!pedido) {
-  console.warn(`Pedido com id_pedido=${pedidoIdFinal} não encontrado. Criando pedido temporário para teste.`);
-  const pedidoTemp = new Pedido({
-    id_pedido: pedidoIdFinal,
-    quantidade: 1000,
-    tipo: "Seguir",
-    rede: "TikTok",
-    nome: "Pedido Temporário"
-  });
-  await pedidoTemp.save();
-  pedido = pedidoTemp;
-}
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+    }
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
