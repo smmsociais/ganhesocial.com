@@ -1066,15 +1066,10 @@ try {
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-    const acoesTotais = await ActionHistory.countDocuments({
-      id_pedido,
-      $or: [
-        { acao_validada: null },
-        { acao_validada: true },
-        { acao_validada: "true" },
-        { acao_validada: { $exists: false } }
-      ]
-    });
+const acoesTotais = await ActionHistory.countDocuments({
+  id_pedido,
+  acao_validada: { $ne: false } // conta apenas ações que não são invalidadas
+});
 
     if (acoesTotais >= limiteQuantidade) {
       return res.status(403).json({
