@@ -1028,38 +1028,41 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
-  try {
-    const pontos = parseFloat(quantidade_pontos);
-    const valorBruto = pontos / 1000;
-    const valorDescontado = (valorBruto > 0.004)
-      ? valorBruto - 0.001
-      : valorBruto;
-    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+try {
+  const pontos = parseFloat(quantidade_pontos);
+  const valorBruto = pontos / 1000;
+  const valorDescontado = (valorBruto > 0.004)
+    ? valorBruto - 0.001
+    : valorBruto;
+  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      token: usuario.token,
-      nome_usuario,
-      id_pedido, // agora sempre será o _id do MongoDB
-      id_conta,
-      url_dir,
-      tipo_acao,
-      quantidade_pontos,
-      tipo: tipo_acao || "Seguir",
-      rede_social: "TikTok",
-      valor_confirmacao: valorFinal,
-      acao_validada: null,
-      data: new Date()
-    });
+  const novaAcao = new ActionHistory({
+    user: usuario._id,
+    token: usuario.token,
+    nome_usuario,
+    id_pedido,
+    id_conta,
+    url_dir,
+    tipo_acao,
+    quantidade_pontos,
+    tipo: tipo_acao || "Seguir",
+    rede_social: "TikTok",
+    valor_confirmacao: valorFinal,
+    acao_validada: null,
+    data: new Date()
+  });
 
-    // Buscar o pedido localmente pelo _id
-    console.log("🔍 id_pedido recebido:", id_pedido);
-    const pedido = await Pedido.findById(id_pedido); // Usando findById corretamente
-    console.log("📦 Pedido encontrado:", pedido);
+  console.log("🔍 id_pedido recebido:", id_pedido);
+  
+  // Converte para ObjectId antes da busca
+  const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
 
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-    }
+  const pedido = await Pedido.findById(pedidoIdMongo);
+  console.log("📦 Pedido encontrado:", pedido);
+
+  if (!pedido) {
+    return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+  }
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
