@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const PedidoSchema = new mongoose.Schema({
-  id_pedido: { type: String, required: false, unique: true }, // campo string para o pedido externo
+  id_pedido: { type: String, required: false }
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   rede: String,
   tipo: String,
