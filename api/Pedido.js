@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const PedidoSchema = new mongoose.Schema({
   id_pedido: { type: String, required: false }
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   rede: String,
   tipo: String,
   nome: String,
