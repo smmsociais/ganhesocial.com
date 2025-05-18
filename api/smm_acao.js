@@ -91,20 +91,20 @@ const handler = async (req, res) => {
     }
 
     // Agora registra a ação no histórico
-    const novaAcao = new ActionHistory({
-      tipo_acao,
-      nome_usuario,
-      quantidade_pontos: pontos,
-      url_dir,
-      id_pedido,  // ainda salva como string para referência, mas Pedido está no _id
-      quantidade: qtd,
-      valor: val,
-      status: "pendente",
-      acao_validada: null,
-      valor_confirmacao: "0",
-      rede_social: "TikTok",
-      tipo: tipo_acao
-    });
+const novaAcao = new ActionHistory({
+  tipo_acao,
+  nome_usuario,
+  quantidade_pontos: pontos,
+  url_dir,
+  id_pedido: pedidoObjectId.toString(), // garante que é uma string única e consistente
+  quantidade: qtd,
+  valor: val,
+  status: "pendente",
+  acao_validada: null,
+  valor_confirmacao: "0",
+  rede_social: "TikTok",
+  tipo: tipo_acao
+});
 
     await novaAcao.save();
 
