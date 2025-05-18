@@ -1,6 +1,7 @@
 import connectDB from './db.js';
-import { ActionHistory } from './ActionHistory.js';  // Corrigido se necessário o nome do arquivo
+import { ActionHistory } from './ActionHistory.js';
 import Pedido from './Pedido.js';
+import mongoose from 'mongoose';
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -53,15 +54,27 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
+    // Verifica se já existe alguma ação com esse id_pedido
     const jaExiste = await ActionHistory.findOne({ id_pedido });
     if (jaExiste) {
       return res.status(409).json({ error: "Ação já cadastrada" });
     }
 
-    const pedidoExistente = await Pedido.findOne({ id_pedido }); // pesquisa por id_pedido string
+    // Converte id_pedido para ObjectId
+    let pedidoObjectId;
+    try {
+      pedidoObjectId = new mongoose.Types.ObjectId(id_pedido);
+    } catch {
+      return res.status(400).json({ error: "id_pedido inválido" });
+    }
+
+    // Procura o Pedido pelo _id do Mongo (não pelo campo id_pedido)
+    const pedidoExistente = await Pedido.findById(pedidoObjectId);
+
     if (!pedidoExistente) {
+      // Cria o Pedido usando _id = id_pedido convertido para ObjectId
       const novoPedido = new Pedido({
-        id_pedido, // <-- USAR id_pedido normal, NÃO _id
+        _id: pedidoObjectId,
         rede: "tiktok",
         tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
         nome: `Ação ${tipo_acao} - ${nome_usuario}`,
@@ -77,12 +90,13 @@ const handler = async (req, res) => {
       await novoPedido.save();
     }
 
+    // Agora registra a ação no histórico
     const novaAcao = new ActionHistory({
       tipo_acao,
       nome_usuario,
       quantidade_pontos: pontos,
       url_dir,
-      id_pedido,
+      id_pedido,  // ainda salva como string para referência, mas Pedido está no _id
       quantidade: qtd,
       valor: val,
       status: "pendente",
