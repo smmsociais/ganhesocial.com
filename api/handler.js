@@ -1068,17 +1068,30 @@ try {
 
 const acoesTotais = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: { $ne: false } // conta apenas ações que não são invalidadas
+  acao_validada: { $ne: false }
 });
 
-    if (acoesTotais >= limiteQuantidade) {
-      return res.status(403).json({
-        status: "limite",
-        message: "Limite de ações atingido para esse pedido."
-      });
-    }
+if (acoesTotais >= limiteQuantidade) {
+  return res.status(403).json({
+    status: "limite",
+    message: "Limite de ações atingido para esse pedido."
+  });
+}
 
-    await novaAcao.save();
+ const acaoExistente = await ActionHistory.findOne({
+  id_pedido,
+  id_conta,
+  acao_validada: { $ne: false }
+});
+
+if (acaoExistente) {
+  return res.status(409).json({
+    status: "ja_registrada",
+    message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
+  });
+}
+
+await novaAcao.save();
 
     return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
 
