@@ -995,8 +995,8 @@ if (url.startsWith("/api/mailer")) {
       }
     }
     
-// Rota: /api/registrar_acao_pendente    
-if (url.startsWith("/api/registrar_acao_pendente")) { 
+// Rota: /api/registrar_acao_pendente      
+if (url.startsWith("/api/registrar_acao_pendente")) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
   }
@@ -1028,70 +1028,70 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
-try {
-  const pontos = parseFloat(quantidade_pontos);
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004)
-    ? valorBruto - 0.001
-    : valorBruto;
-  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  try {
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004)
+      ? valorBruto - 0.001
+      : valorBruto;
+    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-  const novaAcao = new ActionHistory({
-    user: usuario._id,
-    token: usuario.token,
-    nome_usuario,
-    id_pedido,
-    id_conta,
-    url_dir,
-    tipo_acao,
-    quantidade_pontos,
-    tipo: tipo_acao || "Seguir",
-    rede_social: "TikTok",
-    valor_confirmacao: valorFinal,
-    acao_validada: null,
-    data: new Date()
-  });
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
+      nome_usuario,
+      id_pedido,
+      id_conta,
+      url_dir,
+      tipo_acao,
+      quantidade_pontos,
+      tipo: tipo_acao || "Seguir",
+      rede_social: "TikTok",
+      valor_confirmacao: valorFinal,
+      acao_validada: null,
+      data: new Date()
+    });
 
-  console.log("🔍 id_pedido recebido:", id_pedido);
-  
-  // Converte para ObjectId antes da busca
-  const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
+    console.log("🔍 id_pedido recebido:", id_pedido);
+    const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
+    const pedido = await Pedido.findById(pedidoIdMongo);
+    console.log("📦 Pedido encontrado:", pedido);
 
-  const pedido = await Pedido.findById(pedidoIdMongo);
-  console.log("📦 Pedido encontrado:", pedido);
-
-  if (!pedido) {
-    return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-  }
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+    }
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-const acoesTotais = await ActionHistory.countDocuments({
-  id_pedido,
-  acao_validada: { $ne: false }
-});
+    // 1️⃣ Verifica se a conta já registrou ação nesse pedido
+    const acaoExistente = await ActionHistory.findOne({
+      id_pedido,
+      id_conta,
+      acao_validada: { $ne: false }
+    });
 
-if (acoesTotais >= limiteQuantidade) {
-  return res.status(403).json({
-    status: "limite",
-    message: "Limite de ações atingido para esse pedido."
-  });
-}
+    if (acaoExistente) {
+      return res.status(409).json({
+        status: "ja_registrada",
+        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
+      });
+    }
 
- const acaoExistente = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
-  acao_validada: { $ne: false }
-});
+    // 2️⃣ Verifica se o limite total de ações já foi atingido
+    const acoesTotais = await ActionHistory.countDocuments({
+      id_pedido,
+      acao_validada: { $in: [null, true] } // Apenas pendentes e confirmadas
+    });
 
-if (acaoExistente) {
-  return res.status(409).json({
-    status: "ja_registrada",
-    message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
-  });
-}
+    if (acoesTotais >= limiteQuantidade) {
+      return res.status(403).json({
+        status: "limite",
+        message: "Limite de ações atingido para esse pedido."
+      });
+    }
 
-await novaAcao.save();
+    // 3️⃣ Salva a nova ação
+    await novaAcao.save();
 
     return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
 
