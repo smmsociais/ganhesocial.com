@@ -1059,7 +1059,10 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     });
 
     // Buscar o pedido localmente
-    const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+  console.log("🔍 id_pedido recebido:", pedidoIdFinal);
+const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
+console.log("📦 Pedido encontrado:", pedido);
+
 
     if (!pedido) {
       return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
