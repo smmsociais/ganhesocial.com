@@ -1024,13 +1024,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     quantidade_pontos
   } = req.body;
 
-  // Gerar ID aleatório de 6 dígitos se não vier definido
-  let pedidoIdFinal = id_pedido;
-  if (!pedidoIdFinal) {
-    pedidoIdFinal = Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  if (!id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+  if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
@@ -1046,7 +1040,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       user: usuario._id,
       token: usuario.token,
       nome_usuario,
-      id_pedido: pedidoIdFinal,
+      id_pedido, // agora sempre será o _id do MongoDB
       id_conta,
       url_dir,
       tipo_acao,
@@ -1058,11 +1052,10 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       data: new Date()
     });
 
-    // Buscar o pedido localmente
-  console.log("🔍 id_pedido recebido:", pedidoIdFinal);
-const pedido = await Pedido.findOne({ id_pedido: pedidoIdFinal });
-console.log("📦 Pedido encontrado:", pedido);
-
+    // Buscar o pedido localmente pelo _id
+    console.log("🔍 id_pedido recebido:", id_pedido);
+    const pedido = await Pedido.findById(id_pedido); // Usando findById corretamente
+    console.log("📦 Pedido encontrado:", pedido);
 
     if (!pedido) {
       return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
@@ -1071,7 +1064,7 @@ console.log("📦 Pedido encontrado:", pedido);
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
     const acoesTotais = await ActionHistory.countDocuments({
-      id_pedido: pedidoIdFinal,
+      id_pedido,
       $or: [
         { acao_validada: null },
         { acao_validada: true },
