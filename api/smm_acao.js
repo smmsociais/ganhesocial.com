@@ -84,7 +84,6 @@ const handler = async (req, res) => {
         link: url_dir,
         status: "pendente",
         dataCriacao: new Date(),
-        userId: null
       });
 
       await novoPedido.save();
