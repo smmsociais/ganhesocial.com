@@ -1036,6 +1036,44 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       : valorBruto;
     const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
+    // 1️⃣ Verifica se essa conta já registrou ação pendente ou confirmada nesse pedido
+    const acaoExistente = await ActionHistory.findOne({
+      id_pedido,
+      id_conta,
+      acao_validada: { $in: [null, true] }
+    });
+
+    if (acaoExistente) {
+      return res.status(409).json({
+        status: "ja_registrada",
+        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
+      });
+    }
+
+    // 2️⃣ Busca o pedido e extrai o limite
+    const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
+    const pedido = await Pedido.findById(pedidoIdMongo);
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+    }
+
+    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
+
+    // 3️⃣ Tenta incrementar o contador de forma atômica
+    const pedidoAtualizado = await Pedido.findOneAndUpdate(
+      { _id: pedidoIdMongo, quantidadeExecutada: { $lt: limiteQuantidade } },
+      { $inc: { quantidadeExecutada: 1 } },
+      { new: true }
+    );
+
+    if (!pedidoAtualizado) {
+      return res.status(403).json({
+        status: "limite",
+        message: "Limite de ações atingido para esse pedido."
+      });
+    }
+
+    // 4️⃣ Registra a nova ação
     const novaAcao = new ActionHistory({
       user: usuario._id,
       token: usuario.token,
@@ -1052,45 +1090,6 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       data: new Date()
     });
 
-    console.log("🔍 id_pedido recebido:", id_pedido);
-    const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
-    const pedido = await Pedido.findById(pedidoIdMongo);
-    console.log("📦 Pedido encontrado:", pedido);
-
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-    }
-
-    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
-
-    // 1️⃣ Verifica se a conta já registrou ação nesse pedido
-const acaoExistente = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
-  acao_validada: { $in: [null, true] }
-});
-
-    if (acaoExistente) {
-      return res.status(409).json({
-        status: "ja_registrada",
-        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
-      });
-    }
-
-    // 2️⃣ Verifica se o limite total de ações já foi atingido
-    const acoesTotais = await ActionHistory.countDocuments({
-      id_pedido,
-      acao_validada: { $in: [null, true] } // Apenas pendentes e confirmadas
-    });
-
-    if (acoesTotais >= limiteQuantidade) {
-      return res.status(403).json({
-        status: "limite",
-        message: "Limite de ações atingido para esse pedido."
-      });
-    }
-
-    // 3️⃣ Salva a nova ação
     await novaAcao.save();
 
     return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
