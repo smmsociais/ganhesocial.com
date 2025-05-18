@@ -1064,11 +1064,11 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
     // 1️⃣ Verifica se a conta já registrou ação nesse pedido
-    const acaoExistente = await ActionHistory.findOne({
-      id_pedido,
-      id_conta,
-      acao_validada: { $ne: false }
-    });
+const acaoExistente = await ActionHistory.findOne({
+  id_pedido,
+  id_conta,
+  acao_validada: { $in: [null, true] }
+});
 
     if (acaoExistente) {
       return res.status(409).json({
