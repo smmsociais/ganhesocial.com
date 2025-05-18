@@ -5,6 +5,7 @@ const actionHistorySchema = new mongoose.Schema({
   token: { type: String, required: false },
   nome_usuario: { type: String, required: true },
   id_conta: { type: String, required: false },
+  id_pedido: { type: String, required: false },
   url_dir: { type: String, required: true },
   tipo_acao: { type: String, required: true },
   quantidade_pontos: { type: Number, required: true },
