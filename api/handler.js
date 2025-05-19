@@ -1059,10 +1059,10 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-// 3️⃣ Conta apenas ações validadas para esse pedido
+// 3️⃣ Conta apenas ações validadas (boolean true) ou string "true"
 const acoesValidadas = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: true
+  acao_validada: { $in: [ true, "true" ] }
 });
 
 if (acoesValidadas >= limiteQuantidade) {
