@@ -995,7 +995,7 @@ if (url.startsWith("/api/mailer")) {
       }
     }
     
-// Rota: /api/registrar_acao_pendente      
+// Rota: /api/registrar_acao_pendente
 if (url.startsWith("/api/registrar_acao_pendente")) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -1019,7 +1019,6 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     id_pedido,
     nome_usuario,
     url_dir,
-    unique_id_verificado,
     tipo_acao,
     quantidade_pontos
   } = req.body;
@@ -1036,66 +1035,44 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       : valorBruto;
     const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-    // 1️⃣ Verifica se essa conta já registrou ação pendente ou confirmada nesse pedido
-    const acaoExistente = await ActionHistory.findOne({
-      id_pedido,
-      id_conta,
-      acao_validada: { $in: [null, true] }
-    });
+    // Busca o pedido
+    const pedidoIdMongo = new mongoose.Types.ObjectId(id_pedido);
+    const pedido = await Pedido.findById(pedidoIdMongo);
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados." });
+    }
 
-    if (acaoExistente) {
+    // Verifica duplicidade: essa conta já executou esse pedido?
+    if (pedido.contasQueExecutaram?.includes(id_conta)) {
       return res.status(409).json({
         status: "ja_registrada",
-        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
+        message: "Essa conta já registrou uma ação para esse pedido."
       });
     }
 
-    // 2️⃣ Busca o pedido e extrai o limite
-    const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
-    const pedido = await Pedido.findById(pedidoIdMongo);
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+    // Verifica limite
+    const limite = parseInt(pedido.quantidade, 10) || 0;
+    const executadas = parseInt(pedido.quantidadeExecutada, 10) || 0;
+
+    if (executadas >= limite) {
+      return res.status(403).json({
+        status: "limite",
+        message: "Limite de ações atingido para esse pedido."
+      });
     }
 
-    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
+    // Atualiza o pedido com a nova execução
+    pedido.quantidadeExecutada += 1;
+    pedido.contasQueExecutaram.push(id_conta);
+    await pedido.save();
 
-// 3️⃣ Conta quantas ações válidas ou pendentes já existem para esse pedido
-const acoesRegistradas = await ActionHistory.countDocuments({
-  id_pedido,
-  $or: [
-    { acao_validada: null },
-    { acao_validada: true },
-    { acao_validada: { $exists: false } }
-  ]
-});
-
-if (acoesRegistradas >= limiteQuantidade) {
-  return res.status(403).json({
-    status: "limite",
-    message: "Limite de ações atingido para esse pedido."
-  });
-}
-
-    // 4️⃣ Registra a nova ação
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      token: usuario.token,
-      nome_usuario,
-      id_pedido,
-      id_conta,
-      url_dir,
-      tipo_acao,
-      quantidade_pontos,
-      tipo: tipo_acao || "Seguir",
-      rede_social: "TikTok",
+    // Aqui, você pode retornar um "registro virtual" de ação, se desejar exibir ao usuário
+    return res.status(200).json({
+      status: "pendente",
+      message: "Ação registrada com sucesso.",
       valor_confirmacao: valorFinal,
-      acao_validada: null,
-      data: new Date()
+      pontos_recebidos: pontos
     });
-
-    await novaAcao.save();
-
-    return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
 
   } catch (error) {
     console.error("Erro ao registrar ação pendente:", error);
