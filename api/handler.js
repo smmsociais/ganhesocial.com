@@ -1062,7 +1062,11 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 // 3️⃣ Conta quantas ações válidas ou pendentes já existem para esse pedido
 const acoesRegistradas = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: { $in: [null, true] }
+  $or: [
+    { acao_validada: null },
+    { acao_validada: true },
+    { acao_validada: { $exists: false } }
+  ]
 });
 
 if (acoesRegistradas >= limiteQuantidade) {
