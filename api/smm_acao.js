@@ -1,5 +1,4 @@
 import connectDB from './db.js';
-import { ActionHistory } from './ActionHistory.js';
 import Pedido from './Pedido.js';
 import mongoose from 'mongoose';
 
@@ -54,12 +53,6 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    // Verifica se já existe alguma ação com esse id_pedido
-    const jaExiste = await ActionHistory.findOne({ id_pedido });
-    if (jaExiste) {
-      return res.status(409).json({ error: "Ação já cadastrada" });
-    }
-
     // Converte id_pedido para ObjectId
     let pedidoObjectId;
     try {
@@ -88,23 +81,6 @@ const handler = async (req, res) => {
 
       await novoPedido.save();
     }
-
-    // Agora registra a ação no histórico
-const novaAcao = new ActionHistory({
-  tipo_acao,
-  nome_usuario,
-  quantidade_pontos: pontos,
-  url_dir,
-  id_pedido: pedidoObjectId.toString(), // garante que é uma string única e consistente
-  quantidade: qtd,
-  valor: val,
-  status: "pendente",
-  valor_confirmacao: "0",
-  rede_social: "TikTok",
-  tipo: tipo_acao
-});
-
-    await novaAcao.save();
 
     console.log("✅ Nova ação registrada:", { tipo_acao, nome_usuario, id_pedido, pontos });
 
