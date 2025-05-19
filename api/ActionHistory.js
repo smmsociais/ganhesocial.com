@@ -13,7 +13,6 @@ const actionHistorySchema = new mongoose.Schema({
   tipo: { type: String, default: "Seguir" },
   rede_social: { type: String, default: "TikTok" },
   valor_confirmacao: { type: String, required: true },
-  acao_validada: { type: Boolean, default: null },
   data: { type: Date, default: Date.now }
 });
 
