@@ -1059,19 +1059,18 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-    // 3️⃣ Tenta incrementar o contador de forma atômica
-    const pedidoAtualizado = await Pedido.findOneAndUpdate(
-      { _id: pedidoIdMongo, quantidadeExecutada: { $lt: limiteQuantidade } },
-      { $inc: { quantidadeExecutada: 1 } },
-      { new: true }
-    );
+// 3️⃣ Conta quantas ações válidas ou pendentes já existem para esse pedido
+const acoesRegistradas = await ActionHistory.countDocuments({
+  id_pedido,
+  acao_validada: { $in: [null, true] }
+});
 
-    if (!pedidoAtualizado) {
-      return res.status(403).json({
-        status: "limite",
-        message: "Limite de ações atingido para esse pedido."
-      });
-    }
+if (acoesRegistradas >= limiteQuantidade) {
+  return res.status(403).json({
+    status: "limite",
+    message: "Limite de ações atingido para esse pedido."
+  });
+}
 
     // 4️⃣ Registra a nova ação
     const novaAcao = new ActionHistory({
