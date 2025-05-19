@@ -99,7 +99,6 @@ const novaAcao = new ActionHistory({
   quantidade: qtd,
   valor: val,
   status: "pendente",
-  acao_validada: null,
   valor_confirmacao: "0",
   rede_social: "TikTok",
   tipo: tipo_acao
