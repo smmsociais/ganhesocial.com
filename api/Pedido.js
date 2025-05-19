@@ -7,6 +7,8 @@ const PedidoSchema = new mongoose.Schema({
   nome: String,
   valor: Number,
   quantidade: { type: Number, required: true },
+  quantidadeExecutada: { type: Number, default: 0 },
+  contasQueExecutaram: { type: [String], default: [] },
   link: String,
   status: { type: String, enum: ["pendente", "reservada", "concluida"], default: "pendente" },
   dataCriacao: { type: Date, default: Date.now }
