@@ -1059,16 +1059,16 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 
     const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-// 3️⃣ Conta apenas ações validadas (boolean true) ou string "true"
+// 3️⃣ Conta apenas ações validadas e pendentes (boolean true) ou string "true"
 const acoesValidadas = await ActionHistory.countDocuments({
   id_pedido,
-  acao_validada: { $in: [ true, "true" ] }
+  acao_validada: { $in: [true, "true", null] }
 });
 
 if (acoesValidadas >= limiteQuantidade) {
   return res.status(403).json({
     status: "limite",
-    message: "Limite de ações válidas já atingido para esse pedido."
+    message: "Limite de ações válidas e pendentes já atingido para esse pedido."
   });
 }
 
@@ -1099,6 +1099,5 @@ if (acoesValidadas >= limiteQuantidade) {
   }
 }
 
-    // Rota não encontrada
     return res.status(404).json({ error: "Rota não encontrada." });
 }
