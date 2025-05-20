@@ -27,6 +27,9 @@ export default async function handler(req, res) {
       { $set: { acao_validada: false } }
     );
 
+    console.log(`✅ Convertidos "true" ➜ true: ${trueResult.modifiedCount}`);
+    console.log(`✅ Convertidos "false" ➜ false: ${falseResult.modifiedCount}`);   
+
     await mongoose.disconnect();
 
     return res.status(200).json({
