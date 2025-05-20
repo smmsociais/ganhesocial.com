@@ -68,9 +68,4 @@ const PedidoSchema = new mongoose.Schema({
   dataCriacao: { type: Date, default: Date.now }
 });
 
-// 🔹 Exportação dos modelos
-export const User = mongoose.models.User || mongoose.model("User", UserSchema);
-export const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
-export const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
-
 export { User, ActionHistory, Pedido };
