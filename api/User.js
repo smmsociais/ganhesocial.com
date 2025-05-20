@@ -8,16 +8,16 @@ const ContaSchema = new mongoose.Schema({
 
 // 🔹 Schema para Histórico de Ações
 const ActionHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // removido required
-  token: { type: String },                                     // removido required
-  nome_usuario: { type: String },                              // removido required
-  id_pedido: { type: String },                                 // removido required
-  id_conta: { type: String },                                  // removido required
-  url_dir: { type: String },                                   // ✅ agora é opcional
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, 
+  token: { type: String },                                    
+  nome_usuario: { type: String },                            
+  id_pedido: { type: String },                                 
+  id_conta: { type: String },                                 
+  url_dir: { type: String },                       
   acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
-  quantidade_pontos: { type: Number },                         // removido required
-  tipo_acao: { type: String },                                 // removido required
+  quantidade_pontos: { type: Number },
+  tipo_acao: { type: String },
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
   tipo: { type: String, default: "Seguir" }
@@ -55,21 +55,9 @@ const UserSchema = new mongoose.Schema({
   ganhosPorDia: [GanhosPorDiaSchema]
 });
 
-// 🔹 Schema para Verificação Global
-const VerificacaoGlobalSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    default: "verificacao_global"
-  },
-  ultimaVerificacao: {
-    type: Date,
-    required: true
-  }
-});
-
 // 🔹 Exportação dos modelos
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
-const VerificacaoGlobal = mongoose.models.VerificacaoGlobal || mongoose.model("VerificacaoGlobal", VerificacaoGlobalSchema);
+export const User = mongoose.models.User || mongoose.model("User", UserSchema);
+export const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
+export const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
 
-export { User, ActionHistory, VerificacaoGlobal };
+export { User, ActionHistory, Pedido };
