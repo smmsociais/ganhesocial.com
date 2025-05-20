@@ -68,4 +68,8 @@ const PedidoSchema = new mongoose.Schema({
   dataCriacao: { type: Date, default: Date.now }
 });
 
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
+const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
+const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
+
 export { User, ActionHistory, Pedido };
