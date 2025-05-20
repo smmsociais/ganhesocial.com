@@ -1,17 +1,19 @@
-import mongoose from 'mongoose';
-import connectDB from "./db.js";
+// api/migrar_acao_validada.js
 
-// Schema mínimo apenas para a migração
+import mongoose from 'mongoose';
+import connectDB from './db.js';
+
 const actionHistorySchema = new mongoose.Schema(
-  {
-    acao_validada: mongoose.Schema.Types.Mixed,
-  },
+  { acao_validada: mongoose.Schema.Types.Mixed },
   { collection: 'actionhistories' }
 );
-
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model('ActionHistory', actionHistorySchema);
 
-async function migrarAcaoValidada() {
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Método não permitido.' });
+  }
+
   try {
     await connectDB();
     console.log('🔌 Conectado ao MongoDB.');
@@ -20,20 +22,20 @@ async function migrarAcaoValidada() {
       { acao_validada: 'true' },
       { $set: { acao_validada: true } }
     );
-
     const falseResult = await ActionHistory.updateMany(
       { acao_validada: 'false' },
       { $set: { acao_validada: false } }
     );
 
-    console.log(`✅ Convertidos "true" ➜ true: ${trueResult.modifiedCount}`);
-    console.log(`✅ Convertidos "false" ➜ false: ${falseResult.modifiedCount}`);
+    await mongoose.disconnect();
+
+    return res.status(200).json({
+      message: 'Migração concluída.',
+      trueConvertidos: trueResult.modifiedCount,
+      falseConvertidos: falseResult.modifiedCount
+    });
   } catch (erro) {
     console.error('❌ Erro na migração:', erro);
-  } finally {
-    await mongoose.disconnect();
-    console.log('🔒 Conexão encerrada.');
+    return res.status(500).json({ error: 'Erro na migração.' });
   }
 }
-
-migrarAcaoValidada();
