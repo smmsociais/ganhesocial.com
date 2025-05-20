@@ -55,6 +55,19 @@ const UserSchema = new mongoose.Schema({
   ganhosPorDia: [GanhosPorDiaSchema]
 });
 
+const PedidoSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  rede: String,
+  tipo: String,
+  nome: String,
+  valor: Number,
+  quantidade: { type: Number, required: true },
+  quantidadeExecutada: { type: Number, default: 0 },
+  link: String,
+  status: { type: String, enum: ["pendente", "reservada", "concluida"], default: "pendente" },
+  dataCriacao: { type: Date, default: Date.now }
+});
+
 // 🔹 Exportação dos modelos
 export const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
