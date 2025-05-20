@@ -1,6 +1,6 @@
 import connectDB from './db.js';
 import mongoose from 'mongoose';
-import { User, ActionHistory } from "./User.js";
+import { User, ActionHistory, Pedido } from "./User.js";
 
 const SMM_API_KEY = process.env.SMM_API_KEY;
 
@@ -44,41 +44,41 @@ const handler = async (req, res) => {
       return res.json({ status: "NAO_ENCONTRADA" });
     }
 
-// 🔁 Verifica se o usuário já registrou ação para esse pedido
-const acaoExistente = await ActionHistory.findOne({
-  id_pedido: acao._id,
-  id_conta,
-  acao_validada: { $in: [null, true] }
-});
+    // 🔁 Verifica se o usuário já registrou ação para esse pedido
+    const acaoExistente = await ActionHistory.findOne({
+      id_pedido: acao._id,
+      id_conta,
+      acao_validada: { $in: [null, true] }
+    });
 
-if (acaoExistente) {
-  return res.json({
-    status: "JA_REGISTRADA",
-    message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
-  });
-}
+    if (acaoExistente) {
+      return res.json({
+        status: "JA_REGISTRADA",
+        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
+      });
+    }
 
-// 🔢 Verifica se o limite de ações válidas/pending já foi atingido
-const pedidoIdMongo = mongoose.Types.ObjectId(acao._id);
-const pedido = await Pedido.findById(pedidoIdMongo);
+    // 🔢 Verifica se o limite de ações válidas/pending já foi atingido
+    const pedidoIdMongo = mongoose.Types.ObjectId(acao._id);
+    const pedido = await Pedido.findById(pedidoIdMongo);
 
-if (!pedido) {
-  return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-}
+    if (!pedido) {
+      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
+    }
 
-const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
+    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
 
-const acoesRegistradas = await ActionHistory.countDocuments({
-  id_pedido: acao._id,
-  acao_validada: { $in: [true, "true", null] }
-});
+    const acoesRegistradas = await ActionHistory.countDocuments({
+      id_pedido: acao._id,
+      acao_validada: { $in: [true, "true", null] }
+    });
 
-if (acoesRegistradas >= limiteQuantidade) {
-  return res.json({
-    status: "LIMITE_ATINGIDO",
-    message: "O número máximo de ações válidas ou pendentes já foi atingido para esse pedido."
-  });
-}
+    if (acoesRegistradas >= limiteQuantidade) {
+      return res.json({
+        status: "LIMITE_ATINGIDO",
+        message: "O número máximo de ações válidas ou pendentes já foi atingido para esse pedido."
+      });
+    }
 
     // ✅ Extração do nome de usuário do link
     const nomeUsuario = acao.link.includes("@")
