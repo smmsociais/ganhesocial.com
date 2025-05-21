@@ -4,8 +4,7 @@ import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import redis from "./redis.js";
-import { User, ActionHistory, Pedido } from "./User.js";
+import { User, ActionHistory, Pedido, TemporaryAction } from "./schema.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
@@ -1019,23 +1018,26 @@ if (url.startsWith("/api/get_action") && method === "GET") {
                 .map(d => d === '0' ? 'a' : String(Number(d) - 1))
                 .join('');
 
-            try {
-await redis.set(`action:${id_tiktok}`, JSON.stringify({
-    url_dir: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: data.tipo_acao,
-    valor: valorFinal,
-    id_perfil: data.id_alvo,
-    id_pedido: data.id_pedido
-}), { ex: 300 }); // Upstash Redis suporta isso na versão moderna
+try {
+  await TemporaryAction.findOneAndUpdate(
+    { id_tiktok },
+    {
+      id_tiktok,
+      url_dir: data.url_dir,
+      nome_usuario: data.nome_usuario,
+      tipo_acao: data.tipo_acao,
+      valor: valorFinal,
+      id_perfil: data.id_alvo,
+      id_pedido: data.id_pedido
+    },
+    { upsert: true, new: true }
+  );
 
-                console.log("📥 Ação salva no Redis com chave:", `action:${id_tiktok}`);
-
-            } catch (error) {
-                console.error("💥 Erro ao salvar no Redis:", error);
-                return res.status(500).json({ error: "Erro ao salvar dados no Redis." });
-            }
-
+  console.log("📥 Ação salva no MongoDB (coleção TemporaryAction)");
+} catch (error) {
+  console.error("💥 Erro ao salvar no MongoDB:", error);
+  return res.status(500).json({ error: "Erro ao salvar dados no MongoDB." });
+}
             return res.status(200).json({
                 status: "sucess",
                 id_tiktok,
