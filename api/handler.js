@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
+import redis from "redis";
 import { User, ActionHistory, Pedido } from "./User.js";
 
 function getBrasiliaMidnightDate() {
@@ -113,70 +114,6 @@ if (url.startsWith("/api/confirmar_acao") && method === "POST") {
     } catch (error) {
         console.error("Erro na requisição confirm_action:", error.response?.data || error.message);
         return res.status(500).json({ error: "Erro na requisição confirm_action.", detalhes: error.response?.data });
-    }
-}
-
-// Rota: /api/get_user (GET)
-if (url.startsWith("/api/get_user") && method === "GET") {
-    await connectDB();
-
-    const { token, nome_usuario } = req.query;
-    if (!token || !nome_usuario) {
-        return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
-    }
-
-    try {
-        const usuario = await User.findOne({ token });
-
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado. Token inválido." });
-        }
-
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
-        const bindResponse = await axios.get(bindTkUrl);
-        const bindData = bindResponse.data;
-
-        if (bindData.error === "TOKEN_INCORRETO") {
-            return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
-        }
-
-        const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
-
-        if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-            const novaConta = { nomeConta: nome_usuario, id_tiktok: null, status: "Pendente" };
-
-            if (contaIndex !== -1) {
-                usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
-            } else {
-                usuario.contas.push(novaConta);
-            }
-
-            await usuario.save();
-            return res.status(200).json({ status: "success" });
-        }
-
-        const novaConta = {
-            nomeConta: nome_usuario,
-            id_tiktok: bindData.id_tiktok || null,
-            status: bindData.id_tiktok ? "Vinculada" : "Pendente"
-        };
-
-        if (contaIndex !== -1) {
-            usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
-        } else {
-            usuario.contas.push(novaConta);
-        }
-
-        await usuario.save();
-
-        return res.status(200).json({
-            status: "success",
-            ...(bindData.id_tiktok && { id_tiktok: bindData.id_tiktok })
-        });
-
-    } catch (error) {
-        console.error("Erro ao processar requisição:", error.response?.data || error.message);
-        return res.status(500).json({ error: "Erro interno ao processar requisição." });
     }
 }
 
@@ -1058,6 +995,70 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     console.error("Erro ao registrar ação pendente:", error);
     return res.status(500).json({ error: "Erro ao registrar ação." });
   }
+}
+
+// Rota: /api/get_user (GET)
+if (url.startsWith("/api/get_user") && method === "GET") {
+    await connectDB();
+
+    const { token, nome_usuario } = req.query;
+    if (!token || !nome_usuario) {
+        return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
+    }
+
+    try {
+        const usuario = await User.findOne({ token });
+
+        if (!usuario) {
+            return res.status(403).json({ error: "Acesso negado. Token inválido." });
+        }
+
+        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+        const bindResponse = await axios.get(bindTkUrl);
+        const bindData = bindResponse.data;
+
+        if (bindData.error === "TOKEN_INCORRETO") {
+            return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
+        }
+
+        const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
+
+        if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+            const novaConta = { nomeConta: nome_usuario, id_tiktok: null, status: "Pendente" };
+
+            if (contaIndex !== -1) {
+                usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
+            } else {
+                usuario.contas.push(novaConta);
+            }
+
+            await usuario.save();
+            return res.status(200).json({ status: "success" });
+        }
+
+        const novaConta = {
+            nomeConta: nome_usuario,
+            id_tiktok: bindData.id_tiktok || null,
+            status: bindData.id_tiktok ? "Vinculada" : "Pendente"
+        };
+
+        if (contaIndex !== -1) {
+            usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
+        } else {
+            usuario.contas.push(novaConta);
+        }
+
+        await usuario.save();
+
+        return res.status(200).json({
+            status: "success",
+            ...(bindData.id_tiktok && { id_tiktok: bindData.id_tiktok })
+        });
+
+    } catch (error) {
+        console.error("Erro ao processar requisição:", error.response?.data || error.message);
+        return res.status(500).json({ error: "Erro interno ao processar requisição." });
+    }
 }
 
     return res.status(404).json({ error: "Rota não encontrada." });
