@@ -994,7 +994,7 @@ if (url.startsWith("/api/mailer")) {
       }
     }
     
-// Rota: /api/registrar_acao_pendente      
+// Rota: /api/registrar_acao_pendente
 if (url.startsWith("/api/registrar_acao_pendente")) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -1018,7 +1018,6 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     id_pedido,
     nome_usuario,
     url_dir,
-    unique_id_verificado,
     tipo_acao,
     quantidade_pontos
   } = req.body;
@@ -1028,50 +1027,6 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   }
 
   try {
-    const pontos = parseFloat(quantidade_pontos);
-    const valorBruto = pontos / 1000;
-    const valorDescontado = (valorBruto > 0.004)
-      ? valorBruto - 0.001
-      : valorBruto;
-    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-
-    // 1️⃣ Verifica se essa conta já registrou ação pendente ou confirmada nesse pedido
-    const acaoExistente = await ActionHistory.findOne({
-      id_pedido,
-      id_conta,
-      acao_validada: { $in: [null, true] }
-    });
-
-    if (acaoExistente) {
-      return res.status(409).json({
-        status: "ja_registrada",
-        message: "Essa conta já registrou uma ação válida ou pendente para esse pedido."
-      });
-    }
-
-    // 2️⃣ Busca o pedido e extrai o limite
-    const pedidoIdMongo = mongoose.Types.ObjectId(id_pedido);
-    const pedido = await Pedido.findById(pedidoIdMongo);
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido não encontrado no banco de dados local." });
-    }
-
-    const limiteQuantidade = parseInt(pedido.quantidade, 10) || 0;
-
-// 3️⃣ Conta apenas ações validadas e pendentes (boolean true) ou string "true"
-const acoesValidadas = await ActionHistory.countDocuments({
-  id_pedido,
-  acao_validada: { $in: [true, "true", null] }
-});
-
-if (acoesValidadas >= limiteQuantidade) {
-  return res.status(403).json({
-    status: "limite",
-    message: "Limite de ações válidas e pendentes já atingido para esse pedido."
-  });
-}
-
-    // 4️⃣ Registra a nova ação
     const novaAcao = new ActionHistory({
       user: usuario._id,
       token: usuario.token,
@@ -1083,7 +1038,7 @@ if (acoesValidadas >= limiteQuantidade) {
       quantidade_pontos,
       tipo: tipo_acao || "Seguir",
       rede_social: "TikTok",
-      valor_confirmacao: valorFinal,
+      valor_confirmacao,
       acao_validada: null,
       data: new Date()
     });
