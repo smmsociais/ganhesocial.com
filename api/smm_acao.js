@@ -53,34 +53,38 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Valor inválido" });
     }
 
-    // Converte id_pedido para ObjectId
-    let pedidoObjectId;
-    try {
-      pedidoObjectId = new mongoose.Types.ObjectId(id_pedido);
-    } catch {
-      return res.status(400).json({ error: "id_pedido inválido" });
-    }
+// Gera um número aleatório de 9 dígitos
+function gerarIdPedido() {
+  return Math.floor(100000000 + Math.random() * 900000000);
+}   
 
-    // Procura o Pedido pelo _id do Mongo (não pelo campo id_pedido)
-    const pedidoExistente = await Pedido.findById(pedidoObjectId);
+// Usa o id_pedido se for um número válido, senão gera um novo
+let pedidoId;
+if (id_pedido && /^\d{9}$/.test(id_pedido)) {
+  pedidoId = parseInt(id_pedido);
+} else {
+  pedidoId = gerarIdPedido();
+}
 
-    if (!pedidoExistente) {
-      // Cria o Pedido usando _id = id_pedido convertido para ObjectId
-      const novoPedido = new Pedido({
-        _id: pedidoObjectId,
-        rede: "tiktok",
-        tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
-        nome: `Ação ${tipo_acao} - ${nome_usuario}`,
-        valor: val,
-        quantidade: qtd,
-        quantidadeExecutada: 0,
-        link: url_dir,
-        status: "pendente",
-        dataCriacao: new Date(),
-      });
+// Verifica se já existe
+const pedidoExistente = await Pedido.findById(pedidoId);
 
-      await novoPedido.save();
-    }
+if (!pedidoExistente) {
+  const novoPedido = new Pedido({
+    _id: pedidoId,
+    rede: "tiktok",
+    tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
+    nome: `Ação ${tipo_acao} - ${nome_usuario}`,
+    valor: val,
+    quantidade: qtd,
+    quantidadeExecutada: 0,
+    link: url_dir,
+    status: "pendente",
+    dataCriacao: new Date(),
+  });
+
+  await novoPedido.save();
+}
 
     console.log("✅ Nova ação registrada:", { tipo_acao, nome_usuario, id_pedido, pontos });
 
