@@ -56,6 +56,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 const PedidoSchema = new mongoose.Schema({
+  _id: { type: Number }, // <- IMPORTANTE
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   rede: String,
   tipo: String,
