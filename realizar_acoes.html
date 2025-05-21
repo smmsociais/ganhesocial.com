@@ -488,21 +488,24 @@ async function fetchAction() {
         return false;
     }
 
-    async function tentarBuscarLocal() {
-        try {
-            const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-            const data = await response.json();
-            if (data.status === "ENCONTRADA") {
-                await processarAcao(data, "local");
-                return true;
-            } else if (data.error === "Nenhuma ação encontrada.") {
-                return "repetirSMM";
+async function tentarBuscarLocal() {
+    try {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+        const data = await response.json();
+        if (data.status === "ENCONTRADA") {
+            if (parseFloat(data.quantidade_pontos) === 4) {
+                return "ignorarLocalERepetirSMM";
             }
-        } catch (e) {
-            console.error("Erro ao buscar ação local:", e);
+            await processarAcao(data, "local");
+            return true;
+        } else if (data.error === "Nenhuma ação encontrada.") {
+            return "repetirSMM";
         }
-        return false;
+    } catch (e) {
+        console.error("Erro ao buscar ação local:", e);
     }
+    return false;
+}
 
     async function processarAcao(data, origem) {
         document.getElementById("statusMessage").textContent = "";
@@ -548,27 +551,28 @@ async function fetchAction() {
         document.getElementById("actionContent").style.opacity = "1";
     }
 
-    try {
-        const encontrouSMM = await tentarBuscarSMM();
-        if (!encontrouSMM) {
-            const resultadoLocal = await tentarBuscarLocal();
-            if (resultadoLocal === "repetirSMM") {
-                const novaTentativa = await tentarBuscarSMM();
-                if (!novaTentativa) {
-                    document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
-                    setTimeout(fetchAction, 3000);
-                }
-            } else if (!resultadoLocal) {
+try {
+    const encontrouSMM = await tentarBuscarSMM();
+    if (!encontrouSMM) {
+        const resultadoLocal = await tentarBuscarLocal();
+
+        if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+            const novaTentativa = await tentarBuscarSMM();
+            if (!novaTentativa) {
                 document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
                 setTimeout(fetchAction, 3000);
             }
+        } else if (!resultadoLocal) {
+            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
+            setTimeout(fetchAction, 3000);
         }
-    } catch (error) {
-        console.error("Erro ao buscar ações:", error);
-        document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
-        document.getElementById("actionContent").style.opacity = "1";
     }
+} catch (error) {
+    console.error("Erro ao buscar ações:", error);
+    document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
+    document.getElementById("actionContent").style.opacity = "1";
 }
+  }
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
