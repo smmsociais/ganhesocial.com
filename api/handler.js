@@ -986,11 +986,16 @@ if (url.startsWith("/api/get_action") && method === "GET") {
   try {
     await connectDB();
 
+    console.log("[GET_ACTION] Iniciando busca de ação para:", id_tiktok);
+
     // 🔐 Validação do token
     const usuario = await User.findOne({ token });
     if (!usuario) {
+      console.log("[GET_ACTION] Token inválido:", token);
       return res.status(401).json({ error: "Token inválido" });
     }
+
+    console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
     // 🔍 Buscar pedidos locais válidos
     const pedidos = await Pedido.find({
@@ -1000,35 +1005,34 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
     }).sort({ dataCriacao: -1 });
 
+    console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
+
     for (const pedido of pedidos) {
       const id_pedido = pedido._id;
 
-      // ❌ Verifica se a conta já fez essa ação
       const jaFez = await ActionHistory.findOne({
         id_pedido,
         id_conta: id_tiktok,
         acao_validada: { $in: [true, null] }
       });
 
-      if (jaFez) continue;
+      if (jaFez) {
+        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_pedido}, pulando`);
+        continue;
+      }
 
-      // 🔢 Verifica quantas execuções válidas já existem
       const feitas = await ActionHistory.countDocuments({
         id_pedido,
         acao_validada: { $in: [true, null] }
       });
 
-  if (feitas >= pedido.quantidade) continue;
+      if (feitas >= pedido.quantidade) {
+        console.log(`[GET_ACTION] Limite atingido para pedido ${id_pedido}, pulando`);
+        continue;
+      }
 
-  console.log(`[LOCAL] Ação encontrada localmente:`, {
-    id_pedido: pedido._id.toString(),
-    nome: pedido.nome,
-    link: pedido.link,
-    quantidadeExecutada: pedido.quantidadeExecutada,
-    quantidadeTotal: pedido.quantidade
-  });
+      console.log("[GET_ACTION] Ação local encontrada:", pedido.link);
 
-      // ✅ Ação disponível
       const nomeUsuario = pedido.link.includes("@")
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
         : pedido.nome;
@@ -1045,7 +1049,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
         .map(d => d === '0' ? 'a' : String(Number(d) - 1))
         .join('');
 
-      // 💾 Salvar no TemporaryAction
       await TemporaryAction.findOneAndUpdate(
         { id_tiktok },
         {
@@ -1060,6 +1063,8 @@ if (url.startsWith("/api/get_action") && method === "GET") {
         { upsert: true, new: true }
       );
 
+      console.log("[GET_ACTION] Ação local registrada em TemporaryAction");
+
       return res.status(200).json({
         status: "sucess",
         id_tiktok,
@@ -1072,12 +1077,14 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       });
     }
 
-    // 🌀 Fallback para API externa
+    console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+
     const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
     const response = await axios.get(apiURL);
     const data = response.data;
 
     if (data.status === "CONTA_INEXISTENTE") {
+      console.log("[GET_ACTION] Conta inexistente na API externa:", id_tiktok);
       return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
     }
 
@@ -1109,6 +1116,8 @@ if (url.startsWith("/api/get_action") && method === "GET") {
         { upsert: true, new: true }
       );
 
+      console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
+
       return res.status(200).json({
         status: "sucess",
         id_tiktok,
@@ -1121,13 +1130,13 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       });
     }
 
+    console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
     return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
 
   } catch (err) {
-    console.error("Erro ao buscar ação:", err);
+    console.error("[GET_ACTION] Erro ao buscar ação:", err);
     return res.status(500).json({ error: "Erro interno ao buscar ação" });
   }
 };
-
     return res.status(404).json({ error: "Rota não encontrada." });
 }
