@@ -971,37 +971,75 @@ if (url.startsWith("/api/get_user") && method === "GET") {
     }
 }
 
-// Rota: /api/get_action (GET)
 if (url.startsWith("/api/get_action") && method === "GET") {
     await connectDB();
-
     const { token, id_tiktok } = req.query;
 
     if (!token || !id_tiktok) {
-        console.warn("❌ Parâmetros ausentes:", { token, id_tiktok });
         return res.status(400).json({ error: "Os parâmetros 'token' e 'id_tiktok' são obrigatórios." });
     }
 
     try {
         const usuario = await User.findOne({ token });
-
         if (!usuario) {
-            console.warn("❌ Token inválido:", token);
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
+        // ✅ PASSO 1: Buscar ação local do MongoDB (coleção Pedido)
+        const pedido = await Pedido.findOne({
+            rede: "tiktok",
+            tipo: "seguir",
+            status: { $ne: "concluida" },
+            $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
+        });
+
+        if (pedido) {
+            const valorBruto = pedido.valor / 1000;
+            const valorDescontado = (valorBruto > 0.004)
+                ? valorBruto - 0.001
+                : valorBruto;
+            const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
+            const idPedidoOriginal = String(pedido._id).padStart(9, '0');
+            const idPedidoModificado = idPedidoOriginal
+                .split('')
+                .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+                .join('');
+
+            await TemporaryAction.findOneAndUpdate(
+                { id_tiktok },
+                {
+                    id_tiktok,
+                    url_dir: pedido.link,
+                    nome_usuario: pedido.nome,
+                    tipo_acao: "seguir",
+                    valor: valorFinal,
+                    id_perfil: pedido._id.toString(),
+                    id_pedido: pedido._id.toString()
+                },
+                { upsert: true, new: true }
+            );
+
+            console.log("📥 Ação local retornada e salva no TemporaryAction");
+            return res.status(200).json({
+                status: "sucess",
+                id_tiktok,
+                id_action: idPedidoModificado,
+                url: pedido.link,
+                id_perfil: pedido._id,
+                nome_usuario: pedido.nome,
+                tipo_acao: "seguir",
+                valor: valorFinal
+            });
+        }
+
+        // ✅ PASSO 2: Buscar da API externa se nada foi encontrado localmente
         const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
         const actionResponse = await axios.get(getActionUrl);
         const data = actionResponse.data;
 
-        console.log("📦 Resposta da API externa get_action:", data);
-
         if (data.status === "CONTA_INEXISTENTE") {
-            return res.status(200).json({
-                status: "fail",
-                id_tiktok,
-                message: "conta_inexistente"
-            });
+            return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
         }
 
         if (data.status === "ENCONTRADA") {
@@ -1018,26 +1056,21 @@ if (url.startsWith("/api/get_action") && method === "GET") {
                 .map(d => d === '0' ? 'a' : String(Number(d) - 1))
                 .join('');
 
-try {
-  await TemporaryAction.findOneAndUpdate(
-    { id_tiktok },
-    {
-      id_tiktok,
-      url_dir: data.url_dir,
-      nome_usuario: data.nome_usuario,
-      tipo_acao: data.tipo_acao,
-      valor: valorFinal,
-      id_perfil: data.id_alvo,
-      id_pedido: data.id_pedido
-    },
-    { upsert: true, new: true }
-  );
+            await TemporaryAction.findOneAndUpdate(
+                { id_tiktok },
+                {
+                    id_tiktok,
+                    url_dir: data.url_dir,
+                    nome_usuario: data.nome_usuario,
+                    tipo_acao: data.tipo_acao,
+                    valor: valorFinal,
+                    id_perfil: data.id_alvo,
+                    id_pedido: data.id_pedido
+                },
+                { upsert: true, new: true }
+            );
 
-  console.log("📥 Ação salva no MongoDB (coleção TemporaryAction)");
-} catch (error) {
-  console.error("💥 Erro ao salvar no MongoDB:", error);
-  return res.status(500).json({ error: "Erro ao salvar dados no MongoDB." });
-}
+            console.log("📦 Ação externa salva no TemporaryAction");
             return res.status(200).json({
                 status: "sucess",
                 id_tiktok,
@@ -1050,7 +1083,6 @@ try {
             });
         }
 
-        console.log("⚠️ Nenhuma ação disponível no momento.");
         return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
 
     } catch (error) {
