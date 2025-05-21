@@ -1027,19 +1027,12 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   }
 
   try {
-    let pontos = parseFloat(quantidade_pontos);
-    let valorFinal = "0.006";
-    let origem = "smm";
-
-    // Se não for ação SMM, aplicar cálculo padrão e marcar como local
-    if (pontos !== 6) {
-      origem = "local";
-      const valorBruto = pontos / 1000;
-      const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-      valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-    } else {
-      pontos = 6;
-    }
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004)
+      ? valorBruto - 0.001
+      : valorBruto;
+    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
     const novaAcao = new ActionHistory({
       user: usuario._id,
@@ -1049,12 +1042,11 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       id_conta,
       url_dir,
       tipo_acao,
-      quantidade_pontos: pontos,
+      quantidade_pontos,
       tipo: tipo_acao || "Seguir",
       rede_social: "TikTok",
       valor_confirmacao: valorFinal,
       acao_validada: null,
-      origem, // ✅ campo de origem ("smm" ou "local")
       data: new Date()
     });
 
