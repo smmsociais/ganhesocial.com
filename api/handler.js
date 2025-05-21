@@ -1027,33 +1027,36 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   }
 
   try {
-let pontos = parseFloat(quantidade_pontos);
-let valorFinal = "0.006";
+    let pontos = parseFloat(quantidade_pontos);
+    let valorFinal = "0.006";
+    let origem = "smm";
 
-// Se pontos forem diferentes de 6, aplicar cálculo normal (para ações locais)
-if (pontos !== 6) {
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-  valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-} else {
-  pontos = 6; // garantir que sempre seja 6
-}
+    // Se não for ação SMM, aplicar cálculo padrão e marcar como local
+    if (pontos !== 6) {
+      origem = "local";
+      const valorBruto = pontos / 1000;
+      const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+      valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+    } else {
+      pontos = 6;
+    }
 
-const novaAcao = new ActionHistory({
-  user: usuario._id,
-  token: usuario.token,
-  nome_usuario,
-  id_pedido,
-  id_conta,
-  url_dir,
-  tipo_acao,
-  quantidade_pontos: pontos,
-  tipo: tipo_acao || "Seguir",
-  rede_social: "TikTok",
-  valor_confirmacao: valorFinal,
-  acao_validada: null,
-  data: new Date()
-});
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
+      nome_usuario,
+      id_pedido,
+      id_conta,
+      url_dir,
+      tipo_acao,
+      quantidade_pontos: pontos,
+      tipo: tipo_acao || "Seguir",
+      rede_social: "TikTok",
+      valor_confirmacao: valorFinal,
+      acao_validada: null,
+      origem, // ✅ campo de origem ("smm" ou "local")
+      data: new Date()
+    });
 
     await novaAcao.save();
 
