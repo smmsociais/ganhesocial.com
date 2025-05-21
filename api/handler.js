@@ -1038,7 +1038,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       quantidade_pontos,
       tipo: tipo_acao || "Seguir",
       rede_social: "TikTok",
-      valor_confirmacao,
+      valor_confirmacao: quantidade_pontos,
       acao_validada: null,
       data: new Date()
     });
