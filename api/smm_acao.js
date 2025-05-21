@@ -1,5 +1,5 @@
 import connectDB from './db.js';
-import { Pedido } from "./User.js";
+import { Pedido } from "./schema.js";
 import mongoose from 'mongoose';
 
 const handler = async (req, res) => {
