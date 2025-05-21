@@ -1,6 +1,6 @@
 import connectDB from './db.js';
 import mongoose from 'mongoose';
-import { User, ActionHistory, Pedido } from "./User.js";
+import { User, ActionHistory, Pedido } from "./schema.js";
 
 const handler = async (req, res) => {
   if (req.method !== "GET") {
