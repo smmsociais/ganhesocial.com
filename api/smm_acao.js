@@ -24,7 +24,6 @@ const handler = async (req, res) => {
       url_dir,
       id_pedido,
       quantidade,
-      valor
     } = req.body;
 
     if (
@@ -33,8 +32,7 @@ const handler = async (req, res) => {
       quantidade_pontos === undefined ||
       !url_dir ||
       !id_pedido ||
-      quantidade === undefined ||
-      valor === undefined
+      quantidade === undefined
     ) {
       return res.status(400).json({ error: "Dados incompletos" });
     }
@@ -48,9 +46,6 @@ const handler = async (req, res) => {
     }
     if (isNaN(qtd) || qtd <= 0) {
       return res.status(400).json({ error: "Quantidade inválida" });
-    }
-    if (isNaN(val) || val <= 0) {
-      return res.status(400).json({ error: "Valor inválido" });
     }
 
     // Converte id_pedido para ObjectId
@@ -71,7 +66,6 @@ const handler = async (req, res) => {
         rede: "tiktok",
         tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
         nome: `Ação ${tipo_acao} - ${nome_usuario}`,
-        valor: val,
         quantidade: qtd,
         quantidadeExecutada: 0,
         link: url_dir,
