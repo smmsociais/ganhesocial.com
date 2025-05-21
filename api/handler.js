@@ -998,12 +998,12 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
     // 🔍 Buscar pedidos locais válidos
-    const pedidos = await Pedido.find({
-      rede: "tiktok",
-      tipo: "seguir",
-      status: { $ne: "concluida" },
-      $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-    }).sort({ dataCriacao: -1 });
+const pedidos = await Pedido.find({
+  rede: "tiktok",
+  tipo: "seguidores", // <- corrigido
+  status: { $ne: "concluida" },
+  $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
+}).sort({ dataCriacao: -1 });
 
     console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
 
