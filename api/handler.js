@@ -971,125 +971,155 @@ if (url.startsWith("/api/get_user") && method === "GET") {
     }
 }
 
+// Rota: /api/get_action (GET)
 if (url.startsWith("/api/get_action") && method === "GET") {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
+
+  const { id_tiktok, token } = req.query;
+
+  if (!id_tiktok || !token) {
+    return res.status(400).json({ error: "Parâmetros 'id_tiktok' e 'token' são obrigatórios" });
+  }
+
+  try {
     await connectDB();
-    const { token, id_tiktok } = req.query;
 
-    if (!token || !id_tiktok) {
-        return res.status(400).json({ error: "Os parâmetros 'token' e 'id_tiktok' são obrigatórios." });
+    // 🔐 Validação do token
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(401).json({ error: "Token inválido" });
     }
 
-    try {
-        const usuario = await User.findOne({ token });
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado. Token inválido." });
-        }
+    // 🔍 Buscar pedidos locais válidos
+    const pedidos = await Pedido.find({
+      rede: "tiktok",
+      tipo: "seguir",
+      status: { $ne: "concluida" },
+      $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
+    }).sort({ dataCriacao: -1 });
 
-        // ✅ PASSO 1: Buscar ação local do MongoDB (coleção Pedido)
-        const pedido = await Pedido.findOne({
-            rede: "tiktok",
-            tipo: "seguir",
-            status: { $ne: "concluida" },
-            $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-        });
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;
 
-        if (pedido) {
-            const valorBruto = pedido.valor / 1000;
-            const valorDescontado = (valorBruto > 0.004)
-                ? valorBruto - 0.001
-                : valorBruto;
-            const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+      // ❌ Verifica se a conta já fez essa ação
+      const jaFez = await ActionHistory.findOne({
+        id_pedido,
+        id_conta: id_tiktok,
+        acao_validada: { $in: [true, null] }
+      });
 
-            const idPedidoOriginal = String(pedido._id).padStart(9, '0');
-            const idPedidoModificado = idPedidoOriginal
-                .split('')
-                .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-                .join('');
+      if (jaFez) continue;
 
-            await TemporaryAction.findOneAndUpdate(
-                { id_tiktok },
-                {
-                    id_tiktok,
-                    url_dir: pedido.link,
-                    nome_usuario: pedido.nome,
-                    tipo_acao: "seguir",
-                    valor: valorFinal,
-                    id_perfil: pedido._id.toString(),
-                    id_pedido: pedido._id.toString()
-                },
-                { upsert: true, new: true }
-            );
+      // 🔢 Verifica quantas execuções válidas já existem
+      const feitas = await ActionHistory.countDocuments({
+        id_pedido,
+        acao_validada: { $in: [true, null] }
+      });
 
-            console.log("📥 Ação local retornada e salva no TemporaryAction");
-            return res.status(200).json({
-                status: "sucess",
-                id_tiktok,
-                id_action: idPedidoModificado,
-                url: pedido.link,
-                id_perfil: pedido._id,
-                nome_usuario: pedido.nome,
-                tipo_acao: "seguir",
-                valor: valorFinal
-            });
-        }
+      if (feitas >= pedido.quantidade) continue;
 
-        // ✅ PASSO 2: Buscar da API externa se nada foi encontrado localmente
-        const getActionUrl = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
-        const actionResponse = await axios.get(getActionUrl);
-        const data = actionResponse.data;
+      // ✅ Ação disponível
+      const nomeUsuario = pedido.link.includes("@")
+        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
+        : pedido.nome;
 
-        if (data.status === "CONTA_INEXISTENTE") {
-            return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
-        }
+      const valorBruto = pedido.valor / 1000;
+      const valorDescontado = (valorBruto > 0.004)
+        ? valorBruto - 0.001
+        : valorBruto;
+      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-        if (data.status === "ENCONTRADA") {
-            const pontos = parseFloat(data.quantidade_pontos);
-            const valorBruto = pontos / 1000;
-            const valorDescontado = (valorBruto > 0.004)
-                ? valorBruto - 0.001
-                : valorBruto;
-            const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+      const idPedidoOriginal = String(pedido._id).padStart(9, '0');
+      const idPedidoModificado = idPedidoOriginal
+        .split('')
+        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+        .join('');
 
-            const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
-            const idPedidoModificado = idPedidoOriginal
-                .split('')
-                .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-                .join('');
+      // 💾 Salvar no TemporaryAction
+      await TemporaryAction.findOneAndUpdate(
+        { id_tiktok },
+        {
+          id_tiktok,
+          url_dir: pedido.link,
+          nome_usuario: nomeUsuario,
+          tipo_acao: "seguir",
+          valor: valorFinal,
+          id_perfil: pedido._id.toString(),
+          id_pedido: pedido._id.toString()
+        },
+        { upsert: true, new: true }
+      );
 
-            await TemporaryAction.findOneAndUpdate(
-                { id_tiktok },
-                {
-                    id_tiktok,
-                    url_dir: data.url_dir,
-                    nome_usuario: data.nome_usuario,
-                    tipo_acao: data.tipo_acao,
-                    valor: valorFinal,
-                    id_perfil: data.id_alvo,
-                    id_pedido: data.id_pedido
-                },
-                { upsert: true, new: true }
-            );
-
-            console.log("📦 Ação externa salva no TemporaryAction");
-            return res.status(200).json({
-                status: "sucess",
-                id_tiktok,
-                id_action: idPedidoModificado,
-                url: data.url_dir,
-                id_perfil: data.id_alvo,
-                nome_usuario: data.nome_usuario,
-                tipo_acao: data.tipo_acao,
-                valor: valorFinal
-            });
-        }
-
-        return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
-
-    } catch (error) {
-        console.error("💥 Erro ao processar requisição:", error);
-        return res.status(500).json({ error: "Erro interno ao processar requisição." });
+      return res.status(200).json({
+        status: "sucess",
+        id_tiktok,
+        id_action: idPedidoModificado,
+        url: pedido.link,
+        id_perfil: pedido._id,
+        nome_usuario: nomeUsuario,
+        tipo_acao: "seguir",
+        valor: valorFinal
+      });
     }
-}
+
+    // 🌀 Fallback para API externa
+    const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
+    const response = await axios.get(apiURL);
+    const data = response.data;
+
+    if (data.status === "CONTA_INEXISTENTE") {
+      return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
+    }
+
+    if (data.status === "ENCONTRADA") {
+      const pontos = parseFloat(data.quantidade_pontos);
+      const valorBruto = pontos / 1000;
+      const valorDescontado = (valorBruto > 0.004)
+        ? valorBruto - 0.001
+        : valorBruto;
+      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
+      const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
+      const idPedidoModificado = idPedidoOriginal
+        .split('')
+        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+        .join('');
+
+      await TemporaryAction.findOneAndUpdate(
+        { id_tiktok },
+        {
+          id_tiktok,
+          url_dir: data.url_dir,
+          nome_usuario: data.nome_usuario,
+          tipo_acao: data.tipo_acao,
+          valor: valorFinal,
+          id_perfil: data.id_alvo,
+          id_pedido: data.id_pedido
+        },
+        { upsert: true, new: true }
+      );
+
+      return res.status(200).json({
+        status: "sucess",
+        id_tiktok,
+        id_action: idPedidoModificado,
+        url: data.url_dir,
+        id_perfil: data.id_alvo,
+        nome_usuario: data.nome_usuario,
+        tipo_acao: data.tipo_acao,
+        valor: valorFinal
+      });
+    }
+
+    return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
+
+  } catch (err) {
+    console.error("Erro ao buscar ação:", err);
+    return res.status(500).json({ error: "Erro interno ao buscar ação" });
+  }
+};
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
