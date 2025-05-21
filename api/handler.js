@@ -995,7 +995,6 @@ if (url.startsWith("/api/mailer")) {
     }
     
 // Rota: /api/registrar_acao_pendente
-// Rota: /api/registrar_acao_pendente
 if (url.startsWith("/api/registrar_acao_pendente")) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -1028,28 +1027,33 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   }
 
   try {
-    const pontos = parseFloat(quantidade_pontos);
-    const valorBruto = pontos / 1000;
-    const valorDescontado = (valorBruto > 0.004)
-      ? valorBruto - 0.001
-      : valorBruto;
-    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+let pontos = parseFloat(quantidade_pontos);
+let valorFinal = "0.006";
 
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      token: usuario.token,
-      nome_usuario,
-      id_pedido,
-      id_conta,
-      url_dir,
-      tipo_acao,
-      quantidade_pontos,
-      tipo: tipo_acao || "Seguir",
-      rede_social: "TikTok",
-      valor_confirmacao: valorFinal,
-      acao_validada: null,
-      data: new Date()
-    });
+// Se pontos forem diferentes de 6, aplicar cálculo normal (para ações locais)
+if (pontos !== 6) {
+  const valorBruto = pontos / 1000;
+  const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+  valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+} else {
+  pontos = 6; // garantir que sempre seja 6
+}
+
+const novaAcao = new ActionHistory({
+  user: usuario._id,
+  token: usuario.token,
+  nome_usuario,
+  id_pedido,
+  id_conta,
+  url_dir,
+  tipo_acao,
+  quantidade_pontos: pontos,
+  tipo: tipo_acao || "Seguir",
+  rede_social: "TikTok",
+  valor_confirmacao: valorFinal,
+  acao_validada: null,
+  data: new Date()
+});
 
     await novaAcao.save();
 
