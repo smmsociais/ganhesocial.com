@@ -535,10 +535,16 @@ async function tentarBuscarLocal() {
             profileImg.src = "";
         }
 
-        const pontos = parseFloat(data.quantidade_pontos || 0);
-        const valorBruto = pontos / 1000;
-        let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-        let valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+let valorFinal;
+
+if (origem === "smm") {
+    valorFinal = "0.006";
+} else {
+    const pontos = parseFloat(data.quantidade_pontos || 0);
+    const valorBruto = pontos / 1000;
+    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+}
 
         document.getElementById("points").textContent = `R$ ${valorFinal}`;
         document.getElementById("confirmButton").style.display = "none";
