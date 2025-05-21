@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import redis from "redis";
+import redis from "./redis.js";
 import { User, ActionHistory, Pedido } from "./User.js";
 
 function getBrasiliaMidnightDate() {
