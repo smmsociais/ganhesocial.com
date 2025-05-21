@@ -1018,7 +1018,15 @@ if (url.startsWith("/api/get_action") && method === "GET") {
         acao_validada: { $in: [true, null] }
       });
 
-      if (feitas >= pedido.quantidade) continue;
+  if (feitas >= pedido.quantidade) continue;
+
+  console.log(`[LOCAL] Ação encontrada localmente:`, {
+    id_pedido: pedido._id.toString(),
+    nome: pedido.nome,
+    link: pedido.link,
+    quantidadeExecutada: pedido.quantidadeExecutada,
+    quantidadeTotal: pedido.quantidade
+  });
 
       // ✅ Ação disponível
       const nomeUsuario = pedido.link.includes("@")
