@@ -995,6 +995,7 @@ if (url.startsWith("/api/mailer")) {
     }
     
 // Rota: /api/registrar_acao_pendente
+// Rota: /api/registrar_acao_pendente
 if (url.startsWith("/api/registrar_acao_pendente")) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
@@ -1027,6 +1028,13 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   }
 
   try {
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004)
+      ? valorBruto - 0.001
+      : valorBruto;
+    const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+
     const novaAcao = new ActionHistory({
       user: usuario._id,
       token: usuario.token,
@@ -1038,7 +1046,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       quantidade_pontos,
       tipo: tipo_acao || "Seguir",
       rede_social: "TikTok",
-      valor_confirmacao: quantidade_pontos,
+      valor_confirmacao: valorFinal,
       acao_validada: null,
       data: new Date()
     });
