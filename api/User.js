@@ -60,7 +60,6 @@ const PedidoSchema = new mongoose.Schema({
   rede: String,
   tipo: String,
   nome: String,
-  valor: Number,
   quantidade: { type: Number, required: true },
   quantidadeExecutada: { type: Number, default: 0 },
   link: String,
