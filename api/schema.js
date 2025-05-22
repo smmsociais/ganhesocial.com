@@ -75,7 +75,6 @@ const TemporaryActionSchema = new mongoose.Schema({
   nome_usuario: String,
   tipo_acao: String,
   valor: String,
-  id_perfil: String,
   id_pedido: String,
   createdAt: { type: Date, default: Date.now, expires: 300 } // expira após 5 minutos
 });
