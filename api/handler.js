@@ -1027,6 +1027,7 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     }
 
     let idPedidoOriginal = id_action;
+    let url_dir;
 
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
