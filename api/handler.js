@@ -888,10 +888,6 @@ if (url.startsWith("/api/get_user") && method === "GET") {
 
 // Rota: /api/get_action (GET)
 if (url.startsWith("/api/get_action") && method === "GET") {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido" });
-  }
-
   const { id_tiktok, token } = req.query;
 
   if (!id_tiktok || !token) {
@@ -900,7 +896,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
 
   try {
     await connectDB();
-
     console.log("[GET_ACTION] Iniciando busca de ação para:", id_tiktok);
 
     // 🔐 Validação do token
@@ -913,12 +908,12 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
     // 🔍 Buscar pedidos locais válidos
-const pedidos = await Pedido.find({
-  rede: "tiktok",
-  tipo: "seguidores", // <- corrigido
-  status: { $ne: "concluida" },
-  $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-}).sort({ dataCriacao: -1 });
+    const pedidos = await Pedido.find({
+      rede: "tiktok",
+      tipo: "seguidores",
+      status: { $ne: "concluida" },
+      $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
+    }).sort({ dataCriacao: -1 });
 
     console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
 
@@ -953,20 +948,18 @@ const pedidos = await Pedido.find({
         : pedido.nome;
 
       const valorBruto = pedido.valor / 1000;
-      const valorDescontado = (valorBruto > 0.004)
-        ? valorBruto - 0.001
-        : valorBruto;
+      const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-return res.status(200).json({
-  status: "sucess",
-  id_tiktok,
-  id_action: pedido._id.toString(),
-  url: pedido.link,
-  nome_usuario: nomeUsuario,
-  tipo_acao: "seguir",
-  valor: valorFinal
-});
+      return res.status(200).json({
+        status: "sucess",
+        id_tiktok,
+        id_action: pedido._id.toString(),
+        url: pedido.link,
+        nome_usuario: nomeUsuario,
+        tipo_acao: "seguir",
+        valor: valorFinal
+      });
     }
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
@@ -980,48 +973,43 @@ return res.status(200).json({
       return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
     }
 
-if (data.status === "ENCONTRADA") {
-  const pontos = parseFloat(data.quantidade_pontos);
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004)
-    ? valorBruto - 0.001
-    : valorBruto;
-  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+    if (data.status === "ENCONTRADA") {
+      const pontos = parseFloat(data.quantidade_pontos);
+      const valorBruto = pontos / 1000;
+      const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
+      // ⚙️ Transformar id_pedido real em id_action ofuscado
+      const idPedidoOriginal = String(data.id_pedido);
+      const idActionBase64 = Buffer.from(idPedidoOriginal).toString("base64");
+      const idActionModificado = idActionBase64
+        .split('')
+        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+        .join('');
 
+      const temp = await TemporaryAction.create({
+        id_tiktok,
+        url_dir: data.url_dir,
+        nome_usuario: data.nome_usuario,
+        tipo_acao: "seguir",
+        valor: valorFinal,
+        id_action: idPedidoOriginal,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000) // expira em 5 min
+      });
 
-const temp = await TemporaryAction.create({
-  id_tiktok,
-  url_dir: data.url_dir,
-  nome_usuario: data.nome_usuario,
-  tipo_acao: "seguir",
-  valor: valorFinal,
-  id_action: idPedidoOriginal,
-  expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-});
+      console.log("[GET_ACTION] TemporaryAction salva:", temp);
+      console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
-console.log("[GET_ACTION] TemporaryAction salva:", temp);
-
-  console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
-
-// ⚙️ Transformar id_pedido real para o id_action ofuscado
-const idPedidoOriginal = String(data.id_pedido);
-const idActionModificado = Buffer.from(idPedidoOriginal).toString("base64")
-
-  .split('')
-  .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-  .join('');
-
-return res.status(200).json({
-  status: "sucess",
-  id_tiktok,
-  id_action: idActionModificado,
-  url: data.url_dir,
-  nome_usuario: data.nome_usuario,
-  tipo_acao: data.tipo_acao,
-  valor: valorFinal
-});
-}
+      return res.status(200).json({
+        status: "sucess",
+        id_tiktok,
+        id_action: idActionModificado,
+        url: data.url_dir,
+        nome_usuario: data.nome_usuario,
+        tipo_acao: data.tipo_acao,
+        valor: valorFinal
+      });
+    }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
     return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
