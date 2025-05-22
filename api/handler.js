@@ -1045,19 +1045,14 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        const idPedidoOriginal = id_action
-            .split('')
-            .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-            .join('');
+// Buscar o id_pedido original no TemporaryAction
+const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
+if (!tempAction) {
+    console.log("❌ TemporaryAction não encontrada para:", id_tiktok, id_action);
+    return res.status(404).json({ error: "Ação temporária não encontrada" });
+}
 
-        let redisData = null;
-        try {
-            const cache = await redis.get(`action:${id_tiktok}`);
-            console.log("📦 Conteúdo bruto do Redis:", cache);
-            redisData = typeof cache === "object" ? cache : JSON.parse(cache);
-        } catch (redisErr) {
-            console.warn("⚠️ Não foi possível recuperar dados do Redis:", redisErr);
-        }
+const idPedidoOriginal = tempAction.id_action;
 
         const payload = {
             token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
