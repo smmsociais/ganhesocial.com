@@ -1043,25 +1043,10 @@ const pedidos = await Pedido.find({
         : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-      await TemporaryAction.findOneAndUpdate(
-        { id_tiktok },
-        {
-          id_tiktok,
-          url_dir: pedido.link,
-          nome_usuario: nomeUsuario,
-          tipo_acao: "seguir",
-          valor: valorFinal,
-          id_action: pedido._id.toString()
-        },
-        { upsert: true, new: true }
-      );
-
-      console.log("[GET_ACTION] Ação local registrada em TemporaryAction");
-
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: pedido._id.toString(), // ✅ aqui vai o ID real
+  id_action: pedido._id.toString(),
   url: pedido.link,
   nome_usuario: nomeUsuario,
   tipo_acao: "seguir",
