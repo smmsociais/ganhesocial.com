@@ -990,9 +990,6 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido);
 
-console.log("[GET_ACTION] TemporaryAction salva:", temp);
-console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
-
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
