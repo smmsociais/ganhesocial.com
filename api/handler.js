@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import { User, ActionHistory, Pedido, TemporaryAction } from "./schema.js";
+import { User, ActionHistory, Pedido } from "./schema.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
