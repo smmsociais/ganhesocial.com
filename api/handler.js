@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import { User, ActionHistory, Pedido } from "./schema.js";
+import { User, ActionHistory, Pedido, TemporaryAction } from "./schema.js";
 
 function getBrasiliaMidnightDate() {
     const now = new Date();
@@ -990,10 +990,33 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido);
 
+const temp = await TemporaryAction.findOneAndUpdate(
+  { id_tiktok },
+  {
+    id_tiktok,
+    url_dir: data.url_dir,
+    nome_usuario: data.nome_usuario,
+    tipo_acao: "seguir",
+    valor: valorFinal,
+    id_action: idPedidoOriginal
+  },
+  { upsert: true, new: true }
+);
+
+console.log("[GET_ACTION] TemporaryAction salva:", temp);
+
+  console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
+
+// ⚙️ Transformar id_pedido real para o id_action ofuscado
+const idActionModificado = idPedidoOriginal
+  .split('')
+  .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+  .join('');
+
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: idPedidoOriginal,
+  id_action: idActionModificado, // <- retornar o modificado
   url: data.url_dir,
   nome_usuario: data.nome_usuario,
   tipo_acao: data.tipo_acao,
@@ -1026,11 +1049,33 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
+    let idPedidoOriginal = id_action;
+    let tempAction = null;
+
+// Verifica se é uma ação externa codificada (contém letra 'a', usada no encoding)
+const isExterno = id_action.includes('a');
+
+if (isExterno) {
+  // Reverter o id_action modificado para o id_pedido real
+  idPedidoOriginal = id_action
+    .split('')
+    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+    .join('');
+
+  // Buscar no TemporaryAction apenas para ações externas
+  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+
+  if (!tempAction) {
+    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+    return res.status(404).json({ error: "Ação temporária não encontrada" });
+  }
+}
+
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
       id_conta: id_tiktok,
-      id_pedido: id_action,
+      id_pedido: idPedidoOriginal,
       is_tiktok: "1"
     };
 
@@ -1048,37 +1093,18 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(502).json({ error: "Falha na confirmação externa." });
     }
 
-    const valorOriginal = parseFloat(confirmData.valor || 0);
+    const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
     const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
     const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-
-    // 🧠 Verifica se é uma ação local ou externa:
-    let url_dir = "";
-
-    if (confirmData?.fonte === "externa" || confirmData.url_dir) {
-      // Ação externa (da API)
-      url_dir = confirmData.url_dir || "";
-    } else {
-      // Ação local (buscar no banco de dados Pedido)
-      try {
-        const pedido = await Pedido.findById(id_action).lean();
-        url_dir = pedido?.link || "";
-      } catch (e) {
-        console.warn("⚠️ Não foi possível buscar o pedido local:", e.message);
-        url_dir = "";
-      }
-    }
-
-console.log("[DEBUG] confirmData.url_dir:", confirmData.url_dir);
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-      tipo_acao: confirmData.tipo_acao || "Seguir",
+      tipo_acao: confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir',
       quantidade_pontos: valorFinal,
-      url_dir,
+      url_dir: tempAction?.url_dir || '',
       id_conta: id_tiktok,
-      id_action,
+      id_action: id_action,
       user: usuario._id,
       acao_validada: null,
       valor_confirmacao: valorFinal,
@@ -1090,8 +1116,8 @@ console.log("[DEBUG] confirmData.url_dir:", confirmData.url_dir);
     await usuario.save();
 
     return res.status(200).json({
-      status: "sucess",
-      message: "ação confirmada com sucesso",
+      status: 'sucess',
+      message: 'ação confirmada com sucesso',
       valor: valorFinal
     });
 
