@@ -1043,12 +1043,6 @@ const pedidos = await Pedido.find({
         : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-      const idPedidoOriginal = String(pedido._id).padStart(9, '0');
-      const idPedidoModificado = idPedidoOriginal
-        .split('')
-        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-        .join('');
-
       await TemporaryAction.findOneAndUpdate(
         { id_tiktok },
         {
@@ -1064,15 +1058,16 @@ const pedidos = await Pedido.find({
 
       console.log("[GET_ACTION] Ação local registrada em TemporaryAction");
 
-      return res.status(200).json({
-        status: "sucess",
-        id_tiktok,
-        id_action: idPedidoModificado,
-        url: pedido.link,
-        nome_usuario: nomeUsuario,
-        tipo_acao: "seguir",
-        valor: valorFinal
-      });
+return res.status(200).json({
+  status: "sucess",
+  id_tiktok,
+  id_action: pedido._id.toString(), // ✅ aqui vai o ID real
+  url: pedido.link,
+  nome_usuario: nomeUsuario,
+  tipo_acao: "seguir",
+  valor: valorFinal
+});
+
     }
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
@@ -1094,7 +1089,7 @@ if (data.status === "ENCONTRADA") {
     : valorBruto;
   const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-  const idPedidoOriginal = String(data.id_pedido); // ✅ Corrigido aqui
+  const idPedidoOriginal = String(data.id_pedido);
 
 await TemporaryAction.findOneAndUpdate(
   { id_tiktok },
@@ -1104,7 +1099,6 @@ await TemporaryAction.findOneAndUpdate(
     nome_usuario: data.nome_usuario,
     tipo_acao: "seguir",
     valor: valorFinal
-    // id_pedido removido aqui
   },
   { upsert: true, new: true }
 );
@@ -1120,6 +1114,7 @@ return res.status(200).json({
   tipo_acao: data.tipo_acao,
   valor: valorFinal
 });
+
 }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
