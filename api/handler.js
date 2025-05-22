@@ -967,7 +967,6 @@ return res.status(200).json({
   tipo_acao: "seguir",
   valor: valorFinal
 });
-
     }
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
@@ -991,40 +990,18 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido);
 
-const temp = await TemporaryAction.findOneAndUpdate(
-  { id_tiktok },
-  {
-    id_tiktok,
-    url_dir: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: "seguir",
-    valor: valorFinal,
-    id_action: idPedidoOriginal
-  },
-  { upsert: true, new: true }
-);
-
 console.log("[GET_ACTION] TemporaryAction salva:", temp);
-
-  console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
-
-// ⚙️ Transformar id_pedido real para o id_action ofuscado
-const idActionModificado = idPedidoOriginal
-  .split('')
-  .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-  .join('');
+console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: idActionModificado, // <- retornar o modificado
+  id_action: idPedidoOriginal,
   url: data.url_dir,
   nome_usuario: data.nome_usuario,
   tipo_acao: data.tipo_acao,
   valor: valorFinal
 });
-
-
 }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
@@ -1053,26 +1030,6 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     }
 
     let idPedidoOriginal = id_action;
-    let tempAction = null;
-
-// Verifica se é uma ação externa codificada (contém letra 'a', usada no encoding)
-const isExterno = id_action.includes('a');
-
-if (isExterno) {
-  // Reverter o id_action modificado para o id_pedido real
-  idPedidoOriginal = id_action
-    .split('')
-    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-    .join('');
-
-  // Buscar no TemporaryAction apenas para ações externas
-  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
-
-  if (!tempAction) {
-    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-    return res.status(404).json({ error: "Ação temporária não encontrada" });
-  }
-}
 
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
