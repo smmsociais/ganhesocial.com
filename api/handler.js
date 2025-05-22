@@ -998,7 +998,8 @@ const temp = await TemporaryAction.findOneAndUpdate(
     nome_usuario: data.nome_usuario,
     tipo_acao: "seguir",
     valor: valorFinal,
-    id_action: idPedidoOriginal
+    id_action: idPedidoOriginal,
+    expiresAt: new Date(Date.now() + 1 * 60 * 1000) // 1 minuto
   },
   { upsert: true, new: true }
 );
