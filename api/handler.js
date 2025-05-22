@@ -1039,92 +1039,94 @@ return res.status(200).json({
 
 // Rota: /api/confirm_action (POST)
 if (url.startsWith("/api/confirm_action") && method === "POST") {
-    await connectDB();
+  await connectDB();
 
-    const { token, id_action, id_tiktok } = req.body;
-    if (!token || !id_action || !id_tiktok) {
-        return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
-    }
-
-    try {
-        const usuario = await User.findOne({ token });
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado. Token inválido." });
-        }
-
-let idPedidoOriginal = id_action;
-let tempAction = null;
-
-// Se for um ID modificado da API externa (só dígitos/“a”), reverter e buscar TemporaryAction
-const isExterno = /^[0-9a]+$/.test(id_action) && id_action.length < 24;
-if (isExterno) {
-  idPedidoOriginal = id_action
-    .split('')
-    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-    .join('');
-
-  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
-
-  if (!tempAction) {
-    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-    return res.status(404).json({ error: "Ação temporária não encontrada" });
+  const { token, id_action, id_tiktok } = req.body;
+  if (!token || !id_action || !id_tiktok) {
+    return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
   }
-}
 
-        const payload = {
-            token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
-            sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-            id_conta: id_tiktok,
-            id_pedido: idPedidoOriginal,
-            is_tiktok: "1"
-        };
-
-        let confirmData = {};
-        try {
-            const confirmResponse = await axios.post(
-                "https://api.ganharnoinsta.com/confirm_action.php",
-                payload,
-                { timeout: 5000 }
-            );
-            confirmData = confirmResponse.data || {};
-            console.log("📬 Resposta da API confirmar ação:", confirmData);
-        } catch (err) {
-            console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
-            return res.status(502).json({ error: "Falha na confirmação externa." });
-        }
-
-        const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
-        const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
-        const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-
-const newAction = new ActionHistory({
-    token,
-    nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-    tipo_acao: confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir',
-    quantidade_pontos: valorFinal,
-    url_dir: tempAction?.url_dir || '',
-    id_conta: id_tiktok,
-    id_action: id_action,
-    user: usuario._id,
-    acao_validada: null,
-    valor_confirmacao: valorFinal,
-    data: new Date()
-});
-
-        const saved = await newAction.save();
-        usuario.historico_acoes.push(saved._id);
-        await usuario.save();
-
-        return res.status(200).json({
-            status: 'sucess',
-            message: 'ação confirmada com sucesso',
-            valor: valorFinal
-        });
-
-    } catch (error) {
-        console.error("💥 Erro ao processar requisição:", error.message);
-        return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  try {
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
+
+    let idPedidoOriginal = id_action;
+    let tempAction = null;
+
+    // Verifica se é uma ação externa codificada
+    const isExterno = /^[0-9a]+$/.test(id_action) && id_action.length < 24;
+    if (isExterno) {
+      // Reverter o id_action modificado para o id_pedido real
+      idPedidoOriginal = id_action
+        .split('')
+        .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+        .join('');
+
+      // Buscar no TemporaryAction apenas para ações externas
+      tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+
+      if (!tempAction) {
+        console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+        return res.status(404).json({ error: "Ação temporária não encontrada" });
+      }
+    }
+
+    const payload = {
+      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+      sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+      id_conta: id_tiktok,
+      id_pedido: idPedidoOriginal,
+      is_tiktok: "1"
+    };
+
+    let confirmData = {};
+    try {
+      const confirmResponse = await axios.post(
+        "https://api.ganharnoinsta.com/confirm_action.php",
+        payload,
+        { timeout: 5000 }
+      );
+      confirmData = confirmResponse.data || {};
+      console.log("📬 Resposta da API confirmar ação:", confirmData);
+    } catch (err) {
+      console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
+      return res.status(502).json({ error: "Falha na confirmação externa." });
+    }
+
+    const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
+    const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
+    const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+
+    const newAction = new ActionHistory({
+      token,
+      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
+      tipo_acao: confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir',
+      quantidade_pontos: valorFinal,
+      url_dir: tempAction?.url_dir || '',
+      id_conta: id_tiktok,
+      id_action: id_action,
+      user: usuario._id,
+      acao_validada: null,
+      valor_confirmacao: valorFinal,
+      data: new Date()
+    });
+
+    const saved = await newAction.save();
+    usuario.historico_acoes.push(saved._id);
+    await usuario.save();
+
+    return res.status(200).json({
+      status: 'sucess',
+      message: 'ação confirmada com sucesso',
+      valor: valorFinal
+    });
+
+  } catch (error) {
+    console.error("💥 Erro ao processar requisição:", error.message);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  }
 }
 
     return res.status(404).json({ error: "Rota não encontrada." });
