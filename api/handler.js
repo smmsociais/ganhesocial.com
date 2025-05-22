@@ -1098,19 +1098,19 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido); // ✅ Corrigido aqui
 
-  await TemporaryAction.findOneAndUpdate(
-    { id_tiktok },
-    {
-      id_tiktok,
-      url_dir: data.url_dir,
-      nome_usuario: data.nome_usuario,
-      tipo_acao: data.tipo_acao,
-      valor: valorFinal,
-      id_perfil: data.id_alvo,
-      id_pedido: data.id_pedido
-    },
-    { upsert: true, new: true }
-  );
+await TemporaryAction.findOneAndUpdate(
+  { id_tiktok },
+  {
+    id_tiktok,
+    url_dir: pedido.link,
+    nome_usuario: nomeUsuario,
+    tipo_acao: "seguir",
+    valor: valorFinal,
+    id_perfil: pedido.id_conta, // ✅ Correção aqui
+    id_pedido: pedido._id.toString()
+  },
+  { upsert: true, new: true }
+);
 
   console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
