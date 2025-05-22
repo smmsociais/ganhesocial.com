@@ -1050,16 +1050,16 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(502).json({ error: "Falha na confirmação externa." });
     }
 
-    const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
+    const valorOriginal = parseFloat(confirmData.valor|| 0);
     const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
     const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-      tipo_acao: confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir',
+      tipo_acao: confirmData.tipo_acao || 'Seguir',
       quantidade_pontos: valorFinal,
-      url_dir: tempAction?.url_dir || '',
+      url_dir: url_dir,
       id_conta: id_tiktok,
       id_action: id_action,
       user: usuario._id,
