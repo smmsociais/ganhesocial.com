@@ -70,14 +70,20 @@ const PedidoSchema = new mongoose.Schema({
 });
 
 const TemporaryActionSchema = new mongoose.Schema({
-  id_tiktok: { type: String, required: true, unique: true },
+  id_tiktok: String,
   url_dir: String,
   nome_usuario: String,
   tipo_acao: String,
   valor: String,
   id_action: String,
-  createdAt: { type: Date, default: Date.now, expires: 300 } // expira após 5 minutos
+  expiresAt: {
+    type: Date,
+    default: () => new Date(Date.now() + 5 * 60 * 1000) // expira em 5 minutos
+  }
 });
+
+// ✅ Índice TTL para exclusão automática após a data de expiresAt
+TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
