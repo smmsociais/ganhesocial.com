@@ -69,19 +69,8 @@ const PedidoSchema = new mongoose.Schema({
   dataCriacao: { type: Date, default: Date.now }
 });
 
-const TemporaryActionSchema = new mongoose.Schema({
-  id_tiktok: { type: String, required: true, unique: true },
-  url_dir: String,
-  nome_usuario: String,
-  tipo_acao: String,
-  valor: String,
-  id_action: String,
-  createdAt: { type: Date, default: Date.now, expires: 300 } // expira após 5 minutos
-});
-
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
 const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
-const TemporaryAction = mongoose.models.TemporaryAction || mongoose.model("TemporaryAction", TemporaryActionSchema);
 
-export { User, ActionHistory, Pedido, TemporaryAction };
+export { User, ActionHistory, Pedido };
