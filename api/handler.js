@@ -23,13 +23,6 @@ function formatarDataBrasilia(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
-function ofuscarId(id) {
-  return Buffer.from(id).toString('base64')
-    .replace(/=/g, '')   // remove padding
-    .replace(/\+/g, '-') // substitui caracteres inválidos
-    .replace(/\//g, '_');
-}
-
 export default async function handler(req, res) {
     const { method, url } = req;
 
@@ -894,6 +887,25 @@ if (url.startsWith("/api/get_user") && method === "GET") {
 }
 
 // Rota: /api/get_action (GET)
+// 🔐 Funções de ofuscação
+function ofuscarId(id) {
+  return String(id)
+    .split('')
+    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+    .join('');
+}
+
+function ofuscarMongoId(id) {
+  return id
+    .split('')
+    .map(c => {
+      if (c === 'a') return '0';
+      const num = Number(c);
+      return isNaN(num) ? c : String((num + 1) % 10);
+    })
+    .join('');
+}
+
 // Rota: /api/get_action (GET)
 if (url.startsWith("/api/get_action") && method === "GET") {
   if (req.method !== "GET") {
@@ -910,7 +922,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     await connectDB();
     console.log("[GET_ACTION] Iniciando busca de ação para:", id_tiktok);
 
-    // 🔐 Validação do token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       console.log("[GET_ACTION] Token inválido:", token);
@@ -918,7 +929,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     }
     console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
-    // 🔍 Buscar pedidos locais válidos
     const pedidos = await Pedido.find({
       rede: "tiktok",
       tipo: "seguidores",
@@ -965,7 +975,7 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       return res.status(200).json({
         status: "sucess",
         id_tiktok,
-        id_action: ofuscarId(pedido._id.toString()),
+        id_action: ofuscarMongoId(pedido._id.toString()),
         url: pedido.link,
         nome_usuario: nomeUsuario,
         tipo_acao: "seguir",
@@ -975,7 +985,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
 
-    // 🔗 Buscar na API externa
     const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
     const response = await axios.get(apiURL);
     const data = response.data;
@@ -1025,7 +1034,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     return res.status(500).json({ error: "Erro interno ao buscar ação" });
   }
 }
-;
 
 // Rota: /api/confirm_action (POST)
 if (url.startsWith("/api/confirm_action") && method === "POST") {
