@@ -1008,26 +1008,26 @@ const pedidos = await Pedido.find({
     console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
 
     for (const pedido of pedidos) {
-      const id_pedido = pedido._id;
+      const id_action = pedido._id;
 
       const jaFez = await ActionHistory.findOne({
-        id_pedido,
+        id_action,
         id_conta: id_tiktok,
         acao_validada: { $in: [true, null] }
       });
 
       if (jaFez) {
-        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_pedido}, pulando`);
+        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_action}, pulando`);
         continue;
       }
 
       const feitas = await ActionHistory.countDocuments({
-        id_pedido,
+        id_action,
         acao_validada: { $in: [true, null] }
       });
 
       if (feitas >= pedido.quantidade) {
-        console.log(`[GET_ACTION] Limite atingido para pedido ${id_pedido}, pulando`);
+        console.log(`[GET_ACTION] Limite atingido para pedido ${id_action}, pulando`);
         continue;
       }
 
@@ -1051,7 +1051,7 @@ const pedidos = await Pedido.find({
           nome_usuario: nomeUsuario,
           tipo_acao: "seguir",
           valor: valorFinal,
-          id_pedido: pedido._id.toString()
+          id_action: pedido._id.toString()
         },
         { upsert: true, new: true }
       );
