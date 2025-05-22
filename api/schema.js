@@ -78,7 +78,7 @@ const TemporaryActionSchema = new mongoose.Schema({
   id_action: String,
   expiresAt: {
     type: Date,
-    default: () => new Date(Date.now() + 5 * 60 * 1000)
+    default: () => new Date(Date.now() + 1 * 60 * 1000)
   }
 });
 
