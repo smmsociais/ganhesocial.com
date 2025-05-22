@@ -11,7 +11,7 @@ const ActionHistorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, 
   token: { type: String },                                    
   nome_usuario: { type: String },                            
-  id_pedido: { type: String },                                 
+  id_action: { type: String },                                 
   id_conta: { type: String },                                 
   url_dir: { type: String },                       
   acao_validada: { type: Boolean, default: null },
@@ -75,7 +75,7 @@ const TemporaryActionSchema = new mongoose.Schema({
   nome_usuario: String,
   tipo_acao: String,
   valor: String,
-  id_pedido: String,
+  id_action: String,
   createdAt: { type: Date, default: Date.now, expires: 300 } // expira após 5 minutos
 });
 
