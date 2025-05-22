@@ -1026,14 +1026,11 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    let idPedidoOriginal = id_action;
-    let url_dir;
-
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
       sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
       id_conta: id_tiktok,
-      id_pedido: idPedidoOriginal,
+      id_pedido: id_action,
       is_tiktok: "1"
     };
 
@@ -1051,18 +1048,35 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(502).json({ error: "Falha na confirmação externa." });
     }
 
-    const valorOriginal = parseFloat(confirmData.valor|| 0);
+    const valorOriginal = parseFloat(confirmData.valor || 0);
     const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
     const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+
+    // 🧠 Verifica se é uma ação local ou externa:
+    let url_dir = "";
+
+    if (confirmData?.fonte === "externa" || confirmData.url_dir) {
+      // Ação externa (da API)
+      url_dir = confirmData.url_dir || "";
+    } else {
+      // Ação local (buscar no banco de dados Pedido)
+      try {
+        const pedido = await Pedido.findById(id_action).lean();
+        url_dir = pedido?.link || "";
+      } catch (e) {
+        console.warn("⚠️ Não foi possível buscar o pedido local:", e.message);
+        url_dir = "";
+      }
+    }
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-      tipo_acao: confirmData.tipo_acao || 'Seguir',
+      tipo_acao: confirmData.tipo_acao || "Seguir",
       quantidade_pontos: valorFinal,
-      url_dir: url_dir,
+      url_dir,
       id_conta: id_tiktok,
-      id_action: id_action,
+      id_action,
       user: usuario._id,
       acao_validada: null,
       valor_confirmacao: valorFinal,
@@ -1074,8 +1088,8 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     await usuario.save();
 
     return res.status(200).json({
-      status: 'sucess',
-      message: 'ação confirmada com sucesso',
+      status: "sucess",
+      message: "ação confirmada com sucesso",
       valor: valorFinal
     });
 
