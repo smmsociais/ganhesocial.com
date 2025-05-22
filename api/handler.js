@@ -1008,15 +1008,22 @@ console.log("[GET_ACTION] TemporaryAction salva:", temp);
 
   console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
+// ⚙️ Transformar id_pedido real para o id_action ofuscado
+const idActionModificado = idPedidoOriginal
+  .split('')
+  .map(d => d === '0' ? 'a' : String(Number(d) - 1))
+  .join('');
+
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: idPedidoOriginal,
+  id_action: idActionModificado, // <- retornar o modificado
   url: data.url_dir,
   nome_usuario: data.nome_usuario,
   tipo_acao: data.tipo_acao,
   valor: valorFinal
 });
+
 
 }
 
@@ -1045,8 +1052,14 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
+// Reverter o id_action modificado para o id_pedido real
+const idActionOriginal = id_action
+  .split('')
+  .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+  .join('');
+
 // Buscar o id_pedido original no TemporaryAction
-const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
+const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idActionOriginal });
 if (!tempAction) {
     console.log("❌ TemporaryAction não encontrada para:", id_tiktok, id_action);
     return res.status(404).json({ error: "Ação temporária não encontrada" });
