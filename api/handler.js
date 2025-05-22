@@ -1069,6 +1069,8 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       }
     }
 
+console.log("[DEBUG] confirmData.url_dir:", confirmData.url_dir);
+
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
