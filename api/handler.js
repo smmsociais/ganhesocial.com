@@ -1057,6 +1057,7 @@ const pedidos = await Pedido.find({
           nome_usuario: nomeUsuario,
           tipo_acao: "seguir",
           valor: valorFinal,
+          id_perfil: pedido._id.toString(),
           id_pedido: pedido._id.toString()
         },
         { upsert: true, new: true }
@@ -1069,6 +1070,7 @@ const pedidos = await Pedido.find({
         id_tiktok,
         id_action: idPedidoModificado,
         url: pedido.link,
+        id_perfil: pedido._id,
         nome_usuario: nomeUsuario,
         tipo_acao: "seguir",
         valor: valorFinal
@@ -1104,6 +1106,7 @@ await TemporaryAction.findOneAndUpdate(
     nome_usuario: nomeUsuario,
     tipo_acao: "seguir",
     valor: valorFinal,
+    id_perfil: pedido.id_conta, // ✅ Correção aqui
     id_pedido: pedido._id.toString()
   },
   { upsert: true, new: true }
@@ -1116,6 +1119,7 @@ await TemporaryAction.findOneAndUpdate(
     id_tiktok,
     id_action: idPedidoOriginal,
     url: data.url_dir,
+    id_perfil: data.id_alvo,
     nome_usuario: data.nome_usuario,
     tipo_acao: data.tipo_acao,
     valor: valorFinal
