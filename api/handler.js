@@ -1055,23 +1055,24 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     let idPedidoOriginal = id_action;
     let tempAction = null;
 
-    // Verifica se é uma ação externa codificada
-    const isExterno = /^[0-9a]+$/.test(id_action) && id_action.length < 24;
-    if (isExterno) {
-      // Reverter o id_action modificado para o id_pedido real
-      idPedidoOriginal = id_action
-        .split('')
-        .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-        .join('');
+// Verifica se é uma ação externa codificada (contém letra 'a', usada no encoding)
+const isExterno = id_action.includes('a');
 
-      // Buscar no TemporaryAction apenas para ações externas
-      tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+if (isExterno) {
+  // Reverter o id_action modificado para o id_pedido real
+  idPedidoOriginal = id_action
+    .split('')
+    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+    .join('');
 
-      if (!tempAction) {
-        console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-        return res.status(404).json({ error: "Ação temporária não encontrada" });
-      }
-    }
+  // Buscar no TemporaryAction apenas para ações externas
+  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+
+  if (!tempAction) {
+    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+    return res.status(404).json({ error: "Ação temporária não encontrada" });
+  }
+}
 
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
