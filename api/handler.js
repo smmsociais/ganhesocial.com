@@ -990,19 +990,15 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido);
 
-const temp = await TemporaryAction.findOneAndUpdate(
-  { id_tiktok },
-  {
-    id_tiktok,
-    url_dir: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: "seguir",
-    valor: valorFinal,
-    id_action: idPedidoOriginal,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-  },
-  { upsert: true, new: true }
-);
+const temp = await TemporaryAction.create({
+  id_tiktok,
+  url_dir: data.url_dir,
+  nome_usuario: data.nome_usuario,
+  tipo_acao: "seguir",
+  valor: valorFinal,
+  id_action: idPedidoOriginal,
+  expiresAt: new Date(Date.now() + 1 * 60 * 1000) // 1 minuto
+});
 
 console.log("[GET_ACTION] TemporaryAction salva:", temp);
 
@@ -1017,7 +1013,7 @@ const idActionModificado = idPedidoOriginal
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: idActionModificado, // <- retornar o modificado
+  id_action: idActionModificado,
   url: data.url_dir,
   nome_usuario: data.nome_usuario,
   tipo_acao: data.tipo_acao,
