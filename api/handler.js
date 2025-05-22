@@ -23,6 +23,13 @@ function formatarDataBrasilia(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function ofuscarId(id) {
+  return Buffer.from(id).toString('base64')
+    .replace(/=/g, '')   // remove padding
+    .replace(/\+/g, '-') // substitui caracteres inválidos
+    .replace(/\//g, '_');
+}
+
 export default async function handler(req, res) {
     const { method, url } = req;
 
@@ -887,7 +894,12 @@ if (url.startsWith("/api/get_user") && method === "GET") {
 }
 
 // Rota: /api/get_action (GET)
+// Rota: /api/get_action (GET)
 if (url.startsWith("/api/get_action") && method === "GET") {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
+
   const { id_tiktok, token } = req.query;
 
   if (!id_tiktok || !token) {
@@ -904,7 +916,6 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       console.log("[GET_ACTION] Token inválido:", token);
       return res.status(401).json({ error: "Token inválido" });
     }
-
     console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
     // 🔍 Buscar pedidos locais válidos
@@ -954,7 +965,7 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       return res.status(200).json({
         status: "sucess",
         id_tiktok,
-        id_action: pedido._id.toString(),
+        id_action: ofuscarId(pedido._id.toString()),
         url: pedido.link,
         nome_usuario: nomeUsuario,
         tipo_acao: "seguir",
@@ -964,6 +975,7 @@ if (url.startsWith("/api/get_action") && method === "GET") {
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
 
+    // 🔗 Buscar na API externa
     const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
     const response = await axios.get(apiURL);
     const data = response.data;
@@ -979,13 +991,8 @@ if (url.startsWith("/api/get_action") && method === "GET") {
       const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-      // ⚙️ Transformar id_pedido real em id_action ofuscado
       const idPedidoOriginal = String(data.id_pedido);
-      const idActionBase64 = Buffer.from(idPedidoOriginal).toString("base64");
-      const idActionModificado = idActionBase64
-        .split('')
-        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-        .join('');
+      const idActionModificado = ofuscarId(idPedidoOriginal);
 
       const temp = await TemporaryAction.create({
         id_tiktok,
@@ -994,11 +1001,10 @@ if (url.startsWith("/api/get_action") && method === "GET") {
         tipo_acao: "seguir",
         valor: valorFinal,
         id_action: idPedidoOriginal,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000) // expira em 5 min
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000)
       });
 
       console.log("[GET_ACTION] TemporaryAction salva:", temp);
-      console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
       return res.status(200).json({
         status: "sucess",
@@ -1018,8 +1024,8 @@ if (url.startsWith("/api/get_action") && method === "GET") {
     console.error("[GET_ACTION] Erro ao buscar ação:", err);
     return res.status(500).json({ error: "Erro interno ao buscar ação" });
   }
-  
-};
+}
+;
 
 // Rota: /api/confirm_action (POST)
 if (url.startsWith("/api/confirm_action") && method === "POST") {
