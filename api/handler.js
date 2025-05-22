@@ -1057,7 +1057,6 @@ const pedidos = await Pedido.find({
           nome_usuario: nomeUsuario,
           tipo_acao: "seguir",
           valor: valorFinal,
-          id_perfil: pedido._id.toString(),
           id_pedido: pedido._id.toString()
         },
         { upsert: true, new: true }
@@ -1070,7 +1069,6 @@ const pedidos = await Pedido.find({
         id_tiktok,
         id_action: idPedidoModificado,
         url: pedido.link,
-        id_perfil: pedido._id,
         nome_usuario: nomeUsuario,
         tipo_acao: "seguir",
         valor: valorFinal
@@ -1098,32 +1096,30 @@ if (data.status === "ENCONTRADA") {
 
   const idPedidoOriginal = String(data.id_pedido); // ✅ Corrigido aqui
 
-  await TemporaryAction.findOneAndUpdate(
-    { id_tiktok },
-    {
-      id_tiktok,
-      url_dir: data.url_dir,
-      nome_usuario: data.nome_usuario,
-      tipo_acao: data.tipo_acao,
-      valor: valorFinal,
-      id_perfil: data.id_alvo,
-      id_pedido: data.id_pedido
-    },
-    { upsert: true, new: true }
-  );
+await TemporaryAction.findOneAndUpdate(
+  { id_tiktok },
+  {
+    id_tiktok,
+    url_dir: data.url_dir,
+    nome_usuario: data.nome_usuario,
+    tipo_acao: "seguir",
+    valor: valorFinal
+    // id_pedido removido aqui
+  },
+  { upsert: true, new: true }
+);
 
   console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
-  return res.status(200).json({
-    status: "sucess",
-    id_tiktok,
-    id_action: idPedidoOriginal,
-    url: data.url_dir,
-    id_perfil: data.id_alvo,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: data.tipo_acao,
-    valor: valorFinal
-  });
+return res.status(200).json({
+  status: "sucess",
+  id_tiktok,
+  id_action: idPedidoOriginal,
+  url: data.url_dir,
+  nome_usuario: data.nome_usuario,
+  tipo_acao: data.tipo_acao,
+  valor: valorFinal
+});
 }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
