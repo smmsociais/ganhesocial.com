@@ -1035,6 +1035,25 @@ if (url.startsWith("/api/get_action") && method === "GET") {
   }
 }
 
+function desofuscarId(ofuscado) {
+  return ofuscado
+    .split('')
+    .map(c => c === '0' ? 'a' : String(Number(c) - 1))
+    .join('');
+}
+
+function desofuscarMongoId(ofuscado) {
+  return ofuscado
+    .split('')
+    .map(c => {
+      const num = Number(c);
+      return isNaN(num)
+        ? c
+        : String((num - 1 + 10) % 10); // Garantir que (0 - 1) vire 9, etc.
+    })
+    .join('');
+}
+
 // Rota: /api/confirm_action (POST)
 if (url.startsWith("/api/confirm_action") && method === "POST") {
   await connectDB();
@@ -1050,27 +1069,32 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    let idPedidoOriginal = id_action;
-    let tempAction = null;
+let idPedidoOriginal = "";
+let tempAction = null;
 
-// Verifica se é uma ação externa codificada (contém letra 'a', usada no encoding)
-const isExterno = id_action.includes('a');
+// Verifica se é uma ação externa (id contém letras)
+const isExterno = /[a-zA-Z]/.test(id_action);
 
 if (isExterno) {
-  // Reverter o id_action modificado para o id_pedido real
-  idPedidoOriginal = id_action
-    .split('')
-    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-    .join('');
+  // Desofuscar ação externa
+  idPedidoOriginal = desofuscarId(id_action);
 
-  // Buscar no TemporaryAction apenas para ações externas
+  // Buscar no TemporaryAction
   tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
 
   if (!tempAction) {
     console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
     return res.status(404).json({ error: "Ação temporária não encontrada" });
   }
+} else {
+  // Desofuscar MongoDB ID (ação local)
+  idPedidoOriginal = desofuscarMongoId(id_action);
 }
+
+  if (!tempAction) {
+    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+    return res.status(404).json({ error: "Ação temporária não encontrada" });
+  }
 
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
