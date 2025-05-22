@@ -171,19 +171,19 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
         const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
         const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
 
-        const newAction = new ActionHistory({
-            token,
-            nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-            tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
-            quantidade_pontos: valorFinal,
-            url_dir: redisData?.url_dir || '',
-            id_conta: id_tiktok,
-            id_pedido: idPedidoOriginal,
-            user: usuario._id,
-            acao_validada: null,
-            valor_confirmacao: valorFinal,
-            data: new Date()
-        });
+const newAction = new ActionHistory({
+    token,
+    nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
+    tipo_acao: confirmData.tipo_acao || redisData?.tipo_acao || 'Seguir',
+    quantidade_pontos: valorFinal,
+    url_dir: redisData?.url_dir || '',
+    id_conta: id_tiktok,
+    id_action: id_action,
+    user: usuario._id,
+    acao_validada: null,
+    valor_confirmacao: valorFinal,
+    data: new Date()
+});
 
         const saved = await newAction.save();
         usuario.historico_acoes.push(saved._id);
