@@ -1052,20 +1052,24 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-// Reverter o id_action modificado para o id_pedido real
-const idActionOriginal = id_action
-  .split('')
-  .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-  .join('');
+let idPedidoOriginal = id_action;
+let tempAction = null;
 
-// Buscar o id_pedido original no TemporaryAction
-const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idActionOriginal });
-if (!tempAction) {
-    console.log("❌ TemporaryAction não encontrada para:", id_tiktok, id_action);
+// Se for um ID modificado da API externa (só dígitos/“a”), reverter e buscar TemporaryAction
+const isExterno = /^[0-9a]+$/.test(id_action) && id_action.length < 24;
+if (isExterno) {
+  idPedidoOriginal = id_action
+    .split('')
+    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
+    .join('');
+
+  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+
+  if (!tempAction) {
+    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
     return res.status(404).json({ error: "Ação temporária não encontrada" });
+  }
 }
-
-const idPedidoOriginal = tempAction.id_action;
 
         const payload = {
             token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
