@@ -1096,11 +1096,7 @@ const pedidos = await Pedido.find({
         : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-      const idPedidoOriginal = String(data.id_pedido).padStart(9, '0');
-      const idPedidoModificado = idPedidoOriginal
-        .split('')
-        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-        .join('');
+const idPedidoOriginal = String(pedido._id); // mantém o _id original como string
 
       await TemporaryAction.findOneAndUpdate(
         { id_tiktok },
@@ -1121,7 +1117,7 @@ const pedidos = await Pedido.find({
       return res.status(200).json({
         status: "sucess",
         id_tiktok,
-        id_action: idPedidoModificado,
+        id_action: idPedidoOriginal,
         url: data.url_dir,
         id_perfil: data.id_alvo,
         nome_usuario: data.nome_usuario,
