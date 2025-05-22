@@ -988,7 +988,7 @@ if (data.status === "ENCONTRADA") {
     : valorBruto;
   const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-  const idPedidoOriginal = String(data.id_pedido);
+
 
 const temp = await TemporaryAction.create({
   id_tiktok,
@@ -1005,7 +1005,9 @@ console.log("[GET_ACTION] TemporaryAction salva:", temp);
   console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
 // ⚙️ Transformar id_pedido real para o id_action ofuscado
-const idActionModificado = idPedidoOriginal
+const idPedidoOriginal = String(data.id_pedido);
+const idActionModificado = Buffer.from(idPedidoOriginal).toString("base64")
+
   .split('')
   .map(d => d === '0' ? 'a' : String(Number(d) - 1))
   .join('');
