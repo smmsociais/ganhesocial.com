@@ -997,85 +997,81 @@ if (url.startsWith("/api/get_action") && method === "GET") {
 
     console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
 
-    // 🔍 Buscar pedidos locais válidos
+// 🔍 Buscar pedidos locais válidos
 const pedidos = await Pedido.find({
   rede: "tiktok",
-  tipo: "seguidores", // <- corrigido
+  tipo: "seguidores",
   status: { $ne: "concluida" },
   $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
 }).sort({ dataCriacao: -1 });
 
-    console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
+console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
 
-    for (const pedido of pedidos) {
-      const id_pedido = pedido._id;
+for (const pedido of pedidos) {
+  const id_pedido = pedido._id;
 
-      const jaFez = await ActionHistory.findOne({
-        id_pedido,
-        id_conta: id_tiktok,
-        acao_validada: { $in: [true, null] }
-      });
+  const jaFez = await ActionHistory.findOne({
+    id_pedido,
+    id_conta: id_tiktok,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (jaFez) {
-        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_pedido}, pulando`);
-        continue;
-      }
+  if (jaFez) {
+    console.log(`[GET_ACTION] Ação local já feita para pedido ${id_pedido}, pulando`);
+    continue;
+  }
 
-      const feitas = await ActionHistory.countDocuments({
-        id_pedido,
-        acao_validada: { $in: [true, null] }
-      });
+  const feitas = await ActionHistory.countDocuments({
+    id_pedido,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (feitas >= pedido.quantidade) {
-        console.log(`[GET_ACTION] Limite atingido para pedido ${id_pedido}, pulando`);
-        continue;
-      }
+  if (feitas >= pedido.quantidade) {
+    console.log(`[GET_ACTION] Limite atingido para pedido ${id_pedido}, pulando`);
+    continue;
+  }
 
-      console.log("[GET_ACTION] Ação local encontrada:", pedido.link);
+  console.log("[GET_ACTION] Ação local encontrada:", pedido.link);
 
-      const nomeUsuario = pedido.link.includes("@")
-        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-        : pedido.nome;
+  const nomeUsuario = pedido.link.includes("@")
+    ? pedido.link.split("@")[1].split(/[/?#]/)[0]
+    : pedido.nome;
 
-      const valorBruto = pedido.valor / 1000;
-      const valorDescontado = (valorBruto > 0.004)
-        ? valorBruto - 0.001
-        : valorBruto;
-      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  const valorBruto = pedido.valor / 1000;
+  const valorDescontado = (valorBruto > 0.004)
+    ? valorBruto - 0.001
+    : valorBruto;
+  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-      const idPedidoOriginal = String(pedido._id).padStart(9, '0');
-      const idPedidoModificado = idPedidoOriginal
-        .split('')
-        .map(d => d === '0' ? 'a' : String(Number(d) - 1))
-        .join('');
+  const idPedidoOriginal = String(pedido._id); // ✅ mantém o ID original
 
-      await TemporaryAction.findOneAndUpdate(
-        { id_tiktok },
-        {
-          id_tiktok,
-          url_dir: pedido.link,
-          nome_usuario: nomeUsuario,
-          tipo_acao: "seguir",
-          valor: valorFinal,
-          id_perfil: pedido._id.toString(),
-          id_pedido: pedido._id.toString()
-        },
-        { upsert: true, new: true }
-      );
+  await TemporaryAction.findOneAndUpdate(
+    { id_tiktok },
+    {
+      id_tiktok,
+      url_dir: pedido.link,
+      nome_usuario: nomeUsuario,
+      tipo_acao: "seguir",
+      valor: valorFinal,
+      id_perfil: pedido._id.toString(),
+      id_pedido: pedido._id.toString()
+    },
+    { upsert: true, new: true }
+  );
 
-      console.log("[GET_ACTION] Ação local registrada em TemporaryAction");
+  console.log("[GET_ACTION] Ação local registrada em TemporaryAction");
 
-      return res.status(200).json({
-        status: "sucess",
-        id_tiktok,
-        id_action: idPedidoModificado,
-        url: pedido.link,
-        id_perfil: pedido._id,
-        nome_usuario: nomeUsuario,
-        tipo_acao: "seguir",
-        valor: valorFinal
-      });
-    }
+  return res.status(200).json({
+    status: "sucess",
+    id_tiktok,
+    id_action: idPedidoOriginal, // ✅ sem modificação
+    url: pedido.link,
+    id_perfil: pedido._id,
+    nome_usuario: nomeUsuario,
+    tipo_acao: "seguir",
+    valor: valorFinal
+  });
+}
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
 
