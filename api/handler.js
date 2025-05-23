@@ -1179,7 +1179,7 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
 
     const newAction = new ActionHistory({
       token,
-      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta,
+      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok)?.nomeConta,
       tipo_acao,
       quantidade_pontos: valorFinal,
       url_dir,
