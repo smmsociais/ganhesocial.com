@@ -1007,12 +1007,10 @@ console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 // ⚙️ Transformar id_pedido real para o id_action ofuscado
 const idActionModificado = idPedidoOriginal
   .split('')
-  .map(d => {
-    const n = Number(d);
-    return n === 0
-      ? '0'
-      : String(n - 1);
-  })
+  .map(d => d === '0'
+    ? 'a'                   // 0 → a
+    : String(Number(d) - 1) // 2 → 1, 1 → 0, etc.
+  )
   .join('');
 
 return res.status(200).json({
@@ -1053,17 +1051,14 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
- let idPedidoOriginal = id_action;
-
-// detecta se há qualquer dígito <  original (ex.: '5' → era '6')
-const isEncoded = /\d/.test(id_action);
-
-if (isEncoded) {
+// decode (confirm_action)
+let idPedidoOriginal = id_action;               // ex: '037a86513'
+if (id_action.includes('a')) {
   idPedidoOriginal = id_action
     .split('')
-    .map(ch => ch === '0'
-      ? '0'                    // zeros continuam zeros
-      : String(Number(ch) + 1) // '6' → '7', etc.
+    .map(ch => ch === 'a'
+      ? '0'                    // a → 0
+      : String(Number(ch) + 1) // 0 → 1, 2 → 3, etc.
     )
     .join('');
 
