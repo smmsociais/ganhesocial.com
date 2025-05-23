@@ -1051,20 +1051,19 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-// decode (confirm_action)
-let idPedidoOriginal = id_action;  // ex: '037a86513'
+let idPedidoOriginal = id_action;
 
-if (id_action.includes('a')) {
+if (id_action.includes('a') || /^[0-6]+$/.test(id_action)) {
   idPedidoOriginal = id_action
     .split('')
-    .map(ch => ch === 'a'
-      ? '0'                    // a → 0
-      : String(Number(ch) + 1) // 0 → 1, 2 → 3, etc.
-    )
+    .map(ch => {
+      if (ch === 'a') return '0';
+      const n = Number(ch);
+      return isNaN(n) ? ch : String(n + 1);
+    })
     .join('');
 }
 
-// 🔍 Logs para debug
 console.log("🧩 id_action recebido:", id_action);
 console.log("🔓 idPedidoOriginal desofuscado:", idPedidoOriginal);
 
