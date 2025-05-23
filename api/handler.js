@@ -1072,14 +1072,8 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
 let idPedidoOriginal = "";
 let tempAction = null;
 
-// Verifica se é uma ação externa (id contém letras)
-const isExterno = /[a-zA-Z]/.test(id_action);
-
-if (isExterno) {
-  // Desofuscar ação externa
-  idPedidoOriginal = desofuscarId(id_action);
-
-  // Buscar no TemporaryAction
+if (id_action.startsWith("ext_")) {
+  idPedidoOriginal = desofuscarId(id_action.slice(4));
   tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
 
   if (!tempAction) {
@@ -1087,14 +1081,8 @@ if (isExterno) {
     return res.status(404).json({ error: "Ação temporária não encontrada" });
   }
 } else {
-  // Desofuscar MongoDB ID (ação local)
   idPedidoOriginal = desofuscarMongoId(id_action);
 }
-
-  if (!tempAction) {
-    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-    return res.status(404).json({ error: "Ação temporária não encontrada" });
-  }
 
     const payload = {
       token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
