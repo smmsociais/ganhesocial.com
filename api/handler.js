@@ -1068,7 +1068,7 @@ if (isEncoded) {
     .join('');
 
   // Buscar no TemporaryAction apenas para ações externas
-  tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+  const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
 
   if (!tempAction) {
     console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
