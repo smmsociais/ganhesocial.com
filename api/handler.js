@@ -868,14 +868,13 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         }
 
         // Se não vier id_tiktok, gera o fictício
-        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+const returnedId = bindData.id_tiktok || generateFakeTikTokId();
 
-        const novaConta = {
-            nomeConta: nome_usuario,
-            // aqui você pode escolher salvar null ou o fake; se não quiser persistir o fake, salve null
-            id_tiktok: bindData.id_tiktok || null,
-            status: bindData.id_tiktok ? "Vinculada" : "Pendente"
-        };
+const novaConta = {
+    nomeConta: nome_usuario,
+    id_tiktok: returnedId, // <-- agora salva no banco
+    status: bindData.id_tiktok ? "Vinculada" : "Pendente"
+};
 
         if (contaIndex !== -1) {
             usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
