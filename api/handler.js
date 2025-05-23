@@ -1062,9 +1062,14 @@ const isExterno = id_action.includes('a');
 if (isExterno) {
   // Reverter o id_action modificado para o id_pedido real
   idPedidoOriginal = id_action
-    .split('')
-    .map(c => c === 'a' ? '0' : String(Number(c) + 1))
-    .join('');
+  .split('')
+  .map(d => {
+    const n = Number(d);
+    return n === 0
+      ? '0'
+      : String(n - 1);
+  })
+  .join('');
 
   // Buscar no TemporaryAction apenas para ações externas
   tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
