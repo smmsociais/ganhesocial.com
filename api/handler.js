@@ -859,14 +859,16 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
     const fakeId = generateFakeTikTokId(); // 🔹 Gera ID fictício
 
     if (contaIndex !== -1) {
-        // 🔄 Atualiza a conta existente
-        usuario.contas[contaIndex].id_tiktok = fakeId;
+        // 🔄 Atualiza conta existente
+        usuario.contas[contaIndex].id_tiktok = null; // Nada real foi vinculado
+        usuario.contas[contaIndex].id_fake = fakeId; // Salva ID fictício
         usuario.contas[contaIndex].status = "Pendente";
     } else {
-        // ➕ Adiciona nova conta
+        // ➕ Cria nova conta com ID fictício
         const novaConta = {
             nomeConta: nome_usuario,
-            id_tiktok: fakeId,
+            id_tiktok: null,
+            id_fake: fakeId,
             status: "Pendente"
         };
         usuario.contas.push(novaConta);
@@ -874,29 +876,24 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
 
     await usuario.save(); // 💾 Salva no banco
 
-    // ✅ Retorna o ID fictício ao frontend
     return res.status(200).json({
         status: "success",
-        id_tiktok: fakeId
+        id_tiktok: fakeId // ✅ Retorna mesmo assim como se fosse id_tiktok
     });
 }
-        // Se a API externa devolveu um id, usaremos ele, caso contrário geramos o fictício
-        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+const isFake = !bindData.id_tiktok;
 
-        // Atualiza _direto_ no subdocumento
-        if (contaIndex !== -1) {
-            usuario.contas[contaIndex].id_tiktok = returnedId;
-        } else {
-            usuario.contas.push({ nomeConta: nome_usuario, id_tiktok: returnedId });
-        }
-
-        await usuario.save();
-
-        // Retorna sempre um id (real ou fictício)
-        return res.status(200).json({
-            status: "success",
-            id_tiktok: returnedId
-        });
+if (contaIndex !== -1) {
+    usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
+    usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
+} else {
+    usuario.contas.push({
+        nomeConta: nome_usuario,
+        id_tiktok: isFake ? null : returnedId,
+        id_fake: isFake ? returnedId : null
+    });
+}
 
     } catch (error) {
         console.error("Erro ao processar requisição:", error.response?.data || error.message);
