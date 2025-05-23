@@ -874,12 +874,14 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
         usuario.contas.push(novaConta);
     }
 
-    await usuario.save(); // 💾 Salva no banco
+await usuario.save(); // 💾 Salva alterações no MongoDB
 
-    return res.status(200).json({
-        status: "success",
-        id_tiktok: fakeId // ✅ Retorna mesmo assim como se fosse id_tiktok
-    });
+// 📤 Retorna o ID, seja real ou fictício
+return res.status(200).json({
+    status: "success",
+    id_tiktok: returnedId
+});
+
 }
 const returnedId = bindData.id_tiktok || generateFakeTikTokId();
 const isFake = !bindData.id_tiktok;
