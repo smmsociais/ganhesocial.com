@@ -831,9 +831,16 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
     }
 
+    // Função auxiliar para gerar o id_tiktok fictício
+    function generateFakeTikTokId() {
+        const prefix = "74";
+        // Gera 17 dígitos aleatórios
+        const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
+        return prefix + randomDigits;
+    }
+
     try {
         const usuario = await User.findOne({ token });
-
         if (!usuario) {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
@@ -848,21 +855,24 @@ if (url.startsWith("/api/get_user") && method === "GET") {
 
         const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
+        // Caso de usuário não existente na conta externa
         if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
             const novaConta = { nomeConta: nome_usuario, id_tiktok: null, status: "Pendente" };
-
             if (contaIndex !== -1) {
                 usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
             } else {
                 usuario.contas.push(novaConta);
             }
-
             await usuario.save();
             return res.status(200).json({ status: "success" });
         }
 
+        // Se não vier id_tiktok, gera o fictício
+        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+
         const novaConta = {
             nomeConta: nome_usuario,
+            // aqui você pode escolher salvar null ou o fake; se não quiser persistir o fake, salve null
             id_tiktok: bindData.id_tiktok || null,
             status: bindData.id_tiktok ? "Vinculada" : "Pendente"
         };
@@ -872,12 +882,12 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         } else {
             usuario.contas.push(novaConta);
         }
-
         await usuario.save();
 
+        // Retorna sempre um id_tiktok (real ou fictício) para exibir no frontend
         return res.status(200).json({
             status: "success",
-            ...(bindData.id_tiktok && { id_tiktok: bindData.id_tiktok })
+            id_tiktok: returnedId
         });
 
     } catch (error) {
