@@ -1024,7 +1024,6 @@ return res.status(200).json({
   
 };
 
-// Rota: /api/confirm_action (POST)
 if (url.startsWith("/api/confirm_action") && method === "POST") {
   await connectDB();
 
@@ -1039,53 +1038,72 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-let idPedidoOriginal = id_action;
+    console.log("🧩 id_action recebido:", id_action);
 
-console.log("🧩 id_action recebido:", id_action);
-console.log("🔓 idPedidoOriginal desofuscado:", idPedidoOriginal);
+    // 🔍 Verificar se a ação é local (existe no Pedido)
+    const pedidoLocal = await Pedido.findById(id_action);
 
-// Buscar no TemporaryAction apenas para ações externas
-const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+    let valorFinal = 0;
+    let tipo_acao = 'Seguir';
+    let url_dir = '';
 
-if (!tempAction) {
-  console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-  return res.status(404).json({ error: "Ação temporária não encontrada" });
-}
+    if (pedidoLocal) {
+      // ✅ AÇÃO LOCAL
+      console.log("📦 Confirmando ação local:", id_action);
 
-    const payload = {
-      token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
-      sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-      id_conta: id_tiktok,
-      id_pedido: idPedidoOriginal,
-      is_tiktok: "1"
-    };
+      const valorBruto = pedidoLocal.valor / 1000;
+      const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
+      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+      tipo_acao = 'Seguir';
+      url_dir = pedidoLocal.link;
 
-    let confirmData = {};
-    try {
-      const confirmResponse = await axios.post(
-        "https://api.ganharnoinsta.com/confirm_action.php",
-        payload,
-        { timeout: 5000 }
-      );
-      confirmData = confirmResponse.data || {};
-      console.log("📬 Resposta da API confirmar ação:", confirmData);
-    } catch (err) {
-      console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
-      return res.status(502).json({ error: "Falha na confirmação externa." });
+    } else {
+      // 🔍 AÇÃO EXTERNA – Buscar no TemporaryAction
+      const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
+
+      if (!tempAction) {
+        console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+        return res.status(404).json({ error: "Ação temporária não encontrada" });
+      }
+
+      // 🔐 Confirmar ação via API externa
+      const payload = {
+        token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+        sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
+        id_conta: id_tiktok,
+        id_pedido: id_action,
+        is_tiktok: "1"
+      };
+
+      let confirmData = {};
+      try {
+        const confirmResponse = await axios.post(
+          "https://api.ganharnoinsta.com/confirm_action.php",
+          payload,
+          { timeout: 5000 }
+        );
+        confirmData = confirmResponse.data || {};
+        console.log("📬 Resposta da API confirmar ação:", confirmData);
+      } catch (err) {
+        console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
+        return res.status(502).json({ error: "Falha na confirmação externa." });
+      }
+
+      const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
+      const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
+      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+      tipo_acao = confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir';
+      url_dir = tempAction?.url_dir || '';
     }
-
-    const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
-    const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
-    const valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
 
     const newAction = new ActionHistory({
       token,
       nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok)?.nomeConta || "desconhecido",
-      tipo_acao: confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir',
+      tipo_acao,
       quantidade_pontos: valorFinal,
-      url_dir: tempAction?.url_dir || '',
+      url_dir,
       id_conta: id_tiktok,
-      id_action: id_action,
+      id_action,
       user: usuario._id,
       acao_validada: null,
       valor_confirmacao: valorFinal,
