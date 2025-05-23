@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 const ContaSchema = new mongoose.Schema({
   nomeConta: { type: String, required: true },
   id_tiktok: { type: String },
+  id_fake: { type: String },
 });
 
 // 🔹 Schema para Histórico de Ações
