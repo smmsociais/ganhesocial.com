@@ -858,11 +858,12 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         // Caso de usuário não existente na conta externa
         if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
             const novaConta = { nomeConta: nome_usuario, id_tiktok: null, status: "Pendente" };
-            if (contaIndex !== -1) {
-                usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
-            } else {
-                usuario.contas.push(novaConta);
-            }
+if (contaIndex !== -1) {
+    usuario.contas[contaIndex].id_tiktok = returnedId;
+    usuario.contas[contaIndex].status = bindData.id_tiktok ? "Vinculada" : "Pendente";
+} else {
+    usuario.contas.push(novaConta);
+}
             await usuario.save();
             return res.status(200).json({ status: "success" });
         }
@@ -875,7 +876,6 @@ const novaConta = {
     id_tiktok: returnedId, // <-- agora salva no banco
     status: bindData.id_tiktok ? "Vinculada" : "Pendente"
 };
-
         if (contaIndex !== -1) {
             usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
         } else {
