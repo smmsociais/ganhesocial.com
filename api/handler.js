@@ -1053,23 +1053,19 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    let idPedidoOriginal = id_action;
-    let tempAction = null;
+ let idPedidoOriginal = id_action;
 
-// Verifica se é uma ação externa codificada (contém letra 'a', usada no encoding)
-const isExterno = id_action.includes('a');
+// detecta se há qualquer dígito <  original (ex.: '5' → era '6')
+const isEncoded = /\d/.test(id_action);
 
-if (isExterno) {
-  // Reverter o id_action modificado para o id_pedido real
+if (isEncoded) {
   idPedidoOriginal = id_action
-  .split('')
-  .map(d => {
-    const n = Number(d);
-    return n === 0
-      ? '0'
-      : String(n - 1);
-  })
-  .join('');
+    .split('')
+    .map(ch => ch === '0'
+      ? '0'                    // zeros continuam zeros
+      : String(Number(ch) + 1) // '6' → '7', etc.
+    )
+    .join('');
 
   // Buscar no TemporaryAction apenas para ações externas
   tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
