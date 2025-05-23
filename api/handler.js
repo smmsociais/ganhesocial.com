@@ -826,11 +826,11 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 if (url.startsWith("/api/get_user") && method === "GET") {
     await connectDB();
     const { token, nome_usuario } = req.query;
+
     if (!token || !nome_usuario) {
         return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
     }
 
-    // Gera um ID fictício quando precisar
     function generateFakeTikTokId() {
         const prefix = "74";
         const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
@@ -851,51 +851,54 @@ if (url.startsWith("/api/get_user") && method === "GET") {
             return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
         }
 
-        // A partir daqui, já sabemos que bindData.status !== "fail" || message !== "WRONG_USER"
-        // mas vamos tratar mesmo assim:
         const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
-if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-    const fakeId = generateFakeTikTokId(); // 🔹 Gera ID fictício
+        // Caso o usuário não seja encontrado na API externa
+        if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+            const fakeId = generateFakeTikTokId();
 
-    if (contaIndex !== -1) {
-        // 🔄 Atualiza conta existente
-        usuario.contas[contaIndex].id_tiktok = null; // Nada real foi vinculado
-        usuario.contas[contaIndex].id_fake = fakeId; // Salva ID fictício
-        usuario.contas[contaIndex].status = "Pendente";
-    } else {
-        // ➕ Cria nova conta com ID fictício
-        const novaConta = {
-            nomeConta: nome_usuario,
-            id_tiktok: null,
-            id_fake: fakeId,
-            status: "Pendente"
-        };
-        usuario.contas.push(novaConta);
-    }
+            if (contaIndex !== -1) {
+                usuario.contas[contaIndex].id_tiktok = null;
+                usuario.contas[contaIndex].id_fake = fakeId;
+                usuario.contas[contaIndex].status = "Pendente";
+            } else {
+                usuario.contas.push({
+                    nomeConta: nome_usuario,
+                    id_tiktok: null,
+                    id_fake: fakeId,
+                    status: "Pendente"
+                });
+            }
 
-await usuario.save(); // 💾 Salva alterações no MongoDB
+            await usuario.save();
+            return res.status(200).json({
+                status: "success",
+                id_tiktok: fakeId
+            });
+        }
 
-// 📤 Retorna o ID, seja real ou fictício
-return res.status(200).json({
-    status: "success",
-    id_tiktok: returnedId
-});
+        // Se veio um id_tiktok válido da API externa
+        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+        const isFake = !bindData.id_tiktok;
 
-}
-const returnedId = bindData.id_tiktok || generateFakeTikTokId();
-const isFake = !bindData.id_tiktok;
+        if (contaIndex !== -1) {
+            usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
+            usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
+            usuario.contas[contaIndex].status = "Ativa";
+        } else {
+            usuario.contas.push({
+                nomeConta: nome_usuario,
+                id_tiktok: isFake ? null : returnedId,
+                id_fake: isFake ? returnedId : null,
+                status: "Ativa"
+            });
+        }
 
-if (contaIndex !== -1) {
-    usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
-    usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
-} else {
-    usuario.contas.push({
-        nomeConta: nome_usuario,
-        id_tiktok: isFake ? null : returnedId,
-        id_fake: isFake ? returnedId : null
-    });
-}
+        await usuario.save();
+        return res.status(200).json({
+            status: "success",
+            id_tiktok: returnedId
+        });
 
     } catch (error) {
         console.error("Erro ao processar requisição:", error.response?.data || error.message);
