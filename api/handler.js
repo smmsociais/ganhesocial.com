@@ -1007,10 +1007,7 @@ console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 // ⚙️ Transformar id_pedido real para o id_action ofuscado
 const idActionModificado = idPedidoOriginal
   .split('')
-  .map(d => d === '0'
-    ? 'a'                   // 0 → a
-    : String(Number(d) - 1) // 2 → 1, 1 → 0, etc.
-  )
+  .map(d => d === '0' ? 'a' : d)
   .join('');
 
 return res.status(200).json({
