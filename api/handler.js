@@ -1052,7 +1052,8 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     }
 
 // decode (confirm_action)
-let idPedidoOriginal = id_action;               // ex: '037a86513'
+let idPedidoOriginal = id_action;  // ex: '037a86513'
+
 if (id_action.includes('a')) {
   idPedidoOriginal = id_action
     .split('')
@@ -1061,14 +1062,18 @@ if (id_action.includes('a')) {
       : String(Number(ch) + 1) // 0 → 1, 2 → 3, etc.
     )
     .join('');
+}
 
-  // Buscar no TemporaryAction apenas para ações externas
-  const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+// 🔍 Logs para debug
+console.log("🧩 id_action recebido:", id_action);
+console.log("🔓 idPedidoOriginal desofuscado:", idPedidoOriginal);
 
-  if (!tempAction) {
-    console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-    return res.status(404).json({ error: "Ação temporária não encontrada" });
-  }
+// Buscar no TemporaryAction apenas para ações externas
+const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action: idPedidoOriginal });
+
+if (!tempAction) {
+  console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
+  return res.status(404).json({ error: "Ação temporária não encontrada" });
 }
 
     const payload = {
