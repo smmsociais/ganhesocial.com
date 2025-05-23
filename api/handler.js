@@ -856,19 +856,29 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
 if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+    const fakeId = generateFakeTikTokId(); // 🔹 Gera ID fictício
+
     if (contaIndex !== -1) {
-        usuario.contas[contaIndex].id_tiktok = null;
+        // 🔄 Atualiza a conta existente
+        usuario.contas[contaIndex].id_tiktok = fakeId;
         usuario.contas[contaIndex].status = "Pendente";
     } else {
+        // ➕ Adiciona nova conta
         const novaConta = {
             nomeConta: nome_usuario,
-            id_tiktok: null,
+            id_tiktok: fakeId,
             status: "Pendente"
         };
         usuario.contas.push(novaConta);
     }
-    await usuario.save();
-    return res.status(200).json({ status: "success" });
+
+    await usuario.save(); // 💾 Salva no banco
+
+    // ✅ Retorna o ID fictício ao frontend
+    return res.status(200).json({
+        status: "success",
+        id_tiktok: fakeId
+    });
 }
         // Se a API externa devolveu um id, usaremos ele, caso contrário geramos o fictício
         const returnedId = bindData.id_tiktok || generateFakeTikTokId();
