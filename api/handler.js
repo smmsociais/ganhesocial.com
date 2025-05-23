@@ -843,7 +843,7 @@ if (url.startsWith("/api/get_user") && method === "GET") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=…&nome_usuario=${nome_usuario}`;
+        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
