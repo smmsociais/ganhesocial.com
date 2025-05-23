@@ -995,7 +995,7 @@ const data = response.data;
 
 if (data.status === "CONTA_INEXISTENTE") {
   console.log("[GET_ACTION] Conta inexistente na API externa:", id_tiktok);
-  return res.status(200).json({ status: "fail", id_tiktok, message: "conta_inexistente" });
+  return res.status(200).json({ status: "fail", id_tiktok, message: "Nenhuma ação disponível no momento." });
 }
 
 if (data.status === "ENCONTRADA") {
