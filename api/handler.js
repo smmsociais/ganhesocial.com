@@ -855,17 +855,21 @@ if (url.startsWith("/api/get_user") && method === "GET") {
         // mas vamos tratar mesmo assim:
         const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
-        // Se a API externa explicitamente diz que o usuário não existe:
-        if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-            // Mantemos id_tiktok = null e status = "Pendente"
-            if (contaIndex === -1) {
-                usuario.contas.push({ nomeConta: nome_usuario, id_tiktok: null });
-            }
-            // repersiste e sai
-            await usuario.save();
-            return res.status(200).json({ status: "success" });
-        }
-
+if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+    if (contaIndex !== -1) {
+        usuario.contas[contaIndex].id_tiktok = null;
+        usuario.contas[contaIndex].status = "Pendente";
+    } else {
+        const novaConta = {
+            nomeConta: nome_usuario,
+            id_tiktok: null,
+            status: "Pendente"
+        };
+        usuario.contas.push(novaConta);
+    }
+    await usuario.save();
+    return res.status(200).json({ status: "success" });
+}
         // Se a API externa devolveu um id, usaremos ele, caso contrário geramos o fictício
         const returnedId = bindData.id_tiktok || generateFakeTikTokId();
 
