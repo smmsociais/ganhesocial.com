@@ -823,7 +823,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 }
 
 // Rota: /api/get_user (GET)
-if (url.startsWith("/api/get_user") && method === "GET") {
+if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
     await connectDB();
     const { token, nome_usuario } = req.query;
 
@@ -910,7 +910,7 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
 }
 
 // Rota: /api/get_action (GET)
-if (url.startsWith("/api/get_action") && method === "GET") {
+if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método não permitido" });
   }
@@ -1105,7 +1105,7 @@ if (data.status === "ENCONTRADA") {
 };
 
 // Rota: /api/confirm_action (POST)
-if (url.startsWith("/api/confirm_action") && method === "POST") {
+if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
   await connectDB();
 
   const { token, id_action, id_tiktok } = req.body;
