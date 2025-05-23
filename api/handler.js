@@ -825,16 +825,14 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 // Rota: /api/get_user (GET)
 if (url.startsWith("/api/get_user") && method === "GET") {
     await connectDB();
-
     const { token, nome_usuario } = req.query;
     if (!token || !nome_usuario) {
         return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
     }
 
-    // Função auxiliar para gerar o id_tiktok fictício
+    // Gera um ID fictício quando precisar
     function generateFakeTikTokId() {
         const prefix = "74";
-        // Gera 17 dígitos aleatórios
         const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
         return prefix + randomDigits;
     }
@@ -845,7 +843,7 @@ if (url.startsWith("/api/get_user") && method === "GET") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=…&nome_usuario=${nome_usuario}`;
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
@@ -853,37 +851,34 @@ if (url.startsWith("/api/get_user") && method === "GET") {
             return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
         }
 
+        // A partir daqui, já sabemos que bindData.status !== "fail" || message !== "WRONG_USER"
+        // mas vamos tratar mesmo assim:
         const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
-        // Caso de usuário não existente na conta externa
+        // Se a API externa explicitamente diz que o usuário não existe:
         if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-            const novaConta = { nomeConta: nome_usuario, id_tiktok: null, status: "Pendente" };
-if (contaIndex !== -1) {
-    usuario.contas[contaIndex].id_tiktok = returnedId;
-    usuario.contas[contaIndex].status = bindData.id_tiktok ? "Vinculada" : "Pendente";
-} else {
-    usuario.contas.push(novaConta);
-}
+            // Mantemos id_tiktok = null e status = "Pendente"
+            if (contaIndex === -1) {
+                usuario.contas.push({ nomeConta: nome_usuario, id_tiktok: null });
+            }
+            // repersiste e sai
             await usuario.save();
             return res.status(200).json({ status: "success" });
         }
 
-        // Se não vier id_tiktok, gera o fictício
-const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+        // Se a API externa devolveu um id, usaremos ele, caso contrário geramos o fictício
+        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
 
-const novaConta = {
-    nomeConta: nome_usuario,
-    id_tiktok: returnedId, // <-- agora salva no banco
-    status: bindData.id_tiktok ? "Vinculada" : "Pendente"
-};
+        // Atualiza _direto_ no subdocumento
         if (contaIndex !== -1) {
-            usuario.contas[contaIndex] = { ...usuario.contas[contaIndex], ...novaConta };
+            usuario.contas[contaIndex].id_tiktok = returnedId;
         } else {
-            usuario.contas.push(novaConta);
+            usuario.contas.push({ nomeConta: nome_usuario, id_tiktok: returnedId });
         }
+
         await usuario.save();
 
-        // Retorna sempre um id_tiktok (real ou fictício) para exibir no frontend
+        // Retorna sempre um id (real ou fictício)
         return res.status(200).json({
             status: "success",
             id_tiktok: returnedId
