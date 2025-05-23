@@ -967,7 +967,6 @@ return res.status(200).json({
   tipo_acao: "seguir",
   valor: valorFinal
 });
-
     }
 
     console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
@@ -1004,23 +1003,15 @@ if (data.status === "ENCONTRADA") {
 console.log("[GET_ACTION] TemporaryAction salva:", temp);
 console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
 
-// ⚙️ Transformar id_pedido real para o id_action ofuscado
-const idActionModificado = idPedidoOriginal
-  .split('')
-  .map(d => d === '0' ? 'a' : d)
-  .join('');
-
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
-  id_action: idActionModificado, // <- retornar o modificado
+  id_action: idPedidoOriginal,
   url: data.url_dir,
   nome_usuario: data.nome_usuario,
   tipo_acao: data.tipo_acao,
   valor: valorFinal
 });
-
-
 }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
@@ -1049,17 +1040,6 @@ if (url.startsWith("/api/confirm_action") && method === "POST") {
     }
 
 let idPedidoOriginal = id_action;
-
-if (id_action.includes('a') || /^[0-6]+$/.test(id_action)) {
-  idPedidoOriginal = id_action
-    .split('')
-    .map(ch => {
-      if (ch === 'a') return '0';
-      const n = Number(ch);
-      return isNaN(n) ? ch : String(n + 1);
-    })
-    .join('');
-}
 
 console.log("🧩 id_action recebido:", id_action);
 console.log("🔓 idPedidoOriginal desofuscado:", idPedidoOriginal);
