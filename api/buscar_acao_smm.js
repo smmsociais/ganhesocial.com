@@ -4,7 +4,6 @@ import { User, ActionHistory, Pedido } from "./schema.js";
 
 const handler = async (req, res) => {
   if (req.method !== "GET") {
-    console.log("Método não permitido:", req.method);
     return res.status(405).json({ error: "Método não permitido" });
   }
 
@@ -16,7 +15,6 @@ const handler = async (req, res) => {
   console.log("tipo:", tipo);
 
   if (!id_conta || !token) {
-    console.log("❌ id_conta ou token ausentes");
     return res.status(400).json({ error: "id_conta e token são obrigatórios" });
   }
 
@@ -30,17 +28,21 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    const query = { quantidade: { $gt: 0 } };
-    if (tipo) {
-      query.tipo = tipo;
-    }
+    // 🔁 Mapeamento do tipo recebido para o tipo do banco
+    const tipoMap = {
+      seguir: "seguidores",
+      curtir: "curtidas"
+    };
+    const tipoBanco = tipoMap[tipo] || tipo;
 
-    const pedidos = await Pedido.find(query).sort({ createdAt: -1 });
+    const query = { quantidade: { $gt: 0 } };
+    if (tipoBanco) query.tipo = tipoBanco;
+
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }); // usando campo correto
     console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
     for (const pedido of pedidos) {
       const id_pedido = pedido._id;
-      console.log("🔍 Verificando pedido:", id_pedido);
 
       const jaFez = await ActionHistory.findOne({
         id_pedido,
@@ -49,7 +51,7 @@ const handler = async (req, res) => {
       });
 
       if (jaFez) {
-        console.log(`⏩ Ação já registrada para conta ${id_conta} no pedido ${id_pedido}`);
+        console.log(`⛔ Já realizou pedido ${id_pedido}`);
         continue;
       }
 
@@ -58,10 +60,8 @@ const handler = async (req, res) => {
         acao_validada: { $in: [true, null] }
       });
 
-      console.log(`🔢 Pedido ${id_pedido} - ${feitas}/${pedido.quantidade} ações feitas`);
-
       if (feitas >= pedido.quantidade) {
-        console.log(`⏩ Limite de ações atingido para pedido ${id_pedido}`);
+        console.log(`⏩ Pedido ${id_pedido} já atingiu o limite (${feitas}/${pedido.quantidade})`);
         continue;
       }
 
@@ -69,14 +69,14 @@ const handler = async (req, res) => {
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
         : "";
 
-      console.log(`✅ Ação encontrada para ${nomeUsuario}`);
+      console.log(`✅ Ação encontrada: ${nomeUsuario} (pedido ${id_pedido})`);
 
       return res.json({
         status: "ENCONTRADA",
         nome_usuario: nomeUsuario,
         quantidade_pontos: pedido.valor,
         url_dir: pedido.link,
-        tipo_acao: pedido.tipo,
+        tipo_acao: tipo,
         id_pedido: pedido._id
       });
     }
@@ -85,7 +85,7 @@ const handler = async (req, res) => {
     return res.json({ status: "NAO_ENCONTRADA" });
 
   } catch (error) {
-    console.error("❌ Erro ao buscar ação local:", error);
+    console.error("🔥 Erro ao buscar ação:", error);
     return res.status(500).json({ error: "Erro interno" });
   }
 };
