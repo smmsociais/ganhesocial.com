@@ -9,19 +9,24 @@ const ContaSchema = new mongoose.Schema({
 
 // 🔹 Schema para Histórico de Ações
 const ActionHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, 
-  token: { type: String },                                    
-  nome_usuario: { type: String },                            
-  id_action: { type: String },                                 
-  id_conta: { type: String },                                 
-  url_dir: { type: String },                       
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  token: { type: String },
+  nome_usuario: { type: String },
+  id_action: { type: String },
+  id_conta: { type: String },
+  url_dir: { type: String },
   acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
   quantidade_pontos: { type: Number },
   tipo_acao: { type: String },
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, default: "Seguir" }
+  tipo: { type: String, default: "Seguir" },
+  id_pedido: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: "Pedido"
+  }
 });
 
 // 🔹 Schema para Histórico de Saques
