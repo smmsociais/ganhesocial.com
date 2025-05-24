@@ -22,18 +22,16 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    // 🔍 Buscar pedidos filtrando por tipo e quantidade > 0
-    const filtro = {
-      tipo,
+    // 🔍 Determinar os tipos aceitos
+    const tiposAceitos = tipo === "seguir_curtir"
+      ? ["seguir", "curtir"]
+      : [tipo];
+
+    // 🔍 Buscar pedidos com tipos aceitos e quantidade > 0
+    const pedidos = await Pedido.find({
+      tipo: { $in: tiposAceitos },
       quantidade: { $gt: 0 }
-    };
-
-    // 📹 Se for tipo "seguir", ignorar ações com URL de vídeo
-    if (tipo === "seguir") {
-      filtro.link = { $not: /\/video\// };
-    }
-
-    const pedidos = await Pedido.find(filtro).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 });
 
     for (const pedido of pedidos) {
       const id_pedido = pedido._id;
@@ -55,6 +53,12 @@ const handler = async (req, res) => {
 
       if (feitas >= pedido.quantidade) continue;
 
+      // ⚠️ Ignora ações de SEGUIR com URL de vídeo
+      if (pedido.tipo === "seguir" && pedido.link.includes("/video/")) {
+        console.log("Ignorando ação de seguir com URL de vídeo:", pedido.link);
+        continue;
+      }
+
       // ✅ Ação disponível!
       const nomeUsuario = pedido.link.includes("@")
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
@@ -74,7 +78,7 @@ const handler = async (req, res) => {
     return res.json({ status: "NAO_ENCONTRADA" });
 
   } catch (error) {
-    console.error("Erro ao buscar ação:", error);
+    console.error("Erro ao buscar ação local:", error);
     return res.status(500).json({ error: "Erro interno" });
   }
 };
