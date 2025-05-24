@@ -309,33 +309,34 @@
             display: block;
             margin-bottom: 5px;
         }
+        
+    /* Estilo unificado para os selects */
+    #accountSelect,
+    #actionType {
+        padding: 10px;
+        width: 30%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        height: 5px;
+        box-sizing: border-box;
+    }
 
-        /* Estilo unificado para os selects */
-        #accountSelect, #actionType {
-            padding: 10px;
-            width: 30%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            height: 5px;
-            box-sizing: border-box;
+    @media (max-width: 768px) {
+        .container {
+            width: 88%;
+            padding: 20px;
         }
+    }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
-            }
-        }
+    body {
+        visibility: hidden;
+    }
 
-        body {
-            visibility: hidden;
-        }
-
-        body.loaded {
-            visibility: visible;
-        }
-    </style>
+    body.loaded {
+        visibility: visible;
+    }
+</style>
 </head>
 
 <body>
@@ -356,19 +357,17 @@
     <div class="container">
         <h2>Realizar Ações TikTok</h2>
         <select id="accountSelect" onchange="bindAccount()">
-            <option value="">Selecione uma conta</option>
+            <option value="" selected disabled>Selecione uma conta</option>
         </select>
 
         <!-- Novo formulário para tipo de ação -->
         <div class="action-type-container">
             <select id="actionType">
-                <option value="seguir">Seguir</option>
+                <option value="seguir" selected>Seguir</option>
                 <option value="curtir">Curtir</option>
                 <option value="seguir_curtir">Seguir e Curtir</option>
             </select>
-            </div>
-
-        <p id="statusMessage" class="status-message"></p>
+        </div>
 
         <p id="statusMessage" class="status-message"></p>
 
@@ -424,10 +423,6 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
-            if (!token) {
-
-                return;
-            }
 
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
