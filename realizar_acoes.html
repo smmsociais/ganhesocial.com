@@ -491,12 +491,18 @@
 
                 const data = await response.json();
 
-                if (data.id_conta) {
-                    localStorage.setItem("id_conta", data.id_conta);
-                    // Esconde o aviso e mostra o conteúdo da ação
-                    document.getElementById("warningMessage").style.display = "none";
-                    document.getElementById("actionContent").style.display = "block";
-                    fetchAction();
+if (data.id_conta) {
+    localStorage.setItem("id_conta", data.id_conta);
+    
+    // Esconde o aviso e mostra o conteúdo da ação
+    document.getElementById("warningMessage").style.display = "none";
+    document.getElementById("actionContent").style.display = "block";
+    
+    // Ativa o seletor de tipo de ação
+    ativarSelecaoTipoAcao();
+
+    // Busca uma ação imediatamente
+    fetchAction();
                 } else {
                     document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
                 }
