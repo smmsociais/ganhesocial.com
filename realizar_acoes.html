@@ -586,13 +586,10 @@ async function processarAcao(data, origem) {
 const actionType = document.getElementById("actionType").value;
 let actionText = "Seguir"; // valor padrão
 
-if (data.url_dir && data.url_dir.includes("/video/")) {
-    // Força como Curtir se for link de vídeo
+if (data.tipo_acao === "curtir") {
     actionText = "Curtir";
-} else if (actionType === "curtir") {
-    actionText = "Curtir";
-} else if (actionType === "seguir_curtir") {
-    actionText = origem === "local" ? "Seguir" : "Seguir e Curtir";
+} else if (actionType === "seguir_curtir" && origem === "smm") {
+    actionText = "Seguir e Curtir";
 }
 
 document.getElementById("actionText").textContent = actionText;
@@ -627,7 +624,7 @@ if (data.url_dir && data.url_dir.includes("/video/")) {
 }
 let valorFinal;
 
-const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
+const isCurtir = data.tipo_acao === "curtir";
 
 if (isCurtir) {
     valorFinal = "0.001";
