@@ -25,40 +25,46 @@ const handler = async (req, res) => {
     // 🔍 Buscar pedidos com quantidade > 0
     const pedidos = await Pedido.find({ quantidade: { $gt: 0 } }).sort({ createdAt: -1 });
 
-    for (const pedido of pedidos) {
-      const id_pedido = pedido._id;
+for (const pedido of pedidos) {
+  const id_pedido = pedido._id;
 
-      // ❌ Já realizou essa ação?
-      const jaFez = await ActionHistory.findOne({
-        id_pedido,
-        id_conta,
-        acao_validada: { $in: [true, null] }
-      });
+  // ❌ Já realizou essa ação?
+  const jaFez = await ActionHistory.findOne({
+    id_pedido,
+    id_conta,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (jaFez) continue;
+  if (jaFez) continue;
 
-      // 🔢 Quantas já foram feitas
-      const feitas = await ActionHistory.countDocuments({
-        id_pedido,
-        acao_validada: { $in: [true, null] }
-      });
+  // 🔢 Quantas já foram feitas
+  const feitas = await ActionHistory.countDocuments({
+    id_pedido,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (feitas >= pedido.quantidade) continue;
+  if (feitas >= pedido.quantidade) continue;
 
-      // ✅ Ação disponível!
-      const nomeUsuario = pedido.link.includes("@")
-        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-        : "";
+  // ⚠️ Ignora ações de SEGUIR com URL de vídeo
+  if (pedido.tipo === "seguir" && pedido.link.includes("/video/")) {
+    console.log("Ignorando ação de seguir com URL de vídeo:", pedido.link);
+    continue;
+  }
 
-      return res.json({
-        status: "ENCONTRADA",
-        nome_usuario: nomeUsuario,
-        quantidade_pontos: pedido.valor,
-        url_dir: pedido.link,
-        tipo_acao: pedido.tipo,
-        id_pedido: pedido._id
-      });
-    }
+  // ✅ Ação disponível!
+  const nomeUsuario = pedido.link.includes("@")
+    ? pedido.link.split("@")[1].split(/[/?#]/)[0]
+    : "";
+
+  return res.json({
+    status: "ENCONTRADA",
+    nome_usuario: nomeUsuario,
+    quantidade_pontos: pedido.valor,
+    url_dir: pedido.link,
+    tipo_acao: pedido.tipo,
+    id_pedido: pedido._id
+  });
+}
 
     // ❌ Nenhuma ação válida encontrada
     return res.json({ status: "NAO_ENCONTRADA" });
