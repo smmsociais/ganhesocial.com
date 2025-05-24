@@ -336,8 +336,19 @@
         <h2>Realizar Ações TikTok</h2>
         <select id="accountSelect" onchange="bindAccount()">
             <option value="">Selecione uma conta</option>
-        </select>
-        <option value="">Tipo de ação</option>
+
+        <!-- Novo formulário para tipo de ação -->
+        <div class="action-type-container">
+            <label for="actionType"><strong>Tipo de Ação:</strong></label>
+            <select id="actionType">
+                <option value="seguir">Seguir</option>
+                <option value="curtir">Curtir</option>
+                <option value="seguir_curtir">Seguir e Curtir</option>
+            </select>
+        </div>
+
+        <p id="statusMessage" class="status-message"></p>
+
         <p id="statusMessage" class="status-message"></p>
 
         <div id="actionBox" class="action-box">
