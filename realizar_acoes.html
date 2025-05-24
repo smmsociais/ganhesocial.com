@@ -598,7 +598,8 @@ if (data.url_dir && data.url_dir.includes("/video/")) {
 document.getElementById("actionText").textContent = actionText;
 
     const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-const profileImg = document.getElementById("profileImage");
+    const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
+    const profileImg = document.getElementById("profileImage");
 
 if (data.url_dir && data.url_dir.includes("/video/")) {
     // Não carrega imagem de perfil para ações de Curtir
