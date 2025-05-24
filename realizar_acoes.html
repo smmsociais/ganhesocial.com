@@ -300,34 +300,6 @@
             /* Espaço entre menu e logo */
         }
 
-        .action-type-container {
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-
-        .action-type-container label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        /* Estilo unificado para os selects */
-        #accountSelect,
-        #actionType {
-            padding: 4px 8px;
-            /* padding reduzido */
-            width: 33%;
-            /* mantém a largura reduzida */
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 13px;
-            /* fonte levemente reduzida */
-            height: auto;
-            /* deixa a altura natural conforme conteúdo */
-            line-height: 1.4;
-            /* boa legibilidade */
-            box-sizing: border-box;
-        }
-
         @media (max-width: 768px) {
             .container {
                 width: 88%;
@@ -363,18 +335,8 @@
     <div class="container">
         <h2>Realizar Ações TikTok</h2>
         <select id="accountSelect" onchange="bindAccount()">
-            <option value="" selected disabled>Selecione uma conta</option>
+            <option value="">Selecione uma conta</option>
         </select>
-
-        <!-- Novo formulário para tipo de ação -->
-        <div class="action-type-container">
-            <select id="actionType" disabled>
-                <option value="seguir">Seguir</option>
-                <option value="curtir">Curtir</option>
-                <option value="seguir_curtir">Seguir e Curtir</option>
-            </select>
-
-        </div>
         <p id="statusMessage" class="status-message"></p>
 
         <div id="actionBox" class="action-box">
@@ -388,7 +350,7 @@
             </div>
 
             <div id="actionContent" class="action-content">
-                <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
+                <p><strong>Ação:</strong> Seguir</p>
                 <p><strong>Usuário:</strong> <span id="username"></span></p>
                 <p><strong>Valor:</strong> <span id="points"></span></p>
 
@@ -427,8 +389,12 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
 
+            if (!token) {
+                window.location.href = "login";
+                return;
+            }
 
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -465,20 +431,6 @@
                 console.error('Erro ao carregar contas:', error);
             }
 
-            // Habilita o listener de tipo de ação após carregar as contas
-document.getElementById("actionType").addEventListener("change", () => {
-    // Atualiza o texto da ação imediatamente quando o tipo muda
-    const actionType = document.getElementById("actionType").value;
-    let actionText = "Seguir";
-    if (actionType === "curtir") {
-        actionText = "Curtir";
-    } else if (actionType === "seguir_curtir") {
-        actionText = "Seguir e Curtir";
-    }
-    document.getElementById("actionText").textContent = actionText;
-                fetchAction();
-            });
-
             document.body.classList.add('loaded');
         });
 
@@ -502,15 +454,9 @@ document.getElementById("actionType").addEventListener("change", () => {
 
                 if (data.id_conta) {
                     localStorage.setItem("id_conta", data.id_conta);
-
                     // Esconde o aviso e mostra o conteúdo da ação
                     document.getElementById("warningMessage").style.display = "none";
                     document.getElementById("actionContent").style.display = "block";
-
-                    // Ativa o seletor de tipo de ação
-                    ativarSelecaoTipoAcao();
-
-                    // Busca uma ação imediatamente
                     fetchAction();
                 } else {
                     document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
@@ -520,125 +466,78 @@ document.getElementById("actionType").addEventListener("change", () => {
             }
         }
 
-        function ativarSelecaoTipoAcao() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+async function fetchAction() {
+    const id_conta = localStorage.getItem("id_conta");
+    const token = localStorage.getItem("token");
+    if (!id_conta || !token) return;
 
-            if (id_conta && token && id_conta !== "null") {
-                document.getElementById("actionType").disabled = false;
+    document.getElementById("actionContent").style.opacity = "0";
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+
+    async function tentarBuscarSMM() {
+        try {
+            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}`);
+            const data = await response.json();
+            if (data.status === "ENCONTRADA") {
+                await processarAcao(data, "smm");
+                return true;
             }
+        } catch (e) {
+            console.error("Erro ao buscar ação SMM:", e);
         }
-        async function fetchAction() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+        return false;
+    }
 
-            if (document.getElementById("actionType").disabled) return;
-
-            // Se o usuário ainda não selecionou a conta, não busca ação
-            if (!id_conta || !token || id_conta === "null") {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta antes de buscar ações.";
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
-
-            // prossegue normalmente se a conta estiver definida
-            document.getElementById("actionContent").style.opacity = "0";
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-
-async function tentarBuscarSMM() {
+async function tentarBuscarLocal() {
     try {
-        const tipoAcao = document.getElementById("actionType").value; // deve conter "seguir", "curtir" ou "seguir_curtir"
-        
-        // Verificação básica do tipo (opcional, mas pode evitar bugs)
-        if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
-            console.warn("Tipo de ação inválido:", tipoAcao);
-            return false;
-        }
-
-        const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
         const data = await response.json();
-
         if (data.status === "ENCONTRADA") {
-            await processarAcao(data, "smm");
+            if (parseFloat(data.quantidade_pontos) === 4) {
+                return "ignorarLocalERepetirSMM";
+            }
+            await processarAcao(data, "local");
             return true;
-        } else {
-            console.log("Nenhuma ação SMM encontrada.");
+        } else if (data.error === "Nenhuma ação encontrada.") {
+            return "repetirSMM";
         }
     } catch (e) {
-        console.error("Erro ao buscar ação SMM:", e);
+        console.error("Erro ao buscar ação local:", e);
     }
     return false;
 }
-            async function tentarBuscarLocal() {
-                try {
-                    const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-                    const data = await response.json();
-                    if (data.status === "ENCONTRADA") {
-                        if (parseFloat(data.quantidade_pontos) === 4) {
-                            return "ignorarLocalERepetirSMM";
-                        }
-                        await processarAcao(data, "local");
-                        return true;
-                    } else if (data.error === "Nenhuma ação encontrada.") {
-                        return "repetirSMM";
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação local:", e);
-                }
-                return false;
+
+    async function processarAcao(data, origem) {
+        document.getElementById("statusMessage").textContent = "";
+        document.getElementById("username").textContent = data.nome_usuario;
+
+        const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+        const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
+        document.getElementById("actionUrl").href = url;
+
+        try {
+            const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+            const userInfo = await resUserInfo.json();
+
+            const profileImg = document.getElementById("profileImage");
+            if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                profileImg.src = userInfo.data.user.avatarLarger;
+                profileImg.style.display = "block";
+                localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+            } else {
+                profileImg.style.display = "none";
+                profileImg.src = "";
             }
-
-async function processarAcao(data, origem) {
-    document.getElementById("statusMessage").textContent = "";
-    document.getElementById("username").textContent = data.nome_usuario;
-
-    // Atualiza o texto da ação com base no tipo selecionado
-const actionType = document.getElementById("actionType").value;
-let actionText = "Seguir"; // valor padrão
-
-if (data.tipo_acao === "curtir") {
-    actionText = "Curtir";
-} else if (actionType === "seguir_curtir" && origem === "smm") {
-    actionText = "Seguir e Curtir";
-}
-
-document.getElementById("actionText").textContent = actionText;
-
-    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-    const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
-    const profileImg = document.getElementById("profileImage");
-     document.getElementById("actionUrl").href = url;
-
-if (data.url_dir && data.url_dir.includes("/video/")) {
-    // Não carrega imagem de perfil para ações de Curtir
-    profileImg.style.display = "none";
-    profileImg.src = "";
-} else {
-    try {
-        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-        const userInfo = await resUserInfo.json();
-
-        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-            profileImg.src = userInfo.data.user.avatarLarger;
-            profileImg.style.display = "block";
-            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-        } else {
+        } catch (e) {
+            console.error("Erro ao carregar avatar:", e);
+            const profileImg = document.getElementById("profileImage");
             profileImg.style.display = "none";
             profileImg.src = "";
         }
-    } catch (e) {
-        console.error("Erro ao carregar avatar:", e);
-        profileImg.style.display = "none";
-        profileImg.src = "";
-    }
-}
+
 let valorFinal;
 
-const isCurtir = data.tipo_acao === "curtir";
-
-if (isCurtir) {
-    valorFinal = "0.001";
-} else if (origem === "smm") {
+if (origem === "smm") {
     valorFinal = "0.006";
 } else {
     const pontos = parseFloat(data.quantidade_pontos || 0);
@@ -646,46 +545,40 @@ if (isCurtir) {
     let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
     valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 }
-                document.getElementById("points").textContent = `R$ ${valorFinal}`;
-                document.getElementById("confirmButton").style.display = "none";
 
-                currentActionData = {
-                    ...data,
-                    origem
-                };
+        document.getElementById("points").textContent = `R$ ${valorFinal}`;
+        document.getElementById("confirmButton").style.display = "none";
 
-                document.getElementById("actionContent").style.opacity = "1";
+        currentActionData = {
+            ...data,
+            origem
+        };
+
+        document.getElementById("actionContent").style.opacity = "1";
+    }
+
+try {
+    const encontrouSMM = await tentarBuscarSMM();
+    if (!encontrouSMM) {
+        const resultadoLocal = await tentarBuscarLocal();
+
+        if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+            const novaTentativa = await tentarBuscarSMM();
+            if (!novaTentativa) {
+                document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
+                setTimeout(fetchAction, 3000);
             }
-
-            try {
-                const tipoAcao = document.getElementById("actionType").value;
-                const encontrouSMM = await tentarBuscarSMM();
-
-                if (!encontrouSMM) {
-                    let resultadoLocal = false;
-
-                    if (tipoAcao !== "curtir") {
-                        resultadoLocal = await tentarBuscarLocal();
-                    }
-
-                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                        const novaTentativa = await tentarBuscarSMM();
-                        if (!novaTentativa) {
-                            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
-                            setTimeout(fetchAction, 3000);
-                        }
-                    } else if (!resultadoLocal) {
-                        document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
-                        setTimeout(fetchAction, 3000);
-                    }
-                }
-
-            } catch (error) {
-                console.error("Erro ao buscar ações:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
-                document.getElementById("actionContent").style.opacity = "1";
-            }
+        } else if (!resultadoLocal) {
+            document.getElementById("statusMessage").textContent = "Nenhuma ação disponível no momento. Tentando novamente em instantes...";
+            setTimeout(fetchAction, 3000);
         }
+    }
+} catch (error) {
+    console.error("Erro ao buscar ações:", error);
+    document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
+    document.getElementById("actionContent").style.opacity = "1";
+}
+  }
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
