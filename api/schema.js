@@ -22,11 +22,7 @@ const ActionHistorySchema = new mongoose.Schema({
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
   tipo: { type: String, default: "Seguir" },
-  id_pedido: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: false,
-    ref: "Pedido"
-  }
+  id_pedido: { type: mongoose.Schema.Types.ObjectId }
 });
 
 // 🔹 Schema para Histórico de Saques
