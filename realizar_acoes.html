@@ -583,14 +583,19 @@ async function processarAcao(data, origem) {
     document.getElementById("username").textContent = data.nome_usuario;
     
     // Atualiza o texto da ação com base no tipo selecionado
-    const actionType = document.getElementById("actionType").value;
-    let actionText = "Seguir";
-    if (actionType === "curtir") {
-        actionText = "Curtir";
-    } else if (actionType === "seguir_curtir") {
-        actionText = "Seguir e Curtir";
-    }
-    document.getElementById("actionText").textContent = actionText;
+const actionType = document.getElementById("actionType").value;
+let actionText = "Seguir"; // valor padrão
+
+if (data.url_dir && data.url_dir.includes("/video/")) {
+    // Força como Curtir se for link de vídeo
+    actionText = "Curtir";
+} else if (actionType === "curtir") {
+    actionText = "Curtir";
+} else if (actionType === "seguir_curtir") {
+    actionText = origem === "local" ? "Seguir" : "Seguir e Curtir";
+}
+
+document.getElementById("actionText").textContent = actionText;
 
     const tiktokUsername = data.nome_usuario.replace(/^@/, '');
                 const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
