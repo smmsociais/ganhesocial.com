@@ -368,10 +368,10 @@
 
         <!-- Novo formulário para tipo de ação -->
         <div class="action-type-container">
-<select id="actionType" onchange="fetchAction()" disabled>
-    <option value="seguir">Seguir</option>
-    <option value="curtir">Curtir</option>
-    <option value="seguir_curtir">Seguir e Curtir</option>
+<select id="actionType" disabled>
+  <option value="seguir">Seguir</option>
+  <option value="curtir">Curtir</option>
+  <option value="seguir_curtir">Seguir e Curtir</option>
 </select>
 
         </div>
@@ -459,14 +459,19 @@
                 spans[2].style.transform = 'none';
             });
 
-            try {
-                await loadAccounts();
-            } catch (error) {
-                console.error('Erro ao carregar contas:', error);
-            }
+    try {
+        await loadAccounts();
+    } catch (error) {
+        console.error('Erro ao carregar contas:', error);
+    }
 
-            document.body.classList.add('loaded');
-        });
+    // Habilita o listener de tipo de ação após carregar as contas
+    document.getElementById("actionType").addEventListener("change", () => {
+        fetchAction();
+    });
+
+    document.body.classList.add('loaded');
+});
 
         let currentActionData = null;
 
