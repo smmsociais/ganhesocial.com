@@ -368,13 +368,12 @@
 
         <!-- Novo formulário para tipo de ação -->
         <div class="action-type-container">
-            <select id="actionType">
-                <option value="seguir" selected>Seguir</option>
-                <option value="curtir">Curtir</option>
-                <option value="seguir_curtir">Seguir e Curtir</option>
-            </select>
+<select id="actionType" onchange="fetchAction()">
+    <option value="seguir">Seguir</option>
+    <option value="curtir">Curtir</option>
+    <option value="seguir_curtir">Seguir e Curtir</option>
+</select>
         </div>
-
         <p id="statusMessage" class="status-message"></p>
 
         <div id="actionBox" class="action-box">
@@ -427,7 +426,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("token");  // alterado de "authToken" para "token"
+            const token = localStorage.getItem("token");
 
 
             const menuToggle = document.getElementById('menuToggle');
@@ -508,20 +507,20 @@
             document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
-            async function tentarBuscarSMM() {
-                try {
-                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}`);
-                    const data = await response.json();
-                    if (data.status === "ENCONTRADA") {
-                        await processarAcao(data, "smm");
-                        return true;
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação SMM:", e);
-                }
-                return false;
-            }
-
+async function tentarBuscarSMM() {
+    try {
+        const tipoAcao = document.getElementById("actionType").value;
+        const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
+        const data = await response.json();
+        if (data.status === "ENCONTRADA") {
+            await processarAcao(data, "smm");
+            return true;
+        }
+    } catch (e) {
+        console.error("Erro ao buscar ação SMM:", e);
+    }
+    return false;
+}
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
