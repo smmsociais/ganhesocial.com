@@ -600,6 +600,7 @@ document.getElementById("actionText").textContent = actionText;
     const tiktokUsername = data.nome_usuario.replace(/^@/, '');
     const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
     const profileImg = document.getElementById("profileImage");
+     document.getElementById("actionUrl").href = url;
 
 if (data.url_dir && data.url_dir.includes("/video/")) {
     // Não carrega imagem de perfil para ações de Curtir
