@@ -7,7 +7,7 @@ const handler = async (req, res) => {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { id_conta, token, tipo } = req.query;
+  const { id_conta, token } = req.query;
 
   if (!id_conta || !token) {
     return res.status(400).json({ error: "id_conta e token são obrigatórios" });
@@ -16,21 +16,19 @@ const handler = async (req, res) => {
   try {
     await connectDB();
 
+    // 🔐 Validação do token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    const query = { quantidade: { $gt: 0 } };
-    if (tipo) {
-      query.tipo = tipo;
-    }
-
-    const pedidos = await Pedido.find(query).sort({ createdAt: -1 });
+    // 🔍 Buscar pedidos com quantidade > 0
+    const pedidos = await Pedido.find({ quantidade: { $gt: 0 } }).sort({ createdAt: -1 });
 
     for (const pedido of pedidos) {
       const id_pedido = pedido._id;
 
+      // ❌ Já realizou essa ação?
       const jaFez = await ActionHistory.findOne({
         id_pedido,
         id_conta,
@@ -39,6 +37,7 @@ const handler = async (req, res) => {
 
       if (jaFez) continue;
 
+      // 🔢 Quantas já foram feitas
       const feitas = await ActionHistory.countDocuments({
         id_pedido,
         acao_validada: { $in: [true, null] }
@@ -46,6 +45,7 @@ const handler = async (req, res) => {
 
       if (feitas >= pedido.quantidade) continue;
 
+      // ✅ Ação disponível!
       const nomeUsuario = pedido.link.includes("@")
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
         : "";
@@ -60,6 +60,7 @@ const handler = async (req, res) => {
       });
     }
 
+    // ❌ Nenhuma ação válida encontrada
     return res.json({ status: "NAO_ENCONTRADA" });
 
   } catch (error) {
