@@ -545,21 +545,7 @@ document.getElementById("actionType").addEventListener("change", () => {
             document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
-            async function tentarBuscarSMM() {
-                try {
-                    const tipoAcao = document.getElementById("actionType").value;
-                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
-                    const data = await response.json();
-                    if (data.status === "ENCONTRADA") {
-                        await processarAcao(data, "smm");
-                        return true;
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação SMM:", e);
-                }
-                return false;
-            }
- async function tentarBuscarSMM() {
+async function tentarBuscarSMM() {
     try {
         const tipoAcao = document.getElementById("actionType").value; // deve conter "seguir", "curtir" ou "seguir_curtir"
         
@@ -583,6 +569,24 @@ document.getElementById("actionType").addEventListener("change", () => {
     }
     return false;
 }
+            async function tentarBuscarLocal() {
+                try {
+                    const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+                    const data = await response.json();
+                    if (data.status === "ENCONTRADA") {
+                        if (parseFloat(data.quantidade_pontos) === 4) {
+                            return "ignorarLocalERepetirSMM";
+                        }
+                        await processarAcao(data, "local");
+                        return true;
+                    } else if (data.error === "Nenhuma ação encontrada.") {
+                        return "repetirSMM";
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar ação local:", e);
+                }
+                return false;
+            }
 
 async function processarAcao(data, origem) {
     document.getElementById("statusMessage").textContent = "";
