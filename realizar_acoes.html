@@ -309,34 +309,42 @@
             display: block;
             margin-bottom: 5px;
         }
-        
-    /* Estilo unificado para os selects */
-    #accountSelect,
-    #actionType {
-        padding: 10px;
-        width: 30%;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-        height: 5px;
-        box-sizing: border-box;
-    }
 
-    @media (max-width: 768px) {
-        .container {
-            width: 88%;
-            padding: 20px;
+        /* Estilo unificado para os selects */
+        #accountSelect,
+        #actionType {
+            padding: 4px 8px;
+            /* padding reduzido */
+            width: 30%;
+            /* mantém a largura reduzida */
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+            /* fonte levemente reduzida */
+            height: auto;
+            /* deixa a altura natural conforme conteúdo */
+            line-height: 1.4;
+            /* boa legibilidade */
+            box-sizing: border-box;
         }
-    }
 
-    body {
-        visibility: hidden;
-    }
 
-    body.loaded {
-        visibility: visible;
-    }
-</style>
+
+        @media (max-width: 768px) {
+            .container {
+                width: 88%;
+                padding: 20px;
+            }
+        }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+    </style>
 </head>
 
 <body>
