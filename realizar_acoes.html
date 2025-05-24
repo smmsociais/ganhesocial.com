@@ -581,16 +581,7 @@ document.getElementById("actionType").addEventListener("change", () => {
 async function processarAcao(data, origem) {
     document.getElementById("statusMessage").textContent = "";
     document.getElementById("username").textContent = data.nome_usuario;
-
-    // AQUI:
-    const tipoAcaoSelecionado = document.getElementById("actionType").value;
-    const ehVideo = data.url_dir && data.url_dir.includes("/video/");
-
-    if (ehVideo && (tipoAcaoSelecionado === "seguir")) {
-        console.log("Ignorando ação de seguir com URL de vídeo.");
-        fetchAction();
-        return;
-    }
+    
     // Atualiza o texto da ação com base no tipo selecionado
 const actionType = document.getElementById("actionType").value;
 let actionText = "Seguir"; // valor padrão
