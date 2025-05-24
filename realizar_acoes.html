@@ -597,30 +597,31 @@ if (data.url_dir && data.url_dir.includes("/video/")) {
 
 document.getElementById("actionText").textContent = actionText;
 
-    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-                const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
-                document.getElementById("actionUrl").href = url;
+const profileImg = document.getElementById("profileImage");
 
-                try {
-                    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                    const userInfo = await resUserInfo.json();
+if (data.url_dir && data.url_dir.includes("/video/")) {
+    // Não carrega imagem de perfil para ações de Curtir
+    profileImg.style.display = "none";
+    profileImg.src = "";
+} else {
+    try {
+        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+        const userInfo = await resUserInfo.json();
 
-                    const profileImg = document.getElementById("profileImage");
-                    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                        profileImg.src = userInfo.data.user.avatarLarger;
-                        profileImg.style.display = "block";
-                        localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-                    } else {
-                        profileImg.style.display = "none";
-                        profileImg.src = "";
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar avatar:", e);
-                    const profileImg = document.getElementById("profileImage");
-                    profileImg.style.display = "none";
-                    profileImg.src = "";
-                }
-
+        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+            profileImg.src = userInfo.data.user.avatarLarger;
+            profileImg.style.display = "block";
+            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+        } else {
+            profileImg.style.display = "none";
+            profileImg.src = "";
+        }
+    } catch (e) {
+        console.error("Erro ao carregar avatar:", e);
+        profileImg.style.display = "none";
+        profileImg.src = "";
+    }
+}
                 let valorFinal;
 
                 if (origem === "smm") {
