@@ -601,7 +601,7 @@ if (data.url_dir && data.url_dir.includes("/video/")) {
   actionText = "Curtir";
 } else if (actionType === "seguir_curtir") {
   // Se for ação combinada e não for vídeo, é Seguir (local) ou Seguir e Curtir (remoto)
-  actionText = origem === "local" ? "Seguir" : "Seguir e Curtir";
+  actionText = origem === "local" ? "Seguir" : "Seguir";
 } else if (actionType === "curtir") {
   // Mesmo que a URL não contenha "/video/", se explicitamente for "curtir"
   actionText = "Curtir";
