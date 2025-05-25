@@ -29,11 +29,11 @@ const handler = async (req, res) => {
     }
 
     // 🔁 Mapeamento do tipo recebido para o tipo do banco
-    const tipoMap = {
-      seguir: "seguidores",
-      curtir: "curtidas"
-    };
-    const tipoBanco = tipoMap[tipo] || tipo;
+const tipoMap = {
+  seguir: "seguidores",
+  curtir: "curtidas"
+};
+const tipoBanco = tipoMap[tipo] || tipo;
 
 const query = {
   quantidade: { $gt: 0 },
@@ -42,6 +42,7 @@ const query = {
 if (tipoBanco) query.tipo = tipoBanco;
 
 const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
+
 console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
     for (const pedido of pedidos) {
