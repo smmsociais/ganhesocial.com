@@ -45,45 +45,55 @@ const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
 
 console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
-    for (const pedido of pedidos) {
-      const id_pedido = pedido._id;
+for (const pedido of pedidos) {
+  const id_pedido = pedido._id;
+  console.log("🔍 Verificando pedido:", {
+    id_pedido,
+    tipo: pedido.tipo,
+    status: pedido.status,
+    quantidade: pedido.quantidade,
+    valor: pedido.valor,
+    link: pedido.link
+  });
 
-      const jaFez = await ActionHistory.findOne({
-        id_pedido,
-        id_conta,
-        acao_validada: { $in: [true, null] }
-      });
+  const jaFez = await ActionHistory.findOne({
+    id_pedido,
+    id_conta,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (jaFez) {
-        console.log(`⛔ Já realizou pedido ${id_pedido}`);
-        continue;
-      }
+  if (jaFez) {
+    console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
+    continue;
+  }
 
-      const feitas = await ActionHistory.countDocuments({
-        id_pedido,
-        acao_validada: { $in: [true, null] }
-      });
+  const feitas = await ActionHistory.countDocuments({
+    id_pedido,
+    acao_validada: { $in: [true, null] }
+  });
 
-      if (feitas >= pedido.quantidade) {
-        console.log(`⏩ Pedido ${id_pedido} já atingiu o limite (${feitas}/${pedido.quantidade})`);
-        continue;
-      }
+  console.log(`📊 Ação ${id_pedido}: feitas=${feitas}, limite=${pedido.quantidade}`);
 
-      const nomeUsuario = pedido.link.includes("@")
-        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-        : "";
+  if (feitas >= pedido.quantidade) {
+    console.log(`⏩ Pedido ${id_pedido} já atingiu o limite`);
+    continue;
+  }
 
-      console.log(`✅ Ação encontrada: ${nomeUsuario} (pedido ${id_pedido})`);
+  const nomeUsuario = pedido.link.includes("@")
+    ? pedido.link.split("@")[1].split(/[/?#]/)[0]
+    : "";
 
-      return res.json({
-        status: "ENCONTRADA",
-        nome_usuario: nomeUsuario,
-        quantidade_pontos: pedido.valor,
-        url_dir: pedido.link,
-        tipo_acao: tipo,
-        id_pedido: pedido._id
-      });
-    }
+  console.log(`✅ Ação encontrada: ${nomeUsuario} (pedido ${id_pedido})`);
+
+  return res.json({
+    status: "ENCONTRADA",
+    nome_usuario: nomeUsuario,
+    quantidade_pontos: pedido.valor,
+    url_dir: pedido.link,
+    tipo_acao: tipo,
+    id_pedido: pedido._id
+  });
+}
 
     console.log("📭 Nenhuma ação disponível");
     return res.json({ status: "NAO_ENCONTRADA" });
