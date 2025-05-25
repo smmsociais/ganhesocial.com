@@ -38,16 +38,6 @@ const handler = async (req, res) => {
     const query = { quantidade: { $gt: 0 } };
     if (tipoBanco) query.tipo = tipoBanco;
 
-    const filtro = {
-      tipo,
-      quantidade: { $gt: 0 }
-    };
-
-    // 📹 Se for tipo "seguir", ignorar ações com URL de vídeo
-    if (tipo === "seguir") {
-      filtro.link = { $not: /\/video\// };
-    }
-
     const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }); // usando campo correto
     console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
