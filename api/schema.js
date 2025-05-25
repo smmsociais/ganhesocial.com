@@ -12,17 +12,17 @@ const ActionHistorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String },
   nome_usuario: { type: String },
-  id_action: { type: String },
-  id_conta: { type: String },
-  url_dir: { type: String },
+  id_action: { type: String },       // Parece que este campo não está sendo usado no seu código, mas pode ficar
+  id_conta: { type: String, required: true },   // pode marcar como obrigatório, pois é essencial
+  url_dir: { type: String, required: true },
   acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
-  quantidade_pontos: { type: Number },
-  tipo_acao: { type: String },
+  quantidade_pontos: { type: Number, required: true },
+  tipo_acao: { type: String, required: true },  // indica qual ação foi solicitada (seguir, curtir, etc)
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, default: "Seguir" },
-  id_pedido: { type: Number }
+  tipo: { type: String, required: true },  // aqui deve ser "curtir" ou "seguir", obrigatório para garantir registro correto
+  id_pedido: { type: mongoose.Schema.Types.Mixed, required: true } // recomendação usar Mixed se pode ser String ou Number (ex: ObjectId ou int)
 });
 
 // 🔹 Schema para Histórico de Saques
