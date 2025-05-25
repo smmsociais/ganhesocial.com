@@ -35,11 +35,14 @@ const handler = async (req, res) => {
     };
     const tipoBanco = tipoMap[tipo] || tipo;
 
-    const query = { quantidade: { $gt: 0 } };
-    if (tipoBanco) query.tipo = tipoBanco;
+const query = {
+  quantidade: { $gt: 0 },
+  status: { $in: ["pendente", "reservada"] }
+};
+if (tipoBanco) query.tipo = tipoBanco;
 
-    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }); // usando campo correto
-    console.log(`📦 ${pedidos.length} pedidos encontrados`);
+const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
+console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
     for (const pedido of pedidos) {
       const id_pedido = pedido._id;
