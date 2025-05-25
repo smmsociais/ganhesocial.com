@@ -39,7 +39,11 @@ const query = {
   quantidade: { $gt: 0 },
   status: { $in: ["pendente", "reservada"] }
 };
-if (tipoBanco) query.tipo = tipoBanco;
+if (tipo === "seguir_curtir") {
+  query.tipo = { $in: ["seguidores", "curtidas"] };
+} else if (tipoBanco) {
+  query.tipo = tipoBanco;
+}
 
 const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
 
