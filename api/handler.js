@@ -796,21 +796,21 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
       : valorBruto;
     const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      token: usuario.token,
-      nome_usuario,
-      id_pedido,
-      id_conta,
-      url_dir,
-      tipo_acao,
-      quantidade_pontos,
-      tipo: tipo_acao || "Seguir",
-      rede_social: "TikTok",
-      valor_confirmacao: valorFinal,
-      acao_validada: null,
-      data: new Date()
-    });
+const novaAcao = new ActionHistory({
+  user: usuario._id,
+  token: usuario.token,
+  nome_usuario,
+  id_pedido,
+  id_conta,
+  url_dir,
+  tipo_acao,
+  quantidade_pontos,
+  tipo: url_dir.includes("/video/") ? "curtir" : "seguir",  // <- Aqui está o ajuste
+  rede_social: "TikTok",
+  valor_confirmacao: valorFinal,
+  acao_validada: null,
+  data: new Date()
+});
 
     await novaAcao.save();
 
