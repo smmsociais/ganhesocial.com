@@ -775,14 +775,16 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(401).json({ error: "Token inválido." });
   }
 
-  const {
-    id_conta,
-    id_pedido,
-    nome_usuario,
-    url_dir,
-    tipo_acao,
-    quantidade_pontos
-  } = req.body;
+const {
+  id_conta,
+  id_pedido,
+  nome_usuario,
+  url_dir,
+  tipo_acao,
+  quantidade_pontos,
+  sec_uid
+} = req.body;
+
 
   if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
@@ -811,6 +813,7 @@ const novaAcao = new ActionHistory({
   rede_social: "TikTok",
   valor_confirmacao: valorConfirmacaoFinal,
   acao_validada: null,
+  sec_uid,
   data: new Date()
 });
 
