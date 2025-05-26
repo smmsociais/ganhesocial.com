@@ -626,8 +626,7 @@
                         if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
                             profileImg.src = userInfo.data.user.avatarLarger;
                             profileImg.style.display = "block";
-                            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-                            localStorage.setItem("sec_uid", userInfo.data.user.secUid);
+                            localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
 
                         } else {
                             profileImg.style.display = "none";
@@ -741,16 +740,16 @@
                 return;
             }
 
-await registrarAcaoPendente({
-    nome_usuario: selectedAccount,
-    id_pedido: currentActionData.id_pedido,
-    id_conta: localStorage.getItem("id_conta"),
-    unique_id: localStorage.getItem("unique_id"),
-    url_dir: currentActionData.url_dir,
-    tipo_acao: currentActionData.tipo_acao,
-    quantidade_pontos: Number(currentActionData.quantidade_pontos),
-    valor_confirmacao: parseFloat(confirmData.valor),
-});
+            await registrarAcaoPendente({
+                nome_usuario: selectedAccount,
+                id_pedido: currentActionData.id_pedido,
+                id_conta: localStorage.getItem("id_conta"),
+                unique_id: localStorage.getItem("unique_id"),
+                url_dir: currentActionData.url_dir,
+                tipo_acao: currentActionData.tipo_acao,
+                quantidade_pontos: Number(currentActionData.quantidade_pontos),
+                valor_confirmacao: parseFloat(confirmData.valor),
+            });
             const accountFound = true; // ou qualquer lógica para determinar isso
 
             // Busca nova ação sem mostrar o conteúdo da anterior
@@ -826,7 +825,6 @@ await registrarAcaoPendente({
             id_pedido,
             id_conta,
             unique_id,
-            sec_uid,
             url_dir,
             acao_validada,
             valor_confirmacao,
