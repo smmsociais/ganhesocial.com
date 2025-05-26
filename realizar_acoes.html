@@ -720,7 +720,6 @@
                         body: JSON.stringify({
                             id_conta: localStorage.getItem("id_conta"),
                             id_pedido: currentActionData.id_pedido,
-                            sec_uid: localStorage.getItem("sec_uid")
                         })
                     });
 
@@ -746,7 +745,6 @@ await registrarAcaoPendente({
     nome_usuario: selectedAccount,
     id_pedido: currentActionData.id_pedido,
     id_conta: localStorage.getItem("id_conta"),
-    sec_uid: localStorage.getItem("sec_uid"),
     unique_id: localStorage.getItem("unique_id"),
     url_dir: currentActionData.url_dir,
     tipo_acao: currentActionData.tipo_acao,
