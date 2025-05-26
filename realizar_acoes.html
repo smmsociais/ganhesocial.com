@@ -623,10 +623,12 @@ document.getElementById("actionText").textContent = actionText;
                         const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
                         const userInfo = await resUserInfo.json();
 
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
-                            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+    profileImg.src = userInfo.data.user.avatarLarger;
+    profileImg.style.display = "block";
+    localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+    localStorage.setItem("sec_uid", userInfo.data.user.secUid);
+
                         } else {
                             profileImg.style.display = "none";
                             profileImg.src = "";
@@ -716,8 +718,9 @@ if (isCurtir) {
                             "Authorization": `Bearer ${localStorage.getItem('token')}`
                         },
                         body: JSON.stringify({
-                            id_conta: localStorage.getItem("id_conta"),
-                            id_pedido: currentActionData.id_pedido
+    id_conta: localStorage.getItem("id_conta"),
+    id_pedido: currentActionData.id_pedido,
+    sec_uid: localStorage.getItem("sec_uid")
                         })
                     });
 
@@ -743,6 +746,7 @@ if (isCurtir) {
                 nome_usuario: selectedAccount,
                 id_pedido: currentActionData.id_pedido,
                 id_conta: localStorage.getItem("id_conta"),
+                sec_uid: localStorage.getItem("sec_uid"),
                 url_dir: currentActionData.url_dir,
                 tipo_acao: currentActionData.tipo_acao,
                 quantidade_pontos: Number(currentActionData.quantidade_pontos),
@@ -823,6 +827,7 @@ if (isCurtir) {
             nome_usuario,
             id_pedido,
             id_conta,
+            sec_uid,
             url_dir,
             acao_validada,
             valor_confirmacao,
