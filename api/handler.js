@@ -782,7 +782,7 @@ const {
   url_dir,
   tipo_acao,
   quantidade_pontos,
-  sec_uid
+  unique_id
 } = req.body;
 
 
@@ -807,13 +807,13 @@ const novaAcao = new ActionHistory({
   id_pedido,
   id_conta,
   url_dir,
+  unique_id,
   tipo_acao,
   quantidade_pontos,
   tipo: tipoAcaoFinal,
   rede_social: "TikTok",
   valor_confirmacao: valorConfirmacaoFinal,
   acao_validada: null,
-  sec_uid,
   data: new Date()
 });
 
