@@ -72,7 +72,7 @@ export default async function handler(req, res) {
 
         // Buscar secUid usando a API interna, passando nome_usuario como unique_id
         const infoRes = await axios.get(`${process.env.BASE_URL}/api/user-info?unique_id=${valid.nome_usuario}`);
-        const secUid = infoRes.data?.user?.secUid;
+        const secUid = infoRes.data?.data?.user?.secUid;
 
         if (!secUid) {
           console.warn(`secUid não encontrado para nome_usuario: ${valid.nome_usuario}`);
