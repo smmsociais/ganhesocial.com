@@ -547,7 +547,7 @@
 
             async function tentarBuscarSMM() {
                 try {
-                    const tipoAcao = document.getElementById("actionType").value; // deve conter "seguir", "curtir" ou "seguir_curtir"
+                    const tipoAcao = document.getElementById("actionType").value;
 
                     // Verificação básica do tipo (opcional, mas pode evitar bugs)
                     if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
@@ -593,21 +593,21 @@
                 document.getElementById("username").textContent = data.nome_usuario;
 
                 // Atualiza o texto da ação com base no tipo selecionado
-const actionType = document.getElementById("actionType").value;
-let actionText = "Seguir"; // valor padrão
+                const actionType = document.getElementById("actionType").value;
+                let actionText = "Seguir"; // valor padrão
 
-if (data.url_dir && data.url_dir.includes("/video/")) {
-  // Se a URL contém "/video/", então é Curtir
-  actionText = "Curtir";
-} else if (actionType === "seguir_curtir") {
-  // Se for ação combinada e não for vídeo, é Seguir (local) ou Seguir e Curtir (remoto)
-  actionText = origem === "local" ? "Seguir" : "Seguir";
-} else if (actionType === "curtir") {
-  // Mesmo que a URL não contenha "/video/", se explicitamente for "curtir"
-  actionText = "Curtir";
-} // caso contrário, permanece como "Seguir"
+                if (data.url_dir && data.url_dir.includes("/video/")) {
+                    // Se a URL contém "/video/", então é Curtir
+                    actionText = "Curtir";
+                } else if (actionType === "seguir_curtir") {
+                    // Se for ação combinada e não for vídeo, é Seguir (local) ou Seguir e Curtir (remoto)
+                    actionText = origem === "local" ? "Seguir" : "Seguir";
+                } else if (actionType === "curtir") {
+                    // Mesmo que a URL não contenha "/video/", se explicitamente for "curtir"
+                    actionText = "Curtir";
+                } // caso contrário, permanece como "Seguir"
 
-document.getElementById("actionText").textContent = actionText;
+                document.getElementById("actionText").textContent = actionText;
 
                 const tiktokUsername = data.nome_usuario.replace(/^@/, '');
                 const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
@@ -623,11 +623,11 @@ document.getElementById("actionText").textContent = actionText;
                         const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
                         const userInfo = await resUserInfo.json();
 
-if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-    profileImg.src = userInfo.data.user.avatarLarger;
-    profileImg.style.display = "block";
-    localStorage.setItem("unique_id", userInfo.data.user.unique_id);
-    localStorage.setItem("sec_uid", userInfo.data.user.secUid);
+                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                            profileImg.src = userInfo.data.user.avatarLarger;
+                            profileImg.style.display = "block";
+                            localStorage.setItem("unique_id", userInfo.data.user.unique_id);
+                            localStorage.setItem("sec_uid", userInfo.data.user.secUid);
 
                         } else {
                             profileImg.style.display = "none";
@@ -639,20 +639,20 @@ if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
                         profileImg.src = "";
                     }
                 }
-let valorFinal;
+                let valorFinal;
 
-const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
+                const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
 
-if (isCurtir) {
-    valorFinal = "0.001";
-} else if (origem === "smm") {
-    valorFinal = "0.006";
-} else {
-    const pontos = parseFloat(data.quantidade_pontos || 0);
-    const valorBruto = pontos / 1000;
-    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-}
+                if (isCurtir) {
+                    valorFinal = "0.001";
+                } else if (origem === "smm") {
+                    valorFinal = "0.006";
+                } else {
+                    const pontos = parseFloat(data.quantidade_pontos || 0);
+                    const valorBruto = pontos / 1000;
+                    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+                    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+                }
                 document.getElementById("points").textContent = `R$ ${valorFinal}`;
                 document.getElementById("confirmButton").style.display = "none";
 
@@ -718,9 +718,9 @@ if (isCurtir) {
                             "Authorization": `Bearer ${localStorage.getItem('token')}`
                         },
                         body: JSON.stringify({
-    id_conta: localStorage.getItem("id_conta"),
-    id_pedido: currentActionData.id_pedido,
-    sec_uid: localStorage.getItem("sec_uid")
+                            id_conta: localStorage.getItem("id_conta"),
+                            id_pedido: currentActionData.id_pedido,
+                            sec_uid: localStorage.getItem("sec_uid")
                         })
                     });
 
@@ -742,17 +742,17 @@ if (isCurtir) {
                 return;
             }
 
-            await registrarAcaoPendente({
-                nome_usuario: selectedAccount,
-                id_pedido: currentActionData.id_pedido,
-                id_conta: localStorage.getItem("id_conta"),
-                sec_uid: localStorage.getItem("sec_uid"),
-                url_dir: currentActionData.url_dir,
-                tipo_acao: currentActionData.tipo_acao,
-                quantidade_pontos: Number(currentActionData.quantidade_pontos),
-                valor_confirmacao: parseFloat(confirmData.valor),
-            });
-
+await registrarAcaoPendente({
+    nome_usuario: selectedAccount,
+    id_pedido: currentActionData.id_pedido,
+    id_conta: localStorage.getItem("id_conta"),
+    sec_uid: localStorage.getItem("sec_uid"),
+    unique_id: localStorage.getItem("unique_id"),
+    url_dir: currentActionData.url_dir,
+    tipo_acao: currentActionData.tipo_acao,
+    quantidade_pontos: Number(currentActionData.quantidade_pontos),
+    valor_confirmacao: parseFloat(confirmData.valor),
+});
             const accountFound = true; // ou qualquer lógica para determinar isso
 
             // Busca nova ação sem mostrar o conteúdo da anterior
