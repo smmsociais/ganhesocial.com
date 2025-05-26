@@ -61,52 +61,54 @@ export default async function handler(req, res) {
 
     let processadas = 0;
 
-    for (const acao of acoes) {
-      try {
-        const valid = ActionSchema.parse(acao);
+for (const acao of acoes) {
+  try {
+    const valid = ActionSchema.parse(acao);
 
-        const match = valid.url_dir.match(/video\/(\d+)/);
-        if (!match) continue;
+    const matchVideo = valid.url_dir.match(/video\/(\d+)/);
+    const matchUser = valid.url_dir.match(/@([^/]+)/);
 
-        const videoId = match[1];
+    if (!matchVideo || !matchUser) continue;
 
-        const likedRes = await axios.get(API_URL, {
-          params: {
-            unique_id: valid.unique_id,
-            count: '30',
-            cursor: '0'
-          },
-          headers: {
-            'x-rapidapi-key': RAPIDAPI_KEY,
-            'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com'
-          }
-        });
+    const videoId = matchVideo[1];
+    const uniqueId = matchUser[1];
 
-        const likedVideos = likedRes.data?.itemList || [];
-        const liked = likedVideos.some(v => v.id === videoId || v.video_id === videoId);
+    const likedRes = await axios.get(API_URL, {
+      params: {
+        unique_id: uniqueId,
+        count: '30',
+        cursor: '0'
+      },
+      headers: {
+        'x-rapidapi-key': RAPIDAPI_KEY,
+        'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com'
+      }
+    });
 
-        await colecao.updateOne(
-          { _id: new ObjectId(valid._id) },
-          { $set: { acao_validada: liked, verificada_em: new Date() } }
+    const likedVideos = likedRes.data?.itemList || [];
+    const liked = likedVideos.some(v => v.id === videoId || v.video_id === videoId);
+
+    await colecao.updateOne(
+      { _id: new ObjectId(valid._id) },
+      { $set: { acao_validada: liked, verificada_em: new Date() } }
+    );
+
+    if (liked) {
+      const valor = parseFloat(valid.valor_confirmacao);
+      if (!isNaN(valor) && valor > 0) {
+        await usuarios.updateOne(
+          { _id: new ObjectId(valid.user) },
+          { $inc: { saldo: valor } }
         );
-
-        if (liked) {
-          const valor = parseFloat(valid.valor_confirmacao);
-          if (!isNaN(valor) && valor > 0) {
-            await usuarios.updateOne(
-              { _id: new ObjectId(valid.user) },
-              { $inc: { saldo: valor } }
-            );
-          }
-        }
-
-        processadas++;
-
-      } catch (err) {
-        console.error("Erro ao processar ação:", err);
       }
     }
 
+    processadas++;
+
+  } catch (err) {
+    console.error("Erro ao processar ação:", err);
+  }
+}
     return res.status(200).json({ status: "ok", processadas });
 
   } catch (err) {
