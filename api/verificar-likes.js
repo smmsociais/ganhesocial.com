@@ -1,11 +1,11 @@
 import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
-import jwt from 'jsonwebtoken'; 
+import jwt from 'jsonwebtoken';
 
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY; 
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const API_URL = "https://tiktok-api23.p.rapidapi.com/api/user/liked-posts";
 
 let cachedClient = null;
@@ -26,8 +26,8 @@ async function connectToDatabase() {
 const ActionSchema = z.object({
   _id: z.any(),
   user: z.any(),
-  unique_id: z.string().min(1), // agora espera uniqueId
   url_dir: z.string().min(1),
+  nome_usuario: z.string().min(1), // <-- agora usamos nome_usuario
   valor_confirmacao: z.union([z.string(), z.number()]),
   quantidade_pontos: z.number(),
   tipo_acao: z.string(),
@@ -61,54 +61,62 @@ export default async function handler(req, res) {
 
     let processadas = 0;
 
-for (const acao of acoes) {
-  try {
-    const valid = ActionSchema.parse(acao);
+    for (const acao of acoes) {
+      try {
+        const valid = ActionSchema.parse(acao);
 
-    const matchVideo = valid.url_dir.match(/video\/(\d+)/);
-    const matchUser = valid.url_dir.match(/@([^/]+)/);
+        const match = valid.url_dir.match(/video\/(\d+)/);
+        if (!match) continue;
 
-    if (!matchVideo || !matchUser) continue;
+        const videoId = match[1];
 
-    const videoId = matchVideo[1];
-    const uniqueId = matchUser[1];
+        // Buscar secUid usando a API interna, passando nome_usuario como unique_id
+        const infoRes = await axios.get(`${process.env.BASE_URL}/api/user-info?unique_id=${valid.nome_usuario}`);
+        const secUid = infoRes.data?.user?.secUid;
 
-    const likedRes = await axios.get(API_URL, {
-      params: {
-        unique_id: uniqueId,
-        count: '30',
-        cursor: '0'
-      },
-      headers: {
-        'x-rapidapi-key': RAPIDAPI_KEY,
-        'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com'
-      }
-    });
+        if (!secUid) {
+          console.warn(`secUid não encontrado para nome_usuario: ${valid.nome_usuario}`);
+          continue;
+        }
 
-    const likedVideos = likedRes.data?.itemList || [];
-    const liked = likedVideos.some(v => v.id === videoId || v.video_id === videoId);
+        // Buscar vídeos curtidos
+        const likedRes = await axios.get(API_URL, {
+          params: {
+            secUid: secUid,
+            count: '30',
+            cursor: '0'
+          },
+          headers: {
+            'x-rapidapi-key': RAPIDAPI_KEY,
+            'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com'
+          }
+        });
 
-    await colecao.updateOne(
-      { _id: new ObjectId(valid._id) },
-      { $set: { acao_validada: liked, verificada_em: new Date() } }
-    );
+        const likedVideos = likedRes.data?.itemList || [];
+        const liked = likedVideos.some(v => v.id === videoId || v.video_id === videoId);
 
-    if (liked) {
-      const valor = parseFloat(valid.valor_confirmacao);
-      if (!isNaN(valor) && valor > 0) {
-        await usuarios.updateOne(
-          { _id: new ObjectId(valid.user) },
-          { $inc: { saldo: valor } }
+        await colecao.updateOne(
+          { _id: new ObjectId(valid._id) },
+          { $set: { acao_validada: liked, verificada_em: new Date() } }
         );
+
+        if (liked) {
+          const valor = parseFloat(valid.valor_confirmacao);
+          if (!isNaN(valor) && valor > 0) {
+            await usuarios.updateOne(
+              { _id: new ObjectId(valid.user) },
+              { $inc: { saldo: valor } }
+            );
+          }
+        }
+
+        processadas++;
+
+      } catch (err) {
+        console.error("Erro ao processar ação:", err);
       }
     }
 
-    processadas++;
-
-  } catch (err) {
-    console.error("Erro ao processar ação:", err);
-  }
-}
     return res.status(200).json({ status: "ok", processadas });
 
   } catch (err) {
