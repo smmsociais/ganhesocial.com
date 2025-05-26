@@ -14,7 +14,7 @@ const ActionHistorySchema = new mongoose.Schema({
   nome_usuario: { type: String },
   id_action: { type: String },
   id_conta: { type: String, required: true },
-  sec_uid: { type: String },
+  unique_id: { type: String },
   url_dir: { type: String, required: true },
   acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
