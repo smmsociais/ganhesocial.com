@@ -12,17 +12,18 @@ const ActionHistorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String },
   nome_usuario: { type: String },
-  id_action: { type: String },       // Parece que este campo não está sendo usado no seu código, mas pode ficar
-  id_conta: { type: String, required: true },   // pode marcar como obrigatório, pois é essencial
+  id_action: { type: String },
+  id_conta: { type: String, required: true },
+  sec_uid: { type: String },
   url_dir: { type: String, required: true },
   acao_validada: { type: Boolean, default: null },
   valor_confirmacao: { type: Number, default: 0 },
   quantidade_pontos: { type: Number, required: true },
-  tipo_acao: { type: String, required: true },  // indica qual ação foi solicitada (seguir, curtir, etc)
+  tipo_acao: { type: String, required: true },
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, required: true },  // aqui deve ser "curtir" ou "seguir", obrigatório para garantir registro correto
-  id_pedido: { type: mongoose.Schema.Types.Mixed, required: true } // recomendação usar Mixed se pode ser String ou Number (ex: ObjectId ou int)
+  tipo: { type: String, required: true },
+  id_pedido: { type: mongoose.Schema.Types.Mixed, required: true }
 });
 
 // 🔹 Schema para Histórico de Saques
@@ -36,9 +37,9 @@ const WithdrawSchema = new mongoose.Schema({
 
 // 🔹 Schema de Ganhos por Dia
 const GanhosPorDiaSchema = new mongoose.Schema({
-  data: { type: String }, // tipo string ok se formato for "YYYY-MM-DD"
+  data: { type: String },
   valor: { type: Number, default: 0 }
-}, { _id: false }); // evita criar _id interno para cada entrada do array
+}, { _id: false });
 
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
@@ -58,7 +59,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 const PedidoSchema = new mongoose.Schema({
-  _id: { type: Number }, // <- IMPORTANTE
+  _id: { type: Number },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   rede: String,
   tipo: String,
@@ -84,7 +85,6 @@ const TemporaryActionSchema = new mongoose.Schema({
   }
 });
 
-// ✅ Índice TTL para exclusão automática após a data de expiresAt
 TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
