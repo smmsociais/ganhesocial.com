@@ -739,18 +739,17 @@ if (isCurtir) {
                 return;
             }
 
-            const accountFound = true; // ou qualquer lógica para determinar isso
-
-            await salvarAcaoNoBanco({
+            await registrarAcaoPendente({
                 nome_usuario: selectedAccount,
                 id_pedido: currentActionData.id_pedido,
                 id_conta: localStorage.getItem("id_conta"),
                 url_dir: currentActionData.url_dir,
-                acao_validada: accountFound,
+                tipo_acao: currentActionData.tipo_acao,
+                quantidade_pontos: Number(currentActionData.quantidade_pontos),
                 valor_confirmacao: parseFloat(confirmData.valor),
-                quantidade_pontos: currentActionData.quantidade_pontos,
-                tipo_acao: currentActionData.tipo_acao
             });
+
+            const accountFound = true; // ou qualquer lógica para determinar isso
 
             // Busca nova ação sem mostrar o conteúdo da anterior
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
@@ -776,17 +775,6 @@ if (isCurtir) {
                 } catch (error) {
                     console.error("Erro ao salvar ação pulada:", error);
                 }
-
-                await salvarAcaoNoBanco({
-                    nome_usuario: currentActionData.nome_usuario,
-                    id_pedido: currentActionData.id_pedido,
-                    id_conta: currentUserId, // ← id correto da conta
-                    url_dir: currentActionData.url_dir,
-                    acao_validada: false,
-                    valor_confirmacao: 0,
-                    quantidade_pontos: currentActionData.quantidade_pontos,
-                    tipo_acao: currentActionData.tipo_acao
-                });
 
             }
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
