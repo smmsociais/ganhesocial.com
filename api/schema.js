@@ -12,7 +12,8 @@ const ActionHistorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String },
   nome_usuario: { type: String },
-  id_action: { type: String },
+  id_action: { type: String, required: true },  // garantir que seja string
+  id_pedido: { type: String, required: true },  // mudou de Mixed para String
   id_conta: { type: String, required: true },
   unique_id: { type: String },
   url_dir: { type: String, required: true },
@@ -22,8 +23,7 @@ const ActionHistorySchema = new mongoose.Schema({
   tipo_acao: { type: String, required: true },
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, required: true },
-  id_pedido: { type: mongoose.Schema.Types.Mixed, required: true }
+  tipo: { type: String, required: true }
 });
 
 // 🔹 Schema para Histórico de Saques
