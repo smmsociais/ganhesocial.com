@@ -1019,7 +1019,7 @@ console.log("[GET_ACTION] Nenhuma ação local válida encontrada.");
 
 if (tipo === "2") {
   console.log("[GET_ACTION] Tipo 2 (curtidas locais) e nenhuma ação local encontrada. Ignorando API externa.");
-  return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
+  return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
 }
 
 // 🔁 Se não for tipo 2, continua buscando na API externa
@@ -1089,7 +1089,7 @@ if (data.status === "ENCONTRADA") {
     }
 
     // Se nem na segunda tentativa local encontrou, responde 204
-    return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
+    return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
   }
 
   // Caso pontos diferentes de 4, processa normalmente
@@ -1126,7 +1126,7 @@ if (data.status === "ENCONTRADA") {
 }
 
     console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
-    return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
+    return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
 
   } catch (err) {
     console.error("[GET_ACTION] Erro ao buscar ação:", err);
