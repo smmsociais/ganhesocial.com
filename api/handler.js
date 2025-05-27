@@ -1161,6 +1161,10 @@ if (pedidoLocal) {
   valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
   
 tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
+if (tipo_acao === 'curtir') {
+  valorFinal = 0.001;
+}
+
   url_dir = pedidoLocal.link;
 
     } else {
