@@ -1187,19 +1187,21 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
       url_dir = tempAction?.url_dir || '';
     }
 
-    const newAction = new ActionHistory({
-      token,
-      nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok)?.nomeConta,
-      tipo_acao,
-      quantidade_pontos: valorFinal,
-      url_dir,
-      id_conta: id_tiktok,
-      id_action,
-      user: usuario._id,
-      acao_validada: null,
-      valor_confirmacao: valorFinal,
-      data: new Date()
-    });
+const newAction = new ActionHistory({
+  token,
+  nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok)?.nomeConta,
+  tipo_acao,
+  tipo: tipo_acao, // <- Campo obrigatório no schema
+  quantidade_pontos: valorFinal,
+  url_dir,
+  id_conta: id_tiktok,
+  id_action,
+  id_pedido: id_action, // <- Campo obrigatório no schema
+  user: usuario._id,
+  acao_validada: null,
+  valor_confirmacao: valorFinal,
+  data: new Date()
+});
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
