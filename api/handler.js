@@ -991,15 +991,18 @@ const pedidos = await Pedido.find({
         : valorBruto;
       const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
+const tipoAcaoRetorno = pedido.tipo === "curtidas" ? "curtir" : "seguir";
+
 return res.status(200).json({
   status: "sucess",
   id_tiktok,
   id_action: pedido._id.toString(),
   url: pedido.link,
   nome_usuario: nomeUsuario,
-  tipo_acao: "seguir",
+  tipo_acao: tipoAcaoRetorno,
   valor: valorFinal
 });
+
     }
 
 console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
