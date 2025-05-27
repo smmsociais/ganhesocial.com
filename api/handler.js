@@ -775,47 +775,50 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(401).json({ error: "Token inválido." });
   }
 
-const {
-  id_conta,
-  id_pedido,
-  nome_usuario,
-  url_dir,
-  tipo_acao,
-  quantidade_pontos,
-  unique_id
-} = req.body;
-
+  const {
+    id_conta,
+    id_pedido,
+    nome_usuario,
+    url_dir,
+    tipo_acao,
+    quantidade_pontos,
+    unique_id
+  } = req.body;
 
   if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
   try {
-const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
+    // 🔁 Conversão forçada para string
+    const idPedidoStr = id_pedido.toString();
 
-const pontos = parseFloat(quantidade_pontos);
-const valorBruto = pontos / 1000;
-const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+    const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
 
-const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+    const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 
-const novaAcao = new ActionHistory({
-  user: usuario._id,
-  token: usuario.token,
-  nome_usuario,
-  id_pedido,
-  id_conta,
-  url_dir,
-  unique_id,
-  tipo_acao,
-  quantidade_pontos,
-  tipo: tipoAcaoFinal,
-  rede_social: "TikTok",
-  valor_confirmacao: valorConfirmacaoFinal,
-  acao_validada: null,
-  data: new Date()
-});
+    const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
+      nome_usuario,
+      id_pedido: idPedidoStr, // <- String garantida
+      id_action: idPedidoStr, // <- opcional, se quiser manter igual
+      id_conta,
+      url_dir,
+      unique_id,
+      tipo_acao,
+      quantidade_pontos,
+      tipo: tipoAcaoFinal,
+      rede_social: "TikTok",
+      valor_confirmacao: valorConfirmacaoFinal,
+      acao_validada: null,
+      data: new Date()
+    });
 
     await novaAcao.save();
 
