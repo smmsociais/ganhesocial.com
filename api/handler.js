@@ -1015,6 +1015,16 @@ return res.status(200).json({
 
 console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
 
+console.log("[GET_ACTION] Nenhuma ação local válida encontrada.");
+
+if (tipo === "2") {
+  console.log("[GET_ACTION] Tipo 2 (curtidas locais) e nenhuma ação local encontrada. Ignorando API externa.");
+  return res.status(204).json({ message: "Nenhuma ação disponível no momento." });
+}
+
+// 🔁 Se não for tipo 2, continua buscando na API externa
+console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+
 const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
 const response = await axios.get(apiURL);
 const data = response.data;
