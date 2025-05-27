@@ -1141,15 +1141,15 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
     let tipo_acao = 'Seguir';
     let url_dir = '';
 
-    if (pedidoLocal) {
-      // ✅ AÇÃO LOCAL
-      console.log("📦 Confirmando ação local:", id_action);
+if (pedidoLocal) {
+  console.log("📦 Confirmando ação local:", id_action);
 
-      const valorBruto = pedidoLocal.valor / 1000;
-      const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
-      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-      tipo_acao = 'Seguir';
-      url_dir = pedidoLocal.link;
+  const valorBruto = pedidoLocal.valor / 1000;
+  const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
+  valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+  
+  tipo_acao = pedidoLocal.tipo_acao || pedidoLocal.tipo || 'Seguir'; // ✅ Corrigido aqui
+  url_dir = pedidoLocal.link;
 
     } else {
       // 🔍 AÇÃO EXTERNA – Buscar no TemporaryAction
