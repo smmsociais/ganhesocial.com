@@ -920,7 +920,12 @@ if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { id_tiktok, token } = req.query;
+const { id_tiktok, token, tipo } = req.query;
+
+let tipoAcao = "seguidores";
+if (tipo === "2") tipoAcao = "curtidas";
+else if (tipo === "3") tipoAcao = { $in: ["seguidores", "curtidas"] };
+
 
   if (!id_tiktok || !token) {
     return res.status(400).json({ error: "Parâmetros 'id_tiktok' e 'token' são obrigatórios" });
@@ -943,7 +948,7 @@ if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
     // 🔍 Buscar pedidos locais válidos
 const pedidos = await Pedido.find({
   rede: "tiktok",
-  tipo: "seguidores", // <- corrigido
+  tipo: tipoAcao,
   status: { $ne: "concluida" },
   $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
 }).sort({ dataCriacao: -1 });
@@ -1017,11 +1022,11 @@ if (data.status === "ENCONTRADA") {
 
     // Refazer busca de ações locais (mesma lógica anterior, duplicada aqui)
     const pedidosRetry = await Pedido.find({
-      rede: "tiktok",
-      tipo: "seguidores",
-      status: { $ne: "concluida" },
-      $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-    }).sort({ dataCriacao: -1 });
+  rede: "tiktok",
+  tipo: tipoAcao,
+  status: { $ne: "concluida" },
+  $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
+}).sort({ dataCriacao: -1 });
 
     for (const pedido of pedidosRetry) {
       const id_action = pedido._id;
