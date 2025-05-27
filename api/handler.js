@@ -1134,6 +1134,18 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
+function normalizarTipo(tipo) {
+  const mapa = {
+    seguir: 'seguir',
+    seguiram: 'seguir',
+    'Seguir': 'seguir',
+    curtidas: 'curtir',
+    curtir: 'curtir',
+    'Curtir': 'curtir',
+  };
+  return mapa[tipo?.toLowerCase?.()] || 'seguir';
+}
+
     // 🔍 Verificar se a ação é local (existe no Pedido)
     const pedidoLocal = await Pedido.findById(id_action);
 
@@ -1148,7 +1160,7 @@ if (pedidoLocal) {
   const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
   valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
   
-  tipo_acao = pedidoLocal.tipo_acao || pedidoLocal.tipo || 'Seguir'; // ✅ Corrigido aqui
+tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
   url_dir = pedidoLocal.link;
 
     } else {
@@ -1186,7 +1198,7 @@ if (pedidoLocal) {
       const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
       const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
       valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-      tipo_acao = confirmData.tipo_acao || tempAction?.tipo_acao || 'Seguir';
+      tipo_acao = normalizarTipo(confirmData.tipo_acao || tempAction?.tipo_acao);
       url_dir = tempAction?.url_dir || '';
     }
 
