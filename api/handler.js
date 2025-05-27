@@ -985,11 +985,16 @@ const pedidos = await Pedido.find({
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
         : pedido.nome;
 
-      const valorBruto = pedido.valor / 1000;
-      const valorDescontado = (valorBruto > 0.004)
-        ? valorBruto - 0.001
-        : valorBruto;
-      const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+let valorFinal;
+if (pedido.tipo === "curtidas") {
+  valorFinal = "0.001";
+} else {
+  const valorBruto = pedido.valor / 1000;
+  const valorDescontado = (valorBruto > 0.004)
+    ? valorBruto - 0.001
+    : valorBruto;
+  valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+}
 
 const tipoAcaoRetorno = pedido.tipo === "curtidas" ? "curtir" : "seguir";
 
