@@ -368,7 +368,7 @@
 
         <!-- Novo formulário para tipo de ação -->
         <div class="action-type-container">
-            <select id="actionType" disabled>
+            <select id="actionType">
                 <option value="seguir">Seguir</option>
                 <option value="curtir">Curtir</option>
                 <option value="seguir_curtir">Seguir e Curtir</option>
@@ -466,17 +466,22 @@
             }
 
             // Habilita o listener de tipo de ação após carregar as contas
-            document.getElementById("actionType").addEventListener("change", () => {
-                // Atualiza o texto da ação imediatamente quando o tipo muda
-                const actionType = document.getElementById("actionType").value;
-                let actionText = "Seguir";
-                if (actionType === "curtir") {
-                    actionText = "Curtir";
-                } else if (actionType === "seguir_curtir") {
-                    actionText = "Seguir e Curtir";
-                }
-                document.getElementById("actionText").textContent = actionText;
-                fetchAction();
+    document.getElementById("actionType").addEventListener("change", () => {
+        // Atualiza o texto da ação imediatamente quando o tipo muda
+        const actionType = document.getElementById("actionType").value;
+        let actionText = "Seguir";
+        if (actionType === "curtir") {
+            actionText = "Curtir";
+        } else if (actionType === "seguir_curtir") {
+            actionText = "Seguir e Curtir";
+        }
+        document.getElementById("actionText").textContent = actionText;
+        
+        // Verifica se já tem conta selecionada para buscar ação
+        const id_conta = localStorage.getItem("id_conta");
+        if (id_conta && id_conta !== "null") {
+            fetchAction();
+            }
             });
 
             document.body.classList.add('loaded');
@@ -507,9 +512,6 @@
                     document.getElementById("warningMessage").style.display = "none";
                     document.getElementById("actionContent").style.display = "block";
 
-                    // Ativa o seletor de tipo de ação
-                    ativarSelecaoTipoAcao();
-
                     // Busca uma ação imediatamente
                     fetchAction();
                 } else {
@@ -528,9 +530,17 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
-        async function fetchAction() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+async function fetchAction() {
+    const id_conta = localStorage.getItem("id_conta");
+    const token = localStorage.getItem("token");
+    const actionType = document.getElementById("actionType").value;
+    
+    // Verificar se todos os campos foram preenchidos
+    if (!id_conta || !token || id_conta === "null" || !actionType) {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+        document.getElementById("actionContent").style.opacity = "1";
+        return;
+    }
 
             if (document.getElementById("actionType").disabled) return;
 
