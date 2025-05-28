@@ -30,8 +30,8 @@ const handler = async (req, res) => {
 
     // 🔁 Mapeamento do tipo recebido para o tipo do banco
 const tipoMap = {
-  seguir: "seguidores",
-  curtir: "curtidas"
+  seguir: "seguir",
+  curtir: "curtir"
 };
 const tipoBanco = tipoMap[tipo] || tipo;
 
@@ -40,7 +40,7 @@ const query = {
   status: { $in: ["pendente", "reservada"] }
 };
 if (tipo === "seguir_curtir") {
-  query.tipo = { $in: ["seguidores", "curtidas"] };
+  query.tipo = { $in: ["seguir", "curtir"] };
 } else if (tipoBanco) {
   query.tipo = tipoBanco;
 }
