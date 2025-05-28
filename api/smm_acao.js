@@ -77,7 +77,7 @@ if (!pedidoExistente) {
     nome: `Ação ${tipo_acao} - ${nome_usuario}`,
     valor: val,
     quantidade: qtd,
-    quantidadeExecutada: 0,
+    validadas: 0,
     link: url_dir,
     status: "pendente",
     dataCriacao: new Date(),
