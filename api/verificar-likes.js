@@ -109,13 +109,14 @@ if (liked) {
     );
   }
 
-  console.log("Chamando smmsociais.com para incrementar validadas com id_acao_smm:", valid.id_acao_smm);
+  console.log("Chamando smmsociais.com para incrementar validadas com id_acao_smm:", valid.id_pedido);
 
   // 👇 Se tiver id_acao_smm, notifica o smmsociais.com
-  if (valid.id_acao_smm) {
+  if (valid.id_pedido) {
     try {
       await axios.post("https://smmsociais.com/api/incrementar-validadas", {
-        id_acao_smm: valid.id_acao_smm
+        id_acao_smm: valid.id_pedido
+
       }, {
         headers: {
           'Authorization': `Bearer ${process.env.SMM_API_KEY}` // se usar autenticação
