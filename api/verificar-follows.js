@@ -65,10 +65,13 @@ if (!decoded || decoded.aud !== 'https://vercel.com/ganhesocialcom' || decoded.i
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("users");
 
-    const acoes = await colecao.find({ acao_validada: null })
-      .sort({ data: 1 })
-      .limit(120)
-      .toArray();
+const acoes = await colecao.find({
+  acao_validada: null,
+  tipo: "seguir"
+})
+  .sort({ data: 1 })
+  .limit(120)
+  .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
     if (acoes.length === 0) {
