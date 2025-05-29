@@ -120,19 +120,36 @@ if (!decoded || decoded.aud !== 'https://vercel.com/ganhesocialcom' || decoded.i
           { $set: { acao_validada: accountFound, verificada_em: new Date() } }
         );
 
-        if (accountFound) {
-          const valor = parseFloat(valid.valor_confirmacao);
-          if (!isNaN(valor) && valor > 0) {
-            await usuarios.updateOne(
-              { _id: new ObjectId(valid.user) },
-              { $inc: { saldo: valor } }
-            );
-            console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
-          } else {
-            console.warn(`   ⚠ valor_confirmacao inválido para ação ${valid._id}:`, valid.valor_confirmacao);
-          }
-        }
+if (accountFound) {
+  const valor = parseFloat(valid.valor_confirmacao);
+  if (!isNaN(valor) && valor > 0) {
+    await usuarios.updateOne(
+      { _id: new ObjectId(valid.user) },
+      { $inc: { saldo: valor } }
+    );
+    console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
+  } else {
+    console.warn(`   ⚠ valor_confirmacao inválido para ação ${valid._id}:`, valid.valor_confirmacao);
+  }
 
+  // 👇 Notifica o smmsociais.com, se aplicável
+  console.log("Chamando smmsociais.com para incrementar validadas com id_pedido:", valid.id_pedido);
+
+  if (valid.id_pedido) {
+    try {
+      await axios.post("https://smmsociais.com/api/incrementar-validadas", {
+        id_acao_smm: valid.id_pedido
+      }, {
+        headers: {
+          'Authorization': `Bearer ${process.env.SMM_API_KEY}` // ou outro header, se necessário
+        }
+      });
+      console.log("   ✓ Notificação para smmsociais.com enviada com sucesso.");
+    } catch (err) {
+      console.error("   ✗ Erro ao notificar smmsociais.com:", err.response?.data || err.message);
+    }
+  }
+}
         console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${accountFound}`);
         processadas++;
 
