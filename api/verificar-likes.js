@@ -27,11 +27,12 @@ const ActionSchema = z.object({
   _id: z.any(),
   user: z.any(),
   url_dir: z.string().min(1),
-  nome_usuario: z.string().min(1), // <-- agora usamos nome_usuario
+  nome_usuario: z.string().min(1),
   valor_confirmacao: z.union([z.string(), z.number()]),
   quantidade_pontos: z.number(),
   tipo_acao: z.string(),
-  token: z.string()
+  token: z.string(),
+  id_pedido: z.union([z.string(), z.undefined()]).optional() // 👈 Adicione esta linha
 });
 
 export default async function handler(req, res) {
