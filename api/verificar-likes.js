@@ -100,30 +100,16 @@ export default async function handler(req, res) {
           { $set: { acao_validada: liked, verificada_em: new Date() } }
         );
 
-if (liked) {
-  const valor = parseFloat(valid.valor_confirmacao);
-  if (!isNaN(valor) && valor > 0) {
-    await usuarios.updateOne(
-      { _id: new ObjectId(valid.user) },
-      { $inc: { saldo: valor } }
-    );
-  }
-
-  // 👇 Se tiver id_acao_smm, notifica o smmsociais.com
-  if (valid.id_acao_smm) {
-    try {
-      await axios.post("https://smmsociais.com/api/incrementar-validadas", {
-        id_acao_smm: valid.id_acao_smm
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.SMM_API_KEY}` // se usar autenticação
+        if (liked) {
+          const valor = parseFloat(valid.valor_confirmacao);
+          if (!isNaN(valor) && valor > 0) {
+            await usuarios.updateOne(
+              { _id: new ObjectId(valid.user) },
+              { $inc: { saldo: valor } }
+            );
+          }
         }
-      });
-    } catch (err) {
-      console.error("Erro ao notificar smmsociais.com:", err.response?.data || err.message);
-    }
-  }
-}
+
         processadas++;
 
       } catch (err) {
