@@ -85,9 +85,12 @@ if (!pedidoExistente) {
   await novoPedido.save();
 }
 
-    console.log("✅ Nova ação registrada:", { tipo_acao, nome_usuario, id_pedido, pontos });
+console.log("✅ Nova ação registrada:", { tipo_acao, nome_usuario, id_pedido, pontos });
 
-    return res.status(201).json({ message: "Ação adicionada com sucesso" });
+return res.status(201).json({
+  message: "Ação adicionada com sucesso",
+  id_acao_smm: pedidoId.toString()
+});
 
   } catch (error) {
     console.error("❌ Erro ao adicionar ação:", {
