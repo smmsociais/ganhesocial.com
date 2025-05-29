@@ -66,7 +66,6 @@ const PedidoSchema = new mongoose.Schema({
   nome: String,
   valor: Number,
   quantidade: { type: Number, required: true },
-  validadas: { type: Number, default: 0 },
   link: String,
   status: { type: String, enum: ["pendente", "reservada", "concluida"], default: "pendente" },
   dataCriacao: { type: Date, default: Date.now }
