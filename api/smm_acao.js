@@ -73,7 +73,7 @@ if (!pedidoExistente) {
   const novoPedido = new Pedido({
     _id: pedidoId,
     rede: "tiktok",
-    tipo: tipo_acao.toLowerCase() === "seguir" ? "seguidores" : tipo_acao.toLowerCase(),
+    tipo: tipo_acao.toLowerCase() === "seguir" ? "seguir" : tipo_acao.toLowerCase(),
     nome: `Ação ${tipo_acao} - ${nome_usuario}`,
     valor: val,
     quantidade: qtd,
