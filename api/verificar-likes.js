@@ -109,7 +109,7 @@ if (liked) {
     );
   }
 
-  console.log("Chamando smmsociais.com para incrementar validadas com id_acao_smm:", valid.id_pedido);
+  console.log("Chamando smmsociais.com para incrementar validadas com id_pedido:", valid.id_pedido);
 
   // 👇 Se tiver id_acao_smm, notifica o smmsociais.com
   if (valid.id_pedido) {
