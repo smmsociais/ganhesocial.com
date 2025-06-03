@@ -10,9 +10,18 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
+
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
         }
 
@@ -36,9 +45,35 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        .desktop-balance-container {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
         }
 
         .container {
@@ -51,10 +86,6 @@
             max-width: 500px;
             margin: 30px auto;
             transition: background 0.3s;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
         }
 
         .status-message {
@@ -143,7 +174,6 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            /* Adiciona barra de rolagem quando necessário */
         }
 
         .menu-content.active {
@@ -293,13 +323,6 @@
             }
         }
 
-        .left-header {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            /* Espaço entre menu e logo */
-        }
-
         .action-type-container {
             margin-top: 15px;
             margin-bottom: 15px;
@@ -314,18 +337,55 @@
         #accountSelect,
         #actionType {
             padding: 4px 8px;
-            /* padding reduzido */
             width: 33%;
-            /* mantém a largura reduzida */
             border-radius: 5px;
             border: 1px solid #ccc;
             font-size: 13px;
-            /* fonte levemente reduzida */
             height: auto;
-            /* deixa a altura natural conforme conteúdo */
             line-height: 1.4;
-            /* boa legibilidade */
             box-sizing: border-box;
+        }
+
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .desktop-balance-container {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            .desktop-balance-container {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
@@ -346,19 +406,45 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
+
+    <!-- Conteúdo Principal -->
     <div id="pagina"></div>
     <div class="container">
         <h2>Realizar Ações TikTok</h2>
@@ -373,7 +459,6 @@
                 <option value="curtir">Curtir</option>
                 <option value="seguir_curtir">Seguir e Curtir</option>
             </select>
-
         </div>
         <p id="statusMessage" class="status-message"></p>
 
@@ -408,27 +493,13 @@
         </div>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-
-        <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
-        </div>
-    </div>
 
     <script>
+        // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
-
 
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -669,52 +740,53 @@
                 document.getElementById("actionContent").style.opacity = "1";
             }
 
-try {
-    const tipoAcao = document.getElementById("actionType").value;
-    const encontrouSMM = await tentarBuscarSMM();
+            try {
+                const tipoAcao = document.getElementById("actionType").value;
+                const encontrouSMM = await tentarBuscarSMM();
 
-    if (!encontrouSMM) {
-        let resultadoLocal = false;
+                if (!encontrouSMM) {
+                    let resultadoLocal = false;
 
-        if (tipoAcao !== "curtir") {
-            resultadoLocal = await tentarBuscarLocal();
-        }
+                    if (tipoAcao !== "curtir") {
+                        resultadoLocal = await tentarBuscarLocal();
+                    }
 
-        if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-            const novaTentativa = await tentarBuscarSMM();
-            if (!novaTentativa) {
-                exibirContagemRegressiva();
+                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+                        const novaTentativa = await tentarBuscarSMM();
+                        if (!novaTentativa) {
+                            exibirContagemRegressiva();
+                        }
+                    } else if (!resultadoLocal) {
+                        exibirContagemRegressiva();
+                    }
+                }
+
+            } catch (error) {
+                console.error("Erro ao buscar ações:", error);
+                document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
+                document.getElementById("actionContent").style.opacity = "1";
             }
-        } else if (!resultadoLocal) {
-            exibirContagemRegressiva();
-        }
-    }
 
-} catch (error) {
-    console.error("Erro ao buscar ações:", error);
-    document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
-    document.getElementById("actionContent").style.opacity = "1";
-}
+            // Função para exibir a contagem regressiva animada
+            function exibirContagemRegressiva() {
+                let contador = 3;
+                const statusElement = document.getElementById("statusMessage");
 
-// Função para exibir a contagem regressiva animada
-function exibirContagemRegressiva() {
-    let contador = 3;
-    const statusElement = document.getElementById("statusMessage");
-    
-    // Função que atualiza a mensagem a cada segundo
-    function atualizarMensagem() {
-        if (contador > 0) {
-            statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-            contador--;
-            setTimeout(atualizarMensagem, 1000);
-        } else {
-            fetchAction();
+                // Função que atualiza a mensagem a cada segundo
+                function atualizarMensagem() {
+                    if (contador > 0) {
+                        statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+                        contador--;
+                        setTimeout(atualizarMensagem, 1000);
+                    } else {
+                        fetchAction();
+                    }
+                }
+
+                // Inicia a contagem
+                atualizarMensagem();
+            }
         }
-    }
-    
-    // Inicia a contagem
-    atualizarMensagem();
-}}
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
