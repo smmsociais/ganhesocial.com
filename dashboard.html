@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanheSocial - Dashboard</title>
+    <title>Dashboard - GanheSocial</title>
     <style>
         :root {
             --bg-light: #ffffff;
@@ -506,21 +506,6 @@
 
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
-            }
-        }
-
-        async function updateHeaderBalance() {
-            try {
-                const saldoDisponivel = parseFloat(localStorage.getItem("saldoDisponivel") || 0);
-                const formattedBalance = new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
-                }).format(saldoDisponivel);
-
-                document.getElementById('userBalance').textContent = formattedBalance;
-                document.getElementById('desktopUserBalance').textContent = formattedBalance;
-            } catch (error) {
-                console.error('Erro ao atualizar saldo no cabeçalho:', error);
             }
         }
 
