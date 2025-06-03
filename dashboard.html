@@ -89,17 +89,6 @@
             }
         }
 
-        .historico-container {
-            background: var(--container-light);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 315px;
-            margin: 15px auto 30px auto;
-            transition: background 0.3s;
-        }
-
         .saldo {
             font-size: 22px;
             font-weight: bold;
@@ -120,100 +109,6 @@
             color: white;
             font-size: 10px;
             margin: 5px 0;
-        }
-
-        /* Estilos do gráfico */
-        .chart-container {
-            width: 100%;
-            height: 300px;
-            margin-top: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart {
-            display: flex;
-            align-items: flex-end;
-            height: 250px;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-            position: relative;
-        }
-
-        .chart-line {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            position: relative;
-            height: 100%;
-        }
-
-        .chart-bar {
-            width: 20px;
-            background-color: var(--positive-color);
-            border-radius: 3px 3px 0 0;
-            transition: height 0.5s ease;
-            position: relative;
-            margin: 0 2px;
-        }
-
-        .chart-bar.negative {
-            background-color: var(--negative-color);
-        }
-
-        .chart-bar.neutral {
-            background-color: var(--neutral-color);
-        }
-
-        .chart-label {
-            position: absolute;
-            bottom: -25px;
-            font-size: 10px;
-            text-align: center;
-            transform: rotate(-45deg);
-            transform-origin: top left;
-            white-space: nowrap;
-            color: var(--text-light);
-        }
-
-        .chart-value {
-            position: absolute;
-            top: -20px;
-            font-size: 10px;
-            color: var(--text-light);
-        }
-
-        .chart-axis-y {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 30px;
-            border-right: 1px solid #ddd;
-        }
-
-        .chart-axis-y-label {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            text-align: right;
-            padding-right: 5px;
-            font-size: 10px;
-            transform: translateY(-50%);
-        }
-
-        .chart-tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-            display: none;
         }
 
         /* Estilos do menu hamburguer */
@@ -323,8 +218,7 @@
             }
 
             .header,
-            .saldo-container,
-            .historico-container {
+            .saldo-container {
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
@@ -354,19 +248,6 @@
                 color: var(--text-dark);
             }
 
-            .chart {
-                border-bottom: 1px solid #444;
-            }
-
-            .chart-label,
-            .chart-value {
-                color: var(--text-dark);
-            }
-
-            .chart-axis-y {
-                border-right: 1px solid #444;
-            }
-
             .saldo-disponivel {
                 color: var(--positive-color-dark);
             }
@@ -376,32 +257,8 @@
                 /* Amarelo mais vibrante no modo escuro */
             }
 
-            .chart-bar {
-                background-color: var(--positive-color-dark);
-            }
-
-            .chart-bar.negative {
-                background-color: var(--negative-color-dark);
-            }
-
-            .chart-bar.neutral {
-                background-color: var(--neutral-color-dark);
-            }
-
             .telegram-link {
                 color: var(--button-dark);
-            }
-        }
-
-        @media (min-width: 480px) {
-            .historico-container {
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                width: 90%;
-                max-width: 960px;
-                margin: 15px auto 30px auto;
-                transition: background 0.3s;
             }
         }
 
@@ -438,15 +295,6 @@
 
         <div class="saldo-container">
             <p class="saldo saldo-pendente" id="saldoPendente">Saldo Pendente: R$ 0,00</p>
-        </div>
-    </div>
-
-    <div class="historico-container">
-        <h3 style="text-align: center; margin-top: 0;">Histórico de Ganhos Diários</h3>
-        <div class="chart-container">
-            <div class="chart-axis-y" id="chartAxisY"></div>
-            <div class="chart" id="dailyChart"></div>
-            <div class="chart-tooltip" id="chartTooltip"></div>
         </div>
     </div>
 
@@ -513,7 +361,6 @@
 
             // Carrega dados iniciais e espera terminar
             await carregarSaldos();
-            await carregarHistorico();
 
             // Agora mostra o conteúdo
             document.body.classList.add('loaded');
@@ -549,143 +396,6 @@
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
-        }
-
-        async function carregarHistorico() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`https://ganhesocial.com/api/get_historico?token=${token}`);
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao carregar histórico.");
-                }
-
-                // Define "hoje" em UTC-3 (Brasília)
-                const agora = new Date();
-                const hojeUtc3 = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
-                hojeUtc3.setUTCHours(21, 0, 0, 0); // meia-noite BR = 21h UTC
-                const hojeFormatado = hojeUtc3.toLocaleDateString("pt-BR");
-
-                // Monta lista de datas dos últimos 30 dias
-                const datasValidas = [];
-                for (let i = 0; i < 30; i++) {
-                    const data = new Date(hojeUtc3);
-                    data.setDate(data.getDate() - i);
-                    datasValidas.push({
-                        date: data,
-                        dateStr: data.toLocaleDateString("pt-BR"),
-                        displayDate: i === 0 ? "Hoje" : data.toLocaleDateString("pt-BR")
-                    });
-                }
-
-                // Filtra histórico pra datas válidas
-                let historico = data.historico.map(item => {
-                    const dataItem = new Date(item.data);
-                    return {
-                        data: dataItem,
-                        valor: parseFloat(item.valor.toFixed(2))
-                    };
-                }).filter(item => {
-                    const dataStr = item.data.toLocaleDateString("pt-BR");
-                    return datasValidas.some(d => d.dateStr === dataStr);
-                });
-
-                // Prepara dados para o gráfico
-                const chartData = datasValidas.map(dateObj => {
-                    const itemHistorico = historico.find(item =>
-                        item.data.toLocaleDateString("pt-BR") === dateObj.dateStr
-                    );
-                    return {
-                        date: dateObj.date,
-                        dateStr: dateObj.dateStr,
-                        displayDate: dateObj.displayDate,
-                        value: itemHistorico ? itemHistorico.valor : 0
-                    };
-                }).reverse(); // Inverte para mostrar do mais antigo para o mais recente
-
-                renderChart(chartData);
-            } catch (error) {
-                console.error("Erro ao carregar histórico:", error);
-            }
-        }
-
-        function renderChart(data) {
-            const chart = document.getElementById('dailyChart');
-            const chartAxisY = document.getElementById('chartAxisY');
-            const tooltip = document.getElementById('chartTooltip');
-
-            chart.innerHTML = '';
-            chartAxisY.innerHTML = '';
-
-            if (data.length === 0) return;
-
-            // Encontra valores máximos e mínimos para escalar o gráfico
-            const values = data.map(item => item.value);
-            const maxValue = Math.max(...values, 0.1); // Pelo menos 0.1 para evitar divisão por zero
-            const minValue = Math.min(...values, 0);
-
-            // Cria eixos Y
-            const yAxisSteps = 5;
-            for (let i = 0; i <= yAxisSteps; i++) {
-                const value = (maxValue / yAxisSteps) * i;
-                const yPos = 100 - (i * (100 / yAxisSteps));
-
-                const axisLabel = document.createElement('div');
-                axisLabel.className = 'chart-axis-y-label';
-                axisLabel.style.top = `${yPos}%`;
-                axisLabel.textContent = value.toFixed(2);
-                chartAxisY.appendChild(axisLabel);
-            }
-
-            // Cria barras do gráfico
-            data.forEach((item, index) => {
-                const barHeight = (item.value / maxValue) * 100;
-                const barValue = item.value.toFixed(2);
-
-                const barContainer = document.createElement('div');
-                barContainer.className = 'chart-line';
-
-                const bar = document.createElement('div');
-                bar.className = 'chart-bar';
-                if (item.value > 0) bar.className += ' positive';
-                else if (item.value < 0) bar.className += ' negative';
-                else bar.className += ' neutral';
-
-                bar.style.height = `${Math.max(1, barHeight)}%`;
-
-                const valueLabel = document.createElement('div');
-                valueLabel.className = 'chart-value';
-                valueLabel.textContent = barValue;
-
-                const dateLabel = document.createElement('div');
-                dateLabel.className = 'chart-label';
-                dateLabel.textContent = item.displayDate;
-
-                barContainer.appendChild(bar);
-                barContainer.appendChild(valueLabel);
-                barContainer.appendChild(dateLabel);
-                chart.appendChild(barContainer);
-
-                // Adiciona interatividade
-                barContainer.addEventListener('mouseover', (e) => {
-                    tooltip.style.display = 'block';
-                    tooltip.innerHTML = `<strong>${item.displayDate}</strong><br>R$ ${barValue}`;
-                });
-
-                barContainer.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = `${e.pageX + 10}px`;
-                    tooltip.style.top = `${e.pageY + 10}px`;
-                });
-
-                barContainer.addEventListener('mouseout', () => {
-                    tooltip.style.display = 'none';
-                });
-            });
         }
 
         function logout() {
