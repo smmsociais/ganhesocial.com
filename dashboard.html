@@ -14,7 +14,7 @@
             --positive-color: #2ecc71;
             --negative-color: #e74c3c;
             --neutral-color: #3498db;
-
+            --link-color: #0366d6;
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
@@ -23,6 +23,10 @@
             --negative-color-dark: #c0392b;
             --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
+            --label-light: #586069;
+            --label-dark: #8b949e;
+            --primary-color: #007BFF;
+            --border-light: #ddd;
         }
 
         body {
@@ -51,9 +55,55 @@
             gap: 30px;
         }
 
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        /* Adicionado: Estilo do saldo */
+        .balance-container {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .balance-value {
+            color: var(--positive-color);
+        }
+
+        .refresh-balance {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Adicionado: Saldo para desktop */
+        .desktop-balance-container {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
         }
 
         .saldos-container {
@@ -81,6 +131,7 @@
             text-align: center;
             width: 90%;
             transition: background 0.3s;
+            border: 1px solid #e1e4e8;
         }
 
         @media (min-width: 768px) {
@@ -96,17 +147,15 @@
         }
 
         .saldo-disponivel {
-            color: #1a6b1a;
-            /* Verde mais escuro */
+            color: var(--positive-color);
         }
 
         .saldo-pendente {
             color: #b38f00;
-            /* Amarelo dourado */
         }
 
         .ganho-hoje {
-            color: white;
+            color: var(--text-light);
             font-size: 10px;
             margin: 5px 0;
         }
@@ -206,9 +255,84 @@
         }
 
         .telegram-link {
-            color: #0088cc;
+            color: var(--link-color);
             text-decoration: none;
             font-weight: bold;
+        }
+
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .saldos-container {
+                margin-left: 250px;
+                width: calc(90% - 250px);
+                max-width: 1000px;
+            }
+
+            /* Esconde a logo no header na versão desktop */
+            .logo-mobile {
+                display: none;
+            }
+
+            /* Mostra o saldo desktop */
+            .desktop-balance-container {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .saldos-container {
+                width: 95%;
+                max-width: 1000px;
+            }
+
+            /* Mostra a logo no header apenas na versão mobile */
+            .logo-mobile {
+                display: block;
+            }
+
+            /* Esconde o saldo desktop */
+            .desktop-balance-container {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .saldo-container {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .saldo {
+                font-size: 18px;
+            }
+
+            /* Ajuste para o saldo mobile */
+            .balance-container {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
         }
 
         @media (prefers-color-scheme: dark) {
@@ -222,6 +346,10 @@
                 background: var(--container-dark);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
                 border: 1px solid var(--border-dark);
+            }
+
+            .form-label {
+                color: var(--label-dark);
             }
 
             .menu-toggle span {
@@ -254,11 +382,23 @@
 
             .saldo-pendente {
                 color: #d4b300;
-                /* Amarelo mais vibrante no modo escuro */
             }
 
             .telegram-link {
                 color: var(--button-dark);
+            }
+
+            /* Adicionado: Estilo do saldo no dark mode */
+            .balance-container {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .refresh-balance {
+                color: var(--text-dark);
+            }
+
+            .desktop-balance-container {
+                background: rgba(255, 255, 255, 0.05);
             }
         }
 
@@ -273,21 +413,55 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Logo para desktop (no menu lateral) -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
 
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Adicionado: Saldo para desktop (fixo no topo direito) -->
+    <div class="desktop-balance-container">
+        <span class="balance-value" id="desktopSaldoDisponivel">R$ 0,00</span>
+    </div>
+
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
+
+        <!-- Adicionado: Saldo para mobile -->
+        <div class="right-header">
+            <div class="balance-container">
+                <span class="balance-value" id="mobileSaldoDisponivel">R$ 0,00</span>
+            </div>
+        </div>
     </div>
-    <div id="pagina"></div>
+
     <div class="saldos-container">
         <div class="saldo-container">
             <p class="saldo saldo-disponivel" id="saldoDisponivel">Saldo Disponível: R$ 0,00</p>
@@ -308,58 +482,51 @@
         </p>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-
-        <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
-        </div>
-    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("token");
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
+            if (!token) {
+                window.location.href = "https://ganhesocial.com";
+                return;
+            }
 
-            menuToggle.addEventListener('click', function () {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+            // Controle do menu hamburguer (só funciona em mobile)
+            if (window.innerWidth < 992) {
+                const menuToggle = document.getElementById('menuToggle');
+                const menuOverlay = document.getElementById('menuOverlay');
+                const menuContent = document.getElementById('menuContent');
 
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
+                menuToggle.addEventListener('click', function () {
+                    menuContent.classList.toggle('active');
+                    menuOverlay.classList.toggle('active');
+
+                    const spans = menuToggle.querySelectorAll('span');
+                    if (menuContent.classList.contains('active')) {
+                        spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                        spans[1].style.opacity = '0';
+                        spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                    } else {
+                        spans[0].style.transform = 'none';
+                        spans[1].style.opacity = '1';
+                        spans[2].style.transform = 'none';
+                    }
+                });
+
+                menuOverlay.addEventListener('click', function () {
+                    menuContent.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                    const spans = menuToggle.querySelectorAll('span');
                     spans[0].style.transform = 'none';
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
-                }
-            });
+                });
+            }
 
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            });
-
-            // Carrega dados iniciais e espera terminar
+            // Carrega dados iniciais
             await carregarSaldos();
 
             // Agora mostra o conteúdo
@@ -373,7 +540,12 @@
                 return;
             }
             try {
-                const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
+                const response = await fetch(`https://ganhesocial.com/api/get_saldo`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 const data = await response.json();
                 if (!response.ok) {
                     throw new Error(data.error || "Erro ao buscar saldo.");
@@ -385,13 +557,20 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
 
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const formattedDisponivel = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(saldoDisponivel);
 
-                // Mostra os saldos e a página depois de carregar
-                document.getElementById("saldoDisponivel").style.display = "block";
-                document.getElementById("saldoPendente").style.display = "block";
-                document.getElementById("pagina").style.display = "block";  // <<<<< ADICIONA ESSA LINHA
+                const formattedPendente = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(saldoPendente);
+
+                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: ${formattedDisponivel}`;
+                document.getElementById("saldoPendente").textContent = `Saldo Pendente: ${formattedPendente}`;
+                document.getElementById("mobileSaldoDisponivel").textContent = formattedDisponivel;
+                document.getElementById("desktopSaldoDisponivel").textContent = formattedDisponivel;
 
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
