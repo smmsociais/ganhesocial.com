@@ -10,9 +10,18 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
+
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
             --valid-color: #28a745;
             --invalid-color: #dc3545;
@@ -34,6 +43,7 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            position: relative;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -52,9 +62,15 @@
             gap: 30px;
         }
 
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
         }
 
         .container {
@@ -63,7 +79,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 1700x;
+            max-width: 1700px;
             margin: 30px auto;
             transition: background 0.3s;
         }
@@ -71,7 +87,7 @@
         h2 {
             text-align: center;
             margin-bottom: 25px;
-            color: var(--primary-color);
+            color: var(--text-light);
         }
 
         .history-table {
@@ -121,7 +137,7 @@
         }
 
         .action-link {
-            color: var(--primary-color);
+            color: var(--button-light);
             text-decoration: none;
             font-weight: bold;
         }
@@ -157,7 +173,7 @@
             padding: 8px 12px;
             border: 1px solid #dee2e6;
             background-color: white;
-            color: var(--primary-color);
+            color: var(--text-light);
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s;
@@ -228,6 +244,7 @@
             z-index: 6;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         .menu-content.active {
@@ -281,75 +298,109 @@
             .status-pendente {
                 color: var(--pending-color);
             }
+
+            .history-table th {
+                background-color: var(--header-bg-dark);
+                color: var(--header-text-dark);
+                border-bottom: 2px solid var(--border-dark);
+            }
+
+            .history-table tr:nth-child(even) {
+                background-color: var(--container-dark);
+            }
+
+            .history-table tr:hover {
+                background-color: #343a40;
+            }
+
+            .history-table td {
+                border-bottom: 1px solid var(--border-dark);
+            }
+
+            .action-link {
+                color: var(--button-dark);
+            }
+
+            .no-actions {
+                color: #aaa;
+            }
+
+            .table-container {
+                border: 1px solid var(--border-dark);
+            }
+
+            .pagination button {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .pagination button:hover {
+                background-color: #343a40;
+            }
+
+            .pagination button.active {
+                background-color: var(--button-dark);
+                color: white;
+            }
+
+            .pagination-info {
+                color: #aaa;
+            }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
         }
 
-        .history-table th {
-            background-color: var(--header-bg-dark);
-            color: var(--header-text-dark);
-            border-bottom: 2px solid var(--border-dark);
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
         }
 
-        .history-table tr:nth-child(even) {
-            background-color: var(--container-dark);
-        }
-
-        .history-table tr:hover {
-            background-color: #343a40;
-        }
-
-        .history-table td {
-            border-bottom: 1px solid var(--border-dark);
-        }
-
-        .action-link {
-            color: var(--primary-dark);
-        }
-
-        .no-actions {
-            color: #aaa;
-        }
-
-        .table-container {
-            border: 1px solid var(--border-dark);
-        }
-
-        .pagination button {
-            background-color: var(--container-dark);
-            color: var(--primary-dark);
-            border-color: var(--border-dark);
-        }
-
-        .pagination button:hover {
-            background-color: #343a40;
-        }
-
-        .pagination button.active {
-            background-color: var(--primary-dark);
-            color: white;
-        }
-
-        .pagination-info {
-            color: #aaa;
-        }
-
-        .menu-toggle span {
-            background-color: var(--text-dark);
-        }
-
-        .menu-content {
-            background: var(--container-dark);
-        }
-
-        .menu-item {
-            color: var(--text-dark);
-        }
-
-        .menu-item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .menu-footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
         }
 
         @media (max-width: 768px) {
@@ -388,20 +439,45 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
-    <div id="pagina"></div>
+
+    <!-- Conteúdo Principal -->
     <div class="container">
         <h2 id="pageTitle">Histórico de Ações</h2>
         <div class="table-container">
@@ -429,25 +505,10 @@
         </div>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-
-        <div class="menu-footer">
-            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
-        </div>
-    </div>
 
     <script>
-
         function logout() {
             localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
@@ -455,13 +516,6 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("token");
-
-
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -472,7 +526,6 @@
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
-                // Anima os spans do menu hamburguer
                 const spans = menuToggle.querySelectorAll('span');
                 if (menuContent.classList.contains('active')) {
                     spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
@@ -485,7 +538,6 @@
                 }
             });
 
-            // Fechar menu ao clicar no overlay
             menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
@@ -537,50 +589,51 @@
                 }
             }
 
-function displayPageItems() {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
-    const pageActions = allActions.slice(startIndex, endIndex);
+            function displayPageItems() {
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, allActions.length);
+                const pageActions = allActions.slice(startIndex, endIndex);
 
-    if (pageActions.length === 0) {
-        historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Nenhuma ação encontrada.</td></tr>';
-        return;
-    }
+                if (pageActions.length === 0) {
+                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Nenhuma ação encontrada.</td></tr>';
+                    return;
+                }
 
-    historyList.innerHTML = '';
-    pageActions.forEach(action => {
-        const row = document.createElement("tr");
-        let statusClass;
-        if (action.status === "Válida") {
-            statusClass = "status-valid";
-        } else if (action.status === "Inválida") {
-            statusClass = "status-invalid";
-        } else {
-            statusClass = "status-pendente";
-        }
+                historyList.innerHTML = '';
+                pageActions.forEach(action => {
+                    const row = document.createElement("tr");
+                    let statusClass;
+                    if (action.status === "Válida") {
+                        statusClass = "status-valid";
+                    } else if (action.status === "Inválida") {
+                        statusClass = "status-invalid";
+                    } else {
+                        statusClass = "status-pendente";
+                    }
 
-        const statusText = action.status;
+                    const statusText = action.status;
 
-        const actionLink = (action.status === "Inválida" && action.url_dir) ?
-            `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
+                    const actionLink = (action.status === "Inválida" && action.url_dir) ?
+                        `<a href="${action.url_dir}" class="action-link" target="_blank">Ver</a>` : "";
 
-        row.innerHTML = `
-            <td>${new Date(action.data).toLocaleString()}</td>
-            <td>${action.rede_social}</td>    
-            <td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
-            <td>${action.tipo ? action.tipo.charAt(0).toUpperCase() + action.tipo.slice(1) : "Desconhecido"}</td>       
-            <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
-            <td>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <span class="${statusClass}">${statusText}</span>
-                    ${actionLink}
-                </div>
-            </td>
-            <td></td>
-        `;
-        historyList.appendChild(row);
-    });
-}
+                    row.innerHTML = `
+                        <td>${new Date(action.data).toLocaleString()}</td>
+                        <td>${action.rede_social}</td>    
+                        <td><a class="action-link" href="detail_account?usuario=${encodeURIComponent(action.nome_usuario)}">${action.nome_usuario}</a></td>  
+                        <td>${action.tipo ? action.tipo.charAt(0).toUpperCase() + action.tipo.slice(1) : "Desconhecido"}</td>       
+                        <td>R$ ${action.valor_confirmacao.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span class="${statusClass}">${statusText}</span>
+                                ${actionLink}
+                            </div>
+                        </td>
+                        <td></td>
+                    `;
+                    historyList.appendChild(row);
+                });
+            }
+
             // Atualizar informações de paginação
             function updatePaginationInfo() {
                 const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -642,10 +695,7 @@ function displayPageItems() {
             loadData(1).then(() => {
                 document.body.classList.add('loaded');
             });
-
         });
     </script>
-
 </body>
-
 </html>
