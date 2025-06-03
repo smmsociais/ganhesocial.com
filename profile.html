@@ -10,6 +10,8 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --border-light: #ddd;
+            --label-light: #586069;
             --button-light: #0366d6;
             --positive-color: #2ecc71;
             --negative-color: #e74c3c;
@@ -18,17 +20,16 @@
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --border-dark: #30363d;
+            --label-dark: #8b949e;
             --button-dark: #58a6ff;
             --positive-color-dark: #27ae60;
             --negative-color-dark: #c0392b;
             --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
-            --label-light: #586069;
-            --label-dark: #8b949e;
             --error-color: #f85149;
             --success-color: #238636;
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
         }
 
         body {
@@ -203,31 +204,6 @@
             color: var(--text-light);
         }
 
-        /* Menu Lateral para Desktop */
-        .menu-content {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100%;
-            background: var(--container-light);
-            box-shadow: none;
-            padding: 20px 0;
-            z-index: 6;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .menu-overlay {
-            display: none !important;
-        }
-
-        /* Header para Mobile */
-        .desktop-header {
-            display: none;
-        }
-
         /* Estilos do menu hamburguer */
         .menu-toggle {
             width: 30px;
@@ -245,6 +221,41 @@
             background-color: var(--text-light);
             border-radius: 3px;
             transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
         }
 
         .menu-item {
@@ -344,10 +355,6 @@
 
             .menu-footer {
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .desktop-balance-container {
-                background: rgba(255, 255, 255, 0.05);
             }
         }
 
@@ -629,6 +636,7 @@
             window.location.href = "https://ganhesocial.com";
         }
 
+        // Set up menu and copy functionality
         document.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('authToken');
             const copyIcon = document.getElementById('copyIcon');
@@ -667,11 +675,17 @@
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             });
-
-            loadProfile().finally(() => {
-                document.body.classList.add('loaded');
-            });
         });
+
+        window.onload = async () => {
+            try {
+                await loadProfile();
+            } catch (error) {
+                console.error('Erro ao carregar o perfil:', error);
+            } finally {
+                document.body.classList.add('loaded');
+            }
+        };
     </script>
 </body>
 
