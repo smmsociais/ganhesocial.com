@@ -10,9 +10,18 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
+
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
             --primary-color: #007BFF;
             --primary-dark: #1f6feb;
@@ -25,6 +34,7 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            position: relative;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -43,9 +53,29 @@
             gap: 30px;
         }
 
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        .desktop-balance-container {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
         }
 
         .container {
@@ -151,6 +181,7 @@
             z-index: 6;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         .menu-content.active {
@@ -230,6 +261,48 @@
             }
         }
 
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .desktop-balance-container {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            .desktop-balance-container {
+                display: none;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 width: 88%;
@@ -248,19 +321,45 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
+
+    <!-- Conteúdo Principal -->
     <div id="pagina"></div>
     <div class="container">
         <h2>Selecione a Rede Social</h2>
@@ -282,24 +381,10 @@
         </div>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-        <div class="menu-footer">
-            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
-        </div>
-    </div>
 
     <script>
-
         function redirectToTikTokAccountSelection() {
             window.location.href = "adicionar_conta_tiktok";
         }
@@ -311,12 +396,6 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("token");
-
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -339,7 +418,6 @@
                 }
             });
 
-            // Fechar menu ao clicar no overlay
             menuOverlay.addEventListener('click', function () {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
@@ -349,10 +427,8 @@
                 spans[2].style.transform = 'none';
             });
 
-            // AQUI: adicionar classe 'loaded' no body
             document.body.classList.add('loaded');
         });
-
     </script>
 </body>
 
