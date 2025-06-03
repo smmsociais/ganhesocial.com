@@ -10,18 +10,25 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
-            --border-light: #ddd;
-            --label-light: #586069;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
 
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
+            --label-light: #586069;
             --label-dark: #8b949e;
             --error-color: #f85149;
             --success-color: #238636;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
         }
 
         body {
@@ -31,6 +38,7 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            position: relative;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -49,9 +57,29 @@
             gap: 30px;
         }
 
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        .desktop-balance-container {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
         }
 
         .container {
@@ -175,7 +203,32 @@
             color: var(--text-light);
         }
 
-        /* Menu Hamburger Styles */
+        /* Menu Lateral para Desktop */
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: none;
+            padding: 20px 0;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .menu-overlay {
+            display: none !important;
+        }
+
+        /* Header para Mobile */
+        .desktop-header {
+            display: none;
+        }
+
+        /* Estilos do menu hamburguer */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -192,40 +245,6 @@
             background-color: var(--text-light);
             border-radius: 3px;
             transition: all 0.3s ease;
-        }
-
-        .menu-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
-            display: none;
-        }
-
-        .menu-content {
-            position: fixed;
-            top: 0;
-            left: -300px;
-            width: 250px;
-            height: 100%;
-            background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
-            padding: 20px 0;
-            z-index: 6;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .menu-content.active {
-            left: 0;
-        }
-
-        .menu-overlay.active {
-            display: block;
         }
 
         .menu-item {
@@ -326,30 +345,64 @@
             .menu-footer {
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
+
+            .desktop-balance-container {
+                background: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .desktop-balance-container {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            .desktop-balance-container {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
             .container {
+                width: 88%;
                 padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                width: 380px;
-                margin: 30px auto;
-                transition: background 0.3s;
             }
         }
 
-
         @media (max-width: 420px) {
             .container {
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
                 width: 300px;
-                margin: 30px auto;
-                transition: background 0.3s;
             }
         }
 
@@ -364,19 +417,45 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
+
+    <!-- Conteúdo Principal -->
     <div id="pagina"></div>
     <div class="container">
         <h2 class="page-title">Seu Perfil</h2>
@@ -416,22 +495,8 @@
         <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-
-        <div class="menu-footer">
-            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
-        </div>
-    </div>
 
     <script>
         async function loadProfile() {
@@ -440,7 +505,7 @@
             if (!token) {
                 showMessage("Você precisa estar logado para acessar esta página.", true);
                 setTimeout(() => {
-
+                    window.location.href = "https://ganhesocial.com";
                 }, 2000);
                 return;
             }
@@ -564,19 +629,12 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        // Set up menu and copy functionality
         document.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('authToken');
             const copyIcon = document.getElementById('copyIcon');
 
             tokenInput.addEventListener('click', copyTokenToClipboard);
             copyIcon.addEventListener('click', copyTokenToClipboard);
-
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -609,18 +667,11 @@
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             });
-        });
 
-        window.onload = async () => {
-            try {
-                await loadProfile();
-            } catch (error) {
-                console.error('Erro ao carregar o perfil:', error);
-            } finally {
+            loadProfile().finally(() => {
                 document.body.classList.add('loaded');
-            }
-        };
-
+            });
+        });
     </script>
 </body>
 
