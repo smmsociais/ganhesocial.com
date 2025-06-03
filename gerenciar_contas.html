@@ -10,14 +10,24 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
+
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
             --primary-color: #007BFF;
             --primary-dark: #1f6feb;
             --error-color: #dc3545;
             --warning-color: #ffc107;
+            --success-color: #28a745;
         }
 
         body {
@@ -27,6 +37,7 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            position: relative;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -45,9 +56,15 @@
             gap: 30px;
         }
 
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
         }
 
         .container {
@@ -160,6 +177,7 @@
             z-index: 6;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         .menu-content.active {
@@ -246,6 +264,40 @@
             }
         }
 
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 width: 88%;
@@ -264,31 +316,14 @@
 </head>
 
 <body>
-    <div class="header">
-        <div class="left-header">
-            <div class="menu-toggle" id="menuToggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <a href="dashboard" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
-                    alt="Logo GanheSocial" class="logo">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-    </div>
-    <div id="pagina"></div>
-    <div class="container">
-        <h2>Gerenciar Contas TikTok</h2>
-
-        <div id="messageBox" class="message-box" style="display: none;"></div>
-
-        <ul id="accountList" class="account-list"></ul>
-    </div>
-
-    <!-- Menu Overlay e Conteúdo -->
-    <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
         <a class="menu-item" href="dashboard">Página Inicial</a>
         <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
         <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
@@ -299,9 +334,37 @@
         <a class="menu-item" href="profile">Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" href="#" id="logoutLink">Sair</a>
+            <a class="menu-logout" onclick="logout()">Sair</a>
         </div>
     </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="container">
+        <h2>Gerenciar Contas TikTok</h2>
+
+        <div id="messageBox" class="message-box" style="display: none;"></div>
+
+        <ul id="accountList" class="account-list"></ul>
+    </div>
+
+    <!-- Menu Overlay para Mobile -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <script>
         // Função para exibir mensagens na página
@@ -322,7 +385,6 @@
 
             if (!token) {
                 showMessage("Você precisa estar logado para gerenciar contas.", true);
-
                 return;
             }
 
@@ -416,13 +478,6 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-
-            // Configurar evento de logout
-            document.getElementById('logoutLink').addEventListener('click', function (e) {
-                e.preventDefault();
-                logout();
-            });
-
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -457,7 +512,6 @@
             await loadAccounts();
             document.body.classList.add('loaded');
         });
-
     </script>
 </body>
 
