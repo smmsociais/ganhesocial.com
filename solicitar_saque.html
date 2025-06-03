@@ -10,10 +10,21 @@
             --bg-light: #ffffff;
             --text-light: #24292e;
             --container-light: #f6f8fa;
+            --button-light: #0366d6;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
+
             --bg-dark: #0d1117;
             --text-dark: #c9d1d9;
             --container-dark: #161b22;
+            --button-dark: #58a6ff;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
             --border-dark: #30363d;
+            --primary-color: #007BFF;
+            --primary-dark: #1f6feb;
         }
 
         body {
@@ -36,9 +47,35 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .logo {
-            height: 30px;
-            margin-right: 10px;
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        .desktop-balance-container {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
         }
 
         .container {
@@ -181,6 +218,7 @@
             z-index: 6;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         .menu-content.active {
@@ -218,12 +256,6 @@
             text-decoration: none;
         }
 
-        .left-header {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
@@ -242,26 +274,6 @@
                 background: var(--container-dark);
                 border: 1px solid var(--border-dark);
                 color: var(--text-dark);
-            }
-
-            .menu-toggle span {
-                background-color: var(--text-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
-            }
-
-            .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
 
             .info-text {
@@ -292,30 +304,84 @@
                 color: #6bff8b;
                 border: 1px solid #2c5c30;
             }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .desktop-balance-container {
+                background: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .desktop-balance-container {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            .desktop-balance-container {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
             .container {
+                width: 88%;
                 padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                width: 380px;
-                margin: 30px auto;
-                transition: background 0.3s;
             }
         }
 
-
         @media (max-width: 420px) {
             .container {
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
                 width: 300px;
-                margin: 30px auto;
-                transition: background 0.3s;
             }
         }
 
@@ -330,19 +396,45 @@
 </head>
 
 <body>
-    <div class="header">
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard">Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
+        <a class="menu-item" href="profile">Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()">Sair</a>
+        </div>
+    </div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
         <div class="left-header">
             <div class="menu-toggle" id="menuToggle">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-            <a href="dashboard.html" class="logo-container">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1744065809737.png"
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
+
+    <!-- Conteúdo Principal -->
     <div id="pagina"></div>
     <div class="container">
         <h2>Solicitar Saque</h2>
@@ -383,22 +475,8 @@
         <button class="withdraw-button" onclick="requestWithdraw()">Solicitar Saque</button>
     </div>
 
-    <!-- Menu Overlay e Conteúdo -->
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-    <div class="menu-content" id="menuContent">
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
-
-        <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
-        </div>
-    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
@@ -455,7 +533,6 @@
             alertBox.textContent = message;
             alertBox.className = `alert-message alert-${type}`;
             alertBox.style.display = 'block';
-
         }
 
         async function loadWithdrawData() {
@@ -463,7 +540,7 @@
 
             if (!token) {
                 setTimeout(() => {
-
+                    window.location.href = "https://ganhesocial.com";
                 }, 2000);
                 return;
             }
@@ -577,8 +654,6 @@
                 showAlert(error.message);
             }
         }
-
-        window.onload = loadWithdrawData;
     </script>
 </body>
 
