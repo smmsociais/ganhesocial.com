@@ -104,23 +104,36 @@ export default async function handler(req, res) {
 if (liked) {
   const valor = parseFloat(valid.valor_confirmacao);
   if (!isNaN(valor) && valor > 0) {
+    const hoje = new Date();
+    const dataHojeStr = hoje.toLocaleDateString('pt-BR'); // "03/06/2025"
+
+    // Tenta atualizar o item de hoje em ganhosHoje
     await usuarios.updateOne(
-      { _id: new ObjectId(valid.user) },
-      { $inc: { saldo: valor } }
+      { _id: new ObjectId(valid.user), "ganhosHoje.data": dataHojeStr },
+      {
+        $inc: { saldo: valor, "ganhosHoje.$.valor": valor }
+      }
+    );
+
+    // Se não existia a data de hoje, adiciona novo item
+    await usuarios.updateOne(
+      { _id: new ObjectId(valid.user), "ganhosHoje.data": { $ne: dataHojeStr } },
+      {
+        $inc: { saldo: valor },
+        $push: { ganhosHoje: { data: dataHojeStr, valor: valor } }
+      }
     );
   }
 
   console.log("Chamando smmsociais.com para incrementar validadas com id_pedido:", valid.id_pedido);
 
-  // 👇 Se tiver id_acao_smm, notifica o smmsociais.com
   if (valid.id_pedido) {
     try {
       await axios.post("https://smmsociais.com/api/incrementar-validadas", {
         id_acao_smm: valid.id_pedido
-
       }, {
         headers: {
-          'Authorization': `Bearer ${process.env.SMM_API_KEY}` // se usar autenticação
+          'Authorization': `Bearer ${process.env.SMM_API_KEY}`
         }
       });
     } catch (err) {
