@@ -56,7 +56,7 @@ const UserSchema = new mongoose.Schema({
   contas: [ContaSchema],
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
-  ganhosPorDia: [GanhosPorDiaSchema]
+  ganhosHoje: [GanhosHojeSchema]
 });
 
 const PedidoSchema = new mongoose.Schema({
