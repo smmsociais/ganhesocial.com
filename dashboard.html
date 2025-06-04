@@ -671,22 +671,22 @@
                 }
 
                 const rankingRows = document.querySelectorAll('#rankingTable tbody tr');
-                
-                data.ranking.slice(0, 10).forEach((user, index) => {
-                    if (index < rankingRows.length) {
-                        const row = rankingRows[index];
-                        if (user.is_current_user) {
-                            row.classList.add('highlight-row');
-                        }
 
-                        const cells = row.cells;
-                        cells[1].textContent = user.username;
-                        cells[2].textContent = `R$ ${parseFloat(user.total_balance).toLocaleString('pt-BR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        })}`;
-                    }
-                });
+data.ranking.slice(0, 10).forEach((user, index) => {
+    if (index < rankingRows.length) {
+        const row = rankingRows[index];
+
+        if (user.is_current_user) {
+            row.classList.add('highlight-row');
+        }
+
+        row.querySelector(".ranking-user").textContent = user.username;
+        row.querySelector(".ranking-value").textContent = `R$ ${parseFloat(user.total_balance).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    }
+});
 
             } catch (error) {
                 console.error("Erro ao carregar ranking:", error);
