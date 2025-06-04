@@ -78,9 +78,6 @@ const TemporaryActionSchema = new mongoose.Schema({
   }
 });
 
-// models/DailyEarning.js
-import mongoose from "mongoose";
-
 const DailyEarningSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
