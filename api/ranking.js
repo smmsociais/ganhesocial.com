@@ -27,14 +27,14 @@ const handler = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Determinar o início e fim do dia atual (horário de Brasília - UTC-3)
+    // Definir início e fim do dia (horário de Brasília - UTC-3)
     const agora = new Date();
     const inicioDia = new Date(agora.setUTCHours(0, 0, 0, 0));
     const fimDia = new Date(agora.setUTCHours(23, 59, 59, 999));
     inicioDia.setHours(inicioDia.getHours() - 3);
     fimDia.setHours(fimDia.getHours() - 3);
 
-    // Buscar ganhos de hoje agrupados por usuário
+    // Agregação: somar ganhos diários e buscar nome do usuário
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
         $match: {
@@ -49,9 +49,9 @@ const handler = async (req, res) => {
       },
       {
         $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
+          from: "users",          // nome da coleção
+          localField: "_id",      // DailyEarning._id (que é userId)
+          foreignField: "_id",    // deve casar com users._id
           as: "usuario"
         }
       },
@@ -68,14 +68,14 @@ const handler = async (req, res) => {
       }
     ]);
 
-    // Marcar qual é o usuário atual
+    // Marca o usuário atual
     const ranking = ganhosPorUsuario.map(item => ({
       username: item.username,
       total_balance: item.total_balance,
       is_current_user: item.token === user_token
     }));
 
-    // Ordenar ranking
+    // Ordena do maior para o menor
     ranking.sort((a, b) => b.total_balance - a.total_balance);
 
     return res.status(200).json({ ranking });
