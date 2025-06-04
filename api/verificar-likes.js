@@ -147,10 +147,11 @@ await DailyEarning.updateOne(
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: brasilMidnight
+      expiresAt: brasilMidnight,
+      data: new Date() // ⬅️ importante garantir que "data" seja inserido
     },
   },
-  { upsert: false }
+  { upsert: true } // ⬅️ permite criar se não existir
 );
           }
 
