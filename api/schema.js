@@ -37,7 +37,7 @@ const WithdrawSchema = new mongoose.Schema({
 });
 
 // 🔹 Schema de Ganhos por Dia
-const GanhosPorDiaSchema = new mongoose.Schema({
+const GanhosHojeSchema = new mongoose.Schema({
   data: { type: String },
   valor: { type: Number, default: 0 }
 }, { _id: false });
