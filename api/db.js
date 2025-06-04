@@ -17,19 +17,12 @@ export default async function connectDB() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(URI, {
-      bufferCommands: false, // ⛔ evita empilhamento de comandos em conexão lenta
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
   }
 
-  try {
-    cached.conn = await cached.promise;
-    console.log("🟢 Conectado ao MongoDB via Mongoose");
-  } catch (err) {
-    cached.promise = null; // ⚠️ evita travamento em futuras chamadas
-    throw err;
-  }
-
+  cached.conn = await cached.promise;
+  console.log("🟢 Conectado ao MongoDB via Mongoose");
   return cached.conn;
 }
