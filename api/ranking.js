@@ -28,17 +28,19 @@ const handler = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const usuarios = await User.find({ saldo: { $gt: 0 } });
+const usuarios = await User.find({ ganhosHoje: { $exists: true, $ne: [] } });
 
-    const ranking = usuarios.map(user => {
-      return {
-        username: user.nome || "Usuário",
-        total_balance: user.saldo,
-        is_current_user: user.token === user_token
-      };
-    });
+const ranking = usuarios.map(user => {
+  const totalGanhos = (user.ganhosHoje || []).reduce((soma, item) => soma + (item.valor || 0), 0);
 
-    ranking.sort((a, b) => b.total_balance - a.total_balance);
+  return {
+    username: user.nome || "Usuário",
+    total_balance: totalGanhos,
+    is_current_user: user.token === user_token
+  };
+});
+
+ranking.sort((a, b) => b.total_balance - a.total_balance);
 
     return res.status(200).json({ ranking });
 
