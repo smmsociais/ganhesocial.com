@@ -36,12 +36,6 @@ const WithdrawSchema = new mongoose.Schema({
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
 
-// 🔹 Schema de Ganhos por Dia
-const GanhosHojeSchema = new mongoose.Schema({
-  data: { type: String },
-  valor: { type: Number, default: 0 }
-}, { _id: false });
-
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
   nome: { type: String, required: false },
@@ -56,7 +50,6 @@ const UserSchema = new mongoose.Schema({
   contas: [ContaSchema],
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
-  ganhosHoje: [GanhosHojeSchema]
 });
 
 const PedidoSchema = new mongoose.Schema({
@@ -85,11 +78,37 @@ const TemporaryActionSchema = new mongoose.Schema({
   }
 });
 
+// models/DailyEarning.js
+import mongoose from "mongoose";
+
+const DailyEarningSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+  valor: {
+    type: Number,
+    required: true
+  },
+  data: {
+    type: Date,
+    required: true,
+    default: () => new Date()
+  },
+  expiresAt: {
+    type: Date,
+    required: true
+  }
+});
+
+DailyEarningSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
 const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
 const TemporaryAction = mongoose.models.TemporaryAction || mongoose.model("TemporaryAction", TemporaryActionSchema);
+const DailyEarning = mongoose.models.DailyEarning || mongoose.model("DailyEarning", DailyEarningSchema);
 
-export { User, ActionHistory, Pedido, TemporaryAction };
+export { User, ActionHistory, Pedido, TemporaryAction, DailyEarning };
