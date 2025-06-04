@@ -24,7 +24,7 @@ const handler = async (req, res) => {
     }
 
     // Busca todos os usuários com saldos relevantes
-    const usuarios = await Usuario.find({
+    const usuarios = await User.find({
       $or: [
         { saldo_disponivel: { $gt: 0 } },
         { saldo_pendente: { $gt: 0 } }
