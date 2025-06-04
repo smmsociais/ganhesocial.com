@@ -2,8 +2,10 @@ import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
 import jwt from 'jsonwebtoken';
+import { DailyEarning } from './schema.js'; // Verifique se o caminho está correto
 
 const { MongoClient, ObjectId } = pkg;
+
 const MONGODB_URI = process.env.MONGODB_URI;
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const API_URL = "https://tiktok-api23.p.rapidapi.com/api/user/liked-posts";
@@ -32,7 +34,7 @@ const ActionSchema = z.object({
   quantidade_pontos: z.number(),
   tipo_acao: z.string(),
   token: z.string(),
-  id_pedido: z.union([z.string(), z.undefined()]).optional() // 👈 Adicione esta linha
+  id_pedido: z.union([z.string(), z.undefined()]).optional()
 });
 
 export default async function handler(req, res) {
@@ -47,7 +49,11 @@ export default async function handler(req, res) {
 
   try {
     const decoded = jwt.decode(vercelJwt);
-    if (!decoded || decoded.aud !== 'https://vercel.com/ganhesocialcom' || decoded.iss !== 'https://oidc.vercel.com/ganhesocialcom') {
+    if (
+      !decoded ||
+      decoded.aud !== 'https://vercel.com/ganhesocialcom' ||
+      decoded.iss !== 'https://oidc.vercel.com/ganhesocialcom'
+    ) {
       throw new Error('Invalid token');
     }
 
@@ -67,11 +73,14 @@ export default async function handler(req, res) {
         const valid = ActionSchema.parse(acao);
 
         const match = valid.url_dir.match(/video\/(\d+)/);
-        if (!match) continue;
+        if (!match) {
+          console.warn(`URL inválida para extração de videoId: ${valid.url_dir}`);
+          continue;
+        }
 
         const videoId = match[1];
 
-        // Buscar secUid usando a API interna, passando nome_usuario como unique_id
+        // Buscar secUid pelo unique_id (nome_usuario)
         const infoRes = await axios.get(`${process.env.BASE_URL}/api/user-info?unique_id=${valid.nome_usuario}`);
         const secUid = infoRes.data?.data?.user?.secUid;
 
@@ -82,11 +91,7 @@ export default async function handler(req, res) {
 
         // Buscar vídeos curtidos
         const likedRes = await axios.get(API_URL, {
-          params: {
-            secUid: secUid,
-            count: '30',
-            cursor: '0'
-          },
+          params: { secUid, count: '30', cursor: '0' },
           headers: {
             'x-rapidapi-key': RAPIDAPI_KEY,
             'x-rapidapi-host': 'tiktok-api23.p.rapidapi.com'
@@ -101,50 +106,49 @@ export default async function handler(req, res) {
           { $set: { acao_validada: liked, verificada_em: new Date() } }
         );
 
-if (liked) {
-  const valor = parseFloat(valid.valor_confirmacao);
-  if (!isNaN(valor) && valor > 0) {
-    const hoje = new Date();
-    const dataHojeStr = hoje.toLocaleDateString('pt-BR'); // "03/06/2025"
+        if (liked) {
+          const valor = parseFloat(valid.valor_confirmacao);
+          if (!isNaN(valor) && valor > 0) {
+            await usuarios.updateOne(
+              { _id: new ObjectId(valid.user) },
+              { $inc: { saldo: valor } }
+            );
 
-    // Tenta atualizar o item de hoje em ganhosHoje
-    await usuarios.updateOne(
-      { _id: new ObjectId(valid.user), "ganhosHoje.data": dataHojeStr },
-      {
-        $inc: { saldo: valor, "ganhosHoje.$.valor": valor }
-      }
-    );
+            // Meia-noite de amanhã no horário de Brasília (UTC-3)
+            const agora = new Date();
+            const brasilMidnight = new Date(
+              Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() + 1, 3, 0, 0)
+            );
 
-    // Se não existia a data de hoje, adiciona novo item
-    await usuarios.updateOne(
-      { _id: new ObjectId(valid.user), "ganhosHoje.data": { $ne: dataHojeStr } },
-      {
-        $inc: { saldo: valor },
-        $push: { ganhosHoje: { data: dataHojeStr, valor: valor } }
-      }
-    );
-  }
-
-  console.log("Chamando smmsociais.com para incrementar validadas com id_pedido:", valid.id_pedido);
-
-  if (valid.id_pedido) {
-    try {
-      await axios.post("https://smmsociais.com/api/incrementar-validadas", {
-        id_acao_smm: valid.id_pedido
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.SMM_API_KEY}`
+            await DailyEarning.create({
+              userId: new ObjectId(valid.user),
+              valor,
+              data: new Date(),
+              expiresAt: brasilMidnight
+            });
+          } else {
+            console.warn(`Valor inválido para incremento de saldo: ${valid.valor_confirmacao}`);
+          }
         }
-      });
-    } catch (err) {
-      console.error("Erro ao notificar smmsociais.com:", err.response?.data || err.message);
-    }
-  }
-}
+
+        if (valid.id_pedido) {
+          try {
+            await axios.post("https://smmsociais.com/api/incrementar-validadas", {
+              id_acao_smm: valid.id_pedido
+            }, {
+              headers: {
+                'Authorization': `Bearer ${process.env.SMM_API_KEY}`
+              }
+            });
+          } catch (err) {
+            console.error("Erro ao notificar smmsociais.com:", err.response?.data || err.message);
+          }
+        }
+
         processadas++;
 
       } catch (err) {
-        console.error("Erro ao processar ação:", err);
+        console.error("Erro ao processar ação individual:", err);
       }
     }
 
