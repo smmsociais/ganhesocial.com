@@ -657,11 +657,11 @@ async function carregarRanking() {
     try {
         const response = await fetch("https://ganhesocial.com/api/ranking", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-                // Remover o header Authorization, se não for necessário
-                // "Authorization": `Bearer ${token}` 
-            },
+headers: {
+  "Content-Type": "application/json",
+  "Authorization": "Bearer 4769"
+},
+
             body: JSON.stringify({ user_token: token })
         });
 
