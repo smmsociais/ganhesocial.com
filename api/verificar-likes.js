@@ -136,12 +136,22 @@ export default async function handler(req, res) {
             );
 
             // 10) Insere no Mongoose (DailyEarning) — agora funciona porque chamamos connectDB()
-            await DailyEarning.create({
-              userId: new ObjectId(valid.user),
-              valor,
-              data: new Date(),
-              expiresAt: brasilMidnight,
-            });
+await DailyEarning.updateOne(
+  {
+    userId: new ObjectId(valid.user),
+    data: {
+      $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
+      $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
+    },
+  },
+  {
+    $inc: { valor },
+    $setOnInsert: {
+      expiresAt: brasilMidnight
+    },
+  },
+  { upsert: false }
+);
           }
 
           // 11) Notifica smmsociais.com, se houver id_pedido
