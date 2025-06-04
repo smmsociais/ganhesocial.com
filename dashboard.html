@@ -281,7 +281,7 @@
 
         .ranking-table th,
         .ranking-table td {
-            padding: 10px;
+            padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
@@ -297,17 +297,19 @@
 
         .ranking-position {
             font-weight: bold;
-            width: 30px;
+            width: 50px;
+            text-align: center;
         }
 
         .ranking-user {
-            width: 60%;
+            width: calc(100% - 150px);
         }
 
         .ranking-value {
             text-align: right;
             font-weight: bold;
             color: var(--positive-color);
+            width: 100px;
         }
 
         .highlight-row {
@@ -510,11 +512,60 @@
                 <tr>
                     <th>#</th>
                     <th>Usuário</th>
-                    <th>Saldo</th>
+                    <th>Valor</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Os dados do ranking serão preenchidos via JavaScript -->
+                <tr>
+                    <td class="ranking-position">1º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">2º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">3º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">4º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">5º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">6º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">7º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">8º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">9º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
+                <tr>
+                    <td class="ranking-position">10º</td>
+                    <td class="ranking-user"></td>
+                    <td class="ranking-value">R$</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -596,60 +647,53 @@
             }
         }
 
-async function carregarRanking() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("Token não encontrado.");
-        return;
-    }
-
-    try {
-        const response = await fetch("https://ganhesocial.com/api/ranking", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer 4769"
-            },
-            body: JSON.stringify({ user_token: token })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao buscar ranking.");
-        }
-
-        const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
-        rankingTable.innerHTML = '';
-
-        data.ranking.forEach((user, index) => {
-            const row = rankingTable.insertRow();
-            if (user.is_current_user) {
-                row.classList.add('highlight-row');
+        async function carregarRanking() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
             }
 
-            const cellPosicao = row.insertCell(0);
-            cellPosicao.className = 'ranking-position';
-            cellPosicao.textContent = index + 1;
+            try {
+                const response = await fetch("https://ganhesocial.com/api/ranking", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer 4769"
+                    },
+                    body: JSON.stringify({ user_token: token })
+                });
 
-            const cellUsuario = row.insertCell(1);
-            cellUsuario.className = 'ranking-user';
-            cellUsuario.textContent = user.username;
+                const data = await response.json();
 
-            const cellSaldo = row.insertCell(2);
-            cellSaldo.className = 'ranking-value';
-            cellSaldo.textContent = `R$ ${parseFloat(user.total_balance).toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })}`;
-        });
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar ranking.");
+                }
 
-    } catch (error) {
-        console.error("Erro ao carregar ranking:", error);
-        const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
-        rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
-    }
-}
+                const rankingRows = document.querySelectorAll('#rankingTable tbody tr');
+                
+                data.ranking.slice(0, 10).forEach((user, index) => {
+                    if (index < rankingRows.length) {
+                        const row = rankingRows[index];
+                        if (user.is_current_user) {
+                            row.classList.add('highlight-row');
+                        }
+
+                        const cells = row.cells;
+                        cells[1].textContent = user.username;
+                        cells[2].textContent = `R$ ${parseFloat(user.total_balance).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar ranking:", error);
+                const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
+                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
+            }
+        }
 
         function logout() {
             localStorage.removeItem("token");
