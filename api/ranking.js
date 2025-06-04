@@ -1,6 +1,5 @@
 import connectDB from './db.js';
-import mongoose from 'mongoose';
-import { User } from './schema.js';
+import { User, DailyEarning } from './schema.js';
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -28,38 +27,61 @@ const handler = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-const usuarios = await User.find({ ganhosHoje: { $exists: true, $ne: [] } });
+    // Determinar o início e fim do dia atual (horário de Brasília - UTC-3)
+    const agora = new Date();
+    const inicioDia = new Date(agora.setUTCHours(0, 0, 0, 0));
+    const fimDia = new Date(agora.setUTCHours(23, 59, 59, 999));
+    inicioDia.setHours(inicioDia.getHours() - 3);
+    fimDia.setHours(fimDia.getHours() - 3);
 
-const ranking = usuarios.map(user => {
-const hoje = new Date();
-hoje.setUTCHours(hoje.getUTCHours() - 3); // Corrige para horário de Brasília (UTC-3)
-const dataHoje = hoje.toISOString().split("T")[0]; // yyyy-mm-dd
+    // Buscar ganhos de hoje agrupados por usuário
+    const ganhosPorUsuario = await DailyEarning.aggregate([
+      {
+        $match: {
+          data: { $gte: inicioDia, $lte: fimDia }
+        }
+      },
+      {
+        $group: {
+          _id: "$userId",
+          totalGanhos: { $sum: "$valor" }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "usuario"
+        }
+      },
+      {
+        $unwind: "$usuario"
+      },
+      {
+        $project: {
+          _id: 0,
+          username: { $ifNull: ["$usuario.nome", "Usuário"] },
+          total_balance: "$totalGanhos",
+          token: "$usuario.token"
+        }
+      }
+    ]);
 
-const totalGanhos = (user.ganhosHoje || [])
-  .filter(item => {
-    const dataItem = new Date(item.data);
-    dataItem.setUTCHours(dataItem.getUTCHours() - 3); // Também corrige a data do item
-    return dataItem.toISOString().split("T")[0] === dataHoje;
-  })
-  .reduce((soma, item) => soma + (item.valor || 0), 0);
+    // Marcar qual é o usuário atual
+    const ranking = ganhosPorUsuario.map(item => ({
+      username: item.username,
+      total_balance: item.total_balance,
+      is_current_user: item.token === user_token
+    }));
 
-  return {
-    username: user.nome || "Usuário",
-    total_balance: totalGanhos,
-    is_current_user: user.token === user_token
-  };
-});
-
-ranking.sort((a, b) => b.total_balance - a.total_balance);
+    // Ordenar ranking
+    ranking.sort((a, b) => b.total_balance - a.total_balance);
 
     return res.status(200).json({ ranking });
 
   } catch (error) {
-    console.error("❌ Erro ao buscar ranking:", {
-      message: error.message,
-      stack: error.stack,
-      detalhes: error
-    });
+    console.error("❌ Erro ao buscar ranking:", error);
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
   }
 };
