@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("users");
 
-    const acoes = await colecao.find({ acao_validada: null, tipo_acao: "curtir" }).limit(1).toArray();
+    const acoes = await colecao.find({ acao_validada: null, tipo_acao: "curtir" }).limit(100).toArray();
     if (acoes.length === 0) {
       return res.status(200).json({ status: "ok", processadas: 0 });
     }
