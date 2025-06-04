@@ -1,6 +1,6 @@
 import connectDB from './db.js';
 import mongoose from 'mongoose';
-import { User } from './schema.js'; // Ajuste conforme o seu schema real
+import { User } from './schema.js';
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {
@@ -23,31 +23,21 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: "Token do usuário não fornecido" });
     }
 
-    // Busca todos os usuários com saldos relevantes
-    const usuarios = await User.find({
-      $or: [
-        { saldo_disponivel: { $gt: 0 } },
-        { saldo_pendente: { $gt: 0 } }
-      ]
-    });
-
     const usuarioAtual = await User.findOne({ token: user_token });
-
     if (!usuarioAtual) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Monta lista de ranking
+    const usuarios = await User.find({ saldo: { $gt: 0 } });
+
     const ranking = usuarios.map(user => {
-      const total_balance = parseFloat(user.saldo_disponivel || 0) + parseFloat(user.saldo_pendente || 0);
       return {
-        username: user.username || "Usuário",
-        total_balance,
+        username: user.nome || "Usuário",
+        total_balance: user.saldo,
         is_current_user: user.token === user_token
       };
     });
 
-    // Ordena do maior para o menor saldo
     ranking.sort((a, b) => b.total_balance - a.total_balance);
 
     return res.status(200).json({ ranking });
