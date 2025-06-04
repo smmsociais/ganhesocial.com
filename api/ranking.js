@@ -27,20 +27,8 @@ const handler = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Definir início e fim do dia (horário de Brasília - UTC-3)
-    const agora = new Date();
-    const inicioDia = new Date(agora.setUTCHours(0, 0, 0, 0));
-    const fimDia = new Date(agora.setUTCHours(23, 59, 59, 999));
-    inicioDia.setHours(inicioDia.getHours() - 3);
-    fimDia.setHours(fimDia.getHours() - 3);
-
-    // Agregação: somar ganhos diários e buscar nome do usuário
+    // Agregação: somar ganhos de hoje (registros existentes são do dia atual por TTL)
     const ganhosPorUsuario = await DailyEarning.aggregate([
-      {
-        $match: {
-          data: { $gte: inicioDia, $lte: fimDia }
-        }
-      },
       {
         $group: {
           _id: "$userId",
@@ -49,15 +37,13 @@ const handler = async (req, res) => {
       },
       {
         $lookup: {
-          from: "users",          // nome da coleção
-          localField: "_id",      // DailyEarning._id (que é userId)
-          foreignField: "_id",    // deve casar com users._id
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
           as: "usuario"
         }
       },
-      {
-        $unwind: "$usuario"
-      },
+      { $unwind: "$usuario" },
       {
         $project: {
           _id: 0,
