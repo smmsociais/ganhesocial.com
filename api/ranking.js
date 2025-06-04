@@ -31,7 +31,17 @@ const handler = async (req, res) => {
 const usuarios = await User.find({ ganhosHoje: { $exists: true, $ne: [] } });
 
 const ranking = usuarios.map(user => {
-  const totalGanhos = (user.ganhosHoje || []).reduce((soma, item) => soma + (item.valor || 0), 0);
+const hoje = new Date();
+hoje.setUTCHours(hoje.getUTCHours() - 3); // Corrige para horário de Brasília (UTC-3)
+const dataHoje = hoje.toISOString().split("T")[0]; // yyyy-mm-dd
+
+const totalGanhos = (user.ganhosHoje || [])
+  .filter(item => {
+    const dataItem = new Date(item.data);
+    dataItem.setUTCHours(dataItem.getUTCHours() - 3); // Também corrige a data do item
+    return dataItem.toISOString().split("T")[0] === dataHoje;
+  })
+  .reduce((soma, item) => soma + (item.valor || 0), 0);
 
   return {
     username: user.nome || "Usuário",
