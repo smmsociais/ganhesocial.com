@@ -3,6 +3,7 @@ import { z } from "zod";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { DailyEarning } from "./schema.js";
+import connectDB from "./db.js";
 
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
