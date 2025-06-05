@@ -63,30 +63,19 @@ const handler = async (req, res) => {
       }
     ]);
 
-    // Cria o ranking formatado
-    let ranking = ganhosPorUsuario.map(item => {
+    // Aplica a formatação
+    const ranking = ganhosPorUsuario.map(item => {
       const valorFormatado = formatarValorRanking(item.total_balance);
-      if (!valorFormatado && item.token !== user_token) return null;
+      if (!valorFormatado) return null;
 
       return {
         username: item.username,
-        total_balance: valorFormatado || "0",
+        total_balance: valorFormatado,
         is_current_user: item.token === user_token
       };
     }).filter(item => item !== null);
 
-    // Garante que o usuário atual está presente mesmo que não esteja no resultado da agregação
-    const jaNoRanking = ranking.some(u => u.is_current_user);
-    if (!jaNoRanking) {
-      // Busca saldo 0 para exibir como "0"
-      ranking.push({
-        username: usuarioAtual.nome || "",
-        total_balance: "0",
-        is_current_user: true
-      });
-    }
-
-    // Ordena com base no número representado (ignora o "+")
+    // Ordena do maior para o menor (reverter ordenação usando o valor numérico real)
     ranking.sort((a, b) => {
       const numA = parseInt(a.total_balance);
       const numB = parseInt(b.total_balance);
