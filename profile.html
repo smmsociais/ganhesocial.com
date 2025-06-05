@@ -590,11 +590,6 @@
             showMessage("", false);
             showMessage("", true);
 
-            if (!name) {
-                showMessage("O nome é obrigatório.", true);
-                return;
-            }
-
             if (newPassword) {
                 if (newPassword !== confirmPassword) {
                     showMessage("As senhas não coincidem.", true);
