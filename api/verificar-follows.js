@@ -1,7 +1,7 @@
 import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import { DailyEarning } from "./schema.js";
 
 const { MongoClient, ObjectId } = pkg;
@@ -17,10 +17,9 @@ async function connectToDatabase() {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
-  const db = client.db();
   cachedClient = client;
-  cachedDb = db;
-  return db;
+  cachedDb = client.db();
+  return cachedDb;
 }
 
 const ActionSchema = z.object({
@@ -33,27 +32,26 @@ const ActionSchema = z.object({
   quantidade_pontos: z.number(),
   valor_confirmacao: z.union([z.string(), z.number()]),
   tipo_acao: z.string().min(1),
-  token: z.string().min(1)
+  token: z.string().min(1),
 });
-
-function getStartOfDay(date = new Date()) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método não permitido. Use GET." });
   }
 
-  const vercelJwt = req.headers['x-vercel-oidc-token'];
+  const vercelJwt = req.headers["x-vercel-oidc-token"];
   if (!vercelJwt) {
-    return res.status(403).json({ error: 'Authorization token missing' });
+    return res.status(403).json({ error: "Authorization token missing" });
   }
 
   try {
     const decoded = jwt.decode(vercelJwt);
-    if (!decoded || decoded.aud !== 'https://vercel.com/ganhesocialcom' || decoded.iss !== 'https://oidc.vercel.com/ganhesocialcom') {
-      throw new Error('Invalid token');
+    const expectedAud = "https://vercel.com/ganhesocialcom";
+    const expectedIss = "https://oidc.vercel.com/ganhesocialcom";
+
+    if (!decoded || decoded.aud !== expectedAud || decoded.iss !== expectedIss) {
+      throw new Error("Invalid token");
     }
 
     console.log("▶ verificar-follows chamado em", new Date().toISOString());
@@ -64,13 +62,14 @@ export default async function handler(req, res) {
 
     const acoes = await colecao.find({
       acao_validada: null,
-      tipo: "seguir"
+      tipo: "seguir",
     })
       .sort({ data: 1 })
       .limit(120)
       .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
+
     if (acoes.length === 0) {
       return res.status(200).json({ status: "ok", processadas: 0 });
     }
@@ -88,15 +87,13 @@ export default async function handler(req, res) {
           if (!/^\d+$/.test(idConta)) throw new Error(`id_conta inválido: ${idConta}`);
 
           const followingRes = await axios.get(`${API_URL}/user-following?userId=${idConta}`, {
-            headers: {
-              Authorization: `Bearer ${valid.token}`
-            }
+            headers: { Authorization: `Bearer ${valid.token}` },
           });
 
           const followings = followingRes.data?.data?.followings || [];
-          let targetUsername = valid.url_dir.toLowerCase();
-          const match = targetUsername.match(/@([\w_.]+)/);
-          targetUsername = match ? match[1] : targetUsername.replace(/^@/, '');
+
+          const match = valid.url_dir.toLowerCase().match(/@([\w_.]+)/);
+          const targetUsername = match ? match[1] : valid.url_dir.replace(/^@/, "").toLowerCase();
 
           accountFound = followings.some(f => f.unique_id?.toLowerCase() === targetUsername);
         } catch (e) {
@@ -106,45 +103,45 @@ export default async function handler(req, res) {
 
         await colecao.updateOne(
           { _id: new ObjectId(valid._id) },
-          { $set: { acao_validada: accountFound, verificada_em: new Date() } }
+          {
+            $set: {
+              acao_validada: accountFound,
+              verificada_em: new Date(),
+            },
+          }
         );
 
-if (accountFound) {
-  const valor = parseFloat(valid.valor_confirmacao);
-  if (!isNaN(valor) && valor > 0) {
-    await usuarios.updateOne(
-      { _id: new ObjectId(valid.user) },
-      { $inc: { saldo: valor } }
-    );
-    console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
+        if (accountFound) {
+          const valor = parseFloat(valid.valor_confirmacao);
+          if (!isNaN(valor) && valor > 0) {
+            await usuarios.updateOne(
+              { _id: new ObjectId(valid.user) },
+              { $inc: { saldo: valor } }
+            );
+            console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
 
-    const agora = new Date();
-    const brasilMidnight = new Date(
-      Date.UTC(
-        agora.getUTCFullYear(),
-        agora.getUTCMonth(),
-        agora.getUTCDate() + 1,
-        3, 0, 0
-      )
-    );
+            const agora = new Date();
+            const brasilMidnight = new Date(
+              Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() + 1, 3, 0, 0)
+            );
 
-    await DailyEarning.updateOne(
-      {
-        userId: new ObjectId(valid.user),
-        data: {
-          $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
-          $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
-        },
-      },
-      {
-        $inc: { valor },
-        $setOnInsert: {
-          expiresAt: brasilMidnight,
-          data: new Date()
-        },
-      },
-      { upsert: true }
-    );
+            await DailyEarning.updateOne(
+              {
+                userId: new ObjectId(valid.user),
+                data: {
+                  $gte: new Date().setUTCHours(0, 0, 0, 0),
+                  $lt: new Date().setUTCHours(23, 59, 59, 999),
+                },
+              },
+              {
+                $inc: { valor },
+                $setOnInsert: {
+                  expiresAt: brasilMidnight,
+                  data: new Date(),
+                },
+              },
+              { upsert: true }
+            );
 
             console.log(`   ✓ Saldo e dailyearning atualizados para o usuário ${valid.user} em R$${valor}`);
           } else {
@@ -153,13 +150,11 @@ if (accountFound) {
 
           if (valid.id_pedido) {
             try {
-              await axios.post("https://smmsociais.com/api/incrementar-validadas", {
-                id_acao_smm: valid.id_pedido
-              }, {
-                headers: {
-                  'Authorization': `Bearer ${process.env.SMM_API_KEY}`
-                }
-              });
+              await axios.post(
+                "https://smmsociais.com/api/incrementar-validadas",
+                { id_acao_smm: valid.id_pedido },
+                { headers: { Authorization: `Bearer ${process.env.SMM_API_KEY}` } }
+              );
               console.log("   ✓ Notificação para smmsociais.com enviada com sucesso.");
             } catch (err) {
               console.error("   ✗ Erro ao notificar smmsociais.com:", err.response?.data || err.message);
@@ -169,7 +164,6 @@ if (accountFound) {
 
         console.log(`   ✓ Ação ${valid._id} atualizada: acao_validada=${accountFound}`);
         processadas++;
-
       } catch (err) {
         console.error(`   ✗ Erro ao processar ação ${acao._id}:`, err);
       }
