@@ -146,10 +146,23 @@ if (url.startsWith("/api/contas")) {
             return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
         }
 
-        if (method === "GET") {
-            return res.json(user.contas);
-        }
+if (method === "GET") {
+    // Buscar todos os usuários que tenham contas
+    const users = await User.find({ "contas.0": { $exists: true } }, { contas: 1, nome: 1 });
 
+    // Consolidar as contas com identificação de qual usuário pertence
+    const todasAsContas = users.flatMap(user =>
+        user.contas.map(conta => ({
+            ...conta.toObject?.() ?? conta, // Garante compatibilidade se `conta` for um subdocumento Mongoose
+            usuario: {
+                _id: user._id,
+                nome: user.nome
+            }
+        }))
+    );
+
+    return res.status(200).json(todasAsContas);
+}
         if (method === "DELETE") {
             const { nomeConta } = req.query;
             if (!nomeConta) {
