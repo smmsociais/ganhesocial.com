@@ -1,6 +1,16 @@
 import connectDB from './db.js';
 import { User, DailyEarning } from './schema.js';
 
+const formatarValorRanking = (valor) => {
+  if (valor < 10) return null;
+  if (valor < 50) return "10+";
+  if (valor < 100) return "50+";
+  if (valor < 500) return "100+";
+  if (valor < 1000) return "500+";
+  const base = Math.floor(valor / 1000) * 1000;
+  return `${base}+`;
+};
+
 const handler = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
@@ -27,7 +37,6 @@ const handler = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Agregação: somar ganhos de hoje (registros existentes são do dia atual por TTL)
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
         $group: {
@@ -54,15 +63,35 @@ const handler = async (req, res) => {
       }
     ]);
 
-    // Marca o usuário atual
-    const ranking = ganhosPorUsuario.map(item => ({
-      username: item.username,
-      total_balance: item.total_balance,
-      is_current_user: item.token === user_token
-    }));
+    // Cria o ranking formatado
+    let ranking = ganhosPorUsuario.map(item => {
+      const valorFormatado = formatarValorRanking(item.total_balance);
+      if (!valorFormatado && item.token !== user_token) return null;
 
-    // Ordena do maior para o menor
-    ranking.sort((a, b) => b.total_balance - a.total_balance);
+      return {
+        username: item.username,
+        total_balance: valorFormatado || "0",
+        is_current_user: item.token === user_token
+      };
+    }).filter(item => item !== null);
+
+    // Garante que o usuário atual está presente mesmo que não esteja no resultado da agregação
+    const jaNoRanking = ranking.some(u => u.is_current_user);
+    if (!jaNoRanking) {
+      // Busca saldo 0 para exibir como "0"
+      ranking.push({
+        username: usuarioAtual.nome || "",
+        total_balance: "0",
+        is_current_user: true
+      });
+    }
+
+    // Ordena com base no número representado (ignora o "+")
+    ranking.sort((a, b) => {
+      const numA = parseInt(a.total_balance);
+      const numB = parseInt(b.total_balance);
+      return numB - numA;
+    });
 
     return res.status(200).json({ ranking });
 
