@@ -40,7 +40,7 @@ const handler = async (req, res) => {
           from: "users",
           localField: "_id",
           foreignField: "_id",
-          as: "usuario"
+          as: ""
         }
       },
       { $unwind: "$usuario" },
