@@ -8,6 +8,21 @@ import { User, ActionHistory, Pedido, TemporaryAction } from "./schema.js";
 export default async function handler(req, res) {
     const { method, url } = req;
 
+async function salvarAcaoComLimitePorUsuario(novaAcao) {
+  const LIMITE = 1;
+
+  const total = await ActionHistory.countDocuments({ user: novaAcao.user });
+
+  if (total >= LIMITE) {
+    const excess = total - LIMITE + 1; // +1 para abrir espaço
+    await ActionHistory.find({ user: novaAcao.user })
+      .sort({ createdAt: 1 }) // mais antigos primeiro
+      .limit(excess)
+      .deleteMany();
+  }
+
+  await novaAcao.save();
+}
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
         const { nomeUsuario } = req.body;
@@ -723,45 +738,43 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
-  try {
-    // 🔁 Conversão forçada para string
-    const idPedidoStr = id_pedido.toString();
+ try {
+  const idPedidoStr = id_pedido.toString();
+  const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
 
-    const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
+  const pontos = parseFloat(quantidade_pontos);
+  const valorBruto = pontos / 1000;
+  const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
 
-    const pontos = parseFloat(quantidade_pontos);
-    const valorBruto = pontos / 1000;
-    const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-    const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  const novaAcao = new ActionHistory({
+    user: usuario._id,
+    token: usuario.token,
+    nome_usuario,
+    id_pedido: idPedidoStr,
+    id_action: idPedidoStr,
+    id_conta,
+    url_dir,
+    unique_id,
+    tipo_acao,
+    quantidade_pontos,
+    tipo: tipoAcaoFinal,
+    rede_social: "TikTok",
+    valor_confirmacao: valorConfirmacaoFinal,
+    acao_validada: null,
+    data: new Date()
+  });
 
-    const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+  // 🔁 Salva com controle de limite por usuário
+  await salvarAcaoComLimitePorUsuario(novaAcao);
 
-    const novaAcao = new ActionHistory({
-      user: usuario._id,
-      token: usuario.token,
-      nome_usuario,
-      id_pedido: idPedidoStr, // <- String garantida
-      id_action: idPedidoStr, // <- opcional, se quiser manter igual
-      id_conta,
-      url_dir,
-      unique_id,
-      tipo_acao,
-      quantidade_pontos,
-      tipo: tipoAcaoFinal,
-      rede_social: "TikTok",
-      valor_confirmacao: valorConfirmacaoFinal,
-      acao_validada: null,
-      data: new Date()
-    });
+  return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
 
-    await novaAcao.save();
-
-    return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
-
-  } catch (error) {
-    console.error("Erro ao registrar ação pendente:", error);
-    return res.status(500).json({ error: "Erro ao registrar ação." });
-  }
+} catch (error) {
+  console.error("Erro ao registrar ação pendente:", error);
+  return res.status(500).json({ error: "Erro ao registrar ação." });
+}
 }
 
 // Rota: /api/get_user (GET)
