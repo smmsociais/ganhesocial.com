@@ -451,6 +451,28 @@
         body.loaded {
             visibility: visible;
         }
+
+        @media (max-width: 768px) {
+            .ranking-container {
+                width: 90%;
+                max-width: 500px;
+                margin: 20px auto;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        @media (max-width: 420px) {
+            .ranking-container {
+                width: 90%;
+                max-width: 310px;
+                margin: 20px auto;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+        }
     </style>
 </head>
 
@@ -647,56 +669,56 @@
             }
         }
 
-async function carregarRanking() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("Token não encontrado.");
-        return;
-    }
+        async function carregarRanking() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
+            }
 
-    try {
-        const response = await fetch("https://ganhesocial.com/api/ranking", {
-            method: "POST",
-headers: {
-  "Content-Type": "application/json",
-  "Authorization": "Bearer 4769"
-},
+            try {
+                const response = await fetch("https://ganhesocial.com/api/ranking", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer 4769"
+                    },
 
-            body: JSON.stringify({ user_token: token })
-        });
+                    body: JSON.stringify({ user_token: token })
+                });
 
-        const data = await response.json();
-        console.log("Ranking recebido:", data);
+                const data = await response.json();
+                console.log("Ranking recebido:", data);
 
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao buscar ranking.");
-        }
-
-        if (!Array.isArray(data.ranking)) {
-            throw new Error("Resposta da API não contém o array 'ranking'");
-        }
-
-        const rankingRows = document.querySelectorAll('#rankingTable tbody tr');
-
-        data.ranking.slice(0, 10).forEach((user, index) => {
-            if (index < rankingRows.length) {
-                const row = rankingRows[index];
-
-                if (user.is_current_user) {
-                    row.classList.add('highlight-row');
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar ranking.");
                 }
 
-                row.querySelector(".ranking-user").textContent = user.username;
-row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
-            }
-        });
+                if (!Array.isArray(data.ranking)) {
+                    throw new Error("Resposta da API não contém o array 'ranking'");
+                }
 
-    } catch (error) {
-        console.error("Erro ao carregar ranking:", error);
-        const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
-        rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
-    }
-}
+                const rankingRows = document.querySelectorAll('#rankingTable tbody tr');
+
+                data.ranking.slice(0, 10).forEach((user, index) => {
+                    if (index < rankingRows.length) {
+                        const row = rankingRows[index];
+
+                        if (user.is_current_user) {
+                            row.classList.add('highlight-row');
+                        }
+
+                        row.querySelector(".ranking-user").textContent = user.username;
+                        row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar ranking:", error);
+                const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
+                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
+            }
+        }
 
         function logout() {
             localStorage.removeItem("token");
