@@ -47,7 +47,7 @@ const handler = async (req, res) => {
       {
         $project: {
           _id: 0,
-          username: { $ifNull: ["$usuario.nome"] },
+          username: { $ifNull: ["$usuario.nome", ""] },
           total_balance: "$totalGanhos",
           token: "$usuario.token"
         }
