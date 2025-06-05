@@ -40,14 +40,14 @@ const handler = async (req, res) => {
           from: "users",
           localField: "_id",
           foreignField: "_id",
-          as: ""
+          as: "usuario"
         }
       },
       { $unwind: "$usuario" },
       {
         $project: {
           _id: 0,
-          username: { $ifNull: ["$usuario.nome", "Usuário"] },
+          username: { $ifNull: ["$usuario.nome"] },
           total_balance: "$totalGanhos",
           token: "$usuario.token"
         }
