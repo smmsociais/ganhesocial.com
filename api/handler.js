@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const { method, url } = req;
 
 async function salvarAcaoComLimitePorUsuario(novaAcao) {
-  const LIMITE = 1;
+  const LIMITE = 10000;
 
   const total = await ActionHistory.countDocuments({ user: novaAcao.user });
 
