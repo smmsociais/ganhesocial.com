@@ -475,10 +475,10 @@
         <div id="errorMessage" class="message error-message"></div>
         <div id="successMessage" class="message success-message"></div>
 
-        <div class="form-group">
-            <label for="name" class="form-label">Nome</label>
-            <input type="text" id="name" class="input-box">
-        </div>
+<div class="form-group">
+    <label for="name" class="form-label">Nome</label>
+    <input type="text" id="name" class="input-box" maxlength="20">
+</div>
 
         <div class="form-group">
             <label for="email" class="form-label">E-mail</label>
@@ -590,6 +590,10 @@
             showMessage("", false);
             showMessage("", true);
 
+                if (name.length > 20) {
+        showMessage("O nome não pode ter mais de 20 caracteres.", true);
+        return;
+    }
             if (newPassword) {
                 if (newPassword !== confirmPassword) {
                     showMessage("As senhas não coincidem.", true);
