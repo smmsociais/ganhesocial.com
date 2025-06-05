@@ -57,6 +57,7 @@ export default async function handler(req, res) {
     console.log("▶ verificar-follows chamado em", new Date().toISOString());
 
     const db = await connectToDatabase();
+    await connectDB(); // ⬅️ garante conexão Mongoose para o modelo DailyEarning
     const colecao = db.collection("actionhistories");
     const usuarios = db.collection("users");
 
