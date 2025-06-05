@@ -24,7 +24,8 @@ const ActionHistorySchema = new mongoose.Schema({
   tipo_acao: { type: String, required: true },
   data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, required: true }, 
+  tipo: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: 60 },
 });
 
 // 🔹 Schema para Histórico de Saques
