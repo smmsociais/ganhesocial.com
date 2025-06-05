@@ -2,6 +2,7 @@ import pkg from "mongodb";
 import { z } from "zod";
 import axios from "axios";
 import jwt from 'jsonwebtoken';
+import { DailyEarning } from "./schema.js";
 
 const { MongoClient, ObjectId } = pkg;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -108,26 +109,42 @@ export default async function handler(req, res) {
           { $set: { acao_validada: accountFound, verificada_em: new Date() } }
         );
 
-        if (accountFound) {
-          const valor = parseFloat(valid.valor_confirmacao);
-          if (!isNaN(valor) && valor > 0) {
-            const startOfDay = getStartOfDay();
+if (accountFound) {
+  const valor = parseFloat(valid.valor_confirmacao);
+  if (!isNaN(valor) && valor > 0) {
+    await usuarios.updateOne(
+      { _id: new ObjectId(valid.user) },
+      { $inc: { saldo: valor } }
+    );
+    console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
 
-            await usuarios.updateOne(
-              { _id: new ObjectId(valid.user) },
-              {
-                $inc: { saldo: valor },
-                $push: {
-                  dailyearning: {
-                    $each: [{
-                      data: startOfDay,
-                      tipo: valid.tipo_acao || "seguir",
-                      valor
-                    }]
-                  }
-                }
-              }
-            );
+    const agora = new Date();
+    const brasilMidnight = new Date(
+      Date.UTC(
+        agora.getUTCFullYear(),
+        agora.getUTCMonth(),
+        agora.getUTCDate() + 1,
+        3, 0, 0
+      )
+    );
+
+    await DailyEarning.updateOne(
+      {
+        userId: new ObjectId(valid.user),
+        data: {
+          $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
+          $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
+        },
+      },
+      {
+        $inc: { valor },
+        $setOnInsert: {
+          expiresAt: brasilMidnight,
+          data: new Date()
+        },
+      },
+      { upsert: true }
+    );
 
             console.log(`   ✓ Saldo e dailyearning atualizados para o usuário ${valid.user} em R$${valor}`);
           } else {
