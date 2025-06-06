@@ -1231,7 +1231,7 @@ const newAction = new ActionHistory({
 }
 
 // Rota: /api/ranking
-if (url.startsWith("/api/ranking") && method === "GET") {
+if (url.startsWith("/api/ranking") && method === "POST") {
  if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
