@@ -29,31 +29,31 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: 'Token inválido' });
     }
 
-    const existente = await ActionHistory.findOne({
-      id_pedido,
-      id_conta,
-      acao_validada: false,
-    });
+const existente = await ActionHistory.findOne({
+  id_pedido,
+  id_conta,
+  acao_validada: 'pulada',
+});
 
-    if (existente) {
-      return res.status(200).json({ status: 'JA_PULADA' });
-    }
+if (existente) {
+  return res.status(200).json({ status: 'JA_PULADA' });
+}
 
-    const novaAcao = new ActionHistory({
-      user: user._id,
-      token,
-      nome_usuario,
-      id_action: crypto.randomUUID(),
-      id_pedido,
-      id_conta,
-      url_dir,
-      quantidade_pontos,
-      tipo_acao,
-      tipo,
-      acao_validada: false,
-      rede_social: 'TikTok',
-      createdAt: new Date()
-    });
+const novaAcao = new ActionHistory({
+  user: user._id,
+  token,
+  nome_usuario,
+  id_action: crypto.randomUUID(),
+  id_pedido,
+  id_conta,
+  url_dir,
+  quantidade_pontos,
+  tipo_acao,
+  tipo,
+  acao_validada: 'pulada',
+  rede_social: 'TikTok',
+  createdAt: new Date()
+});
 
     await novaAcao.save();
 
