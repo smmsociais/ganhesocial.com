@@ -660,7 +660,8 @@ async function fetchAction() {
         return false;
     }
 
-    await tentarBuscarSMM(); // ou usar sua lógica de múltiplas tentativas, se necessário
+    await tentarBuscarSMM();
+}    
                 try {
                     const tipoAcao = document.getElementById("actionType").value;
 
@@ -683,7 +684,7 @@ async function fetchAction() {
                     console.error("Erro ao buscar ação SMM:", e);
                 }
                 return false;
-            }
+
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
