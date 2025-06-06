@@ -74,11 +74,11 @@ const handler = async (req, res) => {
       }
 
       // ⛔ Verifica se já realizou essa ação
-      const jaFez = await ActionHistory.findOne({
-        id_pedido,
-        id_conta,
-        acao_validada: { $in: [true, null] }
-      });
+const jaFez = await ActionHistory.findOne({
+  id_pedido,
+  id_conta,
+  acao_validada: { $in: ['pendente', 'validada'] }
+});
 
       if (jaFez) {
         console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
@@ -86,10 +86,10 @@ const handler = async (req, res) => {
       }
 
       // ✅ Verifica se o limite de ações foi atingido
-      const feitas = await ActionHistory.countDocuments({
-        id_pedido,
-        acao_validada: { $in: [true, null] }
-      });
+const feitas = await ActionHistory.countDocuments({
+  id_pedido,
+  acao_validada: { $in: ['pendente', 'validada'] }
+});
 
       console.log(`📊 Ação ${id_pedido}: feitas=${feitas}, limite=${pedido.quantidade}`);
 
