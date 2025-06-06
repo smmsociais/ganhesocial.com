@@ -576,7 +576,8 @@
 
             document.body.classList.add('loaded');
         });
-
+        let id_conta = localStorage.getItem("id_conta");
+        let token = localStorage.getItem("token");
         let currentActionData = null;
 
         async function bindAccount() {
@@ -621,8 +622,8 @@
             }
         }
         async function fetchAction() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+id_conta = localStorage.getItem("id_conta");
+token = localStorage.getItem("token");
             const actionType = document.getElementById("actionType").value;
 
             // Verificar se todos os campos foram preenchidos
