@@ -875,7 +875,9 @@ async function skipAction() {
         document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
         try {
-            // Envia ao backend que a ação foi pulada
+            const id_conta = localStorage.getItem("id_conta");
+            const token = localStorage.getItem("token");
+
             await fetch(`/api/pular_acao`, {
                 method: "POST",
                 headers: {
@@ -884,12 +886,7 @@ async function skipAction() {
                 body: JSON.stringify({
                     id_conta: id_conta,
                     token: token,
-                    id_pedido: currentActionData.id_pedido,
-                    nome_usuario: currentActionData.nome_usuario,
-                    url_dir: currentActionData.url_dir,
-                    quantidade_pontos: currentActionData.quantidade_pontos,
-                    tipo_acao: currentActionData.tipo_acao,
-                    tipo: currentActionData.tipo_acao // ou outro campo se houver separação
+                    id_acao: currentActionData._id
                 })
             });
 
