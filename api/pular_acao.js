@@ -33,13 +33,15 @@ const handler = async (req, res) => {
     const existente = await ActionHistory.findOne({
       id_pedido,
       id_conta,
-      status: 'pulada'
+      acao_validada: pulada,
     });
 
     if (existente) {
       return res.status(200).json({ status: 'JA_PULADA' });
     }
 
+    const pulada = false;
+  
     const novaAcao = new ActionHistory({
       user: user._id,
       token,
