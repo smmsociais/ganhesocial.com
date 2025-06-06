@@ -547,7 +547,7 @@
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            });         
 
             try {
                 await loadAccounts();
@@ -576,8 +576,6 @@
 
             document.body.classList.add('loaded');
         });
-        let id_conta = localStorage.getItem("id_conta");
-        let token = localStorage.getItem("token");
         let currentActionData = null;
 
         async function bindAccount() {
@@ -863,21 +861,24 @@ async function fetchAction() {
 async function skipAction() {
     try {
         const tipo = document.getElementById("actionType").value;
-        const nome_usuario = document.getElementById("nomeUsuario").textContent;
-        const url_dir = document.getElementById("perfilLink").href;
-        const quantidade_pontos = parseFloat(document.getElementById("pontos").textContent);
+        const nome_usuario = document.getElementById("username").textContent; // Corrigido de "nomeUsuario" para "username"
+        const url_dir = document.getElementById("actionUrl").href; // Corrigido de "perfilLink" para "actionUrl"
+        const quantidade_pontos_text = document.getElementById("points").textContent; // Corrigido de "pontos" para "points"
+        const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
         const tipo_acao = tipo;
 
-        const id_pedido = document.getElementById("btnConfirmar").dataset.idPedido;
+        const id_conta = localStorage.getItem("id_conta"); // Adicionado
+        const token = localStorage.getItem("token"); // Adicionado
 
         const response = await fetch("/api/pular_acao", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // Adicionado header de autorização
             },
             body: JSON.stringify({
                 token,
-                id_pedido,
+                id_pedido: currentActionData?.id_pedido, // Usando currentActionData
                 id_conta,
                 nome_usuario,
                 url_dir,
