@@ -136,9 +136,12 @@ if (url.startsWith("/api/contas")) {
                 return res.status(400).json({ error: "Nome da conta é obrigatório." });
             }
 
-            if (user.contas.some(conta => conta.nomeConta === nomeConta)) {
-                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
-            }
+// Verifica se já existe esse nomeConta cadastrado por qualquer usuário
+const contaExistente = await User.findOne({ "contas.nomeConta": nomeConta });
+
+if (contaExistente) {
+    return res.status(400).json({ error: "Já existe uma conta com este nome de usuário" });
+}
 
             user.contas.push({ nomeConta, id_conta, id_tiktok });
             await user.save();
