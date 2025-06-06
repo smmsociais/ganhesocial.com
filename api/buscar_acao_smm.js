@@ -29,75 +29,90 @@ const handler = async (req, res) => {
     }
 
     // 🔁 Mapeamento do tipo recebido para o tipo do banco
-const tipoMap = {
-  seguir: "seguir",
-  curtir: "curtir"
-};
-const tipoBanco = tipoMap[tipo] || tipo;
+    const tipoMap = {
+      seguir: "seguir",
+      curtir: "curtir"
+    };
+    const tipoBanco = tipoMap[tipo] || tipo;
 
-const query = {
-  quantidade: { $gt: 0 },
-  status: { $in: ["pendente", "reservada"] }
-};
-if (tipo === "seguir_curtir") {
-  query.tipo = { $in: ["seguir", "curtir"] };
-} else if (tipoBanco) {
-  query.tipo = tipoBanco;
-}
+    const query = {
+      quantidade: { $gt: 0 },
+      status: { $in: ["pendente", "reservada"] }
+    };
 
-const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
+    if (tipo === "seguir_curtir") {
+      query.tipo = { $in: ["seguir", "curtir"] };
+    } else if (tipoBanco) {
+      query.tipo = tipoBanco;
+    }
 
-console.log(`📦 ${pedidos.length} pedidos encontrados`);
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 });
 
-for (const pedido of pedidos) {
-  const id_pedido = pedido._id;
-  console.log("🔍 Verificando pedido:", {
-    id_pedido,
-    tipo: pedido.tipo,
-    status: pedido.status,
-    quantidade: pedido.quantidade,
-    valor: pedido.valor,
-    link: pedido.link
-  });
+    console.log(`📦 ${pedidos.length} pedidos encontrados`);
 
-  const jaFez = await ActionHistory.findOne({
-    id_pedido,
-    id_conta,
-    acao_validada: { $in: [true, null] }
-  });
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;
+      console.log("🔍 Verificando pedido:", {
+        id_pedido,
+        tipo: pedido.tipo,
+        status: pedido.status,
+        quantidade: pedido.quantidade,
+        valor: pedido.valor,
+        link: pedido.link
+      });
 
-  if (jaFez) {
-    console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
-    continue;
-  }
+      // ⛔ Verifica se o usuário pulou essa ação
+      const pulada = await ActionHistory.findOne({
+        id_pedido,
+        id_conta,
+        status: "pulada"
+      });
 
-  const feitas = await ActionHistory.countDocuments({
-    id_pedido,
-    acao_validada: { $in: [true, null] }
-  });
+      if (pulada) {
+        console.log(`🚫 Ação ${id_pedido} foi pulada por ${id_conta}`);
+        continue;
+      }
 
-  console.log(`📊 Ação ${id_pedido}: feitas=${feitas}, limite=${pedido.quantidade}`);
+      // ⛔ Verifica se já realizou essa ação
+      const jaFez = await ActionHistory.findOne({
+        id_pedido,
+        id_conta,
+        acao_validada: { $in: [true, null] }
+      });
 
-  if (feitas >= pedido.quantidade) {
-    console.log(`⏩ Pedido ${id_pedido} já atingiu o limite`);
-    continue;
-  }
+      if (jaFez) {
+        console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
+        continue;
+      }
 
-  const nomeUsuario = pedido.link.includes("@")
-    ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-    : "";
+      // ✅ Verifica se o limite de ações foi atingido
+      const feitas = await ActionHistory.countDocuments({
+        id_pedido,
+        acao_validada: { $in: [true, null] }
+      });
 
-  console.log(`✅ Ação encontrada: ${nomeUsuario} (pedido ${id_pedido})`);
+      console.log(`📊 Ação ${id_pedido}: feitas=${feitas}, limite=${pedido.quantidade}`);
 
-  return res.json({
-    status: "ENCONTRADA",
-    nome_usuario: nomeUsuario,
-    quantidade_pontos: pedido.valor,
-    url_dir: pedido.link,
-    tipo_acao: tipo,
-    id_pedido: pedido._id
-  });
-}
+      if (feitas >= pedido.quantidade) {
+        console.log(`⏩ Pedido ${id_pedido} já atingiu o limite`);
+        continue;
+      }
+
+      const nomeUsuario = pedido.link.includes("@")
+        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
+        : "";
+
+      console.log(`✅ Ação encontrada: ${nomeUsuario} (pedido ${id_pedido})`);
+
+      return res.json({
+        status: "ENCONTRADA",
+        nome_usuario: nomeUsuario,
+        quantidade_pontos: pedido.valor,
+        url_dir: pedido.link,
+        tipo_acao: pedido.tipo,
+        id_pedido: pedido._id
+      });
+    }
 
     console.log("📭 Nenhuma ação disponível");
     return res.json({ status: "NAO_ENCONTRADA" });
