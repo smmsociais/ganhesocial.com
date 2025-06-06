@@ -65,7 +65,7 @@ const handler = async (req, res) => {
       const pulada = await ActionHistory.findOne({
         id_pedido,
         id_conta,
-        status: "pulada"
+        acao_validada: 'pulada',
       });
 
       if (pulada) {
