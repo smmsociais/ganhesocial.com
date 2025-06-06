@@ -59,31 +59,47 @@ const formatarValorRanking = (valor) => {
     }
 
     // Rota: /api/buscar_acao (GET)
-    if (url.startsWith("/api/buscar_acao") && method === "GET") {
-        const { id_conta } = req.query;
+if (url.startsWith("/api/buscar_acao") && method === "GET") {
+    const { id_conta } = req.query;
 
-        if (!id_conta) {
-            return res.status(400).json({ error: "ID da conta é obrigatório." });
-        }
-
-        const urlAction = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
-
-        try {
-            const { data } = await axios.get(urlAction);
-
-            if (data.status === "ENCONTRADA") {
-                return res.status(200).json({
-                    ...data,
-                    unique_id: data.unique_id || null
-                });
-            } else {
-                return res.status(404).json({ error: "Nenhuma ação encontrada." });
-            }
-        } catch (error) {
-            console.error("Erro ao buscar ação:", error);
-            return res.status(500).json({ error: "Erro ao buscar ação." });
-        }
+    if (!id_conta) {
+        return res.status(400).json({ error: "ID da conta é obrigatório." });
     }
+
+    const urlAction = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
+
+    try {
+        await connectDB();
+
+        const { data } = await axios.get(urlAction);
+
+        if (data.status === "ENCONTRADA") {
+            const { id_pedido } = data;
+
+            // ⛔ Verifica se o usuário pulou essa ação
+            const pulada = await ActionHistory.findOne({
+                id_pedido,
+                id_conta,
+                acao_validada: 'pulada',
+            });
+
+            if (pulada) {
+                // Ação já foi pulada, retorna sem conteúdo ou ignora
+                return res.status(204).end(); // ou tente buscar outra
+            }
+
+            return res.status(200).json({
+                ...data,
+                unique_id: data.unique_id || null
+            });
+        } else {
+            return res.status(404).json({ error: "Nenhuma ação encontrada." });
+        }
+    } catch (error) {
+        console.error("Erro ao buscar ação:", error);
+        return res.status(500).json({ error: "Erro ao buscar ação." });
+    }
+}
 
 // Rota: /api/confirmar_acao (POST)
 if (url.startsWith("/api/confirmar_acao") && method === "POST") {
@@ -466,9 +482,7 @@ if (url.startsWith("/api/login")) {
         }
     
         try {
-            console.time("⏱️ Tempo total de login");
             await connectDB();
-            console.timeLog("⏱️ Tempo total de login", "✔️ Conectado ao MongoDB");
     
             const { email, senha } = req.body;
     
@@ -478,7 +492,6 @@ if (url.startsWith("/api/login")) {
     
             console.log("🔍 Buscando usuário no banco de dados...");
             const usuario = await User.findOne({ email });
-            console.timeLog("⏱️ Tempo total de login", "✔️ Usuário buscado");
     
             if (!usuario) {
                 console.log("🔴 Usuário não encontrado!");
@@ -495,13 +508,11 @@ if (url.startsWith("/api/login")) {
                 token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET);
                 usuario.token = token;
                 await usuario.save({ validateBeforeSave: false });
-                console.timeLog("⏱️ Tempo total de login", "✔️ Token gerado e salvo");
-    
+  
                 console.log("🟢 Novo token gerado e salvo.");
             } else {
                 console.log("🟢 Token já existente mantido.");
             }
-            console.timeEnd("⏱️ Tempo total de login");
     
             console.log("🔹 Token gerado para usuário:", token);
             return res.json({ message: "Login bem-sucedido!", token });
@@ -510,7 +521,6 @@ if (url.startsWith("/api/login")) {
             console.error("❌ Erro ao realizar login:", error);
             return res.status(500).json({ error: "Erro ao realizar login" });
         }
-        
     };
 
 // Rota: /api/signup
