@@ -621,47 +621,31 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
-async function fetchAction() {
-    id_conta = localStorage.getItem("id_conta");
-    token = localStorage.getItem("token");
-    const actionType = document.getElementById("actionType").value;
+        async function fetchAction() {
+id_conta = localStorage.getItem("id_conta");
+token = localStorage.getItem("token");
+            const actionType = document.getElementById("actionType").value;
 
-    if (!id_conta || !token || id_conta === "null" || !actionType) {
-        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-        document.getElementById("actionContent").style.opacity = "1";
-        return;
-    }
-
-    if (document.getElementById("actionType").disabled) return;
-
-    document.getElementById("actionContent").style.opacity = "0";
-
-    async function tentarBuscarSMM() {
-        try {
-            const tipoAcao = document.getElementById("actionType").value;
-
-            if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
-                console.warn("Tipo de ação inválido:", tipoAcao);
-                return false;
+            // Verificar se todos os campos foram preenchidos
+            if (!id_conta || !token || id_conta === "null" || !actionType) {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+                document.getElementById("actionContent").style.opacity = "1";
+                return;
             }
 
-            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
-            const data = await response.json();
+            if (document.getElementById("actionType").disabled) return;
 
-            if (data.status === "ENCONTRADA") {
-                await processarAcao(data, "smm");
-                return true;
-            } else {
-                console.log("Nenhuma ação SMM encontrada.");
+            // Se o usuário ainda não selecionou a conta, não busca ação
+            if (!id_conta || !token || id_conta === "null") {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta antes de buscar ações.";
+                document.getElementById("actionContent").style.opacity = "1";
+                return;
             }
-        } catch (e) {
-            console.error("Erro ao buscar ação SMM:", e);
-        }
-        return false;
-    }
 
-    await tentarBuscarSMM();
-}    
+            // prossegue normalmente se a conta estiver definida
+            document.getElementById("actionContent").style.opacity = "0";
+
+            async function tentarBuscarSMM() {
                 try {
                     const tipoAcao = document.getElementById("actionType").value;
 
@@ -684,7 +668,7 @@ async function fetchAction() {
                     console.error("Erro ao buscar ação SMM:", e);
                 }
                 return false;
-
+            }
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
@@ -822,6 +806,7 @@ async function fetchAction() {
                 // Inicia a contagem
                 atualizarMensagem();
             }
+        }
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
@@ -886,40 +871,46 @@ async function fetchAction() {
         }
 
 async function skipAction() {
+  if (currentActionData) {
+    document.getElementById("actionContent").style.opacity = "0";
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+
     try {
-        const tipo = document.getElementById("actionType").value;
-        const nome_usuario = document.getElementById("nomeUsuario").textContent;
-        const url_dir = document.getElementById("perfilLink").href;
-        const quantidade_pontos = parseFloat(document.getElementById("pontos").textContent);
-        const tipo_acao = tipo;
+      // Envia ao backend que a ação foi pulada
+      await fetch(`/api/pular_acao`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          id_conta,
+          token,
+          id_pedido: currentActionData.id_pedido, // id do pedido real
+          nome_usuario: currentActionData.nome_usuario,
+          url_dir: currentActionData.url_dir,
+          quantidade_pontos: currentActionData.quantidade_pontos,
+          tipo_acao: currentActionData.tipo_acao,
+          tipo: currentActionData.tipo // seguir, curtir, etc
+        })
+      });
 
-        const id_pedido = document.getElementById("btnConfirmar").dataset.idPedido;
-
-        const response = await fetch("/api/pular_acao", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                token,
-                id_pedido,
-                id_conta,
-                nome_usuario,
-                url_dir,
-                quantidade_pontos,
-                tipo_acao,
-                tipo
-            })
-        });
-
-        const data = await response.json();
-        console.log("Resposta ao pular ação:", data);
-
-        // Buscar próxima ação
-        fetchAction();
+      // Salva localmente no histórico apenas para exibição
+      const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+      actionHistory.push({
+        tipo: currentActionData.tipo_acao,
+        usuario: currentActionData.nome_usuario,
+        pontos: currentActionData.quantidade_pontos,
+        status: "pulada",
+        data: new Date().toLocaleString()
+      });
+      localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
     } catch (error) {
-        console.error("Erro ao registrar ação pulada:", error);
+      console.error("Erro ao registrar ação pulada:", error);
     }
+  }
+
+  document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+  fetchAction();
 }
         async function loadAccounts() {
             try {
