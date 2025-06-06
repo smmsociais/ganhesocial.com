@@ -51,9 +51,8 @@ const handler = async (req, res) => {
       quantidade_pontos,
       tipo_acao,
       tipo,
-      acao_validada: false,
+      acao_validada: pulada,
       rede_social: 'TikTok',
-      status: 'pulada',
       createdAt: new Date()
     });
 
