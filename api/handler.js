@@ -799,7 +799,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     tipo: tipoAcaoFinal,
     rede_social: "TikTok",
     valor_confirmacao: valorConfirmacaoFinal,
-    acao_validada: "pendente"
+    acao_validada: "pendente",
     data: new Date()
   });
 
