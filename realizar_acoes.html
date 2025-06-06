@@ -871,46 +871,40 @@ token = localStorage.getItem("token");
         }
 
 async function skipAction() {
-  if (currentActionData) {
-    document.getElementById("actionContent").style.opacity = "0";
-    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-
     try {
-      // Envia ao backend que a ação foi pulada
-      await fetch(`/api/pular_acao`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id_conta,
-          token,
-          id_pedido: currentActionData.id_pedido, // id do pedido real
-          nome_usuario: currentActionData.nome_usuario,
-          url_dir: currentActionData.url_dir,
-          quantidade_pontos: currentActionData.quantidade_pontos,
-          tipo_acao: currentActionData.tipo_acao,
-          tipo: currentActionData.tipo // seguir, curtir, etc
-        })
-      });
+        const tipo = document.getElementById("actionType").value;
+        const nome_usuario = document.getElementById("nomeUsuario").textContent;
+        const url_dir = document.getElementById("perfilLink").href;
+        const quantidade_pontos = parseFloat(document.getElementById("pontos").textContent);
+        const tipo_acao = tipo;
 
-      // Salva localmente no histórico apenas para exibição
-      const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-      actionHistory.push({
-        tipo: currentActionData.tipo_acao,
-        usuario: currentActionData.nome_usuario,
-        pontos: currentActionData.quantidade_pontos,
-        status: "pulada",
-        data: new Date().toLocaleString()
-      });
-      localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+        const id_pedido = document.getElementById("btnConfirmar").dataset.idPedido;
+
+        const response = await fetch("/api/pular_acao", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                token,
+                id_pedido,
+                id_conta,
+                nome_usuario,
+                url_dir,
+                quantidade_pontos,
+                tipo_acao,
+                tipo
+            })
+        });
+
+        const data = await response.json();
+        console.log("Resposta ao pular ação:", data);
+
+        // Buscar próxima ação
+        fetchAction();
     } catch (error) {
-      console.error("Erro ao registrar ação pulada:", error);
+        console.error("Erro ao registrar ação pulada:", error);
     }
-  }
-
-  document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-  fetchAction();
 }
         async function loadAccounts() {
             try {
