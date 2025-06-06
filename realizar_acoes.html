@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realizar Ações</title>
+    <title>Realizar Ações - GanheSocial</title>
     <style>
         :root {
             --bg-light: #ffffff;
@@ -34,12 +34,14 @@
             min-height: 100vh;
             position: relative;
             transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
-         .menu-item[href="realizar_acoes"] {
+        .menu-item[href="realizar_acoes"] {
             color: white;
             font-weight: bold;
-        }       
+        }
 
         .header {
             display: flex;
@@ -81,15 +83,25 @@
             z-index: 10;
         }
 
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 20px;
+            margin-top: 20px;
+        }
+
         .container {
             background: var(--container-light);
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 90%;
-            max-width: 500px;
-            margin: 30px auto;
+            width: 95%;
+            /* Alterado de 200% para 90% */
+            max-width: 700px;
+            /* Aumente este valor para containers mais largos */
+            margin: auto auto 150px auto;
             transition: background 0.3s;
         }
 
@@ -450,50 +462,52 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div id="pagina"></div>
-    <div class="container">
-        <h2>Realizar Ações TikTok</h2>
-        <select id="accountSelect" onchange="bindAccount()">
-            <option value="" selected disabled>Selecione uma conta</option>
-        </select>
-
-        <!-- Novo formulário para tipo de ação -->
-        <div class="action-type-container">
-            <select id="actionType">
-                <option value="seguir">Seguir</option>
-                <option value="curtir">Curtir</option>
-                <option value="seguir_curtir">Seguir e Curtir</option>
+    <div class="main-content">
+        <div id="pagina"></div>
+        <div class="container">
+            <h2>Realizar Ações TikTok</h2>
+            <select id="accountSelect" onchange="bindAccount()">
+                <option value="" selected disabled>Selecione uma conta</option>
             </select>
-        </div>
-        <p id="statusMessage" class="status-message"></p>
 
-        <div id="actionBox" class="action-box">
-            <div id="warningMessage" class="warning-box">
-                <h3>Atenção</h3>
-                <ul>
-                    <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
-                    <li>Não envie mensagens privadas para os perfis das ações.</li>
-                </ul>
-                <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
+            <!-- Novo formulário para tipo de ação -->
+            <div class="action-type-container">
+                <select id="actionType">
+                    <option value="seguir">Seguir</option>
+                    <option value="curtir">Curtir</option>
+                    <option value="seguir_curtir">Seguir e Curtir</option>
+                </select>
             </div>
+            <p id="statusMessage" class="status-message"></p>
 
-            <div id="actionContent" class="action-content">
-                <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
-                <p><strong>Usuário:</strong> <span id="username"></span></p>
-                <p><strong>Valor:</strong> <span id="points"></span></p>
-
-                <div class="profile-image-container">
-                    <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
+            <div id="actionBox" class="action-box">
+                <div id="warningMessage" class="warning-box">
+                    <h3>Atenção</h3>
+                    <ul>
+                        <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
+                        <li>Não envie mensagens privadas para os perfis das ações.</li>
+                    </ul>
+                    <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
-                        onclick="showConfirmButton()">Abrir Ação</a>
-                </div>
+                <div id="actionContent" class="action-content">
+                    <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
+                    <p><strong>Usuário:</strong> <span id="username"></span></p>
+                    <p><strong>Valor:</strong> <span id="points"></span></p>
 
-                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
-                    style="display: none;">Confirmar Ação</button>
+                    <div class="profile-image-container">
+                        <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="skip-button" onclick="skipAction()">Pular Ação</button>
+                        <a id="actionUrl" href="#" target="_blank" class="open-action-button"
+                            onclick="showConfirmButton()">Abrir Ação</a>
+                    </div>
+
+                    <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
+                        style="display: none;">Confirmar Ação</button>
+                </div>
             </div>
         </div>
     </div>
