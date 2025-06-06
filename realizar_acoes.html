@@ -621,54 +621,44 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
-        async function fetchAction() {
-id_conta = localStorage.getItem("id_conta");
-token = localStorage.getItem("token");
-            const actionType = document.getElementById("actionType").value;
+async function fetchAction() {
+    id_conta = localStorage.getItem("id_conta");
+    token = localStorage.getItem("token");
+    const actionType = document.getElementById("actionType").value;
 
-            // Verificar se todos os campos foram preenchidos
-            if (!id_conta || !token || id_conta === "null" || !actionType) {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
+    if (!id_conta || !token || id_conta === "null" || !actionType) {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+        document.getElementById("actionContent").style.opacity = "1";
+        return;
+    }
 
-            if (document.getElementById("actionType").disabled) return;
+    if (document.getElementById("actionType").disabled) return;
 
-            // Se o usuário ainda não selecionou a conta, não busca ação
-            if (!id_conta || !token || id_conta === "null") {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta antes de buscar ações.";
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
+    document.getElementById("actionContent").style.opacity = "0";
 
-            // prossegue normalmente se a conta estiver definida
-            document.getElementById("actionContent").style.opacity = "0";
+    async function tentarBuscarSMM() {
+        try {
+            const tipoAcao = document.getElementById("actionType").value;
 
-            async function tentarBuscarSMM() {
-                try {
-                    const tipoAcao = document.getElementById("actionType").value;
-
-                    // Verificação básica do tipo (opcional, mas pode evitar bugs)
-                    if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
-                        console.warn("Tipo de ação inválido:", tipoAcao);
-                        return false;
-                    }
-
-                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
-                    const data = await response.json();
-
-                    if (data.status === "ENCONTRADA") {
-                        await processarAcao(data, "smm");
-                        return true;
-                    } else {
-                        console.log("Nenhuma ação SMM encontrada.");
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação SMM:", e);
-                }
+            if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
+                console.warn("Tipo de ação inválido:", tipoAcao);
                 return false;
             }
+
+            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
+            const data = await response.json();
+
+            if (data.status === "ENCONTRADA") {
+                await processarAcao(data, "smm");
+                return true;
+            } else {
+                console.log("Nenhuma ação SMM encontrada.");
+            }
+        } catch (e) {
+            console.error("Erro ao buscar ação SMM:", e);
+        }
+        return false;
+    }
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
