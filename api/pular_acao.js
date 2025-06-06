@@ -29,19 +29,16 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: 'Token inválido' });
     }
 
-    // Verifica se já existe registro de pulo
     const existente = await ActionHistory.findOne({
       id_pedido,
       id_conta,
-      acao_validada: pulada,
+      acao_validada: false,
     });
 
     if (existente) {
       return res.status(200).json({ status: 'JA_PULADA' });
     }
 
-    const pulada = false;
-  
     const novaAcao = new ActionHistory({
       user: user._id,
       token,
@@ -53,7 +50,7 @@ const handler = async (req, res) => {
       quantidade_pontos,
       tipo_acao,
       tipo,
-      acao_validada: pulada,
+      acao_validada: false,
       rede_social: 'TikTok',
       createdAt: new Date()
     });
