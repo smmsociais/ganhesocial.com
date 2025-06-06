@@ -869,31 +869,48 @@
             fetchAction();
         }
 
-        async function skipAction() {
-            if (currentActionData) {
-                // Esconde o conteúdo da ação enquanto processa o pulo
-                document.getElementById("actionContent").style.opacity = "0";
-                document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+async function skipAction() {
+    if (currentActionData) {
+        document.getElementById("actionContent").style.opacity = "0";
+        document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
-                try {
-                    const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
-                    actionHistory.push({
-                        tipo: currentActionData.tipo_acao,
-                        usuario: currentActionData.nome_usuario,
-                        pontos: currentActionData.quantidade_pontos,
-                        status: "pulada",
-                        data: new Date().toLocaleString()
-                    });
-                    localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
-                } catch (error) {
-                    console.error("Erro ao salvar ação pulada:", error);
-                }
+        try {
+            // Envia ao backend que a ação foi pulada
+            await fetch(`/api/pular_acao`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    id_conta: id_conta,
+                    token: token,
+                    id_pedido: currentActionData.id_pedido,
+                    nome_usuario: currentActionData.nome_usuario,
+                    url_dir: currentActionData.url_dir,
+                    quantidade_pontos: currentActionData.quantidade_pontos,
+                    tipo_acao: currentActionData.tipo_acao,
+                    tipo: currentActionData.tipo_acao // ou outro campo se houver separação
+                })
+            });
 
-            }
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-            fetchAction();
+            // Salva localmente no histórico apenas para exibição
+            const actionHistory = JSON.parse(localStorage.getItem("actionHistory")) || [];
+            actionHistory.push({
+                tipo: currentActionData.tipo_acao,
+                usuario: currentActionData.nome_usuario,
+                pontos: currentActionData.quantidade_pontos,
+                status: "pulada",
+                data: new Date().toLocaleString()
+            });
+            localStorage.setItem("actionHistory", JSON.stringify(actionHistory));
+        } catch (error) {
+            console.error("Erro ao registrar ação pulada:", error);
         }
+    }
 
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+    fetchAction();
+}
         async function loadAccounts() {
             try {
                 const token = localStorage.getItem("token");
