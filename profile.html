@@ -586,10 +586,6 @@
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
             const token = document.getElementById('authToken').value.trim();
 
-            // Clear previous messages
-            showMessage("", false);
-            showMessage("", true);
-
                 if (name.length > 20) {
         showMessage("O nome não pode ter mais de 20 caracteres.", true);
         return;
