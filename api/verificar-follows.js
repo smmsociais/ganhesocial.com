@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     const usuarios = db.collection("users");
 
     const acoes = await colecao.find({
-      acao_validada: null,
+      acao_validada: "pendente",
       tipo: "seguir",
     })
       .sort({ data: 1 })
@@ -103,16 +103,10 @@ export default async function handler(req, res) {
           continue;
         }
 
-        await colecao.updateOne(
-          { _id: new ObjectId(valid._id) },
-          {
-            $set: {
-              acao_validada: accountFound,
-              verificada_em: new Date(),
-            },
-          }
-        );
-
+await colecao.updateOne(
+  { _id: new ObjectId(valid._id) },
+  { $set: { acao_validada: accountFound ? "valida" : "invalida", verificada_em: new Date() } }
+);
         if (accountFound) {
           const valor = parseFloat(valid.valor_confirmacao);
           if (!isNaN(valor) && valor > 0) {
