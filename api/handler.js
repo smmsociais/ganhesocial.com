@@ -387,8 +387,8 @@ if (url.startsWith("/api/historico_acoes")) {
   
     const formattedData = historico.map(action => {
       let status;
-      if (action.acao_validada === true) status = "Válida";
-      else if (action.acao_validada === false) status = "Inválida";
+      if (action.acao_validada === "valida") status = "Válida";
+      else if (action.acao_validada === "invalida") status = "Inválida";
       else status = "Pendente";
   
       return {
@@ -413,8 +413,8 @@ if (url.startsWith("/api/historico_acoes")) {
 
     const formattedData = historico.map(action => {
       let status;
-      if (action.acao_validada === true) status = "Válida";
-      else if (action.acao_validada === false) status = "Inválida";
+      if (action.acao_validada === "valida") status = "Válida";
+      else if (action.acao_validada === "invalida") status = "Inválida";
       else status = "Pendente";
 
       return {
