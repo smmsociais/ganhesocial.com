@@ -581,6 +581,9 @@
 async function bindAccount() {
     const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
+    console.log("Conta selecionada para vincular:", selectedAccount); // Log da conta selecionada
+    document.getElementById("statusMessage").textContent = `Tentando vincular a conta: ${selectedAccount}`; // Mensagem temporária na UI
+
     if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
         document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
         return;
@@ -598,6 +601,9 @@ async function bindAccount() {
 
         const data = await response.json();
 
+        console.log("Resposta da API /vincular_conta:", data); // Log da resposta da API
+        document.getElementById("statusMessage").textContent = `Resposta da API recebida.`;
+
         if (data.id_conta) {
             localStorage.setItem("id_conta", data.id_conta);
             document.getElementById("warningMessage").style.display = "none";
@@ -607,10 +613,10 @@ async function bindAccount() {
             document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
         }
     } catch (error) {
+        console.error("Erro na requisição:", error);
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
     }
 }
-
         function ativarSelecaoTipoAcao() {
             const id_conta = localStorage.getItem("id_conta");
             const token = localStorage.getItem("token");
