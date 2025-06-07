@@ -128,7 +128,7 @@ await colecao.updateOne(
                 agora.getUTCFullYear(),
                 agora.getUTCMonth(),
                 agora.getUTCDate() + 1,
-                3,
+                0,
                 0,
                 0
               )
