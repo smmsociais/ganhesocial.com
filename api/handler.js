@@ -946,8 +946,8 @@ const pedidos = await Pedido.find({
       const id_action = pedido._id;
 
 const jaFez = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
+  id_pedido: pedido._id,
+  id_conta: id_tiktok,
   acao_validada: { $in: ['pendente', 'validada'] }
 });
 
@@ -957,7 +957,7 @@ const jaFez = await ActionHistory.findOne({
       }
 
 const feitas = await ActionHistory.countDocuments({
-  id_pedido,
+  id_pedido: pedido._id,
   acao_validada: { $in: ['pendente', 'validada'] }
 });
 
