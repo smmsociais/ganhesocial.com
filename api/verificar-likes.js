@@ -110,7 +110,7 @@ export default async function handler(req, res) {
         // 7) Atualiza a ação validada
 await colecao.updateOne(
   { _id: new ObjectId(valid._id) },
-  { $set: { acao_validada: liked ? "validada" : "invalida", verificada_em: new Date() } }
+  { $set: { acao_validada: liked ? "valida" : "invalida", verificada_em: new Date() } }
 );
         if (liked) {
           const valor = parseFloat(valid.valor_confirmacao);
