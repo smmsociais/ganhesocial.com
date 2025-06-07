@@ -108,11 +108,10 @@ export default async function handler(req, res) {
         const liked = likedVideos.some((v) => v.id === videoId || v.video_id === videoId);
 
         // 7) Atualiza a ação validada
-        await colecao.updateOne(
-          { _id: new ObjectId(valid._id) },
-          { $set: { acao_validada: liked, verificada_em: new Date() } }
-        );
-
+await colecao.updateOne(
+  { _id: new ObjectId(valid._id) },
+  { $set: { acao_validada: liked ? "validada" : "invalida", verificada_em: new Date() } }
+);
         if (liked) {
           const valor = parseFloat(valid.valor_confirmacao);
           if (!isNaN(valor) && valor > 0) {
