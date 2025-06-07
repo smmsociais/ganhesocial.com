@@ -578,39 +578,6 @@
         });
         let currentActionData = null;
 
-        async function bindAccount() {
-            const selectedAccount = document.getElementById("accountSelect").value;
-            if (!selectedAccount) return;
-
-            try {
-                const response = await fetch("/api/vincular_conta", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ nomeUsuario: selectedAccount })
-                });
-
-                const data = await response.json();
-
-                if (data.id_conta) {
-                    localStorage.setItem("id_conta", data.id_conta);
-
-                    // Esconde o aviso e mostra o conteúdo da ação
-                    document.getElementById("warningMessage").style.display = "none";
-                    document.getElementById("actionContent").style.display = "block";
-
-                    // Busca uma ação imediatamente
-                    fetchAction();
-                } else {
-                    document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
-                }
-            } catch (error) {
-                document.getElementById("statusMessage").textContent = "Erro na requisição.";
-            }
-        }
-
         function ativarSelecaoTipoAcao() {
             const id_conta = localStorage.getItem("id_conta");
             const token = localStorage.getItem("token");
@@ -619,6 +586,7 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
+async function bindAccount() {
     const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
     if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
@@ -792,6 +760,7 @@
                 // Inicia a contagem
                 atualizarMensagem();
             }
+        }
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
