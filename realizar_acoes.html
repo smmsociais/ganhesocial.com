@@ -619,63 +619,68 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
-        async function fetchAction() {
-            id_conta = localStorage.getItem("id_conta");
-            token = localStorage.getItem("token");
-            const actionType = document.getElementById("actionType").value;
+ async function fetchAction() {
+    const id_conta = localStorage.getItem("id_conta");
+    const token = localStorage.getItem("token");
+    const actionType = document.getElementById("actionType").value;
 
-            if (!id_conta || !token || id_conta === "null" || !actionType) {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-                document.getElementById("actionContent").style.opacity = "1";
-                return;
-            }
+    // Validação mínima: exige apenas token e tipo de ação
+    if (!token || !actionType) {
+        document.getElementById("statusMessage").textContent = "Selecione um tipo de ação e esteja logado.";
+        document.getElementById("actionContent").style.opacity = "1";
+        return;
+    }
 
-            if (document.getElementById("actionType").disabled) return;
+    if (document.getElementById("actionType").disabled) return;
 
-            document.getElementById("actionContent").style.opacity = "0";
+    document.getElementById("actionContent").style.opacity = "0";
 
-            async function tentarBuscarSMM() {
-                try {
-                    const tipoAcao = document.getElementById("actionType").value;
-
-                    if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
-                        console.warn("Tipo de ação inválido:", tipoAcao);
-                        return false;
-                    }
-
-                    const response = await fetch(`/api/buscar_acao_smm?token=${token}&tipo=${tipoAcao}`);
-                    const data = await response.json();
-
-                    if (data.status === "ENCONTRADA") {
-                        await processarAcao(data, "smm");
-                        return true;
-                    } else {
-                        console.log("Nenhuma ação SMM encontrada.");
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação SMM:", e);
-                }
-                return false;
-            }
-            async function tentarBuscarLocal() {
-                try {
-                    const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-                    const data = await response.json();
-                    if (data.status === "ENCONTRADA") {
-                        if (parseFloat(data.quantidade_pontos) === 4) {
-                            return "ignorarLocalERepetirSMM";
-                        }
-                        await processarAcao(data, "local");
-                        return true;
-                    } else if (data.error === "Nenhuma ação encontrada.") {
-                        return "repetirSMM";
-                    }
-                } catch (e) {
-                    console.error("Erro ao buscar ação local:", e);
-                }
+    async function tentarBuscarSMM() {
+        try {
+            if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
+                console.warn("Tipo de ação inválido:", actionType);
                 return false;
             }
 
+            const response = await fetch(`/api/buscar_acao_smm?token=${token}&tipo=${actionType}`);
+            const data = await response.json();
+
+            if (data.status === "ENCONTRADA") {
+                await processarAcao(data, "smm");
+                return true;
+            } else {
+                console.log("Nenhuma ação SMM encontrada.");
+            }
+        } catch (e) {
+            console.error("Erro ao buscar ação SMM:", e);
+        }
+        return false;
+    }
+
+    async function tentarBuscarLocal() {
+        if (!id_conta || id_conta === "null") {
+            console.warn("id_conta ausente. Ignorando busca local.");
+            return false;
+        }
+
+        try {
+            const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+            const data = await response.json();
+
+            if (data.status === "ENCONTRADA") {
+                if (parseFloat(data.quantidade_pontos) === 4) {
+                    return "ignorarLocalERepetirSMM";
+                }
+                await processarAcao(data, "local");
+                return true;
+            } else if (data.error === "Nenhuma ação encontrada.") {
+                return "repetirSMM";
+            }
+        } catch (e) {
+            console.error("Erro ao buscar ação local:", e);
+        }
+        return false;
+    }
             async function processarAcao(data, origem) {
                 document.getElementById("statusMessage").textContent = "";
                 document.getElementById("username").textContent = data.nome_usuario;
