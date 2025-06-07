@@ -581,13 +581,12 @@
 async function bindAccount() {
     const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
-    console.log("Conta selecionada para vincular:", selectedAccount); // Log da conta selecionada
-    document.getElementById("statusMessage").textContent = `Tentando vincular a conta: ${selectedAccount}`; // Mensagem temporária na UI
-
     if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
         document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
         return;
     }
+
+    console.log("Conta selecionada para vincular:", selectedAccount);
 
     try {
         const response = await fetch("/api/vincular_conta", {
@@ -600,18 +599,23 @@ async function bindAccount() {
         });
 
         const data = await response.json();
+        console.log("Resposta da API /vincular_conta:", data);
 
-        console.log("Resposta da API /vincular_conta:", data); // Log da resposta da API
-        document.getElementById("statusMessage").textContent = `Resposta da API recebida.`;
-
+        // Caso a conta tenha sido vinculada corretamente
         if (data.id_conta) {
             localStorage.setItem("id_conta", data.id_conta);
-            document.getElementById("warningMessage").style.display = "none";
-            document.getElementById("actionContent").style.display = "block";
-            fetchAction();
         } else {
-            document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
+            // Se a resposta for WRONG_USER, apenas registra e continua
+            console.warn("Vinculação falhou ou foi ignorada:", data.error);
+            // Armazena mesmo assim um valor de fallback no localStorage (opcional)
+            localStorage.setItem("id_conta", "fallback_" + selectedAccount);
         }
+
+        // Prossegue independentemente do resultado da vinculação
+        document.getElementById("warningMessage").style.display = "none";
+        document.getElementById("actionContent").style.display = "block";
+        fetchAction();
+
     } catch (error) {
         console.error("Erro na requisição:", error);
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
