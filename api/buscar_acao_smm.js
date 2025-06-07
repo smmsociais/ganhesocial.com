@@ -14,8 +14,8 @@ const handler = async (req, res) => {
   console.log("token:", token);
   console.log("tipo:", tipo);
 
-  if (!id_conta || !token) {
-    return res.status(400).json({ error: "id_conta e token são obrigatórios" });
+  if (!token) {
+    return res.status(400).json({ error: "Token é obrigatório" });
   }
 
   try {
@@ -28,7 +28,6 @@ const handler = async (req, res) => {
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    // 🔁 Mapeamento do tipo recebido para o tipo do banco
     const tipoMap = {
       seguir: "seguir",
       curtir: "curtir"
@@ -61,35 +60,34 @@ const handler = async (req, res) => {
         link: pedido.link
       });
 
-      // ⛔ Verifica se o usuário pulou essa ação
-      const pulada = await ActionHistory.findOne({
+      if (id_conta) {
+        const pulada = await ActionHistory.findOne({
+          id_pedido,
+          id_conta,
+          acao_validada: 'pulada',
+        });
+
+        if (pulada) {
+          console.log(`🚫 Ação ${id_pedido} foi pulada por ${id_conta}`);
+          continue;
+        }
+
+        const jaFez = await ActionHistory.findOne({
+          id_pedido,
+          id_conta,
+          acao_validada: { $in: ['pendente', 'validada'] }
+        });
+
+        if (jaFez) {
+          console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
+          continue;
+        }
+      }
+
+      const feitas = await ActionHistory.countDocuments({
         id_pedido,
-        id_conta,
-        acao_validada: 'pulada',
+        acao_validada: { $in: ['pendente', 'validada'] }
       });
-
-      if (pulada) {
-        console.log(`🚫 Ação ${id_pedido} foi pulada por ${id_conta}`);
-        continue;
-      }
-
-      // ⛔ Verifica se já realizou essa ação
-const jaFez = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
-
-      if (jaFez) {
-        console.log(`⛔ Conta ${id_conta} já realizou o pedido ${id_pedido}`);
-        continue;
-      }
-
-      // ✅ Verifica se o limite de ações foi atingido
-const feitas = await ActionHistory.countDocuments({
-  id_pedido,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
 
       console.log(`📊 Ação ${id_pedido}: feitas=${feitas}, limite=${pedido.quantidade}`);
 
