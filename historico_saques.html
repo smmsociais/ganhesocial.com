@@ -5,168 +5,320 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico de Saques</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
 
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
-            --success-light: #28a745;
-            --pending-light: #ffc107;
-            --failed-light: #dc3545;
-            --success-dark: #2ea043;
-            --pending-dark: #d29922;
-            --failed-dark: #f85149;
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --primary-gradient: linear-gradient(135deg, #007bff, #00bfff);
+            --primary-gradient-dark: linear-gradient(135deg, #1a73e8, #00bfff);
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
         .menu-item[href="historico_saques"] {
             color: white;
             font-weight: bold;
-        }        
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
         }
 
-        .desktop-balance-container {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-weight: bold;
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 5px;
-            z-index: 10;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
+        }
+
+        .container-header {
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 600px;
-            width: calc(100% - 40px);
-            margin: 30px auto;
-            transition: background 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-sizing: border-box;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: clamp(1.2rem, 3vw, 1.5rem);
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
 
-        .table-container {
-            width: 100%;
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Table Styles */
+        .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            margin-top: 20px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: var(--card-radius);
         }
 
         .withdrawal-table {
             width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .withdrawal-table th,
-        .withdrawal-table td {
-            padding: 12px 10px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-            white-space: nowrap;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
         }
 
-        .withdrawal-table th {
-            background-color: rgba(0, 0, 0, 0.05);
-            font-weight: bold;
+        .withdrawal-table thead th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-light);
             position: sticky;
             top: 0;
+            backdrop-filter: blur(5px);
+        }
+
+        .withdrawal-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .withdrawal-table tbody tr:hover {
+            background-color: var(--hover-light);
+        }
+
+        .withdrawal-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
         }
 
         .withdrawal-table tr:last-child td {
             border-bottom: none;
         }
 
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
         .status-completed {
-            color: var(--success-light);
-            font-weight: bold;
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
         }
 
         .status-pending {
-            color: var(--pending-light);
-            font-weight: bold;
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--pending-color);
         }
 
         .status-failed {
-            color: var(--failed-light);
-            font-weight: bold;
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed-color);
         }
 
-        .no-withdrawals {
+        /* Empty State */
+        .empty-state {
             text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: #6c757d;
+            padding: 40px 20px;
         }
 
-        /* Estilos do menu hamburguer */
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #adb5bd;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .empty-state-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-light);
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pagination button:hover {
+            background-color: var(--hover-light);
+        }
+
+        .pagination button.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Filter Controls */
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background-color: var(--container-light);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-select:hover {
+            border-color: #adb5bd;
+        }
+
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -180,9 +332,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -194,17 +346,18 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 5;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
             z-index: 6;
             display: flex;
@@ -226,17 +379,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -245,27 +406,74 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header,
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
+            .header {
+                background: var(--primary-gradient-dark);
             }
 
-            .menu-toggle span {
-                background-color: var(--text-dark);
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
+            }
+
+            .withdrawal-table thead th {
+                background-color: rgba(255, 255, 255, 0.05);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .withdrawal-table td {
+                border-color: var(--border-dark);
+            }
+
+            .withdrawal-table tbody tr:hover {
+                background-color: var(--hover-dark);
+            }
+
+            .status-completed {
+                background-color: rgba(52, 168, 83, 0.1);
+                color: var(--success-dark);
+            }
+
+            .status-pending {
+                background-color: rgba(249, 171, 0, 0.1);
+                color: var(--pending-dark);
+            }
+
+            .status-failed {
+                background-color: rgba(234, 67, 53, 0.1);
+                color: var(--failed-dark);
+            }
+
+            .empty-state-title {
+                color: var(--text-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -273,51 +481,190 @@
             }
 
             .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: var(--hover-dark);
             }
 
             .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-color: var(--border-dark);
             }
 
-            .withdrawal-table th,
-            .withdrawal-table td {
-                border-bottom: 1px solid var(--border-dark);
+            .filter-select {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
             }
 
-            .withdrawal-table th {
-                background-color: rgba(255, 255, 255, 0.05);
+            .filter-select:hover {
+                border-color: #555;
             }
 
-            .status-completed {
-                color: var(--success-dark);
+            .pagination button {
+                border-color: var(--border-dark);
+                color: var(--text-dark);
             }
 
-            .status-pending {
-                color: var(--pending-dark);
-            }
-
-            .status-failed {
-                color: var(--failed-dark);
-            }
-
-            .no-withdrawals {
-                color: #8b949e;
-            }
-
-            .desktop-balance-container {
-                background: rgba(255, 255, 255, 0.05);
+            .pagination button:hover {
+                background-color: var(--hover-dark);
             }
         }
 
-        /* Estilos para desktop */
-        @media (min-width: 992px) {
-            .desktop-header {
-                display: none;
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-container {
+                padding: 20px;
             }
 
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .withdrawal-table td {
+                padding: 12px 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+
+            .withdrawal-table td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .balance-chip {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+
+            .withdrawal-table td {
+                padding: 8px 6px;
+                font-size: 0.85rem;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+            }
+
+            .empty-state-icon {
+                font-size: 2.5rem;
+            }
+
+            .empty-state-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Loading State */
+        .skeleton {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .skeleton-text {
+            height: 12px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-text:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
             body {
-                padding-left: 250px;
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
             }
 
             .menu-toggle {
@@ -336,59 +683,15 @@
             .logo-mobile {
                 display: none;
             }
-
-            .desktop-balance-container {
-                display: flex;
-            }
         }
 
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
             }
-
-            .desktop-balance-container {
-                display: none;
-            }
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-                margin: 20px auto;
-                width: calc(100% - 30px);
-            }
-            
-            .withdrawal-table th,
-            .withdrawal-table td {
-                padding: 10px 8px;
-                font-size: 0.9rem;
-                min-width: 90px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                width: 100%;
-                padding: 15px;
-                margin: 20px auto;
-            }
-
-            .withdrawal-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 0.85rem;
-            }
-
-            .withdrawal-table th,
-            .withdrawal-table td {
-                padding: 6px 4px;
-                font-size: 0.75rem;
-                min-width: unset;
-                white-space: nowrap;
-            }
-        }
-
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -408,17 +711,17 @@
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
 
@@ -436,37 +739,105 @@
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
+        <div class="right-header">
+            <div class="balance-chip">
+                <i class="fas fa-coins"></i>
+                <span class="balance-amount" id="balance-display">R$ 0,00</span>
+            </div>
+        </div>
     </div>
 
     <!-- Conteúdo Principal -->
-    <div id="pagina"></div>
-    <div class="container">
-        <h2>Histórico de Saques</h2>
-
-        <div id="withdrawals-container">
-            <div class="table-container">
-                <table class="withdrawal-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Método</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="withdrawals-list">
-                        <!-- Linhas serão adicionadas dinamicamente -->
-                    </tbody>
-                </table>
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-wallet"></i> Histórico de Saques</h2>
             </div>
-            <div id="no-withdrawals" class="no-withdrawals" style="display: none;">
-                Nenhum saque realizado ainda.
+            <div class="container-body">
+                <!-- Filtros -->
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <span class="filter-label">Status:</span>
+                        <select class="filter-select" id="status-filter">
+                            <option value="all">Todos</option>
+                            <option value="completed">Efetuados</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="failed">Falhos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Período:</span>
+                        <select class="filter-select" id="period-filter">
+                            <option value="all">Todo período</option>
+                            <option value="7days">Últimos 7 dias</option>
+                            <option value="30days">Últimos 30 dias</option>
+                            <option value="90days">Últimos 90 dias</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="apply-filters">
+                        <i class="fas fa-filter"></i> Aplicar
+                    </button>
+                </div>
+
+                <!-- Tabela de Saques -->
+                <div id="withdrawals-container">
+                    <div class="table-responsive">
+                        <table class="withdrawal-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Método</th>
+                                    <th>Chave/Destino</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-list">
+                                <!-- Loading State -->
+                                <tr id="loading-row">
+                                    <td colspan="6">
+                                        <div class="skeleton skeleton-text" style="width: 80%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 60%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 70%"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="no-withdrawals" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <h3 class="empty-state-title">Nenhum saque realizado ainda</h3>
+                        <p class="empty-state-description">Quando você realizar saques, eles aparecerão aqui.</p>
+                        <a href="solicitar_saque" class="btn-primary">
+                            <i class="fas fa-hand-holding-usd"></i> Solicitar Saque
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
+                    <span id="page-info">Página 1 de 1</span>
+                    <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Modal de Detalhes -->
+    <div id="details-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Detalhes do Saque</h3>
+            <div id="modal-content"></div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
@@ -509,7 +880,12 @@
                 spans[2].style.transform = 'none';
             });
 
+            // Carrega saldo do usuário
+            await loadUserBalance();
+
+            // Carrega histórico de saques
             await loadWithdrawals();
+
             document.body.classList.add('loaded');
         });
 
@@ -518,19 +894,80 @@
             window.location.href = "https://ganhesocial.com";
         }
 
+        async function loadUserBalance() {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            try {
+                const response = await fetch("https://ganhesocial.com/api/user/balance", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const balance = data.balance || 0;
+                    document.getElementById('balance-display').textContent =
+                        'R$ ' + balance.toFixed(2).replace('.', ',');
+                }
+            } catch (error) {
+                console.error("Erro ao carregar saldo:", error);
+            }
+        }
+
         function showAlert(message, type = 'error') {
-            // Implementação da função showAlert se necessário
-            console.log(`${type}: ${message}`);
+            // Implementação melhorada de notificação
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert-${type}`;
+            alertDiv.textContent = message;
+
+            // Estilo para a notificação
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.padding = '15px 20px';
+            alertDiv.style.borderRadius = '6px';
+            alertDiv.style.color = 'white';
+            alertDiv.style.fontWeight = '600';
+            alertDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            alertDiv.style.zIndex = '1000';
+            alertDiv.style.animation = 'fadeIn 0.3s ease';
+
+            if (type === 'success') {
+                alertDiv.style.backgroundColor = '#28a745';
+            } else {
+                alertDiv.style.backgroundColor = '#dc3545';
+            }
+
+            document.body.appendChild(alertDiv);
+
+            // Remove a notificação após 5 segundos
+            setTimeout(() => {
+                alertDiv.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(alertDiv);
+                }, 300);
+            }, 5000);
         }
 
         async function loadWithdrawals() {
             const token = localStorage.getItem("token");
+            const statusFilter = document.getElementById('status-filter').value;
+            const periodFilter = document.getElementById('period-filter').value;
 
             if (!token) {
                 return;
             }
 
             try {
+                // Mostra estado de carregamento
+                document.getElementById('loading-row').style.display = '';
+                document.getElementById('no-withdrawals').style.display = 'none';
+                document.getElementById('pagination').style.display = 'none';
+
                 const response = await fetch("https://ganhesocial.com/api/withdraw", {
                     method: "GET",
                     headers: {
@@ -547,22 +984,27 @@
                 displayWithdrawals(data);
             } catch (error) {
                 showAlert(error.message);
+                document.getElementById('loading-row').style.display = 'none';
+                document.getElementById('no-withdrawals').style.display = 'flex';
             }
         }
 
         function displayWithdrawals(withdrawals) {
             const withdrawalsList = document.getElementById("withdrawals-list");
             const noWithdrawalsMsg = document.getElementById("no-withdrawals");
+            const loadingRow = document.getElementById("loading-row");
 
             withdrawalsList.innerHTML = "";
+            loadingRow.style.display = 'none';
 
             if (withdrawals.length === 0) {
-                noWithdrawalsMsg.style.display = "block";
+                noWithdrawalsMsg.style.display = 'flex';
                 return;
             }
 
-            noWithdrawalsMsg.style.display = "none";
+            noWithdrawalsMsg.style.display = 'none';
 
+            // Ordena por data (mais recente primeiro)
             withdrawals.sort((a, b) => {
                 const aTime = typeof a.date === 'object' && a.date.$date
                     ? Number(a.date.$date.$numberLong || a.date.$date)
@@ -577,10 +1019,7 @@
 
             withdrawals.forEach(withdrawal => {
                 const row = document.createElement("tr");
-
-                const timestamp = typeof withdrawal.date === 'object' && withdrawal.date.$date
-                    ? Number(withdrawal.date.$date.$numberLong || withdrawal.date.$date)
-                    : Date.parse(withdrawal.date);
+                row.className = 'fade-in';
 
                 const date = new Date(withdrawal.date);
                 const formattedDate = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {
@@ -607,19 +1046,65 @@
                     statusText = 'Efetuado';
                 }
 
+                // Formata a chave PIX/CPF
+                let formattedKey = withdrawal.pixKey || withdrawal.method || '-';
+                if (withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey)) {
+                    formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                } else if (withdrawal.keyType === 'phone' && /^\d{11}$/.test(withdrawal.pixKey)) {
+                    formattedKey = withdrawal.pixKey.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                }
+
+                // Adiciona ícone baseado no método
+                let methodIcon = '';
+                let methodText = '';
+
+                if (withdrawal.method === 'pix') {
+                    methodIcon = '<i class="fas fa-qrcode"></i>';
+                    methodText = 'PIX';
+                } else if (withdrawal.method === 'bank_transfer') {
+                    methodIcon = '<i class="fas fa-university"></i>';
+                    methodText = 'Transferência';
+                } else {
+                    methodIcon = '<i class="fas fa-wallet"></i>';
+                    methodText = withdrawal.method || 'Outro';
+                }
+
                 row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${(withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey))
-                        ? withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-                        : (withdrawal.pixKey || withdrawal.method || '-')
-                    }</td>
-                    <td>${formattedValue}</td>
-                    <td class="${statusClass}">${statusText}</td>
+                    <td>
+                        <div class="tooltip">
+                            ${formattedDate}
+                            <span class="tooltip-text">${date.toLocaleString('pt-BR')}</span>
+                        </div>
+                    </td>
+                    <td>${methodIcon} ${methodText}</td>
+                    <td>${formattedKey}</td>
+                    <td><strong>${formattedValue}</strong></td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn-details" onclick="showWithdrawalDetails('${withdrawal._id}')">
+                            <i class="fas fa-eye"></i> Detalhes
+                        </button>
+                    </td>
                 `;
 
                 withdrawalsList.appendChild(row);
             });
+
+            // Mostra paginação se houver muitos itens
+            if (withdrawals.length > 10) {
+                document.getElementById('pagination').style.display = 'flex';
+            }
         }
+
+        function showWithdrawalDetails(withdrawalId) {
+            // Implementação para mostrar detalhes do saque em um modal
+            console.log("Mostrar detalhes do saque:", withdrawalId);
+            // Aqui você pode implementar um modal ou outra forma de mostrar detalhes
+            alert("Detalhes do saque " + withdrawalId);
+        }
+
+        // Filtros
+        document.getElementById('apply-filters').addEventListener('click', loadWithdrawals);
     </script>
 </body>
 
