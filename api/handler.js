@@ -909,9 +909,9 @@ if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
 
 const { id_tiktok, token, tipo } = req.query;
 
-let tipoAcao = "seguidores";
-if (tipo === "2") tipoAcao = "curtidas";
-else if (tipo === "3") tipoAcao = { $in: ["seguidores", "curtidas"] };
+let tipoAcao = "seguir";
+if (tipo === "2") tipoAcao = "curtir";
+else if (tipo === "3") tipoAcao = { $in: ["seguir", "curtir"] };
 
 
   if (!id_tiktok || !token) {
@@ -973,7 +973,7 @@ const feitas = await ActionHistory.countDocuments({
         : pedido.nome;
 
 let valorFinal;
-if (pedido.tipo === "curtidas") {
+if (pedido.tipo === "curtir") {
   valorFinal = "0.001";
 } else {
   const valorBruto = pedido.valor / 1000;
@@ -983,7 +983,7 @@ if (pedido.tipo === "curtidas") {
   valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
 }
 
-const tipoAcaoRetorno = pedido.tipo === "curtidas" ? "curtir" : "seguir";
+const tipoAcaoRetorno = pedido.tipo === "curtir" ? "curtir" : "seguir";
 
 return res.status(200).json({
   status: "sucess",
@@ -1035,21 +1035,6 @@ if (data.status === "ENCONTRADA") {
 
     for (const pedido of pedidosRetry) {
       const id_action = pedido._id;
-
-      const jaFez = await ActionHistory.findOne({
-        id_action,
-        id_conta: id_tiktok,
-        acao_validada: { $in: [true, null] }
-      });
-
-      if (jaFez) continue;
-
-      const feitas = await ActionHistory.countDocuments({
-        id_action,
-        acao_validada: { $in: [true, null] }
-      });
-
-      if (feitas >= pedido.quantidade) continue;
 
       const nomeUsuario = pedido.link.includes("@")
         ? pedido.link.split("@")[1].split(/[/?#]/)[0]
