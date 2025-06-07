@@ -382,7 +382,7 @@ if (url.startsWith("/api/historico_acoes")) {
   if (nomeUsuarioParam) {
     // Busca diretamente pelo nome de usuário, ignorando o token
     const historico = await ActionHistory
-      .find({ nome_usuario: nomeUsuarioParam })
+      .find({ nome_usuario: nomeUsuarioParam, acao_validada: { $ne: "pulada" } })
       .sort({ data: -1 });
   
     const formattedData = historico.map(action => {
@@ -408,7 +408,7 @@ if (url.startsWith("/api/historico_acoes")) {
 
   try {
     const historico = await ActionHistory
-      .find({ user: usuario._id })
+      .find({ user: usuario._id, acao_validada: { $ne: "pulada" } })
       .sort({ data: -1 });
 
     const formattedData = historico.map(action => {
