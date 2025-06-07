@@ -46,13 +46,15 @@ const formatarValorRanking = (valor) => {
         const urlBind = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nomeUsuario}`;
 
         try {
-            const { data } = await axios.get(urlBind);
+const { data } = await axios.get(urlBind);
+console.log("Resposta da API externa bind_tk.php:", data);
 
-            if (data.status === "success") {
-                return res.status(200).json({ id_conta: data.id_conta });
-            } else {
-                return res.status(400).json({ error: "Erro ao vincular conta." });
-            }
+if (data.status === "success") {
+    return res.status(200).json({ id_conta: data.id_conta });
+} else {
+    // Retorna o erro real da API externa para o frontend para facilitar debug
+    return res.status(400).json({ error: data.message || "Erro ao vincular conta." });
+}
         } catch (error) {
             console.error("Erro ao vincular conta:", error);
             return res.status(500).json({ error: "Erro interno ao vincular conta." });
