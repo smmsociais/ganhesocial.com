@@ -1117,6 +1117,18 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
+function normalizarTipo(tipo) {
+  const mapa = {
+    seguir: 'seguir',
+    seguiram: 'seguir',
+    'Seguir': 'seguir',
+    curtidas: 'curtir',
+    curtir: 'curtir',
+    'Curtir': 'curtir',
+  };
+  return mapa[tipo?.toLowerCase?.()] || 'seguir';
+}
+
     // 🔍 Verificar se a ação é local (existe no Pedido)
     const pedidoLocal = await Pedido.findById(id_action);
 
