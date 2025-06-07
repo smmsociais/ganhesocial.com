@@ -618,7 +618,7 @@ async function bindAccount() {
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
     }
 
-    async function tentarBuscarLocal() {
+    async function tentarBuscarSMM() {
         if (!id_conta || id_conta === "null") {
             console.warn("id_conta ausente. Ignorando busca local.");
             return false;
