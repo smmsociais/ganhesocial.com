@@ -18,7 +18,7 @@ const ActionHistorySchema = new mongoose.Schema({
   id_acao_smm: { type: String, required: false },
   unique_id: { type: String },
   url_dir: { type: String, required: true },
-  acao_validada: { type: String, enum: ['validada', 'pendente', 'pulada', 'invalida'], default: 'pendente' },
+  acao_validada: { type: String, enum: ['valida', 'pendente', 'pulada', 'invalida'], default: 'pendente' },
   valor_confirmacao: { type: Number, default: 0 },
   quantidade_pontos: { type: Number, required: true },
   tipo_acao: { type: String, required: true },
