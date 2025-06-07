@@ -586,6 +586,34 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
+let id_conta = null;
+let token = null;
+
+async function tentarBuscarSMM() {
+    if (!id_conta || id_conta === "null") {
+        console.warn("id_conta ausente. Ignorando busca local.");
+        return false;
+    }
+
+    try {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+        const data = await response.json();
+
+        if (data.status === "ENCONTRADA") {
+            if (parseFloat(data.quantidade_pontos) === 4) {
+                return "ignorarLocalERepetirSMM";
+            }
+            await processarAcao(data, "local");
+            return true;
+        } else if (data.error === "Nenhuma ação encontrada.") {
+            return "repetirSMM";
+        }
+    } catch (e) {
+        console.error("Erro ao buscar ação local:", e);
+    }
+    return false;
+}
+
 async function bindAccount() {
     const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
@@ -607,6 +635,9 @@ async function bindAccount() {
         const data = await response.json();
 
         if (data.id_conta) {
+            id_conta = data.id_conta; // Atualiza a variável global
+            token = localStorage.getItem("token"); // Atualiza a variável global
+
             localStorage.setItem("id_conta", data.id_conta);
             document.getElementById("warningMessage").style.display = "none";
             document.getElementById("actionContent").style.display = "block";
@@ -616,31 +647,6 @@ async function bindAccount() {
         }
     } catch (error) {
         document.getElementById("statusMessage").textContent = "Erro na requisição.";
-    }
-
-    async function tentarBuscarSMM() {
-        if (!id_conta || id_conta === "null") {
-            console.warn("id_conta ausente. Ignorando busca local.");
-            return false;
-        }
-
-        try {
-            const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-            const data = await response.json();
-
-            if (data.status === "ENCONTRADA") {
-                if (parseFloat(data.quantidade_pontos) === 4) {
-                    return "ignorarLocalERepetirSMM";
-                }
-                await processarAcao(data, "local");
-                return true;
-            } else if (data.error === "Nenhuma ação encontrada.") {
-                return "repetirSMM";
-            }
-        } catch (e) {
-            console.error("Erro ao buscar ação local:", e);
-        }
-        return false;
     }
             async function processarAcao(data, origem) {
                 document.getElementById("statusMessage").textContent = "";
