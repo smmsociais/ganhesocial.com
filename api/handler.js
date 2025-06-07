@@ -976,11 +976,7 @@ let valorFinal;
 if (pedido.tipo === "curtir") {
   valorFinal = "0.001";
 } else {
-  const valorBruto = pedido.valor / 1000;
-  const valorDescontado = (valorBruto > 0.004)
-    ? valorBruto - 0.001
-    : valorBruto;
-  valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  valorFinal = "0.006";
 }
 
 const tipoAcaoRetorno = pedido.tipo === "curtir" ? "curtir" : "seguir";
