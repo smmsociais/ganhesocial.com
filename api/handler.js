@@ -1117,18 +1117,6 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
-function normalizarTipo(tipo) {
-  const mapa = {
-    seguir: 'seguir',
-    seguiram: 'seguir',
-    'Seguir': 'seguir',
-    curtidas: 'curtir',
-    curtir: 'curtir',
-    'Curtir': 'curtir',
-  };
-  return mapa[tipo?.toLowerCase?.()] || 'seguir';
-}
-
     // 🔍 Verificar se a ação é local (existe no Pedido)
     const pedidoLocal = await Pedido.findById(id_action);
 
@@ -1139,13 +1127,12 @@ function normalizarTipo(tipo) {
 if (pedidoLocal) {
   console.log("📦 Confirmando ação local:", id_action);
 
-  const valorBruto = pedidoLocal.valor / 1000;
-  const valorDescontado = valorBruto > 0.004 ? valorBruto - 0.001 : valorBruto;
-  valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
-  
 tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
+
 if (tipo_acao === 'curtir') {
   valorFinal = 0.001;
+} else if (tipo_acao === 'seguir') {
+  valorFinal = 0.006;
 }
 
   url_dir = pedidoLocal.link;
