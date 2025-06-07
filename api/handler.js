@@ -1212,14 +1212,14 @@ const newAction = new ActionHistory({
   token,
   nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok)?.nomeConta,
   tipo_acao,
-  tipo: tipo_acao, // <- Campo obrigatório no schema
+  tipo: tipo_acao,
   quantidade_pontos: valorFinal,
   url_dir,
   id_conta: id_tiktok,
   id_action,
-  id_pedido: id_action, // <- Campo obrigatório no schema
+  id_pedido: id_action,
   user: usuario._id,
-  acao_validada: null,
+  acao_validada: "pendente",
   valor_confirmacao: valorFinal,
   data: new Date()
 });
