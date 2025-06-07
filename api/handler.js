@@ -945,21 +945,21 @@ const pedidos = await Pedido.find({
     for (const pedido of pedidos) {
       const id_action = pedido._id;
 
-      const jaFez = await ActionHistory.findOne({
-        id_action,
-        id_conta: id_tiktok,
-        acao_validada: { $in: [true, null] }
-      });
+const jaFez = await ActionHistory.findOne({
+  id_pedido,
+  id_conta,
+  acao_validada: { $in: ['pendente', 'validada'] }
+});
 
       if (jaFez) {
         console.log(`[GET_ACTION] Ação local já feita para pedido ${id_action}, pulando`);
         continue;
       }
 
-      const feitas = await ActionHistory.countDocuments({
-        id_action,
-        acao_validada: { $in: [true, null] }
-      });
+const feitas = await ActionHistory.countDocuments({
+  id_pedido,
+  acao_validada: { $in: ['pendente', 'validada'] }
+});
 
       if (feitas >= pedido.quantidade) {
         console.log(`[GET_ACTION] Limite atingido para pedido ${id_action}, pulando`);
