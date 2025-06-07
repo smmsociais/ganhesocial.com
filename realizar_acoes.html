@@ -601,16 +601,19 @@ async function bindAccount() {
         const data = await response.json();
         console.log("Resposta da API /vincular_conta:", data);
 
-        // Caso a conta tenha sido vinculada corretamente
-        if (data.id_conta) {
-            localStorage.setItem("id_conta", data.id_conta);
-        } else {
-            // Se a resposta for WRONG_USER, apenas registra e continua
-            console.warn("Vinculação falhou ou foi ignorada:", data.error);
-            // Armazena mesmo assim um valor de fallback no localStorage (opcional)
-            localStorage.setItem("id_conta", "fallback_" + selectedAccount);
-        }
-
+if (data.id_conta) {
+    localStorage.setItem("id_conta", data.id_conta);
+    localStorage.setItem("conta_invalida", "false");
+} else {
+    if (data.error === "WRONG_USER") {
+        console.warn("WRONG_USER recebido, usando fallback.");
+        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
+        localStorage.setItem("conta_invalida", "true");
+    } else {
+        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
+        return;
+    }
+}
         // Prossegue independentemente do resultado da vinculação
         document.getElementById("warningMessage").style.display = "none";
         document.getElementById("actionContent").style.display = "block";
@@ -634,6 +637,7 @@ async function fetchAction() {
     id_conta = localStorage.getItem("id_conta");
     token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
+     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
     if (!id_conta || !token || id_conta === "null" || !actionType) {
         document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
@@ -759,26 +763,26 @@ async function fetchAction() {
                 document.getElementById("actionContent").style.opacity = "1";
             }
 
-            try {
-                const tipoAcao = document.getElementById("actionType").value;
-                const encontrouSMM = await tentarBuscarSMM();
+    try {
+        const tipoAcao = document.getElementById("actionType").value;
+        const encontrouSMM = await tentarBuscarSMM();
 
-                if (!encontrouSMM) {
-                    let resultadoLocal = false;
+        if (!encontrouSMM) {
+            let resultadoLocal = false;
 
-                    if (tipoAcao !== "curtir") {
-                        resultadoLocal = await tentarBuscarLocal();
-                    }
+            if (!contaInvalida && tipoAcao !== "curtir") {
+                resultadoLocal = await tentarBuscarLocal();
+            }
 
-                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                        const novaTentativa = await tentarBuscarSMM();
-                        if (!novaTentativa) {
-                            exibirContagemRegressiva();
-                        }
-                    } else if (!resultadoLocal) {
-                        exibirContagemRegressiva();
-                    }
+            if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+                const novaTentativa = await tentarBuscarSMM();
+                if (!novaTentativa) {
+                    exibirContagemRegressiva();
                 }
+            } else if (!resultadoLocal) {
+                exibirContagemRegressiva();
+            }
+        }
 
             } catch (error) {
                 console.error("Erro ao buscar ações:", error);
