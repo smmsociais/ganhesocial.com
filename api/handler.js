@@ -25,7 +25,7 @@ async function salvarAcaoComLimitePorUsuario(novaAcao) {
 }
 
 const formatarValorRanking = (valor) => {
-  if (valor < 1) return null;
+  if (valor < 1) return "1+";
   if (valor < 5) return "5+";
   if (valor < 10) return "10+";
   if (valor < 100) return "50+";
