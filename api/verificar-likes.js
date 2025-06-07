@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
     // 3) Busca as ações pendentes
     const acoes = await colecao
-      .find({ acao_validada: null, tipo_acao: "curtir" })
+      .find({ acao_validada: "pendente", tipo_acao: "curtir" })
       .limit(100)
       .toArray();
 
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
         // 5) Chama a API interna para pegar secUid
         const infoRes = await axios.get(
           `${BASE_URL}/api/user-info?unique_id=${valid.nome_usuario}`,
-          { timeout: 5000 }
+          { timeout: 15000 }
         );
         const secUid = infoRes.data?.data?.user?.secUid;
         if (!secUid) {
@@ -102,7 +102,7 @@ export default async function handler(req, res) {
             "x-rapidapi-key": RAPIDAPI_KEY,
             "x-rapidapi-host": "tiktok-api23.p.rapidapi.com",
           },
-          timeout: 7000,
+          timeout: 15000,
         });
         const likedVideos = likedRes.data?.itemList || [];
         const liked = likedVideos.some((v) => v.id === videoId || v.video_id === videoId);
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
               )
             );
 
-            // 10) Insere no Mongoose (DailyEarning) — agora funciona porque chamamos connectDB()
+            // 10) Insere no Mongoose (DailyEarning)
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
@@ -165,7 +165,7 @@ await DailyEarning.updateOne(
                 },
                 {
                   headers: { Authorization: `Bearer ${SMM_API_KEY}` },
-                  timeout: 5000,
+                  timeout: 15000,
                 }
               );
             } catch (err) {
