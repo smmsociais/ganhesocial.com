@@ -466,9 +466,9 @@
         <div id="pagina"></div>
         <div class="container">
             <h2>Realizar Ações TikTok</h2>
-            <select id="accountSelect" onchange="bindAccount()">
-                <option value="" selected disabled>Selecione uma conta</option>
-            </select>
+<select id="accountSelect" onchange="bindAccount()">
+    <option value="" selected disabled>Selecione uma conta</option>
+</select>
 
             <!-- Novo formulário para tipo de ação -->
             <div class="action-type-container">
@@ -619,42 +619,36 @@
                 document.getElementById("actionType").disabled = false;
             }
         }
- async function fetchAction() {
-    const id_conta = localStorage.getItem("id_conta");
-    const token = localStorage.getItem("token");
-    const actionType = document.getElementById("actionType").value;
+ async function bindAccount() {
+    const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
-    // Validação mínima: exige apenas token e tipo de ação
-    if (!token || !actionType) {
-        document.getElementById("statusMessage").textContent = "Selecione um tipo de ação e esteja logado.";
-        document.getElementById("actionContent").style.opacity = "1";
+    if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
         return;
     }
 
-    if (document.getElementById("actionType").disabled) return;
+    try {
+        const response = await fetch("/api/vincular_conta", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ nomeUsuario: selectedAccount })
+        });
 
-    document.getElementById("actionContent").style.opacity = "0";
+        const data = await response.json();
 
-    async function tentarBuscarSMM() {
-        try {
-            if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-                console.warn("Tipo de ação inválido:", actionType);
-                return false;
-            }
-
-            const response = await fetch(`/api/buscar_acao_smm?token=${token}&tipo=${actionType}`);
-            const data = await response.json();
-
-            if (data.status === "ENCONTRADA") {
-                await processarAcao(data, "smm");
-                return true;
-            } else {
-                console.log("Nenhuma ação SMM encontrada.");
-            }
-        } catch (e) {
-            console.error("Erro ao buscar ação SMM:", e);
+        if (data.id_conta) {
+            localStorage.setItem("id_conta", data.id_conta);
+            document.getElementById("warningMessage").style.display = "none";
+            document.getElementById("actionContent").style.display = "block";
+            fetchAction();
+        } else {
+            document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
         }
-        return false;
+    } catch (error) {
+        document.getElementById("statusMessage").textContent = "Erro na requisição.";
     }
 
     async function tentarBuscarLocal() {
