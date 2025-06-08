@@ -30,8 +30,7 @@
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
 
-            --primary-gradient: linear-gradient(135deg, #1e1e1e, #1e1e1e);
-            --primary-gradient-dark: linear-gradient(135deg, #2d2d2d, #1e1e1e);
+
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
@@ -683,6 +682,11 @@
             .logo-mobile {
                 display: none;
             }
+
+            /* Esconde o botão de fechar no desktop */
+            .menu-close-btn {
+                display: none !important;
+            }
         }
 
         @media (max-width: 991px) {
@@ -693,6 +697,24 @@
             /* Esconde o header quando o menu está aberto */
             body.menu-open .header {
                 display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: var(--text-light);
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
@@ -710,6 +732,9 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
@@ -856,8 +881,9 @@
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -871,16 +897,20 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
+            }
 
-            menuOverlay.addEventListener('click', function () {
+            function closeMenu() {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
 
             // Carrega saldo do usuário
             await loadUserBalance();
