@@ -441,15 +441,54 @@
             background-color: rgba(220, 53, 69, 0.1);
         }
 
-        /* Social Media Icons */
-        .social-icon {
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-        }
+.pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.pagination-info {
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination button.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.pagination span {
+    padding: 8px 12px;
+}
 
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
@@ -850,12 +889,11 @@
             <!-- Informações de Paginação -->
             <div id="pagination-info" class="pagination-info" style="text-align: center; margin-top: 10px;"></div>
 
-            <!-- Paginação -->
-            <div class="pagination" id="pagination" style="display: none;">
-                <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
-                <span id="page-info">Página 1 de 1</span>
-                <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
-            </div>
+<!-- Paginação -->
+<div class="pagination-container">
+    <div id="pagination-info" class="pagination-info"></div>
+    <div class="pagination" id="pagination"></div>
+</div>
 
         </div>
     </div>
@@ -909,39 +947,36 @@
             let allActions = [];
 
             // Carregar dados da API
-            async function loadData(page = 1) {
-                try {
-                    currentPage = page;
-                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Carregando...</td></tr>';
+async function loadData(page = 1) {
+    try {
+        currentPage = page;
+        document.getElementById('historyList').innerHTML = '<tr id="loading-row"><td colspan="6">Carregando...</td></tr>';
 
-                    // Se ainda não carregamos todos os dados, buscar da API
-                    if (allActions.length === 0) {
-                        const response = await fetch("/api/historico_acoes", {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-                        const historyData = await response.json();
-                        allActions = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
-                    }
-
-                    // Calcular total de páginas
-                    totalPages = Math.max(1, Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages));
-
-                    // Atualizar informações de paginação
-                    updatePaginationInfo();
-
-                    // Gerar paginação
-                    generatePagination();
-
-                    // Exibir itens da página atual
-                    displayPageItems();
-
-                } catch (error) {
-                    console.error("Erro ao carregar histórico:", error);
-                    historyList.innerHTML = '<tr><td colspan="7" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+        if (allActions.length === 0) {
+            const response = await fetch("/api/historico_acoes", {
+                headers: {
+                    'Authorization': `Bearer ${token}`
                 }
-            }
+            });
+            const historyData = await response.json();
+            allActions = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
+        }
+
+        totalPages = Math.max(1, Math.min(Math.ceil(allActions.length / itemsPerPage), maxPages));
+
+        updatePaginationInfo();
+        generatePagination();
+        displayPageItems();
+
+        // Mostra ou esconde a paginação conforme necessário
+        const pagination = document.getElementById('pagination');
+        pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+        document.getElementById('historyList').innerHTML = '<tr><td colspan="6" class="no-actions">Erro ao carregar histórico de ações.</td></tr>';
+    }
+}
 
             function displayPageItems() {
                 const startIndex = (currentPage - 1) * itemsPerPage;
@@ -996,54 +1031,88 @@
             }
 
             // Gerar controles de paginação
-            function generatePagination() {
-                pagination.innerHTML = '';
+// Gerar controles de paginação
+function generatePagination() {
+    const pagination = document.getElementById('pagination');
+    pagination.style.display = 'flex'; // Garante que a paginação será exibida
+    pagination.innerHTML = '';
 
-                // Botão Anterior
-                const prevButton = document.createElement("button");
-                prevButton.innerHTML = "&laquo; Anterior";
-                prevButton.disabled = currentPage === 1;
-                prevButton.addEventListener("click", () => loadData(currentPage - 1));
-                pagination.appendChild(prevButton);
+    if (totalPages <= 1) return; // Não mostra paginação se houver apenas 1 página
 
-                // Botão fixo para página 1
-                const pageOneButton = document.createElement("button");
-                pageOneButton.textContent = "1";
-                if (currentPage === 1) {
-                    pageOneButton.classList.add("active");
-                }
-                pageOneButton.addEventListener("click", () => loadData(1));
-                pagination.appendChild(pageOneButton);
+    // Botão Anterior
+    const prevButton = document.createElement("button");
+    prevButton.id = "prev-page";
+    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener("click", () => loadData(currentPage - 1));
+    pagination.appendChild(prevButton);
 
-                // Separador se necessário
-                if (currentPage > 6) {
-                    const dots = document.createElement("span");
-                    dots.textContent = "...";
-                    pagination.appendChild(dots);
-                }
+    // Botão fixo para página 1
+    if (totalPages > 1) {
+        const pageOneButton = document.createElement("button");
+        pageOneButton.textContent = "1";
+        if (currentPage === 1) {
+            pageOneButton.classList.add("active");
+        }
+        pageOneButton.addEventListener("click", () => loadData(1));
+        pagination.appendChild(pageOneButton);
+    }
 
-                // Botões de páginas após a página 1
-                const maxPageButtons = 5;
-                let startPage = Math.max(2, currentPage); // começa no mínimo da página 2
-                let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+    // Mostrar ... se necessário
+    if (currentPage > 3 && totalPages > 5) {
+        const dots = document.createElement("span");
+        dots.textContent = "...";
+        pagination.appendChild(dots);
+    }
 
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = document.createElement("button");
-                    pageButton.textContent = i;
-                    if (i === currentPage) {
-                        pageButton.classList.add("active");
-                    }
-                    pageButton.addEventListener("click", () => loadData(i));
-                    pagination.appendChild(pageButton);
-                }
+    // Botões de páginas intermediárias
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
 
-                // Botão Próximo
-                const nextButton = document.createElement("button");
-                nextButton.innerHTML = "Próximo &raquo;";
-                nextButton.disabled = currentPage === totalPages;
-                nextButton.addEventListener("click", () => loadData(currentPage + 1));
-                pagination.appendChild(nextButton);
-            }
+    if (currentPage <= 3) {
+        endPage = Math.min(5, totalPages - 1);
+    } else if (currentPage >= totalPages - 2) {
+        startPage = Math.max(totalPages - 4, 2);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === 1 || i === totalPages) continue;
+
+        const pageButton = document.createElement("button");
+        pageButton.textContent = i;
+        if (i === currentPage) {
+            pageButton.classList.add("active");
+        }
+        pageButton.addEventListener("click", () => loadData(i));
+        pagination.appendChild(pageButton);
+    }
+
+    // Mostrar ... se necessário
+    if (currentPage < totalPages - 2 && totalPages > 5) {
+        const dots = document.createElement("span");
+        dots.textContent = "...";
+        pagination.appendChild(dots);
+    }
+
+    // Botão para última página (se houver mais de 1 página)
+    if (totalPages > 1) {
+        const lastPageButton = document.createElement("button");
+        lastPageButton.textContent = totalPages;
+        if (currentPage === totalPages) {
+            lastPageButton.classList.add("active");
+        }
+        lastPageButton.addEventListener("click", () => loadData(totalPages));
+        pagination.appendChild(lastPageButton);
+    }
+
+    // Botão Próximo
+    const nextButton = document.createElement("button");
+    nextButton.id = "next-page";
+    nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener("click", () => loadData(currentPage + 1));
+    pagination.appendChild(nextButton);
+}
 
             // Inicializar carregando a primeira página
             loadData(1).then(() => {
