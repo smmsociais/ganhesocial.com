@@ -5,89 +5,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adicionar Conta TikTok</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
-
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
-            --error-color: #dc3545;
-            --warning-color: #ffc107;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
             --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
         .menu-item[href="adicionar_conta"] {
             color: white;
             font-weight: bold;
-        }        
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
+        }
+
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 700px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 700px;
-            margin: 30px auto;
-            transition: background 0.3s;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
         }
 
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Requirements Box */
         .requirements-box {
             background-color: #fff8e1;
-            border-left: 4px solid var(--warning-color);
-            padding: 12px;
-            margin-bottom: 15px;
+            border-left: 4px solid var(--pending-color);
+            padding: 15px;
+            margin-bottom: 20px;
             text-align: left;
             border-radius: 4px;
             font-size: 14px;
@@ -95,9 +148,12 @@
 
         .requirements-box h3 {
             margin-top: 0;
-            color: var(--warning-color);
+            color: var(--pending-color);
             font-size: 15px;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .requirements-box ul {
@@ -107,67 +163,76 @@
         }
 
         .requirements-box li {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
+        /* Input Styles */
         .input-box {
             width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
             background: var(--container-light);
             color: var(--text-light);
-            transition: all 0.3s;
+            transition: var(--transition);
             box-sizing: border-box;
             font-size: 14px;
         }
 
         .input-box:focus {
-            border-color: var(--primary-color);
+            border-color: var(--button-light);
             outline: none;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
-        .add-button {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        /* Button Styles */
+        .btn-primary {
+            background: var(--button-light);
             color: white;
-            font-size: 14px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            background-color: var(--primary-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
         }
 
-        .add-button:hover {
-            background-color: #0056b3;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+            background: #0069d9;
         }
 
+        /* Message Box */
         .message-box {
-            padding: 10px;
-            margin: 12px 0;
-            border-radius: 5px;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
             display: none;
             font-size: 14px;
+            transition: var(--transition);
         }
 
         .error-message {
-            background-color: #f8d7da;
-            border-left: 4px solid var(--error-color);
-            color: var(--error-color);
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid var(--failed-color);
+            color: var(--failed-color);
         }
 
         .success-message {
-            background-color: #d4edda;
+            background-color: rgba(40, 167, 69, 0.1);
             border-left: 4px solid var(--success-color);
             color: var(--success-color);
         }
 
-        /* Estilos do menu hamburguer */
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -181,9 +246,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -193,21 +258,22 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -227,17 +293,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -246,48 +320,76 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header,
+            .header {
+                background: var(--primary-gradient-dark);
+            }
+
             .container {
                 background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
             }
 
             .requirements-box {
                 background-color: #2a2a00;
-                border-left-color: var(--warning-color);
+                border-left-color: var(--pending-dark);
+            }
+
+            .requirements-box h3 {
+                color: var(--pending-dark);
             }
 
             .input-box {
                 background: var(--container-dark);
-                border: 1px solid var(--border-dark);
+                border-color: var(--border-dark);
                 color: var(--text-dark);
             }
 
+            .btn-primary {
+                background: var(--button-dark);
+            }
+
+            .btn-primary:hover {
+                background: #1a5cb8;
+            }
+
             .error-message {
-                background-color: #3a1a1d;
-                border-left-color: var(--error-color);
+                background-color: rgba(234, 67, 53, 0.1);
+                border-left-color: var(--failed-dark);
+                color: var(--failed-dark);
             }
 
             .success-message {
-                background-color: #1a3a1d;
-                border-left-color: var(--success-color);
-            }
-
-            .menu-toggle span {
-                background-color: var(--text-dark);
+                background-color: rgba(52, 168, 83, 0.1);
+                border-left-color: var(--success-dark);
+                color: var(--success-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -295,22 +397,64 @@
             }
 
             .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: var(--hover-dark);
             }
 
             .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-color: var(--border-dark);
             }
         }
 
-        /* Estilos para desktop */
-        @media (min-width: 992px) {
-            .desktop-header {
-                display: none;
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px;
             }
 
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
             body {
-                padding-left: 250px;
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
             }
 
             .menu-toggle {
@@ -329,21 +473,42 @@
             .logo-mobile {
                 display: none;
             }
+
+            .menu-close-btn {
+                display: none !important;
+            }
         }
 
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
             }
-        }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -357,25 +522,31 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Header para Mobile -->
     <div class="header desktop-header">
@@ -394,26 +565,30 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="container">
-        <h2>Adicionar Conta TikTok</h2>
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fab fa-tiktok"></i> Adicionar Conta TikTok</h2>
+            </div>
+            <div class="container-body">
+                <div class="requirements-box">
+                    <h3><i class="fas fa-info-circle"></i> Requisitos:</h3>
+                    <ul>
+                        <li>A sua conta do TikTok deve estar como pública.</li>
+                        <li>A sua conta deve ser real e ter no mínimo 2 publicações e foto de perfil.</li>
+                        <li>Conecte perfis de qualidade para receber mais ações.</li>
+                    </ul>
+                </div>
 
-        <div class="requirements-box">
-            <h3>Requisitos:</h3>
-            <ul>
-                <li>A sua conta do TikTok deve estar como pública.</li>
-                <li>A sua conta deve ser real e ter no mínimo 2 publicações e foto de perfil.</li>
-                <strong> Conecte perfis de qualidade para receber mais ações.</strong>
-            </ul>
+                <div id="messageBox" class="message-box" style="display: none;"></div>
+
+                <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (sem @)">
+                <button class="btn-primary" onclick="addAccount()">
+                    <i class="fas fa-plus-circle"></i> Adicionar Conta
+                </button>
+            </div>
         </div>
-
-        <div id="messageBox" class="message-box" style="display: none;"></div>
-
-        <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok">
-        <button class="add-button" onclick="addAccount()">Adicionar Conta</button>
     </div>
-
-    <!-- Menu Overlay para Mobile -->
-    <div class="menu-overlay" id="menuOverlay"></div>
 
     <script>
         // Função para exibir mensagens na página
@@ -496,8 +671,9 @@
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -511,16 +687,20 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
+            }
 
-            menuOverlay.addEventListener('click', function () {
+            function closeMenu() {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
 
             document.body.classList.add('loaded');
         });
