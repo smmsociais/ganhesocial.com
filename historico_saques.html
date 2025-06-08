@@ -31,7 +31,7 @@
             --shadow-dark: rgba(0, 0, 0, 0.3);
 
             --primary-gradient: linear-gradient(135deg, #1e1e1e, #1e1e1e);
-            --primary-gradient-dark: linear-gradient(135deg, #1e1e1e, #1e1e1e);
+            --primary-gradient-dark: linear-gradient(135deg, #2d2d2d, #1e1e1e);
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
@@ -344,7 +344,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
             backdrop-filter: blur(3px);
         }
@@ -359,7 +359,7 @@
             box-shadow: 2px 0 15px var(--shadow-light);
             transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -689,6 +689,11 @@
             .logo-mobile {
                 display: block;
             }
+
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
         }
 
         /* Initial Load */
@@ -725,6 +730,9 @@
         </div>
     </div>
 
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
     <!-- Header para Mobile -->
     <div class="header desktop-header">
         <div class="left-header">
@@ -739,7 +747,6 @@
                     alt="Logo GanheSocial" class="logo">
             </a>
         </div>
-    </div>
     </div>
 
     <!-- Conteúdo Principal -->
