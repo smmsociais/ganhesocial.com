@@ -5,119 +5,176 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realizar Ações - GanheSocial</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
 
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
-            display: flex;
-            flex-direction: column;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
         .menu-item[href="realizar_acoes"] {
             color: white;
             font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
         }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
         }
 
-        .desktop-balance-container {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-weight: bold;
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 5px;
-            z-index: 10;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
         }
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 20px;
-            margin-top: 20px;
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 95%;
-            /* Alterado de 200% para 90% */
-            max-width: 700px;
-            /* Aumente este valor para containers mais largos */
-            margin: auto auto 150px auto;
-            transition: background 0.3s;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
         }
 
-        .status-message {
-            margin-top: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #007BFF;
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
         }
 
-        .warning-box {
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
             display: block;
-            margin-top: 20px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background-color: var(--container-light);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-select:hover {
+            border-color: #adb5bd;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--button-light);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            margin: 20px 0;
             padding: 15px;
+            border-radius: var(--card-radius);
             border: 1px solid #ffcc00;
-            border-radius: 5px;
             background-color: #fff8e6;
             text-align: left;
         }
@@ -127,6 +184,7 @@
             margin-top: 0;
             margin-bottom: 10px;
             text-align: center;
+            font-size: 1.2rem;
         }
 
         .warning-box ul {
@@ -143,11 +201,113 @@
             margin-bottom: 0;
         }
 
+        /* Action Content */
         .action-content {
             display: none;
+            margin-top: 20px;
         }
 
-        /* Estilos do menu hamburguer */
+        .action-details {
+            margin-bottom: 20px;
+        }
+
+        .action-details p {
+            margin: 8px 0;
+            font-size: 1rem;
+        }
+
+        .action-details strong {
+            font-weight: 600;
+        }
+
+        .profile-image-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .profile-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border-light);
+            box-shadow: 0 4px 8px var(--shadow-light);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        .btn-danger {
+            background-color: var(--failed-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Status Message */
+        .status-message {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed-color);
+        }
+
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -161,9 +321,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -173,21 +333,22 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -207,17 +368,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -226,100 +395,60 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
-        }
-
-        /* Estilos padronizados para todos os botões */
-        .confirm-button,
-        .open-action-button,
-        .skip-button {
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            height: 40px;
-            box-sizing: border-box;
-        }
-
-        .confirm-button {
-            width: 100%;
-            margin-top: 10px;
-            background-color: #5cb85c;
-            color: white;
-        }
-
-        .confirm-button:hover {
-            background-color: #4cae4c;
-        }
-
-        /* Container dos botões de ação */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        /* Botão Pular Ação (agora à esquerda) */
-        .skip-button {
-            flex: 1;
-            background-color: #d9534f;
-            color: white;
-        }
-
-        .skip-button:hover {
-            background-color: #c9302c;
-        }
-
-        /* Botão Abrir Ação (agora à direita) */
-        .open-action-button {
-            flex: 1;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            text-align: center;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
-        .open-action-button:hover {
-            background-color: #0069d9;
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
         }
 
-        .profile-image-container {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
-        }
-
-        .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            display: none;
-        }
-
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header,
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
+            .header {
+                background: var(--primary-gradient-dark);
             }
 
-            .menu-toggle span {
-                background-color: var(--text-dark);
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
+            }
+
+            .form-select {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .form-select:hover {
+                border-color: #555;
+            }
+
+            .warning-box {
+                background-color: #2a2a00;
+                border-color: #ffcc00;
+            }
+
+            .profile-image {
+                border-color: var(--border-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -327,50 +456,62 @@
             }
 
             .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: var(--hover-dark);
             }
 
             .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .warning-box {
-                background-color: #2a2a00;
-                border-color: #ffcc00;
+                border-color: var(--border-dark);
             }
         }
 
-        .action-type-container {
-            margin-top: 15px;
-            margin-bottom: 15px;
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-container {
+                padding: 20px;
+            }
+
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
         }
 
-        .action-type-container label {
-            display: block;
-            margin-bottom: 5px;
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
         }
 
-        /* Estilo unificado para os selects */
-        #accountSelect,
-        #actionType {
-            padding: 4px 8px;
-            width: 33%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 13px;
-            height: auto;
-            line-height: 1.4;
-            box-sizing: border-box;
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .balance-chip {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
         }
 
-        /* Estilos para desktop */
+        /* Desktop Menu */
         @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
             .desktop-header {
                 display: none;
-            }
-
-            body {
-                padding-left: 250px;
             }
 
             .menu-toggle {
@@ -390,8 +531,8 @@
                 display: none;
             }
 
-            .desktop-balance-container {
-                display: flex;
+            .menu-close-btn {
+                display: none !important;
             }
         }
 
@@ -400,18 +541,31 @@
                 display: block;
             }
 
-            .desktop-balance-container {
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
                 display: none;
             }
-        }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -425,25 +579,31 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Header para Mobile -->
     <div class="header desktop-header">
@@ -462,25 +622,30 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="main-content">
-        <div id="pagina"></div>
-        <div class="container">
-            <h2>Realizar Ações TikTok</h2>
-            <select id="accountSelect" onchange="bindAccount()">
-                <option value="" selected disabled>Selecione uma conta</option>
-            </select>
-
-            <!-- Novo formulário para tipo de ação -->
-            <div class="action-type-container">
-                <select id="actionType">
-                    <option value="seguir">Seguir</option>
-                    <option value="curtir">Curtir</option>
-                    <option value="seguir_curtir">Seguir e Curtir</option>
-                </select>
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-tasks"></i> Realizar Ações TikTok</h2>
             </div>
-            <p id="statusMessage" class="status-message"></p>
+            <div class="container-body">
+                <div class="form-group">
+                    <label for="accountSelect" class="form-label">Selecione uma conta</label>
+                    <select id="accountSelect" class="form-select" onchange="bindAccount()">
+                        <option value="" selected disabled>Selecione uma conta</option>
+                    </select>
+                </div>
 
-            <div id="actionBox" class="action-box">
+                <div class="form-group">
+                    <label for="actionType" class="form-label">Tipo de Ação</label>
+                    <select id="actionType" class="form-select">
+                        <option value="seguir">Seguir</option>
+                        <option value="curtir">Curtir</option>
+                        <option value="seguir_curtir">Seguir e Curtir</option>
+                    </select>
+                </div>
+
+                <div id="statusMessage" class="status-message"></div>
+
                 <div id="warningMessage" class="warning-box">
                     <h3>Atenção</h3>
                     <ul>
@@ -491,22 +656,29 @@
                 </div>
 
                 <div id="actionContent" class="action-content">
-                    <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
-                    <p><strong>Usuário:</strong> <span id="username"></span></p>
-                    <p><strong>Valor:</strong> <span id="points"></span></p>
+                    <div class="action-details">
+                        <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
+                        <p><strong>Usuário:</strong> <span id="username"></span></p>
+                        <p><strong>Valor:</strong> <span id="points"></span></p>
+                    </div>
 
                     <div class="profile-image-container">
                         <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
                     </div>
 
-                    <div class="action-buttons">
-                        <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                        <a id="actionUrl" href="#" target="_blank" class="open-action-button"
-                            onclick="showConfirmButton()">Abrir Ação</a>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="skipAction()">
+                            <i class="fas fa-times"></i> Pular Ação
+                        </button>
+                        <a id="actionUrl" href="#" target="_blank" class="btn btn-primary"
+                            onclick="showConfirmButton()">
+                            <i class="fas fa-external-link-alt"></i> Abrir Ação
+                        </a>
                     </div>
 
-                    <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
-                        style="display: none;">Confirmar Ação</button>
+                    <button id="confirmButton" class="btn btn-success" onclick="confirmAction()" style="display: none;">
+                        <i class="fas fa-check"></i> Confirmar Ação
+                    </button>
                 </div>
             </div>
         </div>
@@ -547,7 +719,7 @@
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });         
+            });
 
             try {
                 await loadAccounts();
@@ -578,52 +750,52 @@
         });
         let currentActionData = null;
 
-async function bindAccount() {
-    const selectedAccount = document.getElementById("accountSelect").value?.trim();
+        async function bindAccount() {
+            const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
-    if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
-        document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
-        return;
-    }
+            if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
+                return;
+            }
 
-    console.log("Conta selecionada para vincular:", selectedAccount);
+            console.log("Conta selecionada para vincular:", selectedAccount);
 
-    try {
-        const response = await fetch("/api/vincular_conta", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ nomeUsuario: selectedAccount })
-        });
+            try {
+                const response = await fetch("/api/vincular_conta", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ nomeUsuario: selectedAccount })
+                });
 
-        const data = await response.json();
-        console.log("Resposta da API /vincular_conta:", data);
+                const data = await response.json();
+                console.log("Resposta da API /vincular_conta:", data);
 
-if (data.id_conta) {
-    localStorage.setItem("id_conta", data.id_conta);
-    localStorage.setItem("conta_invalida", "false");
-} else {
-    if (data.error === "WRONG_USER") {
-        console.warn("WRONG_USER recebido, usando fallback.");
-        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
-        localStorage.setItem("conta_invalida", "true");
-    } else {
-        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
-        return;
-    }
-}
-        // Prossegue independentemente do resultado da vinculação
-        document.getElementById("warningMessage").style.display = "none";
-        document.getElementById("actionContent").style.display = "block";
-        fetchAction();
+                if (data.id_conta) {
+                    localStorage.setItem("id_conta", data.id_conta);
+                    localStorage.setItem("conta_invalida", "false");
+                } else {
+                    if (data.error === "WRONG_USER") {
+                        console.warn("WRONG_USER recebido, usando fallback.");
+                        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
+                        localStorage.setItem("conta_invalida", "true");
+                    } else {
+                        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
+                        return;
+                    }
+                }
+                // Prossegue independentemente do resultado da vinculação
+                document.getElementById("warningMessage").style.display = "none";
+                document.getElementById("actionContent").style.display = "block";
+                fetchAction();
 
-    } catch (error) {
-        console.error("Erro na requisição:", error);
-        document.getElementById("statusMessage").textContent = "Erro na requisição.";
-    }
-}
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                document.getElementById("statusMessage").textContent = "Erro na requisição.";
+            }
+        }
 
         function ativarSelecaoTipoAcao() {
             const id_conta = localStorage.getItem("id_conta");
@@ -633,45 +805,45 @@ if (data.id_conta) {
                 document.getElementById("actionType").disabled = false;
             }
         }
-async function fetchAction() {
-    id_conta = localStorage.getItem("id_conta");
-    token = localStorage.getItem("token");
-    const actionType = document.getElementById("actionType").value;
-     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
+        async function fetchAction() {
+            id_conta = localStorage.getItem("id_conta");
+            token = localStorage.getItem("token");
+            const actionType = document.getElementById("actionType").value;
+            const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
-    if (!id_conta || !token || id_conta === "null" || !actionType) {
-        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-        document.getElementById("actionContent").style.opacity = "1";
-        return;
-    }
+            if (!id_conta || !token || id_conta === "null" || !actionType) {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+                document.getElementById("actionContent").style.opacity = "1";
+                return;
+            }
 
-    if (document.getElementById("actionType").disabled) return;
+            if (document.getElementById("actionType").disabled) return;
 
-    document.getElementById("actionContent").style.opacity = "0";
+            document.getElementById("actionContent").style.opacity = "0";
 
-    async function tentarBuscarSMM() {
-        try {
-            const tipoAcao = document.getElementById("actionType").value;
+            async function tentarBuscarSMM() {
+                try {
+                    const tipoAcao = document.getElementById("actionType").value;
 
-            if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
-                console.warn("Tipo de ação inválido:", tipoAcao);
+                    if (!["seguir", "curtir", "seguir_curtir"].includes(tipoAcao)) {
+                        console.warn("Tipo de ação inválido:", tipoAcao);
+                        return false;
+                    }
+
+                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
+                    const data = await response.json();
+
+                    if (data.status === "ENCONTRADA") {
+                        await processarAcao(data, "smm");
+                        return true;
+                    } else {
+                        console.log("Nenhuma ação SMM encontrada.");
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar ação SMM:", e);
+                }
                 return false;
             }
-
-            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${tipoAcao}`);
-            const data = await response.json();
-
-            if (data.status === "ENCONTRADA") {
-                await processarAcao(data, "smm");
-                return true;
-            } else {
-                console.log("Nenhuma ação SMM encontrada.");
-            }
-        } catch (e) {
-            console.error("Erro ao buscar ação SMM:", e);
-        }
-        return false;
-    }
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
@@ -763,26 +935,26 @@ async function fetchAction() {
                 document.getElementById("actionContent").style.opacity = "1";
             }
 
-    try {
-        const tipoAcao = document.getElementById("actionType").value;
-        const encontrouSMM = await tentarBuscarSMM();
+            try {
+                const tipoAcao = document.getElementById("actionType").value;
+                const encontrouSMM = await tentarBuscarSMM();
 
-        if (!encontrouSMM) {
-            let resultadoLocal = false;
+                if (!encontrouSMM) {
+                    let resultadoLocal = false;
 
-            if (!contaInvalida && tipoAcao !== "curtir") {
-                resultadoLocal = await tentarBuscarLocal();
-            }
+                    if (!contaInvalida && tipoAcao !== "curtir") {
+                        resultadoLocal = await tentarBuscarLocal();
+                    }
 
-            if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                const novaTentativa = await tentarBuscarSMM();
-                if (!novaTentativa) {
-                    exibirContagemRegressiva();
+                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+                        const novaTentativa = await tentarBuscarSMM();
+                        if (!novaTentativa) {
+                            exibirContagemRegressiva();
+                        }
+                    } else if (!resultadoLocal) {
+                        exibirContagemRegressiva();
+                    }
                 }
-            } else if (!resultadoLocal) {
-                exibirContagemRegressiva();
-            }
-        }
 
             } catch (error) {
                 console.error("Erro ao buscar ações:", error);
@@ -873,45 +1045,45 @@ async function fetchAction() {
             fetchAction();
         }
 
-async function skipAction() {
-    try {
-        const tipo = document.getElementById("actionType").value;
-        const nome_usuario = document.getElementById("username").textContent; // Corrigido de "nomeUsuario" para "username"
-        const url_dir = document.getElementById("actionUrl").href; // Corrigido de "perfilLink" para "actionUrl"
-        const quantidade_pontos_text = document.getElementById("points").textContent; // Corrigido de "pontos" para "points"
-        const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
-        const tipo_acao = tipo;
+        async function skipAction() {
+            try {
+                const tipo = document.getElementById("actionType").value;
+                const nome_usuario = document.getElementById("username").textContent; // Corrigido de "nomeUsuario" para "username"
+                const url_dir = document.getElementById("actionUrl").href; // Corrigido de "perfilLink" para "actionUrl"
+                const quantidade_pontos_text = document.getElementById("points").textContent; // Corrigido de "pontos" para "points"
+                const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
+                const tipo_acao = tipo;
 
-        const id_conta = localStorage.getItem("id_conta"); // Adicionado
-        const token = localStorage.getItem("token"); // Adicionado
+                const id_conta = localStorage.getItem("id_conta"); // Adicionado
+                const token = localStorage.getItem("token"); // Adicionado
 
-        const response = await fetch("/api/pular_acao", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // Adicionado header de autorização
-            },
-            body: JSON.stringify({
-                token,
-                id_pedido: currentActionData?.id_pedido, // Usando currentActionData
-                id_conta,
-                nome_usuario,
-                url_dir,
-                quantidade_pontos,
-                tipo_acao,
-                tipo
-            })
-        });
+                const response = await fetch("/api/pular_acao", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Adicionado header de autorização
+                    },
+                    body: JSON.stringify({
+                        token,
+                        id_pedido: currentActionData?.id_pedido, // Usando currentActionData
+                        id_conta,
+                        nome_usuario,
+                        url_dir,
+                        quantidade_pontos,
+                        tipo_acao,
+                        tipo
+                    })
+                });
 
-        const data = await response.json();
-        console.log("Resposta ao pular ação:", data);
+                const data = await response.json();
+                console.log("Resposta ao pular ação:", data);
 
-        // Buscar próxima ação
-        fetchAction();
-    } catch (error) {
-        console.error("Erro ao registrar ação pulada:", error);
-    }
-}
+                // Buscar próxima ação
+                fetchAction();
+            } catch (error) {
+                console.error("Erro ao registrar ação pulada:", error);
+            }
+        }
         async function loadAccounts() {
             try {
                 const token = localStorage.getItem("token");
