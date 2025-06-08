@@ -18,7 +18,10 @@
             --border-light: #dee2e6;
             --hover-light: #f1f1f1;
             --shadow-light: rgba(0, 0, 0, 0.1);
-            --label-light: #6c757d;
+            --label-light: #586069;
+            --positive-color: #2ecc71;
+            --negative-color: #e74c3c;
+            --neutral-color: #3498db;
 
             --bg-dark: #121212;
             --text-dark: #e0e0e0;
@@ -31,11 +34,14 @@
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
             --label-dark: #8b949e;
+            --positive-color-dark: #27ae60;
+            --negative-color-dark: #c0392b;
+            --neutral-color-dark: #2980b9;
+            --error-color: #f85149;
+            --success-color-dark: #238636;
 
             --card-radius: 12px;
             --transition: all 0.3s ease;
-            --primary-gradient: linear-gradient(135deg, #007bff 0%, #1a73e8 100%);
-            --primary-gradient-dark: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
         }
 
         body {
@@ -109,7 +115,7 @@
         /* Main Container */
         .main-container {
             padding: 30px;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -121,6 +127,10 @@
             transition: var(--transition);
             margin-bottom: 30px;
             border: 1px solid var(--border-light);
+            width: 100%;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 25px;
         }
 
         .container-header {
@@ -137,47 +147,44 @@
         }
 
         .container-body {
-            padding: 30px;
+            padding: 20px;
         }
 
         /* Form Styles */
         .form-group {
             margin-bottom: 20px;
+            text-align: left;
         }
 
         .form-label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--label-light);
-            font-size: 0.9rem;
+            color: var(--text-light);
         }
 
         .input-box {
             width: 100%;
             padding: 12px 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid var(--border-light);
-            background-color: var(--container-light);
+            background: var(--container-light);
             color: var(--text-light);
-            font-size: 1rem;
             transition: var(--transition);
             box-sizing: border-box;
+            font-size: 1rem;
         }
 
         .input-box:focus {
             border-color: var(--button-light);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
 
         .input-box[readonly] {
-            background-color: transparent;
-            border: none;
-            border-bottom: 1px solid var(--border-light);
-            border-radius: 0;
-            padding-left: 0;
-            cursor: default;
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            cursor: not-allowed;
         }
 
         .token-container {
@@ -190,7 +197,7 @@
             margin-left: 10px;
             cursor: pointer;
             color: var(--label-light);
-            font-size: 1.1rem;
+            font-size: 18px;
             transition: var(--transition);
         }
 
@@ -202,45 +209,41 @@
             position: absolute;
             right: 0;
             top: -30px;
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--text-light);
             color: white;
             padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            border-radius: 4px;
+            font-size: 12px;
             opacity: 0;
             transition: var(--transition);
-            pointer-events: none;
         }
 
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+        .save-button {
             width: 100%;
-            font-size: 1rem;
+            padding: 14px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            background: var(--primary-gradient);
+            transition: var(--transition);
+            font-weight: 600;
         }
 
-        .btn-primary:hover {
+        .save-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px var(--shadow-light);
-            opacity: 0.9;
         }
 
         .message {
             padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
+            margin: 20px 0;
+            border-radius: 6px;
             display: none;
-            font-size: 0.95rem;
+            font-size: 15px;
+            transition: var(--transition);
         }
 
         .error-message {
@@ -422,14 +425,108 @@
             }
         }
 
+        /* Dark Mode Styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .header {
+                background: var(--primary-gradient-dark);
+            }
+
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
+            }
+
+            .form-label {
+                color: var(--text-dark);
+            }
+
+            .input-box {
+                background: var(--container-dark);
+                border-color: var(--border-dark);
+                color: var(--text-dark);
+            }
+
+            .input-box[readonly] {
+                background-color: rgba(255, 255, 255, 0.05);
+                border-color: var(--border-dark);
+            }
+
+            .input-box:focus {
+                border-color: var(--button-dark);
+                box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+            }
+
+            .copy-icon {
+                color: var(--label-dark);
+            }
+
+            .copy-icon:hover {
+                color: var(--button-dark);
+            }
+
+            .copy-notification {
+                background: var(--text-dark);
+                color: var(--container-dark);
+            }
+
+            .error-message {
+                background-color: rgba(234, 67, 53, 0.1);
+                color: var(--failed-dark);
+                border-color: rgba(234, 67, 53, 0.2);
+            }
+
+            .success-message {
+                background-color: rgba(52, 168, 83, 0.1);
+                color: var(--success-dark);
+                border-color: rgba(52, 168, 83, 0.2);
+            }
+
+            .page-title {
+                color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: var(--hover-dark);
+            }
+
+            .menu-footer {
+                border-color: var(--border-dark);
+            }
+        }
+
         /* Responsive Styles */
         @media (max-width: 768px) {
             .main-container {
                 padding: 20px;
             }
 
-            .container-body {
+            .container {
                 padding: 20px;
+                width: calc(100% - 40px);
+            }
+
+            .page-title {
+                font-size: 1.5rem;
             }
         }
 
@@ -438,17 +535,17 @@
                 padding: 15px;
             }
 
-            .container-body {
+            .container {
                 padding: 15px;
+                width: calc(100% - 30px);
             }
 
-            .form-label {
-                font-size: 0.85rem;
+            .page-title {
+                font-size: 1.3rem;
             }
 
             .input-box {
                 padding: 10px 12px;
-                font-size: 0.95rem;
             }
         }
 
@@ -469,7 +566,6 @@
             animation: fadeIn 0.5s ease forwards;
         }
 
-        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -526,48 +622,43 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="main-container fade-in">
-        <div class="container">
-            <div class="container-header">
-                <h2><i class="fas fa-user-cog"></i> Minha Conta</h2>
+    <div class="main-container">
+        <div class="container fade-in">
+            <h2 class="page-title"><i class="fas fa-user-cog"></i> Seu Perfil</h2>
+
+            <div id="errorMessage" class="message error-message"></div>
+            <div id="successMessage" class="message success-message"></div>
+
+            <div class="form-group">
+                <label for="name" class="form-label">Nome</label>
+                <input type="text" id="name" class="input-box" maxlength="20">
             </div>
-            <div class="container-body">
-                <div id="errorMessage" class="message error-message"></div>
-                <div id="successMessage" class="message success-message"></div>
 
-                <div class="form-group">
-                    <label for="name" class="form-label">Nome</label>
-                    <input type="text" id="name" class="input-box" maxlength="20">
-                </div>
-
-                <div class="form-group">
-                    <label for="email" class="form-label">E-mail</label>
-                    <input type="email" id="email" class="input-box" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label for="authToken" class="form-label">Token de Autenticação</label>
-                    <div class="token-container">
-                        <input type="text" id="authToken" class="input-box" readonly>
-                        <span id="copyIcon" class="copy-icon" title="Copiar token"><i class="far fa-copy"></i></span>
-                        <span id="copyNotification" class="copy-notification">Copiado!</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="newPassword" class="form-label">Nova Senha</label>
-                    <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
-                    <input type="password" id="confirmPassword" class="input-box">
-                </div>
-
-                <button class="btn-primary" onclick="saveProfile()">
-                    <i class="fas fa-save"></i> Salvar Alterações
-                </button>
+            <div class="form-group">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" id="email" class="input-box" readonly>
             </div>
+
+            <div class="form-group">
+                <label for="authToken" class="form-label">Token de Autenticação</label>
+                <div class="token-container">
+                    <input type="text" id="authToken" class="input-box" readonly>
+                    <span id="copyIcon" class="copy-icon" title="Copiar token"><i class="far fa-copy"></i></span>
+                    <span id="copyNotification" class="copy-notification">Copiado!</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="newPassword" class="form-label">Nova Senha</label>
+                <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
+                <input type="password" id="confirmPassword" class="input-box">
+            </div>
+
+            <button class="save-button" onclick="saveProfile()"><i class="fas fa-save"></i> Salvar Alterações</button>
         </div>
     </div>
 
@@ -633,7 +724,7 @@
             tokenInput.select();
             document.execCommand('copy');
 
-            // Mostra notificação
+            // Show notification
             copyNotification.style.opacity = '1';
             setTimeout(() => {
                 copyNotification.style.opacity = '0';
@@ -698,13 +789,8 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        // Configura o menu e funcionalidade de cópia
-        document.addEventListener('DOMContentLoaded', () => {
-            const tokenInput = document.getElementById('authToken');
-            const copyIcon = document.getElementById('copyIcon');
-
-            tokenInput.addEventListener('click', copyTokenToClipboard);
-            copyIcon.addEventListener('click', copyTokenToClipboard);
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem("token");
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
@@ -740,17 +826,19 @@
             menuToggle.addEventListener('click', toggleMenu);
             menuCloseBtn.addEventListener('click', closeMenu);
             menuOverlay.addEventListener('click', closeMenu);
-        });
 
-        window.onload = async () => {
-            try {
-                await loadProfile();
-            } catch (error) {
-                console.error('Erro ao carregar o perfil:', error);
-            } finally {
-                document.body.classList.add('loaded');
-            }
-        };
+            // Configura cópia do token
+            const tokenInput = document.getElementById('authToken');
+            const copyIcon = document.getElementById('copyIcon');
+
+            tokenInput.addEventListener('click', copyTokenToClipboard);
+            copyIcon.addEventListener('click', copyTokenToClipboard);
+
+            // Carrega perfil do usuário
+            await loadProfile();
+
+            document.body.classList.add('loaded');
+        });
     </script>
 </body>
 
