@@ -372,6 +372,22 @@
         .status-pendente {
             color: var(--pending-color);
             font-weight: bold;
+        }   
+        
+         .action-link {
+            color: var(--button-light);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-actions {
+            text-align: center;
+            padding: 20px;
+            color: #666;
         }       
 
         .menu-content.active {
@@ -469,21 +485,6 @@
 
             .history-table tbody tr:hover {
                 background-color: var(--hover-dark);
-            }
-
-            .status-completed {
-                background-color: rgba(52, 168, 83, 0.1);
-                color: var(--success-dark);
-            }
-
-            .status-pending {
-                background-color: rgba(249, 171, 0, 0.1);
-                color: var(--pending-dark);
-            }
-
-            .status-failed {
-                background-color: rgba(234, 67, 53, 0.1);
-                color: var(--failed-dark);
             }
 
             .empty-state-title {
