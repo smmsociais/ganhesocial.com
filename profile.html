@@ -5,133 +5,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Conta</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --border-light: #ddd;
-            --label-light: #586069;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --label-light: #6c757d;
 
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --border-dark: #30363d;
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
             --label-dark: #8b949e;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --error-color: #f85149;
-            --success-color: #238636;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+            --primary-gradient: linear-gradient(135deg, #007bff 0%, #1a73e8 100%);
+            --primary-gradient-dark: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
         .menu-item[href="profile"] {
             color: white;
             font-weight: bold;
-        }        
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
         }
 
-        .desktop-balance-container {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-weight: bold;
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 5px;
-            z-index: 10;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 700px;
-            margin: 30px auto;
-            transition: background 0.3s;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
         }
 
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 30px;
+        }
+
+        /* Form Styles */
         .form-group {
-            margin-bottom: 15px;
-            text-align: left;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: var(--label-light);
+            margin-bottom: 8px;
             font-weight: 600;
+            color: var(--label-light);
+            font-size: 0.9rem;
         }
 
         .input-box {
             width: 100%;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border-radius: 8px;
             border: 1px solid var(--border-light);
-            background: var(--container-light);
+            background-color: var(--container-light);
             color: var(--text-light);
-            transition: all 0.3s;
+            font-size: 1rem;
+            transition: var(--transition);
             box-sizing: border-box;
         }
 
+        .input-box:focus {
+            border-color: var(--button-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
         .input-box[readonly] {
-            background: transparent;
+            background-color: transparent;
             border: none;
-            padding-left: 0;
-            font-weight: bold;
-            cursor: pointer;
-            color: var(--text-light);
             border-bottom: 1px solid var(--border-light);
             border-radius: 0;
+            padding-left: 0;
+            cursor: default;
         }
 
         .token-container {
@@ -141,75 +187,83 @@
         }
 
         .copy-icon {
-            margin-left: 8px;
+            margin-left: 10px;
             cursor: pointer;
             color: var(--label-light);
-            font-size: 16px;
-            transition: color 0.2s;
+            font-size: 1.1rem;
+            transition: var(--transition);
         }
 
         .copy-icon:hover {
-            color: var(--text-light);
+            color: var(--button-light);
         }
 
         .copy-notification {
             position: absolute;
             right: 0;
-            top: -25px;
-            background: rgba(0, 0, 0, 0.7);
+            top: -30px;
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: var(--transition);
+            pointer-events: none;
         }
 
-        .save-button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        .btn-primary {
+            background: var(--primary-gradient);
             color: white;
-            font-size: 16px;
-            background-color: #28a745;
-            transition: background-color 0.3s;
-            font-weight: bold;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            font-size: 1rem;
         }
 
-        .save-button:hover {
-            background-color: #218838;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+            opacity: 0.9;
         }
 
         .message {
-            padding: 12px;
-            margin: 15px 0;
-            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
             display: none;
-            font-size: 14px;
+            font-size: 0.95rem;
         }
 
         .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed-color);
+            border: 1px solid rgba(220, 53, 69, 0.2);
         }
 
         .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(40, 167, 69, 0.2);
         }
 
         .page-title {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             color: var(--text-light);
+            font-size: 1.8rem;
+            font-weight: 600;
         }
 
-        /* Estilos do menu hamburguer */
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -223,9 +277,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -235,21 +289,22 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -269,17 +324,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -288,89 +351,24 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .header,
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
-            }
-
-            .form-label {
-                color: var(--label-dark);
-            }
-
-            .input-box {
-                background: var(--container-dark);
-                border: 1px solid var(--border-dark);
-                color: var(--text-dark);
-            }
-
-            .input-box[readonly] {
-                color: var(--text-dark);
-                border-bottom: 1px solid var(--border-dark);
-            }
-
-            .copy-icon {
-                color: var(--label-dark);
-            }
-
-            .copy-icon:hover {
-                color: var(--text-dark);
-            }
-
-            .error-message {
-                background-color: #2d2223;
-                color: var(--error-color);
-                border: 1px solid var(--error-color);
-            }
-
-            .success-message {
-                background-color: #1c2b21;
-                color: var(--success-color);
-                border: 1px solid var(--success-color);
-            }
-
-            .page-title {
-                color: var(--text-dark);
-            }
-
-            .menu-toggle span {
-                background-color: var(--text-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
-            }
-
-            .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
         }
 
-        /* Estilos para desktop */
+        /* Desktop Menu */
         @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
             .desktop-header {
                 display: none;
-            }
-
-            body {
-                padding-left: 250px;
             }
 
             .menu-toggle {
@@ -390,8 +388,8 @@
                 display: none;
             }
 
-            .desktop-balance-container {
-                display: flex;
+            .menu-close-btn {
+                display: none !important;
             }
         }
 
@@ -400,24 +398,78 @@
                 display: block;
             }
 
-            .desktop-balance-container {
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
                 display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
+        /* Responsive Styles */
         @media (max-width: 768px) {
-            .container {
-                width: 88%;
+            .main-container {
+                padding: 20px;
+            }
+
+            .container-body {
                 padding: 20px;
             }
         }
 
-        @media (max-width: 420px) {
-            .container {
-                width: 300px;
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+
+            .form-label {
+                font-size: 0.85rem;
+            }
+
+            .input-box {
+                padding: 10px 12px;
+                font-size: 0.95rem;
             }
         }
 
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -431,25 +483,31 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Header para Mobile -->
     <div class="header desktop-header">
@@ -468,47 +526,50 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div id="pagina"></div>
-    <div class="container">
-        <h2 class="page-title">Seu Perfil</h2>
+    <div class="main-container fade-in">
+        <div class="container">
+            <div class="container-header">
+                <h2><i class="fas fa-user-cog"></i> Minha Conta</h2>
+            </div>
+            <div class="container-body">
+                <div id="errorMessage" class="message error-message"></div>
+                <div id="successMessage" class="message success-message"></div>
 
-        <div id="errorMessage" class="message error-message"></div>
-        <div id="successMessage" class="message success-message"></div>
+                <div class="form-group">
+                    <label for="name" class="form-label">Nome</label>
+                    <input type="text" id="name" class="input-box" maxlength="20">
+                </div>
 
-<div class="form-group">
-    <label for="name" class="form-label">Nome</label>
-    <input type="text" id="name" class="input-box" maxlength="20">
-</div>
+                <div class="form-group">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" id="email" class="input-box" readonly>
+                </div>
 
-        <div class="form-group">
-            <label for="email" class="form-label">E-mail</label>
-            <input type="email" id="email" class="input-box" readonly>
-        </div>
+                <div class="form-group">
+                    <label for="authToken" class="form-label">Token de Autenticação</label>
+                    <div class="token-container">
+                        <input type="text" id="authToken" class="input-box" readonly>
+                        <span id="copyIcon" class="copy-icon" title="Copiar token"><i class="far fa-copy"></i></span>
+                        <span id="copyNotification" class="copy-notification">Copiado!</span>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label for="authToken" class="form-label">Token de Autenticação</label>
-            <div class="token-container">
-                <input type="text" id="authToken" class="input-box" readonly>
-                <span id="copyIcon" class="copy-icon" title="Copiar token">⎘</span>
-                <span id="copyNotification" class="copy-notification">Copiado!</span>
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">Nova Senha</label>
+                    <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmPassword" class="input-box">
+                </div>
+
+                <button class="btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
             </div>
         </div>
-
-        <div class="form-group">
-            <label for="newPassword" class="form-label">Nova Senha</label>
-            <input type="password" id="newPassword" class="input-box" placeholder="Deixe em branco para não alterar">
-        </div>
-
-        <div class="form-group">
-            <label for="confirmPassword" class="form-label">Confirmar Nova Senha</label>
-            <input type="password" id="confirmPassword" class="input-box">
-        </div>
-
-        <button class="save-button" onclick="saveProfile()">Salvar Alterações</button>
     </div>
-
-    <!-- Menu Overlay para Mobile -->
-    <div class="menu-overlay" id="menuOverlay"></div>
 
     <script>
         async function loadProfile() {
@@ -572,7 +633,7 @@
             tokenInput.select();
             document.execCommand('copy');
 
-            // Show notification
+            // Mostra notificação
             copyNotification.style.opacity = '1';
             setTimeout(() => {
                 copyNotification.style.opacity = '0';
@@ -586,10 +647,11 @@
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
             const token = document.getElementById('authToken').value.trim();
 
-                if (name.length > 20) {
-        showMessage("O nome não pode ter mais de 20 caracteres.", true);
-        return;
-    }
+            if (name.length > 20) {
+                showMessage("O nome não pode ter mais de 20 caracteres.", true);
+                return;
+            }
+
             if (newPassword) {
                 if (newPassword !== confirmPassword) {
                     showMessage("As senhas não coincidem.", true);
@@ -636,7 +698,7 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        // Set up menu and copy functionality
+        // Configura o menu e funcionalidade de cópia
         document.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('authToken');
             const copyIcon = document.getElementById('copyIcon');
@@ -648,12 +710,12 @@
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
-                // Anima os spans do menu hamburguer
                 const spans = menuToggle.querySelectorAll('span');
                 if (menuContent.classList.contains('active')) {
                     spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
@@ -664,17 +726,20 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
+            }
 
-            // Fechar menu ao clicar no overlay
-            menuOverlay.addEventListener('click', function () {
+            function closeMenu() {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
         });
 
         window.onload = async () => {
