@@ -5,141 +5,252 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Contas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
-
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
-            --primary-color: #007BFF;
-            --primary-dark: #1f6feb;
-            --error-color: #dc3545;
-            --warning-color: #ffc107;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
             --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
         .menu-item[href="gerenciar_contas"] {
             color: white;
             font-weight: bold;
-        }        
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
+        }
+
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 700px;
-            margin: 30px auto;
-            transition: background 0.3s;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
         }
 
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Account List Styles */
         .account-list {
             list-style: none;
             padding: 0;
-            margin: 20px 0;
+            margin: 0;
         }
 
         .account-item {
-            padding: 12px 15px;
-            background: var(--container-light);
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-top: 10px;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s;
+            transition: var(--transition);
+        }
+
+        .account-item:last-child {
+            border-bottom: none;
         }
 
         .account-item:hover {
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: var(--hover-light);
         }
 
-        .disable-button {
-            background-color: var(--error-color);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 5px;
+        .account-name {
+            font-weight: 500;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .disable-button:hover {
-            background-color: #c82333;
+        .btn-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed-color);
         }
 
+        .btn-danger:hover {
+            background-color: rgba(220, 53, 69, 0.2);
+        }
+
+        /* Message Box */
         .message-box {
-            padding: 12px;
-            margin: 15px 0;
-            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
             display: none;
+            border-left: 4px solid transparent;
         }
 
-        .error-message {
-            background-color: #f8d7da;
-            border-left: 4px solid var(--error-color);
-            color: var(--error-color);
+        .message-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left-color: var(--failed-color);
+            color: var(--failed-color);
         }
 
-        .success-message {
-            background-color: #d4edda;
-            border-left: 4px solid var(--success-color);
+        .message-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left-color: var(--success-color);
             color: var(--success-color);
         }
 
-        /* Estilos do menu hamburguer */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #adb5bd;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .empty-state-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -153,9 +264,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -165,21 +276,22 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -199,17 +311,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -218,42 +338,74 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header,
-            .container,
-            .account-item {
+            .header {
+                background: var(--primary-gradient-dark);
+            }
+
+            .container {
                 background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
+            }
+
+            .account-item {
+                border-color: var(--border-dark);
             }
 
             .account-item:hover {
-                box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
+                background-color: var(--hover-dark);
             }
 
-            .error-message {
-                background-color: #3a1a1d;
-                border-left-color: var(--error-color);
+            .btn-danger {
+                background-color: rgba(234, 67, 53, 0.1);
+                color: var(--failed-dark);
             }
 
-            .success-message {
-                background-color: #1a3a1d;
-                border-left-color: var(--success-color);
+            .btn-danger:hover {
+                background-color: rgba(234, 67, 53, 0.2);
             }
 
-            .menu-toggle span {
-                background-color: var(--text-dark);
+            .message-error {
+                background-color: rgba(234, 67, 53, 0.1);
+                border-left-color: var(--failed-dark);
+                color: var(--failed-dark);
+            }
+
+            .message-success {
+                background-color: rgba(52, 168, 83, 0.1);
+                border-left-color: var(--success-dark);
+                color: var(--success-dark);
+            }
+
+            .empty-state-title {
+                color: var(--text-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -261,22 +413,83 @@
             }
 
             .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: var(--hover-dark);
             }
 
             .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-color: var(--border-dark);
             }
         }
 
-        /* Estilos para desktop */
-        @media (min-width: 992px) {
-            .desktop-header {
-                display: none;
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-container {
+                padding: 20px;
             }
 
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .balance-chip {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+
+            .empty-state-icon {
+                font-size: 2.5rem;
+            }
+
+            .empty-state-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
             body {
-                padding-left: 250px;
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
             }
 
             .menu-toggle {
@@ -295,21 +508,42 @@
             .logo-mobile {
                 display: none;
             }
+
+            .menu-close-btn {
+                display: none !important;
+            }
         }
 
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
             }
-        }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 88%;
-                padding: 20px;
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -323,25 +557,31 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Header para Mobile -->
     <div class="header desktop-header">
@@ -360,33 +600,60 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="container">
-        <h2>Gerenciar Contas TikTok</h2>
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-cog"></i> Gerenciar Contas</h2>
+            </div>
+            <div class="container-body">
+                <div id="messageBox" class="message-box" style="display: none;"></div>
 
-        <div id="messageBox" class="message-box" style="display: none;"></div>
+                <ul id="accountList" class="account-list">
+                    <!-- Loading State -->
+                    <li id="loading-item" class="account-item">
+                        <div class="skeleton skeleton-text" style="width: 60%"></div>
+                        <div class="skeleton skeleton-text" style="width: 30%"></div>
+                    </li>
+                </ul>
 
-        <ul id="accountList" class="account-list"></ul>
+                <!-- Empty State -->
+                <div id="no-accounts" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-user-slash"></i>
+                    </div>
+                    <h3 class="empty-state-title">Nenhuma conta cadastrada</h3>
+                    <p class="empty-state-description">Adicione uma conta para começar a ganhar</p>
+                    <a href="adicionar_conta" class="btn-primary">
+                        <i class="fas fa-plus-circle"></i> Adicionar Conta
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Menu Overlay para Mobile -->
-    <div class="menu-overlay" id="menuOverlay"></div>
 
     <script>
         // Função para exibir mensagens na página
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
-            messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
+            messageBox.className = isError ? 'message-box message-error' : 'message-box message-success';
             messageBox.style.display = 'block';
 
-            // Rolagem suave para a mensagem
-            messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Esconde a mensagem após 5 segundos
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
         }
 
         async function loadAccounts() {
             const token = localStorage.getItem("token");
             const messageBox = document.getElementById('messageBox');
+            const accountList = document.getElementById("accountList");
+            const noAccounts = document.getElementById("no-accounts");
+            
             messageBox.style.display = 'none';
+            document.getElementById('loading-item').style.display = 'flex';
+            noAccounts.style.display = 'none';
 
             if (!token) {
                 showMessage("Você precisa estar logado para gerenciar contas.", true);
@@ -408,7 +675,6 @@
                     throw new Error(accounts.error || "Erro ao carregar contas");
                 }
 
-                const accountList = document.getElementById("accountList");
                 accountList.innerHTML = "";
 
                 if (!Array.isArray(accounts)) {
@@ -416,23 +682,27 @@
                 }
 
                 if (accounts.length === 0) {
-                    showMessage("Nenhuma conta cadastrada. Adicione uma conta para começar.");
+                    noAccounts.style.display = 'flex';
                     return;
                 }
 
                 accounts.forEach((account) => {
                     const li = document.createElement("li");
-                    li.className = "account-item";
+                    li.className = "account-item fade-in";
                     li.innerHTML = `
-                        <span>${account.nomeConta}</span>
-                        <button class="disable-button" onclick="disableAccount('${account.nomeConta}', this)">Desativar</button>
+                        <span class="account-name">${account.nomeConta}</span>
+                        <button class="btn btn-danger" onclick="disableAccount('${account.nomeConta}', this)">
+                            <i class="fas fa-ban"></i> Desativar
+                        </button>
                     `;
                     accountList.appendChild(li);
                 });
 
             } catch (error) {
                 console.error("Erro ao carregar contas:", error);
-                showMessage("Erro ao carregar contas. Tente novamente.", true);
+                showMessage(error.message || "Erro ao carregar contas. Tente novamente.", true);
+            } finally {
+                document.getElementById('loading-item').style.display = 'none';
             }
         }
 
@@ -443,6 +713,13 @@
                 window.location.href = "login";
                 return;
             }
+
+            if (!confirm(`Tem certeza que deseja desativar a conta "${accountName}"?`)) {
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando';
 
             try {
                 const url = `https://ganhesocial.com/api/contas?nomeConta=${encodeURIComponent(accountName)}`;
@@ -467,11 +744,14 @@
 
                 // Remove a conta da interface
                 const listItem = button.parentElement;
-                listItem.remove();
+                listItem.classList.add('fade-out');
+                setTimeout(() => listItem.remove(), 300);
 
             } catch (error) {
                 console.error("❌ Erro ao desativar conta:", error);
-                showMessage("Erro ao desativar conta. Tente novamente.", true);
+                showMessage(error.message || "Erro ao desativar conta. Tente novamente.", true);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-ban"></i> Desativar';
             }
         }
 
@@ -487,8 +767,9 @@
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -502,19 +783,24 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
+            }
 
-            menuOverlay.addEventListener('click', function () {
+            function closeMenu() {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
 
-            // Carregar contas e só então mostrar a página
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
+
+            // Carrega saldo do usuário
             await loadAccounts();
+
             document.body.classList.add('loaded');
         });
     </script>
