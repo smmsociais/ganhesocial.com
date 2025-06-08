@@ -808,85 +808,61 @@
                 <!-- Filtros -->
                 <div class="filter-controls">
                     <div class="filter-group">
-                        <span class="filter-label">Status:</span>
-                        <select class="filter-select" id="status-filter">
-                            <option value="all">Todos</option>
-                            <option value="completed">Concluídas</option>
-                            <option value="pending">Pendentes</option>
-                            <option value="failed">Falhas</option>
                         </select>
                     </div>
-                    <div class="filter-group">
-                        <span class="filter-label">Rede Social:</span>
-                        <select class="filter-select" id="social-filter">
-                            <option value="all">Todas</option>
-                            <option value="facebook">Facebook</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="twitter">Twitter</option>
-                            <option value="youtube">YouTube</option>
-                            <option value="tiktok">TikTok</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <span class="filter-label">Período:</span>
-                        <select class="filter-select" id="period-filter">
-                            <option value="all">Todo período</option>
-                            <option value="7days">Últimos 7 dias</option>
-                            <option value="30days">Últimos 30 dias</option>
-                            <option value="90days">Últimos 90 dias</option>
-                        </select>
-                    </div>
-                    <button class="btn-primary" id="apply-filters">
-                        <i class="fas fa-filter"></i> Aplicar
-                    </button>
-                </div>
-
-                <!-- Tabela de Ações -->
-                <div id="actions-container">
-                    <div class="table-responsive">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Rede Social</th>
-                                    <th>Usuário</th>
-                                    <th>Tipo</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyList">
-                                <!-- Loading State -->
-                                <tr id="loading-row">
-                                    <td colspan="6">
-                                        <div class="skeleton skeleton-text" style="width: 80%"></div>
-                                        <div class="skeleton skeleton-text" style="width: 60%"></div>
-                                        <div class="skeleton skeleton-text" style="width: 70%"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="no-actions" class="empty-state" style="display: none;">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h3 class="empty-state-title">Nenhuma ação realizada ainda</h3>
-                        <p class="empty-state-description">Quando você realizar ações, elas aparecerão aqui.</p>
-                        <a href="realizar_acoes" class="btn-primary">
-                            <i class="fas fa-tasks"></i> Realizar Ações
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Paginação -->
-                <div class="pagination" id="pagination" style="display: none;">
-                    <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
-                    <span id="page-info">Página 1 de 1</span>
-                    <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
+
+            <!-- Tabela de Ações -->
+            <div id="actions-container">
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Rede Social</th>
+                                <th>Usuário</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyList">
+                            <!-- Loading State -->
+                            <tr id="loading-row">
+                                <td colspan="6">
+                                    <div class="skeleton skeleton-text" style="width: 80%"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%"></div>
+                                    <div class="skeleton skeleton-text" style="width: 70%"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-actions" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="empty-state-title">Nenhuma ação realizada ainda</h3>
+                    <p class="empty-state-description">Quando você realizar ações, elas aparecerão aqui.</p>
+                    <a href="realizar_acoes" class="btn-primary">
+                        <i class="fas fa-tasks"></i> Realizar Ações
+                    </a>
+                </div>
+            </div>
+
+            <!-- Informações de Paginação -->
+            <div id="pagination-info" class="pagination-info" style="text-align: center; margin-top: 10px;"></div>
+
+            <!-- Paginação -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
+                <span id="page-info">Página 1 de 1</span>
+                <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
+            </div>
+
         </div>
+    </div>
     </div>
 
     <script>
@@ -898,6 +874,7 @@
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
             const menuCloseBtn = document.getElementById('menuCloseBtn');
+            const paginationInfo = document.getElementById('pagination-info');
 
             function toggleMenu() {
                 menuContent.classList.toggle('active');
@@ -934,7 +911,7 @@
             let currentPage = 1;
             let totalPages = 1;
             let allActions = [];
-                        
+
             // Carregar dados da API
             async function loadData(page = 1) {
                 try {
