@@ -5,193 +5,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico de Ações</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --container-light: #f6f8fa;
-            --button-light: #0366d6;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
 
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --container-dark: #161b22;
-            --button-dark: #58a6ff;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
-            --border-dark: #30363d;
-            --valid-color: #28a745;
-            --invalid-color: #dc3545;
-            --pending-color: #e6ad03;
-            --primary-color: #e0e0e0;
-            --primary-dark: #1f6feb;
-            --header-bg-light: #f8f9fa;
-            --header-text-light: #212529;
-            --header-bg-dark: #212529;
-            --header-text-dark: #f8f9fa;
-            --pagination-active: #007bff;
-            --pagination-hover: #e9ecef;
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            position: relative;
-            transition: background-color 0.3s, color 0.3s;
+            transition: var(--transition);
+            line-height: 1.6;
         }
 
-         .menu-item[href="historico_acoes"] {
+        .menu-item[href="historico_acoes"] {
             color: white;
             font-weight: bold;
-        }       
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
 
+        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 29px;
+            margin-right: 10px;
+        }
+
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .container {
             background: var(--container-light);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 1700px;
-            margin: 30px auto;
-            transition: background 0.3s;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: var(--text-light);
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: var(--card-radius);
         }
 
         .history-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 0.9em;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 600px;
         }
 
-        .history-table th {
-            background-color: var(--header-bg-light);
-            color: var(--header-text-light);
+        .history-table thead th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 15px;
             text-align: left;
-            padding: 12px 15px;
+            border-bottom: 2px solid var(--border-light);
             position: sticky;
             top: 0;
-            font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
+            backdrop-filter: blur(5px);
+        }
+
+        .history-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .history-table tbody tr:hover {
+            background-color: var(--hover-light);
         }
 
         .history-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #dee2e6;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
         }
 
-        .history-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+        .history-table tr:last-child td {
+            border-bottom: none;
         }
 
-        .history-table tr:hover {
-            background-color: #e9ecef;
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: capitalize;
         }
 
-        .status-valid {
-            color: var(--valid-color);
-            font-weight: bold;
+        .status-completed {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
         }
 
-        .status-invalid {
-            color: var(--invalid-color);
-            font-weight: bold;
-        }
-
-        .status-pendente {
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.1);
             color: var(--pending-color);
-            font-weight: bold;
         }
 
-        .action-link {
-            color: var(--button-light);
-            text-decoration: none;
-            font-weight: bold;
+        .status-failed {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed-color);
         }
 
-        .action-link:hover {
-            text-decoration: underline;
-        }
-
-        .no-actions {
+        /* Empty State */
+        .empty-state {
             text-align: center;
-            padding: 20px;
-            color: #666;
+            padding: 40px 20px;
         }
 
-        .table-container {
-            max-height: 70vh;
-            overflow-y: auto;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
+        .empty-state-icon {
+            font-size: 3rem;
+            color: #adb5bd;
             margin-bottom: 20px;
         }
 
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .empty-state-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 5px;
+            padding: 20px 0;
             margin-top: 20px;
-            flex-wrap: wrap;
         }
 
         .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            background-color: white;
+            background: none;
+            border: 1px solid var(--border-light);
             color: var(--text-light);
-            border-radius: 4px;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
         }
 
         .pagination button:hover {
-            background-color: var(--pagination-hover);
+            background-color: var(--hover-light);
         }
 
         .pagination button.active {
-            background-color: var(--pagination-active);
+            background: var(--primary-gradient);
             color: white;
-            border-color: var(--pagination-active);
+            border-color: transparent;
         }
 
         .pagination button:disabled {
@@ -199,14 +278,41 @@
             cursor: not-allowed;
         }
 
-        .pagination-info {
-            text-align: center;
-            margin-top: 10px;
-            color: #666;
-            font-size: 0.9em;
+        /* Filter Controls */
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
         }
 
-        /* Estilos do menu hamburguer */
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background-color: var(--container-light);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-select:hover {
+            border-color: #adb5bd;
+        }
+
+        /* Menu Styles */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -220,9 +326,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: white;
             border-radius: 3px;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
 
         .menu-overlay {
@@ -232,21 +338,22 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 250px;
+            width: 280px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -266,17 +373,25 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: background-color 0.2s;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--hover-light);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--border-light);
         }
 
         .menu-logout {
@@ -285,80 +400,104 @@
             color: #dc3545;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
         }
 
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Social Media Icons */
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        .facebook-icon {
+            color: #1877F2;
+        }
+
+        .instagram-icon {
+            color: #E4405F;
+        }
+
+        .twitter-icon {
+            color: #1DA1F2;
+        }
+
+        .youtube-icon {
+            color: #FF0000;
+        }
+
+        .tiktok-icon {
+            color: #000000;
+        }
+
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header,
+            .header {
+                background: var(--primary-gradient-dark);
+            }
+
             .container {
                 background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
             }
 
-            .status-pendente {
-                color: var(--pending-color);
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
             }
 
-            .history-table th {
-                background-color: var(--header-bg-dark);
-                color: var(--header-text-dark);
-                border-bottom: 2px solid var(--border-dark);
-            }
-
-            .history-table tr:nth-child(even) {
-                background-color: var(--container-dark);
-            }
-
-            .history-table tr:hover {
-                background-color: #343a40;
-            }
-
-            .history-table td {
-                border-bottom: 1px solid var(--border-dark);
-            }
-
-            .action-link {
-                color: var(--button-dark);
-            }
-
-            .no-actions {
-                color: #aaa;
-            }
-
-            .table-container {
-                border: 1px solid var(--border-dark);
-            }
-
-            .pagination button {
-                background-color: var(--container-dark);
+            .history-table thead th {
+                background-color: rgba(255, 255, 255, 0.05);
                 color: var(--text-dark);
                 border-color: var(--border-dark);
             }
 
-            .pagination button:hover {
-                background-color: #343a40;
+            .history-table td {
+                border-color: var(--border-dark);
             }
 
-            .pagination button.active {
-                background-color: var(--button-dark);
-                color: white;
+            .history-table tbody tr:hover {
+                background-color: var(--hover-dark);
             }
 
-            .pagination-info {
-                color: #aaa;
+            .status-completed {
+                background-color: rgba(52, 168, 83, 0.1);
+                color: var(--success-dark);
             }
 
-            .menu-toggle span {
-                background-color: var(--text-dark);
+            .status-pending {
+                background-color: rgba(249, 171, 0, 0.1);
+                color: var(--pending-dark);
+            }
+
+            .status-failed {
+                background-color: rgba(234, 67, 53, 0.1);
+                color: var(--failed-dark);
+            }
+
+            .empty-state-title {
+                color: var(--text-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -366,22 +505,190 @@
             }
 
             .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
+                background-color: var(--hover-dark);
             }
 
             .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-color: var(--border-dark);
+            }
+
+            .filter-select {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .filter-select:hover {
+                border-color: #555;
+            }
+
+            .pagination button {
+                border-color: var(--border-dark);
+                color: var(--text-dark);
+            }
+
+            .pagination button:hover {
+                background-color: var(--hover-dark);
             }
         }
 
-        /* Estilos para desktop */
-        @media (min-width: 992px) {
-            .desktop-header {
-                display: none;
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-container {
+                padding: 20px;
             }
 
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .history-table td {
+                padding: 12px 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+
+            .history-table td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .balance-chip {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+
+            .history-table td {
+                padding: 8px 6px;
+                font-size: 0.85rem;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+            }
+
+            .empty-state-icon {
+                font-size: 2.5rem;
+            }
+
+            .empty-state-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Loading State */
+        .skeleton {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .skeleton-text {
+            height: 12px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-text:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
             body {
-                padding-left: 250px;
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
             }
 
             .menu-toggle {
@@ -400,39 +707,42 @@
             .logo-mobile {
                 display: none;
             }
+
+            .menu-close-btn {
+                display: none !important;
+            }
         }
 
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
             }
-        }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 90%;
-                padding: 15px;
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
             }
 
-            .history-table {
-                font-size: 0.8em;
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
             }
 
-            .history-table th,
-            .history-table td {
-                padding: 8px 10px;
-            }
-
-            .pagination {
-                gap: 3px;
-            }
-
-            .pagination button {
-                padding: 6px 8px;
-                font-size: 0.8em;
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -446,25 +756,31 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
                     alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
-        <a class="menu-item" href="dashboard">Página Inicial</a>
-        <a class="menu-item" href="realizar_acoes">Realizar Ações</a>
-        <a class="menu-item" href="adicionar_conta">Adicionar Conta</a>
-        <a class="menu-item" href="gerenciar_contas">Gerenciar Contas</a>
-        <a class="menu-item" href="historico_acoes">Histórico de Ações</a>
-        <a class="menu-item" href="solicitar_saque">Solicitar Saque</a>
-        <a class="menu-item" href="historico_saques">Histórico de Saques</a>
-        <a class="menu-item" href="profile">Minha Conta</a>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
-            <a class="menu-logout" onclick="logout()">Sair</a>
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Header para Mobile -->
     <div class="header desktop-header">
@@ -483,51 +799,107 @@
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="container">
-        <h2 id="pageTitle">Histórico de Ações</h2>
-        <div class="table-container">
-            <table class="history-table" id="historyTable">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Rede Social</th>
-                        <th>Usuário</th>
-                        <th>Tipo</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyList">
-                    <!-- Os itens serão adicionados dinamicamente aqui -->
-                </tbody>
-            </table>
-        </div>
-        <div class="pagination-info" id="paginationInfo">
-            Carregando...
-        </div>
-        <div class="pagination" id="pagination">
-            <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-history"></i> Histórico de Ações</h2>
+            </div>
+            <div class="container-body">
+                <!-- Filtros -->
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <span class="filter-label">Status:</span>
+                        <select class="filter-select" id="status-filter">
+                            <option value="all">Todos</option>
+                            <option value="completed">Concluídas</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="failed">Falhas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Rede Social:</span>
+                        <select class="filter-select" id="social-filter">
+                            <option value="all">Todas</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Período:</span>
+                        <select class="filter-select" id="period-filter">
+                            <option value="all">Todo período</option>
+                            <option value="7days">Últimos 7 dias</option>
+                            <option value="30days">Últimos 30 dias</option>
+                            <option value="90days">Últimos 90 dias</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="apply-filters">
+                        <i class="fas fa-filter"></i> Aplicar
+                    </button>
+                </div>
+
+                <!-- Tabela de Ações -->
+                <div id="actions-container">
+                    <div class="table-responsive">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Rede Social</th>
+                                    <th>Usuário</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyList">
+                                <!-- Loading State -->
+                                <tr id="loading-row">
+                                    <td colspan="6">
+                                        <div class="skeleton skeleton-text" style="width: 80%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 60%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 70%"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="no-actions" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h3 class="empty-state-title">Nenhuma ação realizada ainda</h3>
+                        <p class="empty-state-description">Quando você realizar ações, elas aparecerão aqui.</p>
+                        <a href="realizar_acoes" class="btn-primary">
+                            <i class="fas fa-tasks"></i> Realizar Ações
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
+                    <span id="page-info">Página 1 de 1</span>
+                    <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Menu Overlay para Mobile -->
-    <div class="menu-overlay" id="menuOverlay"></div>
-
     <script>
-        function logout() {
-            localStorage.removeItem("token");
-            window.location.href = "https://ganhesocial.com";
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -541,24 +913,20 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
+            }
 
-            menuOverlay.addEventListener('click', function () {
+            function closeMenu() {
                 menuContent.classList.remove('active');
                 menuOverlay.classList.remove('active');
                 const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            });
+            }
 
-            // Configurações de paginação
-            const itemsPerPage = 100;
-            const maxPages = 100;
-            let currentPage = 1;
-            let totalPages = 1;
-            let allActions = [];
-
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
             // Carregar dados da API
             async function loadData(page = 1) {
                 try {
@@ -703,4 +1071,5 @@
         });
     </script>
 </body>
+
 </html>
