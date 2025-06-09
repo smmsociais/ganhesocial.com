@@ -52,229 +52,146 @@
             border-left: 3px solid white;
         }
 
-        /* Header Styles */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 25px;
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: 0 2px 10px var(--shadow-light);
-            position: relative;
-            z-index: 10;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 30px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
         .logo {
             height: 32px;
-            margin-right: 10px;
-        }
-
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .balance-amount {
-            font-weight: 700;
-        }
-
-        /* Main Container */
-        .main-container {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
+            margin-right: 29px;
         }
 
         .container {
             background: var(--container-light);
-            border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-light);
-            overflow: hidden;
-            transition: var(--transition);
-            margin-bottom: 30px;
-            border: 1px solid var(--border-light);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1700px;
+            margin: 30px auto;
+            transition: background 0.3s;
         }
 
-        .container-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-light);
-            background: var(--primary-gradient);
-            color: white;
-        }
-
-        .container-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .container-body {
-            padding: 20px;
-        }
-
-        /* Table Styles */
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: var(--card-radius);
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text-light);
         }
 
         .history-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 600px;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
 
-        .history-table thead th {
-            background-color: rgba(0, 0, 0, 0.02);
-            color: var(--text-light);
-            font-weight: 600;
-            padding: 15px;
+        .history-table th {
+            background-color: var(--header-bg-light);
+            color: var(--header-text-light);
             text-align: left;
-            border-bottom: 2px solid var(--border-light);
+            padding: 12px 15px;
             position: sticky;
             top: 0;
-            backdrop-filter: blur(5px);
-        }
-
-        .history-table tbody tr {
-            transition: var(--transition);
-        }
-
-        .history-table tbody tr:hover {
-            background-color: var(--hover-light);
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
         }
 
         .history-table td {
-            padding: 15px;
-            border-bottom: 1px solid var(--border-light);
-            vertical-align: middle;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .history-table tr:last-child td {
-            border-bottom: none;
+        .history-table tr:nth-child(even) {
+            background-color: #f8f9fa;
         }
 
-        /* Status Badges */
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: capitalize;
+        .history-table tr:hover {
+            background-color: #e9ecef;
         }
 
-        .status-completed {
-            background-color: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
+        .status-valid {
+            color: var(--valid-color);
+            font-weight: bold;
         }
 
-        .status-pending {
-            background-color: rgba(255, 193, 7, 0.1);
+        .status-invalid {
+            color: var(--invalid-color);
+            font-weight: bold;
+        }
+
+        .status-pendente {
             color: var(--pending-color);
+            font-weight: bold;
         }
 
-        .status-failed {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: var(--failed-color);
+        .action-link {
+            color: var(--button-light);
+            text-decoration: none;
+            font-weight: bold;
         }
 
-        /* Empty State */
-        .empty-state {
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-actions {
             text-align: center;
-            padding: 40px 20px;
+            padding: 20px;
+            color: #666;
         }
 
-        .empty-state-icon {
-            font-size: 3rem;
-            color: #adb5bd;
+        .table-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
             margin-bottom: 20px;
         }
 
-        .empty-state-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text-light);
-        }
-
-        .empty-state-description {
-            color: #6c757d;
-            margin-bottom: 20px;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
-        }
-
-        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
-            padding: 20px 0;
+            align-items: center;
+            gap: 5px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .pagination button {
-            background: none;
-            border: 1px solid var(--border-light);
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
             color: var(--text-light);
-            padding: 8px 15px;
-            margin: 0 5px;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s;
         }
 
         .pagination button:hover {
-            background-color: var(--hover-light);
+            background-color: var(--pagination-hover);
         }
 
         .pagination button.active {
-            background: var(--primary-gradient);
+            background-color: var(--pagination-active);
             color: white;
-            border-color: transparent;
+            border-color: var(--pagination-active);
         }
 
         .pagination button:disabled {
@@ -285,11 +202,11 @@
         .pagination-info {
             text-align: center;
             margin-top: 10px;
-            color: var(--text-light);
+            color: #666;
             font-size: 0.9em;
         }
 
-        /* Menu Styles */
+        /* Estilos do menu hamburguer */
         .menu-toggle {
             width: 30px;
             height: 30px;
@@ -303,9 +220,9 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: white;
+            background-color: var(--text-light);
             border-radius: 3px;
-            transition: var(--transition);
+            transition: all 0.3s ease;
         }
 
         .menu-overlay {
@@ -315,22 +232,21 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 5;
             display: none;
-            backdrop-filter: blur(3px);
         }
 
         .menu-content {
             position: fixed;
             top: 0;
             left: -300px;
-            width: 280px;
+            width: 250px;
             height: 100%;
             background: var(--container-light);
-            box-shadow: 2px 0 15px var(--shadow-light);
-            transition: var(--transition);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
             padding: 20px 0;
-            z-index: 1001;
+            z-index: 6;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -350,7 +266,7 @@
             color: var(--text-light);
             font-size: 16px;
             text-decoration: none;
-            transition: var(--transition);
+            transition: background-color 0.2s;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -362,13 +278,13 @@
         }
 
         .menu-item:hover {
-            background-color: var(--hover-light);
+            background-color: rgba(0, 0, 0, 0.05);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-light);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .menu-logout {
@@ -380,71 +296,80 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            transition: var(--transition);
         }
 
-        .menu-logout:hover {
-            background-color: rgba(220, 53, 69, 0.1);
-        }
-
-        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .header {
-                background: var(--primary-gradient-dark);
-            }
-
+            .header,
             .container {
                 background: var(--container-dark);
-                box-shadow: 0 4px 20px var(--shadow-dark);
-                border-color: var(--border-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
             }
 
-            .container-header {
-                background: var(--primary-gradient-dark);
-                border-color: var(--border-dark);
+            .status-pendente {
+                color: var(--pending-color);
             }
 
-            .history-table thead th {
-                background-color: rgba(255, 255, 255, 0.05);
-                color: var(--text-dark);
-                border-color: var(--border-dark);
+            .history-table th {
+                background-color: var(--header-bg-dark);
+                color: var(--header-text-dark);
+                border-bottom: 2px solid var(--border-dark);
+            }
+
+            .history-table tr:nth-child(even) {
+                background-color: var(--container-dark);
+            }
+
+            .history-table tr:hover {
+                background-color: #343a40;
             }
 
             .history-table td {
+                border-bottom: 1px solid var(--border-dark);
+            }
+
+            .action-link {
+                color: var(--button-dark);
+            }
+
+            .no-actions {
+                color: #aaa;
+            }
+
+            .table-container {
+                border: 1px solid var(--border-dark);
+            }
+
+            .pagination button {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
                 border-color: var(--border-dark);
             }
 
-            .history-table tbody tr:hover {
-                background-color: var(--hover-dark);
+            .pagination button:hover {
+                background-color: #343a40;
             }
 
-            .status-completed {
-                background-color: rgba(52, 168, 83, 0.1);
-                color: var(--success-dark);
+            .pagination button.active {
+                background-color: var(--button-dark);
+                color: white;
             }
 
-            .status-pending {
-                background-color: rgba(249, 171, 0, 0.1);
-                color: var(--pending-dark);
+            .pagination-info {
+                color: #aaa;
             }
 
-            .status-failed {
-                background-color: rgba(234, 67, 53, 0.1);
-                color: var(--failed-dark);
-            }
-
-            .empty-state-title {
-                color: var(--text-dark);
+            .menu-toggle span {
+                background-color: var(--text-dark);
             }
 
             .menu-content {
                 background: var(--container-dark);
-                box-shadow: 2px 0 15px var(--shadow-dark);
             }
 
             .menu-item {
@@ -452,171 +377,22 @@
             }
 
             .menu-item:hover {
-                background-color: var(--hover-dark);
+                background-color: rgba(255, 255, 255, 0.05);
             }
 
             .menu-footer {
-                border-color: var(--border-dark);
-            }
-
-            .pagination button {
-                border-color: var(--border-dark);
-                color: var(--text-dark);
-            }
-
-            .pagination button:hover {
-                background-color: var(--hover-dark);
-            }
-
-            .pagination-info {
-                color: var(--text-dark);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
         }
 
-        /* Responsive Styles */
-        @media (max-width: 992px) {
-            .main-container {
-                padding: 20px;
-            }
-
-            .container-header h2 {
-                font-size: 1.3rem;
-            }
-
-            .history-table td {
-                padding: 12px 10px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 15px;
-            }
-
-            .container-header {
-                padding: 15px;
-            }
-
-            .container-body {
-                padding: 15px;
-            }
-
-            .history-table td {
-                padding: 10px 8px;
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .header {
-                padding: 12px 15px;
-            }
-
-            .balance-chip {
-                padding: 6px 12px;
-                font-size: 0.9rem;
-            }
-
-            .history-table td {
-                padding: 8px 6px;
-                font-size: 0.85rem;
-            }
-
-            .status-badge {
-                padding: 4px 8px;
-                font-size: 0.8rem;
-            }
-
-            .empty-state-icon {
-                font-size: 2.5rem;
-            }
-
-            .empty-state-title {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-
-        /* Loading State */
-        .skeleton {
-            background-color: #e9ecef;
-            border-radius: 4px;
-            animation: pulse 1.5s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .skeleton-text {
-            height: 12px;
-            margin-bottom: 8px;
-        }
-
-        .skeleton-text:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Tooltip */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltip-text {
-            visibility: hidden;
-            width: 120px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Desktop Menu */
+        /* Estilos para desktop */
         @media (min-width: 992px) {
-            body {
-                padding-left: 280px;
-            }
-
             .desktop-header {
                 display: none;
+            }
+
+            body {
+                padding-left: 250px;
             }
 
             .menu-toggle {
@@ -635,42 +411,39 @@
             .logo-mobile {
                 display: none;
             }
-
-            .menu-close-btn {
-                display: none !important;
-            }
         }
 
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
             }
+        }
 
-            /* Esconde o header quando o menu está aberto */
-            body.menu-open .header {
-                display: none;
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 15px;
             }
 
-            /* Estilos para o botão de fechar no mobile */
-            .menu-close-btn {
-                display: block;
-                position: absolute;
-                top: 15px;
-                right: 15px;
-                background: none;
-                border: none;
-                color: #afaeae;
-                font-size: 1.5rem;
-                cursor: pointer;
-                z-index: 1002;
+            .history-table {
+                font-size: 0.8em;
             }
 
-            .menu-close-btn:hover {
-                color: #dc3545;
+            .history-table th,
+            .history-table td {
+                padding: 8px 10px;
+            }
+
+            .pagination {
+                gap: 3px;
+            }
+
+            .pagination button {
+                padding: 6px 8px;
+                font-size: 0.8em;
             }
         }
 
-        /* Initial Load */
         body {
             visibility: hidden;
         }
