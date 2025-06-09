@@ -28,9 +28,10 @@ const formatarValorRanking = (valor) => {
   if (valor <= 1) return "1+";
   if (valor > 1 && valor < 5) return "1+";
   if (valor < 10) return "5+";
-  if (valor < 100) return "10+";
-  if (valor < 500) return "50+";
-  if (valor < 1000) return "100+";
+  if (valor < 50) return "10+";
+  if (valor < 100) return "50+";
+  if (valor < 500) return "100+";
+  if (valor < 1000) return "500+";
   const base = Math.floor(valor / 1000) * 1000;
   return `${base}+`;
 };
