@@ -461,7 +461,7 @@ if (url.startsWith("/api/get_saldo")) {
         // calcula o saldo pendente com base nas ações ainda não validadas
         const pendentes = await ActionHistory.find({
             user: usuario._id,
-            acao_validada: null
+            acao_validada: "pendente"
         }).select("valor_confirmacao");
         
         const saldo_pendente = pendentes.reduce((soma, acao) => soma + (acao.valor_confirmacao || 0), 0);
