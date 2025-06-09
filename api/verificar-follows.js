@@ -86,7 +86,7 @@ export default async function handler(req, res) {
         let accountFound = false;
         try {
           const idConta = String(valid.id_conta).trim();
-          if (!/^\d+$/.test(idConta)) throw new Error(`id_conta inválido: ${idConta}`);
+          if (!idConta || typeof idConta !== "string") throw new Error(`id_conta inválido: ${idConta}`);
 
           const followingRes = await axios.get(`${API_URL}/user-following?userId=${idConta}`, {
             headers: { Authorization: `Bearer ${valid.token}` },
