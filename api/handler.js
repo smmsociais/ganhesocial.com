@@ -1277,16 +1277,17 @@ if (url.startsWith("/api/ranking") && method === "POST") {
     ]);
 
     // Aplica a formatação
-    const ranking = ganhosPorUsuario.map(item => {
-      const valorFormatado = formatarValorRanking(item.total_balance);
-      if (!valorFormatado) return null;
+const ranking = ganhosPorUsuario
+  .filter(item => item.total_balance > 1) // 🔥 Remove usuários com valor ≤ 1
+  .map(item => {
+    const valorFormatado = formatarValorRanking(item.total_balance);
 
-      return {
-        username: item.username,
-        total_balance: valorFormatado,
-        is_current_user: item.token === user_token
-      };
-    }).filter(item => item !== null);
+    return {
+      username: item.username,
+      total_balance: valorFormatado,
+      is_current_user: item.token === user_token
+    };
+  });
 
     // Ordena do maior para o menor (reverter ordenação usando o valor numérico real)
     ranking.sort((a, b) => {
