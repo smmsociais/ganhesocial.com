@@ -498,7 +498,10 @@
             </a>
         </div>
     </div>
-
+    <!-- Adicione isso no header, antes do main-container -->
+    <div class="container-header">
+        <h2 id="pageTitle"><i class="fas fa-history"></i> Histórico de Ações</h2>
+    </div>
     <!-- Conteúdo Principal -->
     <div class="main-container">
         <div class="container fade-in">
@@ -573,6 +576,7 @@
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
             menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
@@ -620,6 +624,7 @@
             const historyList = document.getElementById("historyList");
             const paginationInfo = document.getElementById("paginationInfo");
             const pageTitle = document.getElementById("pageTitle");
+            const pagination = document.getElementById("pagination");
 
             // Ajusta título
             if (nomeUsuario) {
