@@ -228,28 +228,20 @@
             box-shadow: 0 4px 8px var(--shadow-light);
         }
 
-        /* Buttons */
-        .btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border: none;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background-color: #0051ff;
+        /* Botão Abrir Ação (agora à direita) */
+        .open-action-button {
+            flex: 1;
+            background-color: #007BFF;
             color: white;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
+        .open-action-button:hover {
+            background-color: #0069d9;
         }
 
         .btn-danger {
@@ -666,24 +658,17 @@
                         <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
                     </div>
 
-                    <div class="btn-group">
-                        <button class="btn btn-danger" onclick="skipAction()">
-                            <i class="fas fa-times"></i> Pular Ação
-                        </button>
-                        <a id="actionUrl" href="#" target="_blank" class="btn btn-primary"
-                            onclick="showConfirmButton()">
-                            <i class="fas fa-external-link-alt"></i> Abrir Ação
-                        </a>
-                    </div>
-
-                    <button id="confirmButton" class="btn btn-success" onclick="confirmAction()" style="display: none;">
-                        <i class="fas fa-check"></i> Confirmar Ação
-                    </button>
+                <div class="action-buttons">
+                    <button class="skip-button" onclick="skipAction()">Pular Ação</button>
+                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
+                        onclick="showConfirmButton()">Abrir Ação</a>
                 </div>
+
+                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
+                    style="display: none;">Confirmar Ação</button>
             </div>
         </div>
     </div>
-
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
