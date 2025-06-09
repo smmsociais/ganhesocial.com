@@ -158,6 +158,13 @@
             color: #666;
         }
 
+        .table-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
 
         .pagination {
             display: flex;
@@ -319,6 +326,10 @@
                 background-color: var(--container-dark);
             }
 
+            .history-table tr:hover {
+                background-color: #343a40;
+            }
+
             .history-table td {
                 border-bottom: 1px solid var(--border-dark);
             }
@@ -331,6 +342,9 @@
                 color: #aaa;
             }
 
+            .table-container {
+                border: 1px solid var(--border-dark);
+            }
 
             .pagination button {
                 background-color: var(--container-dark);
@@ -372,6 +386,38 @@
             }
         }
 
+        /* Desktop Menu */
+        @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: none !important;
+            }
+        }
+
         /* Estilos para desktop */
         @media (min-width: 992px) {
             .desktop-header {
@@ -404,6 +450,29 @@
             .logo-mobile {
                 display: block;
             }
+
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
+            }
         }
 
         @media (max-width: 768px) {
@@ -418,7 +487,7 @@
 
             .history-table th,
             .history-table td {
-                padding: 20px 10px;
+                padding: 8px 10px;
             }
 
             .pagination {
