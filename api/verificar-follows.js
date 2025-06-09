@@ -118,26 +118,33 @@ await colecao.updateOne(
 
             const agora = new Date();
             const brasilMidnight = new Date(
-              Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() + 1, 3, 0, 0)
+              Date.UTC(
+                agora.getUTCFullYear(),
+                agora.getUTCMonth(),
+                agora.getUTCDate() + 1,
+                0,
+                0,
+                0
+              )
             );
 
-            await DailyEarning.updateOne(
-              {
-                userId: new ObjectId(valid.user),
-                data: {
-                  $gte: new Date().setUTCHours(0, 0, 0, 0),
-                  $lt: new Date().setUTCHours(23, 59, 59, 999),
-                },
-              },
-              {
-                $inc: { valor },
-                $setOnInsert: {
-                  expiresAt: brasilMidnight,
-                  data: new Date(),
-                },
-              },
-              { upsert: true }
-            );
+await DailyEarning.updateOne(
+  {
+    userId: new ObjectId(valid.user),
+    data: {
+      $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
+      $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
+    },
+  },
+  {
+    $inc: { valor },
+    $setOnInsert: {
+      expiresAt: brasilMidnight,
+      data: new Date() // ⬅️ importante garantir que "data" seja inserido
+    },
+  },
+  { upsert: true } // ⬅️ permite criar se não existir
+);
 
             console.log(`   ✓ Saldo e dailyearning atualizados para o usuário ${valid.user} em R$${valor}`);
           } else {
