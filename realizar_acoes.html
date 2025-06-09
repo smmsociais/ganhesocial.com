@@ -13,7 +13,7 @@
             --container-light: #ffffff;
             --button-light: #007bff;
             --success-color: #28a745;
-            --pending-color: #ffc107;
+            --pending-color: #000000;
             --failed-color: #dc3545;
             --border-light: #dee2e6;
             --hover-light: #f1f1f1;
@@ -24,7 +24,7 @@
             --container-dark: #1e1e1e;
             --button-dark: #1a73e8;
             --success-dark: #34a853;
-            --pending-dark: #f9ab00;
+            --pending-dark: #000000;
             --failed-dark: #ea4335;
             --border-dark: #333333;
             --hover-dark: #2d2d2d;
@@ -82,30 +82,10 @@
             margin-right: 10px;
         }
 
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .balance-amount {
-            font-weight: 700;
-        }
-
         /* Main Container */
         .main-container {
             padding: 30px;
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -128,7 +108,7 @@
 
         .container-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 600;
         }
 
@@ -149,7 +129,7 @@
         }
 
         .form-select {
-            width: 100%;
+            width: 40%;
             padding: 10px 15px;
             border-radius: 6px;
             border: 1px solid var(--border-light);
@@ -169,14 +149,27 @@
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
-        /* Warning Box */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .form-select {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
         .warning-box {
             margin: 20px 0;
             padding: 15px;
             border-radius: var(--card-radius);
-            border: 1px solid #ffcc00;
+            border: 1px solid #000000;
             background-color: #fff8e6;
             text-align: left;
+            font-size: 1.0rem;
         }
 
         .warning-box h3 {
@@ -184,7 +177,7 @@
             margin-top: 0;
             margin-bottom: 10px;
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         .warning-box ul {
@@ -294,7 +287,7 @@
             padding: 10px;
             border-radius: 6px;
             text-align: center;
-            font-weight: 600;
+            font-weight: 10;
         }
 
         .status-success {
@@ -438,8 +431,8 @@
             }
 
             .warning-box {
-                background-color: #2a2a00;
-                border-color: #ffcc00;
+                background-color: #1e1e1e;
+                border-color: #383838;
             }
 
             .profile-image {
@@ -471,7 +464,7 @@
             }
 
             .container-header h2 {
-                font-size: 1.3rem;
+                font-size: 1.0rem;
             }
         }
 
@@ -629,14 +622,12 @@
             </div>
             <div class="container-body">
                 <div class="form-group">
-                    <label for="accountSelect" class="form-label">Selecione uma conta</label>
                     <select id="accountSelect" class="form-select" onchange="bindAccount()">
                         <option value="" selected disabled>Selecione uma conta</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="actionType" class="form-label">Tipo de Ação</label>
                     <select id="actionType" class="form-select">
                         <option value="seguir">Seguir</option>
                         <option value="curtir">Curtir</option>
