@@ -87,6 +87,7 @@
             padding: 30px;
             max-width: 800px;
             margin: 0 auto;
+            margin-top: 5%;
         }
 
         .container {
@@ -145,8 +146,7 @@
 
         .form-select:focus {
             outline: none;
-            border-color: var(--button-light);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(54, 54, 54, 0.25);
         }
 
         .form-group {
@@ -629,6 +629,7 @@
 
                 <div class="form-group">
                     <select id="actionType" class="form-select">
+                        <option value="" selected disabled>Tipo de ação</option>
                         <option value="seguir">Seguir</option>
                         <option value="curtir">Curtir</option>
                         <option value="seguir_curtir">Seguir e Curtir</option>
