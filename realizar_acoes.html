@@ -228,62 +228,28 @@
             box-shadow: 0 4px 8px var(--shadow-light);
         }
 
-        /* Botão Abrir Ação (agora à direita) */
-        .open-action-button {
-            flex: 1;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-
-        /* Botão Pular Ação (agora à esquerda) */
-        .skip-button {
-            flex: 1;
-            background-color: #d9534f;
-            color: white;
-        }
-
-        .skip-button:hover {
-            background-color: #c9302c;
-        }
-
-        /* Botão Abrir Ação (agora à direita) */
-        .open-action-button {
-            flex: 1;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .open-action-button:hover {
-            background-color: #0069d9;
-        }
-
-         /* Estilos padronizados para todos os botões */
-        .confirm-button,
-        .open-action-button,
-        .skip-button {
-            padding: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
-            height: 40px;
-            box-sizing: border-box;
-        }       
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            text-decoration: none;
+        }
 
-        .open-action-button:hover {
-            background-color: #0069d9;
+        .btn-primary {
+            background-color: #0051ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
         }
 
         .btn-danger {
@@ -700,17 +666,24 @@
                         <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
                     </div>
 
-                <div class="action-buttons">
-                    <button class="skip-button" onclick="skipAction()">Pular Ação</button>
-                    <a id="actionUrl" href="#" target="_blank" class="open-action-button"
-                        onclick="showConfirmButton()">Abrir Ação</a>
-                </div>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="skipAction()">
+                            <i class="fas fa-times"></i> Pular Ação
+                        </button>
+                        <a id="actionUrl" href="#" target="_blank" class="btn btn-primary"
+                            onclick="showConfirmButton()">
+                            <i class="fas fa-external-link-alt"></i> Abrir Ação
+                        </a>
+                    </div>
 
-                <button id="confirmButton" class="confirm-button" onclick="confirmAction()"
-                    style="display: none;">Confirmar Ação</button>
+                    <button id="confirmButton" class="btn btn-success" onclick="confirmAction()" style="display: none;">
+                        <i class="fas fa-check"></i> Confirmar Ação
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
