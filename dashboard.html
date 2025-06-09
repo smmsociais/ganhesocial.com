@@ -825,8 +825,8 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
 
-                document.getElementById("saldoDisponivel").textContent = `Saldo Disponível: R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent = `Saldo Pendente: R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
                 // Mostra os saldos e a página depois de carregar
                 document.getElementById("saldoDisponivel").style.display = "block";
