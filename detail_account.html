@@ -89,6 +89,8 @@
             transition: background 0.3s;
         }
 
+
+
         h2 {
             text-align: center;
             margin-bottom: 25px;
@@ -385,6 +387,38 @@
             }
         }
 
+        /* Desktop Menu */
+        @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: none !important;
+            }
+        }
+
         /* Estilos para desktop */
         @media (min-width: 992px) {
             .desktop-header {
@@ -416,6 +450,29 @@
         @media (max-width: 991px) {
             .logo-mobile {
                 display: block;
+            }
+
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
             }
         }
 
@@ -498,15 +555,12 @@
             </a>
         </div>
     </div>
-    <!-- Adicione isso no header, antes do main-container -->
-    <div class="container-header">
-        <h2 id="pageTitle"><i class="fas fa-history"></i> Histórico de Ações</h2>
-    </div>
+
     <!-- Conteúdo Principal -->
     <div class="main-container">
         <div class="container fade-in">
             <div class="container-header">
-                <h2><i class="fas fa-history"></i> Histórico de Ações</h2>
+                <h2 id="pageTitle"><i class="fas fa-history"></i> Histórico de Ações</h2>
             </div>
             <div class="container-body">
                 <!-- Tabela de Ações -->
