@@ -180,21 +180,20 @@ if (contaExistente) {
         }
 
 if (method === "GET") {
-    // Buscar todos os usuários que tenham contas
-    const users = await User.find({ "contas.0": { $exists: true } }, { contas: 1, nome: 1 });
+    if (!user.contas || user.contas.length === 0) {
+        return res.status(200).json([]);
+    }
 
-    // Consolidar as contas com identificação de qual usuário pertence
-    const todasAsContas = users.flatMap(user =>
-        user.contas.map(conta => ({
-            ...conta.toObject?.() ?? conta, // Garante compatibilidade se `conta` for um subdocumento Mongoose
-            usuario: {
-                _id: user._id,
-                nome: user.nome
-            }
-        }))
-    );
+    // Mapeia apenas as contas do próprio usuário autenticado
+    const contasDoUsuario = user.contas.map(conta => ({
+        ...conta.toObject?.() ?? conta,
+        usuario: {
+            _id: user._id,
+            nome: user.nome
+        }
+    }));
 
-    return res.status(200).json(todasAsContas);
+    return res.status(200).json(contasDoUsuario);
 }
         if (method === "DELETE") {
             const { nomeConta } = req.query;
