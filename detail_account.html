@@ -545,13 +545,12 @@
                     </a>
                 </div>
 
-                <!-- Paginação -->
-                <div class="pagination" id="pagination" style="display: none;">
-                    <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
-                    <span id="page-info">Página 1 de 1</span>
-                    <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
-                </div>
-                <div class="pagination-info" id="paginationInfo">Carregando...</div>
+            </div>
+            <div class="pagination-info" id="paginationInfo">
+                <i class="fas fa-spinner fa-spin"></i> Carregando...
+            </div>
+            <div class="pagination" id="pagination">
+                <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
             </div>
         </div>
     </div>
@@ -621,10 +620,6 @@
             let currentPage = 1;
             let totalPages = 1;
             let allActions = [];
-            const historyList = document.getElementById("historyList");
-            const paginationInfo = document.getElementById("paginationInfo");
-            const pageTitle = document.getElementById("pageTitle");
-            const pagination = document.getElementById("pagination");
 
             // Ajusta título
             if (nomeUsuario) {
