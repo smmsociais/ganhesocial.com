@@ -870,7 +870,7 @@
                     throw new Error("Resposta da API não contém o array 'ranking'");
                 }
 
-                const rankingRows = document.querySelectorAll('#rankingTable tbody tr');
+               const rankingRows = rankingTable.querySelectorAll('tr');
 
                 data.ranking.slice(0, 10).forEach((user, index) => {
                     if (index < rankingRows.length) {
@@ -887,7 +887,8 @@
 
             } catch (error) {
                 console.error("Erro ao carregar ranking:", error);
-                const rankingTable = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
+                const rankingTable = document.getElementById('rankingTable');
+                const rankingRows = rankingTable.querySelectorAll('tr');
                 rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
             }
         }
