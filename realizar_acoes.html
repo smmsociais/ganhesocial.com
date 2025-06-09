@@ -468,23 +468,31 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 15px;
-            }
+@media (max-width: 768px) {
+    .main-container {
+        padding: 15px;
+    }
 
-            .container-header {
-                padding: 15px;
-            }
+    .container-header {
+        padding: 15px;
+    }
 
-            .container-body {
-                padding: 15px;
-            }
+    .container-body {
+        padding: 15px;
+    }
 
-            .btn-group {
-                flex-direction: column;
-            }
-        }
+    /* Modificação para o grupo de botões */
+    .btn-group {
+        flex-direction: row; /* Mantém os botões em linha */
+        flex-wrap: wrap; /* Permite quebrar linha se necessário */
+        justify-content: space-between; /* Distribui os botões igualmente */
+    }
+
+    .btn-group .btn {
+        flex: 0 0 calc(50% - 5px); /* Define largura de 50% com pequeno gap */
+        min-width: auto; /* Remove a largura mínima */
+    }
+}
 
         @media (max-width: 576px) {
             .header {
