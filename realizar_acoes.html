@@ -242,15 +242,22 @@
             text-decoration: none;
         }
 
-        .btn-primary {
-            background-color: #0051ff;
+        /* Botão Abrir Ação (agora à direita) */
+        .open-action-button {
+            flex: 1;
+            background-color: #007BFF;
             color: white;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
+        .open-action-button:hover {
+            background-color: #0069d9;
         }
+
 
         .btn-danger {
             background-color: var(--failed-color);
@@ -468,31 +475,36 @@
             }
         }
 
-@media (max-width: 768px) {
-    .main-container {
-        padding: 15px;
-    }
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
 
-    .container-header {
-        padding: 15px;
-    }
+            .container-header {
+                padding: 15px;
+            }
 
-    .container-body {
-        padding: 15px;
-    }
+            .container-body {
+                padding: 15px;
+            }
 
-    /* Modificação para o grupo de botões */
-    .btn-group {
-        flex-direction: row; /* Mantém os botões em linha */
-        flex-wrap: wrap; /* Permite quebrar linha se necessário */
-        justify-content: space-between; /* Distribui os botões igualmente */
-    }
+            /* Modificação para o grupo de botões */
+            .btn-group {
+                flex-direction: row;
+                /* Mantém os botões em linha */
+                flex-wrap: wrap;
+                /* Permite quebrar linha se necessário */
+                justify-content: space-between;
+                /* Distribui os botões igualmente */
+            }
 
-    .btn-group .btn {
-        flex: 0 0 calc(50% - 5px); /* Define largura de 50% com pequeno gap */
-        min-width: auto; /* Remove a largura mínima */
-    }
-}
+            .btn-group .btn {
+                flex: 0 0 calc(50% - 5px);
+                /* Define largura de 50% com pequeno gap */
+                min-width: auto;
+                /* Remove a largura mínima */
+            }
+        }
 
         @media (max-width: 576px) {
             .header {
@@ -670,7 +682,7 @@
                         <button class="btn btn-danger" onclick="skipAction()">
                             <i class="fas fa-times"></i> Pular Ação
                         </button>
-                        <a id="actionUrl" href="#" target="_blank" class="btn btn-primary"
+                        <a id="actionUrl" href="#" target="_blank" class="open-action-button"
                             onclick="showConfirmButton()">
                             <i class="fas fa-external-link-alt"></i> Abrir Ação
                         </a>
