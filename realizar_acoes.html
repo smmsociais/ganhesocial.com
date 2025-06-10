@@ -835,34 +835,27 @@ function ativarSelecaoTipoAcao() {
     const token = localStorage.getItem("token");
 
     if (id_conta && token && id_conta !== "null") {
-        const oldSelect = document.getElementById("actionType");
+        const select = document.getElementById("actionType");
+        select.disabled = false;
+        // adiciona listener apenas uma vez, se necessário
+                newSelect.id = "actionType"; // reatribui ID
+                oldSelect.parentNode.replaceChild(newSelect, oldSelect);
 
-        // 🔒 Salva o valor atual selecionado
-        const selectedValue = oldSelect.value;
+                newSelect.addEventListener("change", () => {
+                    const actionType = newSelect.value;
+                    const id_conta = localStorage.getItem("id_conta");
 
-        const newSelect = oldSelect.cloneNode(true);
-        newSelect.disabled = false;
-        newSelect.id = "actionType"; // reatribui ID
+                    if (id_conta && id_conta !== "null" && actionType !== "") {
+                        document.getElementById("actionText").textContent =
+                            actionType === "curtir" ? "Curtir" :
+                                actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-        oldSelect.parentNode.replaceChild(newSelect, oldSelect);
-
-        // ✅ Restaura a seleção anterior
-        newSelect.value = selectedValue;
-
-        newSelect.addEventListener("change", () => {
-            const actionType = newSelect.value;
-            const id_conta = localStorage.getItem("id_conta");
-
-            if (id_conta && id_conta !== "null" && actionType !== "") {
-                document.getElementById("actionText").textContent =
-                    actionType === "curtir" ? "Curtir" :
-                        actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
-
-                fetchAction();
+                        fetchAction();
+                    }
+                });
             }
-        });
-    }
-}
+        }
+
         async function fetchAction() {
             const id_conta = localStorage.getItem("id_conta");
             const token = localStorage.getItem("token");
