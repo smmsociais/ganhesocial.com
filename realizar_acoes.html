@@ -162,9 +162,9 @@
             margin: 0 auto;
         }
 
-#accountSelect option[disabled] {
-    user-select: none;
-}
+        option[disabled] {
+            user-select: none;
+        }
 
         .warning-box {
             margin: 20px 0;
@@ -297,6 +297,36 @@
 
         .skip-button:hover {
             background-color: #c9302c;
+        }
+
+
+        .btn-danger {
+            background-color: var(--failed-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+            justify-content: center;
         }
 
         /* Status Message */
