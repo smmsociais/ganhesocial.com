@@ -827,12 +827,12 @@ function ativarSelecaoTipoAcao() {
     const token = localStorage.getItem("token");
 
     if (id_conta && token && id_conta !== "null") {
-        const actionSelect = document.getElementById("actionType");
-        actionSelect.disabled = false;
-
-        // Remove qualquer listener antigo
-        const newSelect = actionSelect.cloneNode(true);
-        actionSelect.parentNode.replaceChild(newSelect, actionSelect);
+        const oldSelect = document.getElementById("actionType");
+        const newSelect = oldSelect.cloneNode(true);
+        
+        newSelect.disabled = false;
+        newSelect.id = "actionType"; // reatribui ID
+        oldSelect.parentNode.replaceChild(newSelect, oldSelect);
 
         newSelect.addEventListener("change", () => {
             const actionType = newSelect.value;
