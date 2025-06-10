@@ -747,6 +747,13 @@
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
+                    const disabledOptions = document.querySelectorAll('option[disabled]');
+        disabledOptions.forEach(option => {
+            option.style.userSelect = 'none';
+            option.style.webkitUserSelect = 'none'; // Para navegadores baseados em WebKit (Chrome, Safari)
+            option.style.MozUserSelect = 'none'; // Para Firefox
+            option.style.msUserSelect = 'none'; // Para IE/Edge
+        });
             const token = localStorage.getItem("token");
 
             const menuToggle = document.getElementById('menuToggle');
