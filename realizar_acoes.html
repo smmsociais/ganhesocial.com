@@ -838,25 +838,26 @@ function ativarSelecaoTipoAcao() {
         const select = document.getElementById("actionType");
         select.disabled = false;
 
-        // Remove event listeners antigos, se necessário (opcional)
-        const cloned = select.cloneNode(true);
-        select.parentNode.replaceChild(cloned, select);
+        // Adiciona listener só se ainda não tiver
+        if (!select.dataset.listenerAdded) {
+            select.addEventListener("change", () => {
+                const actionType = select.value;
+                const id_conta = localStorage.getItem("id_conta");
 
-        cloned.addEventListener("change", () => {
-            const actionType = cloned.value;
-            const id_conta = localStorage.getItem("id_conta");
+                if (id_conta && id_conta !== "null" && actionType !== "") {
+                    document.getElementById("actionText").textContent =
+                        actionType === "curtir" ? "Curtir" :
+                            actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-            if (id_conta && id_conta !== "null" && actionType !== "") {
-                document.getElementById("actionText").textContent =
-                    actionType === "curtir" ? "Curtir" :
-                        actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+                    fetchAction();
+                }
+            });
 
-                fetchAction();
-            }
-        });
+            // Marca que o listener foi adicionado
+            select.dataset.listenerAdded = "true";
+        }
     }
 }
-
         async function fetchAction() {
             const id_conta = localStorage.getItem("id_conta");
             const token = localStorage.getItem("token");
