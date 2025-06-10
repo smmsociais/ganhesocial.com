@@ -1100,6 +1100,7 @@ if (data.status === "ENCONTRADA") {
         }
 
 async function skipAction() {
+    document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
     document.getElementById("skipButton").style.display = "none";
     document.getElementById("actionContent").style.opacity = "0"; 
 
