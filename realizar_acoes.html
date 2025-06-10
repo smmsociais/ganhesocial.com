@@ -683,7 +683,6 @@
                 </div>
 
                 <div class="form-group">
-                    <div id="actionContent" class="action-content" style="display: none;">
                     <select id="actionType" class="form-select">
                         <option value="" selected disabled>Tipo de ação</option>
                         <option value="seguir">Seguir</option>
@@ -982,7 +981,7 @@ async function fetchAction() {
                     ...data,
                     origem
                 };
-
+                document.getElementById("actionContent").style.display = "block";
                 document.getElementById("actionContent").style.opacity = "1";
             }
 
