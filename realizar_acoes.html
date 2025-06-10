@@ -194,11 +194,15 @@
             margin-bottom: 0;
         }
 
-        /* Action Content */
-        .action-content {
-            display: none;
-            margin-top: 20px;
-        }
+.action-content {
+    display: none;
+    margin-top: 20px;
+    max-width: 500px; /* Define uma largura máxima */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    text-align: center; /* Centraliza o texto */
+}
 
         .action-details {
             margin-bottom: 20px;
@@ -873,7 +877,7 @@
             }
 
             if (document.getElementById("actionType").disabled) return;
-            
+
             document.getElementById("warningMessage").style.display = "none";
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             document.getElementById("actionContent").style.opacity = "0";
