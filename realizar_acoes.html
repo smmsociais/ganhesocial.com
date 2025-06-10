@@ -901,6 +901,7 @@ if (data.status === "ENCONTRADA") {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
                     const data = await response.json();
                     if (data.status === "ENCONTRADA") {
+                        document.getElementById("warningMessage").style.display = "none";
                         if (parseFloat(data.quantidade_pontos) === 4) {
                             return "ignorarLocalERepetirSMM";
                         }
