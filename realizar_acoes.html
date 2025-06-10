@@ -1101,6 +1101,7 @@ if (data.status === "ENCONTRADA") {
 
 async function skipAction() {
     document.getElementById("skipButton").style.display = "none";
+    document.getElementById("actionContent").style.opacity = "0"; 
 
     try {
         const tipo = document.getElementById("actionType").value;
@@ -1109,7 +1110,6 @@ async function skipAction() {
         const quantidade_pontos_text = document.getElementById("points").textContent;
         const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
         const tipo_acao = tipo;
-
         const id_conta = localStorage.getItem("id_conta");
         const token = localStorage.getItem("token");
 
