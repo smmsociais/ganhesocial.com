@@ -838,7 +838,7 @@ function ativarSelecaoTipoAcao() {
         const select = document.getElementById("actionType");
         select.disabled = false;
 
-        // Adiciona listener só se ainda não tiver
+        // Adiciona listener só uma vez
         if (!select.dataset.listenerAdded) {
             select.addEventListener("change", () => {
                 const actionType = select.value;
@@ -853,8 +853,17 @@ function ativarSelecaoTipoAcao() {
                 }
             });
 
-            // Marca que o listener foi adicionado
             select.dataset.listenerAdded = "true";
+        }
+
+        // Se já tiver uma ação selecionada, chama fetchAction diretamente
+        const preSelectedAction = select.value;
+        if (preSelectedAction && preSelectedAction !== "") {
+            document.getElementById("actionText").textContent =
+                preSelectedAction === "curtir" ? "Curtir" :
+                    preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+
+            fetchAction();
         }
     }
 }
