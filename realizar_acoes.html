@@ -683,20 +683,19 @@
             </div>
             <div class="container-body">
                 <div class="form-group">
-<select id="accountSelect" class="form-select" onchange="bindAccount()">
-    <option value="" selected disabled style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">Selecione uma conta</option>
-</select>
+                    <select id="accountSelect" class="form-select" onchange="bindAccount()">
+                       <option value="" disabled selected hidden>Selecione uma conta</option>
+
+                    </select>
                 </div>
 
                 <div class="form-group">
-<select id="actionType" class="form-select">
-    <option value="" selected disabled>
-        <span style="user-select: none;">Tipo de ação</span>
-    </option>
-    <option value="seguir">Seguir</option>
-    <option value="curtir">Curtir</option>
-    <option value="seguir_curtir">Seguir e Curtir</option>
-</select>
+                    <select id="actionType" class="form-select">
+                        <option value="" disabled selected hidden>Tipo de ação</option>
+                        <option value="seguir">Seguir</option>
+                        <option value="curtir">Curtir</option>
+                        <option value="seguir_curtir">Seguir e Curtir</option>
+                    </select>
                 </div>
 
                 <div id="statusMessage" class="status-message"></div>
@@ -745,15 +744,6 @@
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
-        const disabledOptions = document.querySelectorAll('option[disabled]');
-        
-        // Aplica user-select: none em cada uma
-        disabledOptions.forEach(option => {
-            option.style.userSelect = 'none';
-            option.style.webkitUserSelect = 'none'; // Chrome, Safari
-            option.style.MozUserSelect = 'none'; // Firefox
-            option.style.msUserSelect = 'none'; // IE/Edge
-        });
             const token = localStorage.getItem("token");
 
             const menuToggle = document.getElementById('menuToggle');
