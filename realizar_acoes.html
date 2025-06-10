@@ -162,6 +162,10 @@
             margin: 0 auto;
         }
 
+        option[disabled] {
+            user-select: none;
+        }
+
         .warning-box {
             margin: 20px 0;
             padding: 15px;
@@ -194,12 +198,13 @@
             margin-bottom: 0;
         }
 
-.action-content {
-    display: none;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center; /* Centraliza o texto */
-}
+        .action-content {
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            /* Centraliza o texto */
+        }
 
         .action-details {
             margin-bottom: 20px;
@@ -783,7 +788,6 @@
             const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
             if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
                 return;
             }
 
