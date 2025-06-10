@@ -735,498 +735,499 @@
     </div>
     <div class="menu-overlay" id="menuOverlay"></div>
 
-<script>
-    // O restante do JavaScript permanece exatamente igual
-    document.addEventListener("DOMContentLoaded", async function () {
-        const token = localStorage.getItem("token");
+    <script>
+        // O restante do JavaScript permanece exatamente igual
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem("token");
 
-        const menuToggle = document.getElementById('menuToggle');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const menuContent = document.getElementById('menuContent');
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
 
-        menuToggle.addEventListener('click', function () {
-            menuContent.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
+            menuToggle.addEventListener('click', function () {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-            const spans = menuToggle.querySelectorAll('span');
-            if (menuContent.classList.contains('active')) {
-                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-            } else {
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            });
+
+            menuOverlay.addEventListener('click', function () {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            }
-        });
-
-        menuOverlay.addEventListener('click', function () {
-            menuContent.classList.remove('active');
-            menuOverlay.classList.remove('active');
-            const spans = menuToggle.querySelectorAll('span');
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        });
-
-        try {
-            await loadAccounts();
-        } catch (error) {
-            console.error('Erro ao carregar contas:', error);
-        }
-
-        document.body.classList.add('loaded');
-    });
-    let currentActionData = null;
-
-    async function bindAccount() {
-        const selectedAccount = document.getElementById("accountSelect").value?.trim();
-
-        if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
-            document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
-            return;
-        }
-
-        console.log("Conta selecionada para vincular:", selectedAccount);
-
-        try {
-            const response = await fetch("/api/vincular_conta", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ nomeUsuario: selectedAccount })
             });
 
-            const data = await response.json();
-            console.log("Resposta da API /vincular_conta:", data);
-
-            if (data.id_conta) {
-                localStorage.setItem("id_conta", data.id_conta);
-                localStorage.setItem("conta_invalida", "false");
-            } else {
-                if (data.error === "WRONG_USER") {
-                    console.warn("WRONG_USER recebido, usando fallback.");
-                    localStorage.setItem("id_conta", "fallback_" + selectedAccount);
-                    localStorage.setItem("conta_invalida", "true");
-                } else {
-                    document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
-                    return;
-                }
-            }
-
-            // Habilita o select de tipo de ação, mas NÃO chama fetchAction ainda
-            document.getElementById("warningMessage").style.display = "none";
-            document.getElementById("actionContent").style.display = "none";
-            ativarSelecaoTipoAcao();
-
-        } catch (error) {
-            console.error("Erro na requisição:", error);
-            document.getElementById("statusMessage").textContent = "Erro na requisição.";
-        }
-    }
-
-    function ativarSelecaoTipoAcao() {
-        const id_conta = localStorage.getItem("id_conta");
-        const token = localStorage.getItem("token");
-
-        if (id_conta && token && id_conta !== "null") {
-            const oldSelect = document.getElementById("actionType");
-            const newSelect = oldSelect.cloneNode(true);
-
-            newSelect.disabled = false;
-            newSelect.id = "actionType"; // reatribui ID
-            oldSelect.parentNode.replaceChild(newSelect, oldSelect);
-
-            newSelect.addEventListener("change", () => {
-                const actionType = newSelect.value;
-                const id_conta = localStorage.getItem("id_conta");
-
-                if (id_conta && id_conta !== "null" && actionType !== "") {
-                    document.getElementById("actionText").textContent =
-                        actionType === "curtir" ? "Curtir" :
-                            actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
-
-                    fetchAction();
-                }
-            });
-        }
-    }
-
-    async function fetchAction() {
-        const id_conta = localStorage.getItem("id_conta");
-        const token = localStorage.getItem("token");
-        const actionType = document.getElementById("actionType").value;
-        const contaInvalida = localStorage.getItem("conta_invalida") === "true";
-
-        // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
-        if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
-            document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-            document.getElementById("actionContent").style.opacity = "1";
-            return;
-        }
-
-        // 🚫 Bloqueia se tipo de ação não for um dos válidos
-        if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-            document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
-            return;
-        }
-
-        if (document.getElementById("actionType").disabled) return;
-
-        document.getElementById("actionContent").style.opacity = "0";
-
-        async function tentarBuscarSMM() {
             try {
-                const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
-                const data = await response.json();
-
-                if (data.status === "ENCONTRADA") {
-                    await processarAcao(data, "smm");
-                    return true;
-                } else {
-                    console.log("Nenhuma ação SMM encontrada.");
-                }
-            } catch (e) {
-                console.error("Erro ao buscar ação SMM:", e);
+                await loadAccounts();
+            } catch (error) {
+                console.error('Erro ao carregar contas:', error);
             }
-            return false;
-        }
 
-        await tentarBuscarSMM(); // Chama de fato
+            document.body.classList.add('loaded');
+        });
+        let currentActionData = null;
 
-        async function tentarBuscarLocal() {
+        async function bindAccount() {
+            const selectedAccount = document.getElementById("accountSelect").value?.trim();
+
+            if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
+                return;
+            }
+
+            console.log("Conta selecionada para vincular:", selectedAccount);
+
             try {
-                const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+                const response = await fetch("/api/vincular_conta", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ nomeUsuario: selectedAccount })
+                });
+
                 const data = await response.json();
-                if (data.status === "ENCONTRADA") {
-                    if (parseFloat(data.quantidade_pontos) === 4) {
-                        return "ignorarLocalERepetirSMM";
-                    }
-                    await processarAcao(data, "local");
-                    return true;
-                } else if (data.error === "Nenhuma ação encontrada.") {
-                    return "repetirSMM";
-                }
-            } catch (e) {
-                console.error("Erro ao buscar ação local:", e);
-            }
-            return false;
-        }
+                console.log("Resposta da API /vincular_conta:", data);
 
-        async function processarAcao(data, origem) {
-            document.getElementById("statusMessage").textContent = "";
-            document.getElementById("username").textContent = data.nome_usuario;
-
-            // Atualiza o texto da ação com base no tipo selecionado
-            const actionType = document.getElementById("actionType").value;
-            let actionText = "Seguir";
-
-            if (data.url_dir && data.url_dir.includes("/video/")) {
-                actionText = "Curtir";
-            } else if (actionType === "seguir_curtir") {
-                actionText = origem === "local" ? "Seguir" : "Seguir";
-            } else if (actionType === "curtir") {
-                actionText = "Curtir";
-            }
-
-            document.getElementById("actionText").textContent = actionText;
-
-            const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-            const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
-            const profileImg = document.getElementById("profileImage");
-            document.getElementById("actionUrl").href = url;
-
-            if (data.url_dir && data.url_dir.includes("/video/")) {
-                // Não carrega imagem de perfil para ações de Curtir
-                profileImg.style.display = "none";
-                profileImg.src = "";
-            } else {
-                try {
-                    const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                    const userInfo = await resUserInfo.json();
-
-                    if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                        profileImg.src = userInfo.data.user.avatarLarger;
-                        profileImg.style.display = "block";
-                        localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
-
+                if (data.id_conta) {
+                    localStorage.setItem("id_conta", data.id_conta);
+                    localStorage.setItem("conta_invalida", "false");
+                } else {
+                    if (data.error === "WRONG_USER") {
+                        console.warn("WRONG_USER recebido, usando fallback.");
+                        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
+                        localStorage.setItem("conta_invalida", "true");
                     } else {
+                        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
+                        return;
+                    }
+                }
+
+                // Habilita o select de tipo de ação, mas NÃO chama fetchAction ainda
+                document.getElementById("warningMessage").style.display = "none";
+                document.getElementById("actionContent").style.display = "none";
+                ativarSelecaoTipoAcao();
+
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                document.getElementById("statusMessage").textContent = "Erro na requisição.";
+            }
+        }
+
+        function ativarSelecaoTipoAcao() {
+            const id_conta = localStorage.getItem("id_conta");
+            const token = localStorage.getItem("token");
+
+            if (id_conta && token && id_conta !== "null") {
+                const oldSelect = document.getElementById("actionType");
+                const newSelect = oldSelect.cloneNode(true);
+
+                newSelect.disabled = false;
+                newSelect.id = "actionType"; // reatribui ID
+                oldSelect.parentNode.replaceChild(newSelect, oldSelect);
+
+                newSelect.addEventListener("change", () => {
+                    const actionType = newSelect.value;
+                    const id_conta = localStorage.getItem("id_conta");
+
+                    if (id_conta && id_conta !== "null" && actionType !== "") {
+                        document.getElementById("actionText").textContent =
+                            actionType === "curtir" ? "Curtir" :
+                                actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+
+                        fetchAction();
+                    }
+                });
+            }
+        }
+
+        async function fetchAction() {
+            const id_conta = localStorage.getItem("id_conta");
+            const token = localStorage.getItem("token");
+            const actionType = document.getElementById("actionType").value;
+            const contaInvalida = localStorage.getItem("conta_invalida") === "true";
+
+            // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
+            if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+                document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+                document.getElementById("warningMessage").style.display = "block";
+                document.getElementById("actionContent").style.opacity = "1";
+                return;
+            }
+
+            // 🚫 Bloqueia se tipo de ação não for um dos válidos
+            if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
+                document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
+                return;
+            }
+
+            if (document.getElementById("actionType").disabled) return;
+
+            document.getElementById("actionContent").style.opacity = "0";
+
+            async function tentarBuscarSMM() {
+                try {
+                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
+                    const data = await response.json();
+
+                    if (data.status === "ENCONTRADA") {
+                        await processarAcao(data, "smm");
+                        return true;
+                    } else {
+                        console.log("Nenhuma ação SMM encontrada.");
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar ação SMM:", e);
+                }
+                return false;
+            }
+
+            await tentarBuscarSMM(); // Chama de fato
+
+            async function tentarBuscarLocal() {
+                try {
+                    const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+                    const data = await response.json();
+                    if (data.status === "ENCONTRADA") {
+                        if (parseFloat(data.quantidade_pontos) === 4) {
+                            return "ignorarLocalERepetirSMM";
+                        }
+                        await processarAcao(data, "local");
+                        return true;
+                    } else if (data.error === "Nenhuma ação encontrada.") {
+                        return "repetirSMM";
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar ação local:", e);
+                }
+                return false;
+            }
+
+            async function processarAcao(data, origem) {
+                document.getElementById("statusMessage").textContent = "";
+                document.getElementById("username").textContent = data.nome_usuario;
+
+                // Atualiza o texto da ação com base no tipo selecionado
+                const actionType = document.getElementById("actionType").value;
+                let actionText = "Seguir";
+
+                if (data.url_dir && data.url_dir.includes("/video/")) {
+                    actionText = "Curtir";
+                } else if (actionType === "seguir_curtir") {
+                    actionText = origem === "local" ? "Seguir" : "Seguir";
+                } else if (actionType === "curtir") {
+                    actionText = "Curtir";
+                }
+
+                document.getElementById("actionText").textContent = actionText;
+
+                const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+                const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
+                const profileImg = document.getElementById("profileImage");
+                document.getElementById("actionUrl").href = url;
+
+                if (data.url_dir && data.url_dir.includes("/video/")) {
+                    // Não carrega imagem de perfil para ações de Curtir
+                    profileImg.style.display = "none";
+                    profileImg.src = "";
+                } else {
+                    try {
+                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+                        const userInfo = await resUserInfo.json();
+
+                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                            profileImg.src = userInfo.data.user.avatarLarger;
+                            profileImg.style.display = "block";
+                            localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
+
+                        } else {
+                            profileImg.style.display = "none";
+                            profileImg.src = "";
+                        }
+                    } catch (e) {
+                        console.error("Erro ao carregar avatar:", e);
                         profileImg.style.display = "none";
                         profileImg.src = "";
                     }
-                } catch (e) {
-                    console.error("Erro ao carregar avatar:", e);
-                    profileImg.style.display = "none";
-                    profileImg.src = "";
                 }
-            }
-            let valorFinal;
+                let valorFinal;
 
-            const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
+                const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
 
-            if (isCurtir) {
-                valorFinal = "0.001";
-            } else if (origem === "smm") {
-                valorFinal = "0.006";
-            } else {
-                const pontos = parseFloat(data.quantidade_pontos || 0);
-                const valorBruto = pontos / 1000;
-                let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-                valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-            }
-            document.getElementById("points").textContent = `R$ ${valorFinal}`;
-            document.getElementById("confirmButton").style.display = "none";
-
-            currentActionData = {
-                ...data,
-                origem
-            };
-            document.getElementById("actionContent").style.display = "block";
-            document.getElementById("actionContent").style.opacity = "1";
-        }
-
-        try {
-            const tipoAcao = document.getElementById("actionType").value;
-            const encontrouSMM = await tentarBuscarSMM();
-
-            if (!encontrouSMM) {
-                let resultadoLocal = false;
-
-                if (!contaInvalida && tipoAcao !== "curtir") {
-                    resultadoLocal = await tentarBuscarLocal();
+                if (isCurtir) {
+                    valorFinal = "0.001";
+                } else if (origem === "smm") {
+                    valorFinal = "0.006";
+                } else {
+                    const pontos = parseFloat(data.quantidade_pontos || 0);
+                    const valorBruto = pontos / 1000;
+                    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+                    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
                 }
+                document.getElementById("points").textContent = `R$ ${valorFinal}`;
+                document.getElementById("confirmButton").style.display = "none";
 
-                if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                    const novaTentativa = await tentarBuscarSMM();
-                    if (!novaTentativa) {
+                currentActionData = {
+                    ...data,
+                    origem
+                };
+                document.getElementById("actionContent").style.display = "block";
+                document.getElementById("actionContent").style.opacity = "1";
+            }
+
+            try {
+                const tipoAcao = document.getElementById("actionType").value;
+                const encontrouSMM = await tentarBuscarSMM();
+
+                if (!encontrouSMM) {
+                    let resultadoLocal = false;
+
+                    if (!contaInvalida && tipoAcao !== "curtir") {
+                        resultadoLocal = await tentarBuscarLocal();
+                    }
+
+                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+                        const novaTentativa = await tentarBuscarSMM();
+                        if (!novaTentativa) {
+                            exibirContagemRegressiva();
+                        }
+                    } else if (!resultadoLocal) {
                         exibirContagemRegressiva();
                     }
-                } else if (!resultadoLocal) {
-                    exibirContagemRegressiva();
                 }
+
+            } catch (error) {
+                console.error("Erro ao buscar ações:", error);
+                document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
             }
 
-        } catch (error) {
-            console.error("Erro ao buscar ações:", error);
-            document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
+            // Função para exibir a contagem regressiva animada
+            function exibirContagemRegressiva() {
+                let contador = 3;
+                const statusElement = document.getElementById("statusMessage");
+
+                // Função que atualiza a mensagem a cada segundo
+                function atualizarMensagem() {
+                    if (contador > 0) {
+                        statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+                        contador--;
+                        setTimeout(atualizarMensagem, 1000);
+                    } else {
+                        fetchAction();
+                    }
+                }
+
+                // Inicia a contagem
+                atualizarMensagem();
+            }
+        }
+        function showConfirmButton() {
+            document.getElementById("confirmButton").style.display = "block";
         }
 
-        // Função para exibir a contagem regressiva animada
-        function exibirContagemRegressiva() {
-            let contador = 3;
-            const statusElement = document.getElementById("statusMessage");
+        async function confirmAction() {
+            const selectedAccount = document.getElementById("accountSelect").value;
+            if (!selectedAccount || !currentActionData) return;
 
-            // Função que atualiza a mensagem a cada segundo
-            function atualizarMensagem() {
-                if (contador > 0) {
-                    statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-                    contador--;
-                    setTimeout(atualizarMensagem, 1000);
+            // Esconde o conteúdo da ação enquanto processa a confirmação
+            document.getElementById("actionContent").style.opacity = "0";
+            document.getElementById("confirmButton").style.display = "none";
+            document.getElementById("profileImage").style.display = "none";
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+
+            let confirmData;
+            try {
+                if (currentActionData.origem !== 'smm') {
+                    const confirmResponse = await fetch("/api/confirmar_acao", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                            id_conta: localStorage.getItem("id_conta"),
+                            id_pedido: currentActionData.id_pedido,
+                        })
+                    });
+
+                    confirmData = await confirmResponse.json();
+
+                    if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
+                        throw new Error("Erro ao confirmar ação.");
+                    }
                 } else {
-                    fetchAction();
+                    // Simula retorno básico para seguir com o restante da lógica
+                    confirmData = {
+                        valor: "0.007"
+                    };
                 }
+
+            } catch (error) {
+                console.error("Erro ao confirmar ação:", error);
+                document.getElementById("actionContent").style.opacity = "1";
+                return;
             }
 
-            // Inicia a contagem
-            atualizarMensagem();
+            await registrarAcaoPendente({
+                nome_usuario: selectedAccount,
+                id_pedido: currentActionData.id_pedido,
+                id_conta: localStorage.getItem("id_conta"),
+                url_dir: currentActionData.url_dir,
+                tipo_acao: currentActionData.tipo_acao,
+                quantidade_pontos: Number(currentActionData.quantidade_pontos),
+                valor_confirmacao: parseFloat(confirmData.valor),
+            });
+            const accountFound = true; // ou qualquer lógica para determinar isso
+
+            // Busca nova ação sem mostrar o conteúdo da anterior
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+            fetchAction();
         }
-    }
-    function showConfirmButton() {
-        document.getElementById("confirmButton").style.display = "block";
-    }
 
-    async function confirmAction() {
-        const selectedAccount = document.getElementById("accountSelect").value;
-        if (!selectedAccount || !currentActionData) return;
+        async function skipAction() {
+            try {
+                const tipo = document.getElementById("actionType").value;
+                const nome_usuario = document.getElementById("username").textContent; // Corrigido de "nomeUsuario" para "username"
+                const url_dir = document.getElementById("actionUrl").href; // Corrigido de "perfilLink" para "actionUrl"
+                const quantidade_pontos_text = document.getElementById("points").textContent; // Corrigido de "pontos" para "points"
+                const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
+                const tipo_acao = tipo;
 
-        // Esconde o conteúdo da ação enquanto processa a confirmação
-        document.getElementById("actionContent").style.opacity = "0";
-        document.getElementById("confirmButton").style.display = "none";
-        document.getElementById("profileImage").style.display = "none";
-        document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+                const id_conta = localStorage.getItem("id_conta"); // Adicionado
+                const token = localStorage.getItem("token"); // Adicionado
 
-        let confirmData;
-        try {
-            if (currentActionData.origem !== 'smm') {
-                const confirmResponse = await fetch("/api/confirmar_acao", {
+                const response = await fetch("/api/pular_acao", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Adicionado header de autorização
+                    },
+                    body: JSON.stringify({
+                        token,
+                        id_pedido: currentActionData?.id_pedido, // Usando currentActionData
+                        id_conta,
+                        nome_usuario,
+                        url_dir,
+                        quantidade_pontos,
+                        tipo_acao,
+                        tipo
+                    })
+                });
+
+                const data = await response.json();
+                console.log("Resposta ao pular ação:", data);
+
+                // Buscar próxima ação
+                fetchAction();
+            } catch (error) {
+                console.error("Erro ao registrar ação pulada:", error);
+            }
+        }
+        async function loadAccounts() {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    throw new Error("Token não encontrado. Faça login novamente.");
+                }
+
+                const response = await fetch("https://ganhesocial.com/api/contas", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Erro ao carregar contas");
+                }
+
+                const accounts = await response.json();
+
+                if (!Array.isArray(accounts)) {
+                    throw new Error("Formato de dados inválido");
+                }
+
+                const accountSelect = document.getElementById("accountSelect");
+                accountSelect.innerHTML = '<option value="">Selecione uma conta</option>';
+
+                accounts.forEach((account) => {
+                    const option = document.createElement("option");
+                    option.value = account.nomeConta;
+                    option.textContent = account.nomeConta;
+                    accountSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar contas:", error);
+            }
+        }
+
+        async function salvarAcaoNoBanco({
+            nome_usuario,
+            id_pedido,
+            id_conta,
+            url_dir,
+            acao_validada,
+            valor_confirmacao,
+            quantidade_pontos,
+            tipo_acao
+        }) {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token de autenticação não encontrado.");
+                return;
+            }
+        }
+
+        async function registrarAcaoPendente(acao) {
+            try {
+                // Validação básica
+                if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
+                    console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
+                    return;
+                }
+
+                console.log("📤 Enviando ação pendente:", acao);
+
+                const response = await fetch("/api/registrar_acao_pendente", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${localStorage.getItem('token')}`
                     },
-                    body: JSON.stringify({
-                        id_conta: localStorage.getItem("id_conta"),
-                        id_pedido: currentActionData.id_pedido,
-                    })
+                    body: JSON.stringify(acao)
                 });
 
-                confirmData = await confirmResponse.json();
+                const data = await response.json();
+                console.log("📥 Resposta da API registrar_acao_pendente:", data);
 
-                if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
-                    throw new Error("Erro ao confirmar ação.");
+                if (data.status !== "success") {
+                    console.warn("⚠️ Resposta com status diferente de 'success'", data);
+                    throw new Error("Falha ao registrar ação pendente.");
                 }
-            } else {
-                // Simula retorno básico para seguir com o restante da lógica
-                confirmData = {
-                    valor: "0.007"
-                };
-            }
 
-        } catch (error) {
-            console.error("Erro ao confirmar ação:", error);
-            document.getElementById("actionContent").style.opacity = "1";
-            return;
+            } catch (error) {
+                console.error("❌ Erro ao registrar ação pendente:", error);
+            }
         }
 
-        await registrarAcaoPendente({
-            nome_usuario: selectedAccount,
-            id_pedido: currentActionData.id_pedido,
-            id_conta: localStorage.getItem("id_conta"),
-            url_dir: currentActionData.url_dir,
-            tipo_acao: currentActionData.tipo_acao,
-            quantidade_pontos: Number(currentActionData.quantidade_pontos),
-            valor_confirmacao: parseFloat(confirmData.valor),
-        });
-        const accountFound = true; // ou qualquer lógica para determinar isso
-
-        // Busca nova ação sem mostrar o conteúdo da anterior
-        document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-        fetchAction();
-    }
-
-    async function skipAction() {
-        try {
-            const tipo = document.getElementById("actionType").value;
-            const nome_usuario = document.getElementById("username").textContent; // Corrigido de "nomeUsuario" para "username"
-            const url_dir = document.getElementById("actionUrl").href; // Corrigido de "perfilLink" para "actionUrl"
-            const quantidade_pontos_text = document.getElementById("points").textContent; // Corrigido de "pontos" para "points"
-            const quantidade_pontos = parseFloat(quantidade_pontos_text.replace('R$ ', ''));
-            const tipo_acao = tipo;
-
-            const id_conta = localStorage.getItem("id_conta"); // Adicionado
-            const token = localStorage.getItem("token"); // Adicionado
-
-            const response = await fetch("/api/pular_acao", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` // Adicionado header de autorização
-                },
-                body: JSON.stringify({
-                    token,
-                    id_pedido: currentActionData?.id_pedido, // Usando currentActionData
-                    id_conta,
-                    nome_usuario,
-                    url_dir,
-                    quantidade_pontos,
-                    tipo_acao,
-                    tipo
-                })
-            });
-
-            const data = await response.json();
-            console.log("Resposta ao pular ação:", data);
-
-            // Buscar próxima ação
-            fetchAction();
-        } catch (error) {
-            console.error("Erro ao registrar ação pulada:", error);
-        }
-    }
-    async function loadAccounts() {
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("Token não encontrado. Faça login novamente.");
-            }
-
-            const response = await fetch("https://ganhesocial.com/api/contas", {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error("Erro ao carregar contas");
-            }
-
-            const accounts = await response.json();
-
-            if (!Array.isArray(accounts)) {
-                throw new Error("Formato de dados inválido");
-            }
-
-            const accountSelect = document.getElementById("accountSelect");
-            accountSelect.innerHTML = '<option value="">Selecione uma conta</option>';
-
-            accounts.forEach((account) => {
-                const option = document.createElement("option");
-                option.value = account.nomeConta;
-                option.textContent = account.nomeConta;
-                accountSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar contas:", error);
-        }
-    }
-
-    async function salvarAcaoNoBanco({
-        nome_usuario,
-        id_pedido,
-        id_conta,
-        url_dir,
-        acao_validada,
-        valor_confirmacao,
-        quantidade_pontos,
-        tipo_acao
-    }) {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.error("Token de autenticação não encontrado.");
-            return;
-        }
-    }
-
-    async function registrarAcaoPendente(acao) {
-        try {
-            // Validação básica
-            if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
-                console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
-                return;
-            }
-
-            console.log("📤 Enviando ação pendente:", acao);
-
-            const response = await fetch("/api/registrar_acao_pendente", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(acao)
-            });
-
-            const data = await response.json();
-            console.log("📥 Resposta da API registrar_acao_pendente:", data);
-
-            if (data.status !== "success") {
-                console.warn("⚠️ Resposta com status diferente de 'success'", data);
-                throw new Error("Falha ao registrar ação pendente.");
-            }
-
-        } catch (error) {
-            console.error("❌ Erro ao registrar ação pendente:", error);
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem("token");
-        window.location.href = "https://ganhesocial.com";
-    }   
-</script>
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "https://ganhesocial.com";
+        }   
+    </script>
 </body>
 
 </html>
