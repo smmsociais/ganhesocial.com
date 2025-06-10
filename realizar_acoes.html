@@ -773,7 +773,24 @@
                 console.error('Erro ao carregar contas:', error);
             }
 
+            // Habilita o listener de tipo de ação após carregar as contas
+document.getElementById("actionType").addEventListener("change", () => {
+    const actionType = document.getElementById("actionType").value;
+    const id_conta = localStorage.getItem("id_conta");
+
+    // Só atualiza se ambos forem válidos
+    if (id_conta && id_conta !== "null" && actionType !== "") {
+        document.getElementById("actionText").textContent =
+            actionType === "curtir" ? "Curtir" :
+            actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+
+        fetchAction();
+    }
+});
+            document.body.classList.add('loaded');
         });
+        let currentActionData = null;
+
 async function bindAccount() {
     const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
@@ -827,12 +844,12 @@ function ativarSelecaoTipoAcao() {
     const token = localStorage.getItem("token");
 
     if (id_conta && token && id_conta !== "null") {
-        const oldSelect = document.getElementById("actionType");
-        const newSelect = oldSelect.cloneNode(true);
-        
-        newSelect.disabled = false;
-        newSelect.id = "actionType"; // reatribui ID
-        oldSelect.parentNode.replaceChild(newSelect, oldSelect);
+        const actionSelect = document.getElementById("actionType");
+        actionSelect.disabled = false;
+
+        // Remove qualquer listener antigo
+        const newSelect = actionSelect.cloneNode(true);
+        actionSelect.parentNode.replaceChild(newSelect, actionSelect);
 
         newSelect.addEventListener("change", () => {
             const actionType = newSelect.value;
