@@ -196,27 +196,26 @@ if (method === "GET") {
 
     return res.status(200).json(contasDoUsuario);
 }
-        if (method === "DELETE") {
-            const { nomeConta } = req.query;
-            if (!nomeConta) {
-                return res.status(400).json({ error: "Nome da conta não fornecido." });
-            }
+if (method === "DELETE") {
+    const { nomeConta } = req.query;
+    if (!nomeConta) {
+        return res.status(400).json({ error: "Nome da conta não fornecido." });
+    }
 
-            console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
+    console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
 
-            const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
+    const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
 
-            if (contaIndex === -1) {
-                return res.status(404).json({ error: "Conta não encontrada." });
-            }
+    if (contaIndex === -1) {
+        return res.status(404).json({ error: "Conta não encontrada." });
+    }
 
-            user.contas.splice(contaIndex, 1);
-            await user.save();
+    user.contas[contaIndex].status = "inativa";
+    user.contas[contaIndex].dataDesativacao = new Date();
+    await user.save();
 
-            return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
-        }
-
-        return res.status(405).json({ error: "Método não permitido." });
+    return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
+}
 
     } catch (error) {
         console.error("❌ Erro:", error);
