@@ -187,7 +187,7 @@ if (url.startsWith("/api/contas")) {
 
             // Filtra contas ativas (ou sem status) e mapeia para objeto plano com dados do usuário
             const contasAtivas = user.contas
-                .filter(conta => conta.status !== "inativa")
+                .filter(conta => !conta.status || conta.status === "ativa")
                 .map(conta => {
                     // se for documento Mongoose, transforma em objeto JS plano
                     const contaObj = typeof conta.toObject === "function" ? conta.toObject() : conta;
