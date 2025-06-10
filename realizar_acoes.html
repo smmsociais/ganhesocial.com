@@ -918,6 +918,7 @@ if (data.status === "ENCONTRADA") {
             }
 
             async function processarAcao(data, origem) {
+                document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
                 document.getElementById("username").textContent = data.nome_usuario;
 
