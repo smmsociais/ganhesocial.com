@@ -281,7 +281,17 @@
 
         .confirm-button:hover {
             background-color: #4cae4c;
-        }        
+        }
+        
+         .skip-button {
+            flex: 1;
+            background-color: #d9534f;
+            color: white;
+        }
+
+        .skip-button:hover {
+            background-color: #c9302c;
+        }   
 
 
         .btn-danger {
@@ -703,13 +713,13 @@
                         <img id="profileImage" src="" alt="Avatar do TikTok" class="profile-image">
                     </div>
 
-                    <div class="btn-group">
+                    <div class="skip-button">
                         <button class="btn btn-danger" onclick="skipAction()">
                             <i class="fas fa-times"></i> Pular Ação
                         </button>
                         <a id="actionUrl" href="#" target="_blank" class="open-action-button"
                             onclick="showConfirmButton()">
-                            <i class="fas fa-external-link-alt"></i> Abrir Ação
+                            <i class="fas fa-external-link-alt"></i>  Abrir Ação
                         </a>
                     </div>
 
