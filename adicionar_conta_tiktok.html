@@ -11,7 +11,6 @@
             --bg-light: #f8f9fa;
             --text-light: #212529;
             --container-light: #ffffff;
-            --button-light: #007bff;
             --success-color: #28a745;
             --pending-color: #1e1e1e;
             --failed-color: #dc3545;
@@ -165,9 +164,8 @@
         }
 
         .input-box:focus {
-            border-color: var(--button-light);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(20, 20, 20, 0.25);
         }
 
         /* Button Styles */
@@ -188,11 +186,7 @@
             margin-top: 10px;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
-            background: #0069d9;
-        }
+
 
         /* Message Box */
         .message-box {
@@ -355,9 +349,6 @@
                 background: var(--button-dark);
             }
 
-            .btn-primary:hover {
-                background: #1a5cb8;
-            }
 
             .error-message {
                 background-color: rgba(234, 67, 53, 0.1);
