@@ -82,26 +82,6 @@
             margin-right: 10px;
         }
 
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .balance-amount {
-            font-weight: 700;
-        }
-
         /* Main Container */
         .main-container {
             padding: 30px;
@@ -135,7 +115,7 @@
         }
 
         .container-title {
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             margin-bottom: 10px;
             color: var(--text-light);
             font-weight: 600;
@@ -147,12 +127,15 @@
             margin-bottom: 30px;
         }
 
-        /* Social Networks Grid */
         .social-networks {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(2, 120px);
             gap: 25px;
             margin-top: 30px;
+            justify-content: center;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .network-item {
@@ -171,7 +154,7 @@
         }
 
         .network-logo {
-            width: 60px;
+            width: 100px;
             height: 60px;
             object-fit: contain;
             margin-bottom: 10px;
@@ -365,8 +348,17 @@
 
             .social-networks {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
+                gap: 1px;
+                max-width: 70%;
             }
+        }
+
+        .network-logo {
+            width: 400px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            transition: var(--transition);
         }
 
         @media (max-width: 576px) {
@@ -528,7 +520,6 @@
                     <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743629544238.png"
                         alt="TikTok" class="network-logo">
                     <div class="network-name">TikTok</div>
-                    <div class="network-status">Disponível</div>
                 </div>
 
                 <div class="network-item">
