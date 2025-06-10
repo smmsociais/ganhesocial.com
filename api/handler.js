@@ -167,12 +167,12 @@ if (url.startsWith("/api/contas")) {
                 return res.status(400).json({ error: "Nome da conta é obrigatório." });
             }
 
-// Verifica se já existe esse nomeConta cadastrado por qualquer usuário
-const contaExistente = await User.findOne({ "contas.nomeConta": nomeConta });
+            // Verifica se já existe esse nomeConta cadastrado por qualquer usuário
+            const contaExistente = await User.findOne({ "contas.nomeConta": nomeConta });
 
-if (contaExistente) {
-    return res.status(400).json({ error: "Já existe uma conta com este nome de usuário" });
-}
+            if (contaExistente) {
+                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário" });
+            }
 
             user.contas.push({ nomeConta, id_conta, id_tiktok, status: "ativa" });
             await user.save();
@@ -180,44 +180,49 @@ if (contaExistente) {
             return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
         }
 
-if (method === "GET") {
-    if (!user.contas || user.contas.length === 0) {
-        return res.status(200).json([]);
-    }
+        if (method === "GET") {
+            if (!user.contas || user.contas.length === 0) {
+                return res.status(200).json([]);
+            }
 
-    // Mapeia apenas as contas do próprio usuário autenticado
-    const contasDoUsuario = user.contas
-  .filter(conta => conta.status !== "inativa")
-  .map(conta => ({
-        ...conta.toObject?.() ?? conta,
-        usuario: {
-            _id: user._id,
-            nome: user.nome
+            // Filtra contas ativas (ou sem status) e mapeia para objeto plano com dados do usuário
+            const contasAtivas = user.contas
+                .filter(conta => conta.status !== "inativa")
+                .map(conta => {
+                    // se for documento Mongoose, transforma em objeto JS plano
+                    const contaObj = typeof conta.toObject === "function" ? conta.toObject() : conta;
+                    return {
+                        ...contaObj,
+                        usuario: {
+                            _id: user._id,
+                            nome: user.nome
+                        }
+                    };
+                });
+
+            return res.status(200).json(contasAtivas);
         }
-    }));
 
-    return res.status(200).json(contasDoUsuario);
-}
-if (method === "DELETE") {
-    const { nomeConta } = req.query;
-    if (!nomeConta) {
-        return res.status(400).json({ error: "Nome da conta não fornecido." });
-    }
+        if (method === "DELETE") {
+            const { nomeConta } = req.query;
+            if (!nomeConta) {
+                return res.status(400).json({ error: "Nome da conta não fornecido." });
+            }
 
-    console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
+            console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
 
-    const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
+            const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
 
-    if (contaIndex === -1) {
-        return res.status(404).json({ error: "Conta não encontrada." });
-    }
+            if (contaIndex === -1) {
+                return res.status(404).json({ error: "Conta não encontrada." });
+            }
 
-    user.contas[contaIndex].status = "inativa";
-    user.contas[contaIndex].dataDesativacao = new Date();
-    await user.save();
+            user.contas[contaIndex].status = "inativa";
+            user.contas[contaIndex].dataDesativacao = new Date();
+            await user.save();
 
-    return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
-}
+            return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
+        }
 
     } catch (error) {
         console.error("❌ Erro:", error);
