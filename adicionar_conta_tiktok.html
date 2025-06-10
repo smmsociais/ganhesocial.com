@@ -13,7 +13,7 @@
             --container-light: #ffffff;
             --button-light: #007bff;
             --success-color: #28a745;
-            --pending-color: #ffc107;
+            --pending-color: #1e1e1e;
             --failed-color: #dc3545;
             --border-light: #dee2e6;
             --hover-light: #f1f1f1;
@@ -82,22 +82,6 @@
             margin-right: 10px;
         }
 
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
         /* Main Container */
         .main-container {
             padding: 30px;
@@ -124,7 +108,7 @@
 
         .container-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -353,7 +337,7 @@
             }
 
             .requirements-box {
-                background-color: #2a2a00;
+                background-color: #1e1e1e;
                 border-left-color: var(--pending-dark);
             }
 
@@ -412,7 +396,7 @@
             }
 
             .container-header h2 {
-                font-size: 1.3rem;
+                font-size: 1.0rem;
             }
         }
 
@@ -582,7 +566,7 @@
 
                 <div id="messageBox" class="message-box" style="display: none;"></div>
 
-                <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok (sem @)">
+                <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok">
                 <button class="btn-primary" onclick="addAccount()">
                     <i class="fas fa-plus-circle"></i> Adicionar Conta
                 </button>
