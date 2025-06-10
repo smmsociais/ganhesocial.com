@@ -683,12 +683,12 @@
                 </div>
 
                 <div class="form-group">
-                    <select id="actionType" class="form-select">
-                        <option value="" selected disabled>Tipo de ação</option>
-                        <option value="seguir">Seguir</option>
-                        <option value="curtir">Curtir</option>
-                        <option value="seguir_curtir">Seguir e Curtir</option>
-                    </select>
+<select id="actionType" disabled>
+  <option value="">Selecione uma ação</option>
+  <option value="seguir">Seguir</option>
+  <option value="curtir">Curtir</option>
+  <option value="seguir_curtir">Seguir e Curtir</option>
+</select>
                 </div>
 
                 <div id="statusMessage" class="status-message"></div>
@@ -791,52 +791,53 @@ document.getElementById("actionType").addEventListener("change", () => {
         });
         let currentActionData = null;
 
-        async function bindAccount() {
-            const selectedAccount = document.getElementById("accountSelect").value?.trim();
+async function bindAccount() {
+    const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
-            if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
-                document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
+    if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta válida.";
+        return;
+    }
+
+    console.log("Conta selecionada para vincular:", selectedAccount);
+
+    try {
+        const response = await fetch("/api/vincular_conta", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ nomeUsuario: selectedAccount })
+        });
+
+        const data = await response.json();
+        console.log("Resposta da API /vincular_conta:", data);
+
+        if (data.id_conta) {
+            localStorage.setItem("id_conta", data.id_conta);
+            localStorage.setItem("conta_invalida", "false");
+        } else {
+            if (data.error === "WRONG_USER") {
+                console.warn("WRONG_USER recebido, usando fallback.");
+                localStorage.setItem("id_conta", "fallback_" + selectedAccount);
+                localStorage.setItem("conta_invalida", "true");
+            } else {
+                document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
                 return;
             }
-
-            console.log("Conta selecionada para vincular:", selectedAccount);
-
-            try {
-                const response = await fetch("/api/vincular_conta", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ nomeUsuario: selectedAccount })
-                });
-
-                const data = await response.json();
-                console.log("Resposta da API /vincular_conta:", data);
-
-                if (data.id_conta) {
-                    localStorage.setItem("id_conta", data.id_conta);
-                    localStorage.setItem("conta_invalida", "false");
-                } else {
-                    if (data.error === "WRONG_USER") {
-                        console.warn("WRONG_USER recebido, usando fallback.");
-                        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
-                        localStorage.setItem("conta_invalida", "true");
-                    } else {
-                        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
-                        return;
-                    }
-                }
-                // Prossegue independentemente do resultado da vinculação
-                document.getElementById("warningMessage").style.display = "none";
-                document.getElementById("actionContent").style.display = "block";
-                fetchAction();
-
-            } catch (error) {
-                console.error("Erro na requisição:", error);
-                document.getElementById("statusMessage").textContent = "Erro na requisição.";
-            }
         }
+
+        // Habilita o select de tipo de ação, mas NÃO chama fetchAction ainda
+        document.getElementById("warningMessage").style.display = "none";
+        document.getElementById("actionContent").style.display = "block";
+        ativarSelecaoTipoAcao();
+
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        document.getElementById("statusMessage").textContent = "Erro na requisição.";
+    }
+}
 
         function ativarSelecaoTipoAcao() {
             const id_conta = localStorage.getItem("id_conta");
