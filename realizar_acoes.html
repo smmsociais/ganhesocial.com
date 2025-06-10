@@ -676,7 +676,6 @@
                 <h2><i class="fas fa-tasks"></i> Realizar Ações TikTok</h2>
             </div>
             <div class="container-body">
-                <!-- Seletor de contas -->
                 <div class="form-group">
                     <select id="accountSelect" class="form-select" onchange="bindAccount()">
                         <option value="" selected disabled>Selecione uma conta</option>
@@ -694,7 +693,15 @@
 
                 <div id="statusMessage" class="status-message"></div>
 
-                <!-- CONTEÚDO DAS AÇÕES -->
+                <div id="warningMessage" class="warning-box">
+                    <h3>Atenção</h3>
+                    <ul>
+                        <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
+                        <li>Não envie mensagens privadas para os perfis das ações.</li>
+                    </ul>
+                    <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
+                </div>
+
                 <div id="actionContent" class="action-content">
                     <div class="action-details">
                         <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
@@ -718,22 +725,14 @@
 
                     <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">
                         <i class="fas fa-check"></i> Confirmar Ação
-                    </button>
                 </div>
-            </div>
-
-            <!-- CAIXA DE AVISO MOVIDA PARA FORA DE .container-body -->
-            <div id="warningMessage" class="warning-box">
-                <h3>Atenção</h3>
-                <ul>
-                    <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
-                    <li>Não envie mensagens privadas para os perfis das ações.</li>
-                </ul>
-                <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
             </div>
         </div>
     </div>
+
+    <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
+
 
     <script>
         // O restante do JavaScript permanece exatamente igual
