@@ -684,9 +684,7 @@
             <div class="container-body">
                 <div class="form-group">
 <select id="accountSelect" class="form-select" onchange="bindAccount()">
-    <option value="" selected disabled>
-        <span style="user-select: none;">Selecione uma conta</span>
-    </option>
+    <option value="" selected disabled style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">Selecione uma conta</option>
 </select>
                 </div>
 
@@ -747,12 +745,14 @@
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
-                    const disabledOptions = document.querySelectorAll('option[disabled]');
+        const disabledOptions = document.querySelectorAll('option[disabled]');
+        
+        // Aplica user-select: none em cada uma
         disabledOptions.forEach(option => {
             option.style.userSelect = 'none';
-            option.style.webkitUserSelect = 'none'; // Para navegadores baseados em WebKit (Chrome, Safari)
-            option.style.MozUserSelect = 'none'; // Para Firefox
-            option.style.msUserSelect = 'none'; // Para IE/Edge
+            option.style.webkitUserSelect = 'none'; // Chrome, Safari
+            option.style.MozUserSelect = 'none'; // Firefox
+            option.style.msUserSelect = 'none'; // IE/Edge
         });
             const token = localStorage.getItem("token");
 
