@@ -874,6 +874,7 @@
 
             if (document.getElementById("actionType").disabled) return;
 
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             document.getElementById("actionContent").style.opacity = "0";
 
             async function tentarBuscarSMM() {
@@ -1043,10 +1044,10 @@ if (data.status === "ENCONTRADA") {
             if (!selectedAccount || !currentActionData) return;
 
             // Esconde o conteúdo da ação enquanto processa a confirmação
+            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
             document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("profileImage").style.display = "none";
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
 
             let confirmData;
             try {
