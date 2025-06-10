@@ -258,6 +258,17 @@
             background-color: #0069d9;
         }
 
+        .confirm-button{
+            width: 100%;
+            margin-top: 10px;
+            background-color: #5cb85c;
+            color: white;
+        }
+
+        .confirm-button:hover {
+            background-color: #4cae4c;
+        }        
+
 
         .btn-danger {
             background-color: var(--failed-color);
@@ -688,7 +699,7 @@
                         </a>
                     </div>
 
-                    <button id="confirmButton" class="btn btn-success" onclick="confirmAction()" style="display: none;">
+                    <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">
                         <i class="fas fa-check"></i> Confirmar Ação
                     </button>
                 </div>
