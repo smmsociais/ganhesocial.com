@@ -174,7 +174,7 @@ if (contaExistente) {
     return res.status(400).json({ error: "Já existe uma conta com este nome de usuário" });
 }
 
-            user.contas.push({ nomeConta, id_conta, id_tiktok });
+            user.contas.push({ nomeConta, id_conta, id_tiktok, status: "ativa" });
             await user.save();
 
             return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
@@ -186,7 +186,9 @@ if (method === "GET") {
     }
 
     // Mapeia apenas as contas do próprio usuário autenticado
-    const contasDoUsuario = user.contas.map(conta => ({
+    const contasDoUsuario = user.contas
+  .filter(conta => conta.status !== "inativa")
+  .map(conta => ({
         ...conta.toObject?.() ?? conta,
         usuario: {
             _id: user._id,
