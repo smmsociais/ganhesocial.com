@@ -719,13 +719,12 @@
                         </button>
                         <a id="actionUrl" href="#" target="_blank" class="open-action-button"
                             onclick="showConfirmButton()">
-                            <i class="fas fa-external-link-alt "></i> Abrir Ação
+                            <i class="fas fa-external-link-alt"></i> Abrir Ação
                         </a>
                     </div>
 
                     <button id="confirmButton" class="confirm-button" onclick="confirmAction()" style="display: none;">
                         <i class="fas fa-check"></i> Confirmar Ação
-                    </button>
                 </div>
             </div>
         </div>
@@ -775,24 +774,25 @@
             }
 
             // Habilita o listener de tipo de ação após carregar as contas
-            document.getElementById("actionType").addEventListener("change", () => {
-                // Atualiza o texto da ação imediatamente quando o tipo muda
-                const actionType = document.getElementById("actionType").value;
-                let actionText = "Seguir";
-                if (actionType === "curtir") {
-                    actionText = "Curtir";
-                } else if (actionType === "seguir_curtir") {
-                    actionText = "Seguir e Curtir";
-                }
-                document.getElementById("actionText").textContent = actionText;
+document.getElementById("actionType").addEventListener("change", () => {
+    const actionType = document.getElementById("actionType").value;
+    let actionText = "Seguir";
 
-                // Verifica se já tem conta selecionada para buscar ação
-                const id_conta = localStorage.getItem("id_conta");
-                if (id_conta && id_conta !== "null") {
-                    fetchAction();
-                }
-            });
+    if (actionType === "curtir") {
+        actionText = "Curtir";
+    } else if (actionType === "seguir_curtir") {
+        actionText = "Seguir e Curtir";
+    }
 
+    document.getElementById("actionText").textContent = actionText;
+
+    const id_conta = localStorage.getItem("id_conta");
+
+    // ✅ Só busca ação se conta estiver vinculada e tipo de ação selecionado
+    if (id_conta && id_conta !== "null" && actionType !== "") {
+        fetchAction();
+    }
+});
             document.body.classList.add('loaded');
         });
         let currentActionData = null;
