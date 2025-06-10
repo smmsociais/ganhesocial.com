@@ -669,39 +669,48 @@
         </div>
     </div>
 
-    <!-- Conteúdo Principal -->
-    <div class="main-container">
-        <div class="container fade-in">
-            <div class="container-header">
-                <h2><i class="fas fa-tasks"></i> Realizar Ações TikTok</h2>
+ <!-- Conteúdo Principal -->
+<div class="main-container">
+    <div class="container fade-in">
+        <div class="container-header">
+            <h2><i class="fas fa-tasks"></i> Realizar Ações TikTok</h2>
+        </div>
+        <div class="container-body">
+            <!-- Seletor de contas -->
+            <div class="form-group">
+                <select id="accountSelect" class="form-select" onchange="bindAccount()">
+                    <option value="" selected disabled>Selecione uma conta</option>
+                </select>
             </div>
-            <div class="container-body">
-                <div class="form-group">
-                    <select id="accountSelect" class="form-select" onchange="bindAccount()">
-                        <option value="" selected disabled>Selecione uma conta</option>
-                    </select>
-                </div>
 
-                <div class="form-group">
-                    <select id="actionType" class="form-select">
-                        <option value="" selected disabled>Tipo de ação</option>
-                        <option value="seguir">Seguir</option>
-                        <option value="curtir">Curtir</option>
-                        <option value="seguir_curtir">Seguir e Curtir</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <select id="actionType" class="form-select">
+                    <option value="" selected disabled>Tipo de ação</option>
+                    <option value="seguir">Seguir</option>
+                    <option value="curtir">Curtir</option>
+                    <option value="seguir_curtir">Seguir e Curtir</option>
+                </select>
+            </div>
 
-                <div id="statusMessage" class="status-message"></div>
+            <div id="statusMessage" class="status-message"></div>
 
-                <div id="warningMessage" class="warning-box">
-                    <h3>Atenção</h3>
-                    <ul>
-                        <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
-                        <li>Não envie mensagens privadas para os perfis das ações.</li>
-                    </ul>
-                    <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
-                </div>
+            <!-- CONTEÚDO DAS AÇÕES -->
+            <div id="actionContent" class="action-content">
+                ...
+            </div>
+        </div>
 
+        <!-- MOVER ESSA DIV PARA FORA DE .container-body -->
+        <div id="warningMessage" class="warning-box">
+            <h3>Atenção</h3>
+            <ul>
+                <li>Não deixe de seguir ou curtir após as ações serem realizadas.</li>
+                <li>Não envie mensagens privadas para os perfis das ações.</li>
+            </ul>
+            <p>Se fizer isso, sua conta será permanentemente suspensa da plataforma.</p>
+        </div>
+    </div>
+</div>
                 <div id="actionContent" class="action-content">
                     <div class="action-details">
                         <p><strong>Ação:</strong> <span id="actionText">Seguir</span></p>
