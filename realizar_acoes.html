@@ -683,18 +683,22 @@
             </div>
             <div class="container-body">
                 <div class="form-group">
-                    <select id="accountSelect" class="form-select" onchange="bindAccount()">
-                       <option value="" selected disabled style="user-select: none;">Selecione uma conta</option>
-                    </select>
+<select id="accountSelect" class="form-select" onchange="bindAccount()">
+    <option value="" selected disabled>
+        <span style="user-select: none;">Selecione uma conta</span>
+    </option>
+</select>
                 </div>
 
                 <div class="form-group">
-                    <select id="actionType" class="form-select">
-                        <option value="" selected disabled style="user-select: none;">Tipo de ação</option>
-                        <option value="seguir">Seguir</option>
-                        <option value="curtir">Curtir</option>
-                        <option value="seguir_curtir">Seguir e Curtir</option>
-                    </select>
+<select id="actionType" class="form-select">
+    <option value="" selected disabled>
+        <span style="user-select: none;">Tipo de ação</span>
+    </option>
+    <option value="seguir">Seguir</option>
+    <option value="curtir">Curtir</option>
+    <option value="seguir_curtir">Seguir e Curtir</option>
+</select>
                 </div>
 
                 <div id="statusMessage" class="status-message"></div>
