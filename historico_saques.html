@@ -9,8 +9,8 @@
     <style>
         :root {
             --bg-light: #f8f9fa;
-            --text-light: #212529;
-            --container-light: #ffffff;
+            --text-light: #a0a0a0;
+            --container-light: #808080;
             --button-light: #007bff;
             --success-color: #28a745;
             --pending-color: #ffc107;
@@ -185,52 +185,12 @@
             color: var(--failed-color);
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            background: var(--container-light);
-            border-radius: var(--card-radius);
-            margin: 20px 0;
-            box-shadow: 0 4px 20px var(--shadow-light);
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            color: #adb5bd;
-            margin-bottom: 20px;
-        }
-
-        .empty-state-title {
-            font-size: 1.25rem;
+            font-size: 1.0rem;
             font-weight: 600;
             margin-bottom: 10px;
             color: var(--text-light);
-        }
-
-        .empty-state-description {
-            color: #6c757d;
-            margin-bottom: 20px;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
         }
 
         /* Pagination */
@@ -755,7 +715,9 @@
                         </table>
                     </div>
                     <div id="no-withdrawals" class="empty-state" style="display: none;">
-                        <p class="">Nenhum saque realizado ainda. Quando você realizar saques, eles aparecerão aqui.</p>
+                        <p class="empty-state">Nenhum saque realizado ainda. Quando você realizar saques, eles
+                            aparecerão
+                            aqui.</p>
                         </a>
                     </div>
                 </div>
