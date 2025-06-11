@@ -9,7 +9,7 @@
     <style>
         :root {
             --bg-light: #f8f9fa;
-            --text-light: #a0a0a0;
+            --text-light: #b3b3b3;
             --container-light: #808080;
             --button-light: #007bff;
             --success-color: #28a745;
@@ -185,14 +185,24 @@
             color: var(--failed-color);
         }
 
-        .empty-state {
-            text-align: center;
-            font-size: 1.0rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text-light);
-        }
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--container-light);
+    border-radius: var(--card-radius);
+    margin: 20px 0;
+    box-shadow: 0 4px 20px var(--shadow-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
+.empty-state p {
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
         /* Pagination */
         .pagination {
             display: flex;
@@ -716,8 +726,7 @@
                     </div>
                     <div id="no-withdrawals" class="empty-state" style="display: none;">
                         <p class="empty-state">Nenhum saque realizado ainda. Quando você realizar saques, eles
-                            aparecerão
-                            aqui.</p>
+                            aparecerão aqui.</p>
                         </a>
                     </div>
                 </div>
