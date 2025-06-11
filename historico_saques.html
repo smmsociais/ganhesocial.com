@@ -973,14 +973,10 @@
                             <span class="tooltip-text">${date.toLocaleString('pt-BR')}</span>
                         </div>
                     </td>
-                    <td>${methodIcon} ${methodText}</td>
                     <td>${formattedKey}</td>
                     <td><strong>${formattedValue}</strong></td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>
-                        <button class="btn-details" onclick="showWithdrawalDetails('${withdrawal._id}')">
-                            <i class="fas fa-eye"></i> Detalhes
-                        </button>
                     </td>
                 `;
 
@@ -993,12 +989,6 @@
             }
         }
 
-        function showWithdrawalDetails(withdrawalId) {
-            // Implementação para mostrar detalhes do saque em um modal
-            console.log("Mostrar detalhes do saque:", withdrawalId);
-            // Aqui você pode implementar um modal ou outra forma de mostrar detalhes
-            alert("Detalhes do saque " + withdrawalId);
-        }
     </script>
 </body>
 
