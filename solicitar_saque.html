@@ -643,7 +643,6 @@
             // Verifica se há uma mensagem de sucesso para exibir
             const successMessage = localStorage.getItem("withdrawSuccess");
             if (successMessage) {
-                showAlert(successMessage, 'success');
                 localStorage.removeItem("withdrawSuccess");
             }
 
