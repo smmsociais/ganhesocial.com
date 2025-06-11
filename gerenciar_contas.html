@@ -82,26 +82,6 @@
             margin-right: 10px;
         }
 
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .balance-amount {
-            font-weight: 700;
-        }
-
         /* Main Container */
         .main-container {
             padding: 30px;
@@ -128,7 +108,7 @@
 
         .container-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 600;
         }
 
@@ -441,6 +421,12 @@
                 padding: 15px;
             }
 
+            .container-header h2 {
+                margin: 0;
+                font-size: 1.0rem;
+                font-weight: 600;
+            }
+
             .container-body {
                 padding: 15px;
             }
@@ -603,7 +589,7 @@
     <div class="main-container">
         <div class="container fade-in">
             <div class="container-header">
-                <h2><i class="fas fa-cog"></i> Gerenciar Contas</h2>
+                <h2><i class="fas fa-cog"></i> Gerenciar Contas TikTok</h2>
             </div>
             <div class="container-body">
                 <div id="messageBox" class="message-box" style="display: none;"></div>
@@ -645,76 +631,72 @@
             }, 5000);
         }
 
-async function loadAccounts() {
-    const token = localStorage.getItem("token");
-    const messageBox = document.getElementById('messageBox');
-    const accountList = document.getElementById("accountList");
-    const noAccounts = document.getElementById("no-accounts");
-    const loadingItem = document.getElementById('loading-item');
+        async function loadAccounts() {
+            const token = localStorage.getItem("token");
+            const messageBox = document.getElementById('messageBox');
+            const accountList = document.getElementById("accountList");
+            const noAccounts = document.getElementById("no-accounts");
+            const loadingItem = document.getElementById('loading-item');
 
-    if (messageBox) messageBox.style.display = 'none';
-    if (loadingItem) loadingItem.style.display = 'flex';
-    if (noAccounts) noAccounts.style.display = 'none';
+            if (messageBox) messageBox.style.display = 'none';
+            if (loadingItem) loadingItem.style.display = 'flex';
+            if (noAccounts) noAccounts.style.display = 'none';
 
-    if (!token) {
-        showMessage("Você precisa estar logado para gerenciar contas.", true);
-        return;
-    }
-
-    try {
-        const response = await fetch("https://ganhesocial.com/api/contas", {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
+            if (!token) {
+                showMessage("Você precisa estar logado para gerenciar contas.", true);
+                return;
             }
-        });
 
-        const accounts = await response.json();
+            try {
+                const response = await fetch("https://ganhesocial.com/api/contas", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
 
-        if (!response.ok) {
-            throw new Error(accounts.error || "Erro ao carregar contas");
-        }
+                const accounts = await response.json();
 
-        if (accountList) accountList.innerHTML = "";
+                if (!response.ok) {
+                    throw new Error(accounts.error || "Erro ao carregar contas");
+                }
 
-        if (!Array.isArray(accounts)) {
-            throw new Error("Dados retornados não são uma lista de contas.");
-        }
+                if (accountList) accountList.innerHTML = "";
 
-        if (accounts.length === 0) {
-            if (noAccounts) noAccounts.style.display = 'flex';
-            return;
-        }
+                if (!Array.isArray(accounts)) {
+                    throw new Error("Dados retornados não são uma lista de contas.");
+                }
 
-        accounts.forEach((account) => {
-            const li = document.createElement("li");
-            li.className = "account-item fade-in";
-            li.innerHTML = `
+                if (accounts.length === 0) {
+                    if (noAccounts) noAccounts.style.display = 'flex';
+                    return;
+                }
+
+                accounts.forEach((account) => {
+                    const li = document.createElement("li");
+                    li.className = "account-item fade-in";
+                    li.innerHTML = `
                 <span class="account-name">${account.nomeConta}</span>
                 <button class="btn btn-danger" onclick="disableAccount('${account.nomeConta}', this)">
-                    <i class="fas fa-ban"></i> Desativar
+                    <i class="fas fa-ban"></i> Destivar
                 </button>
             `;
-            if (accountList) accountList.appendChild(li);
-        });
+                    if (accountList) accountList.appendChild(li);
+                });
 
-    } catch (error) {
-        console.error("Erro ao carregar contas:", error);
-        showMessage(error.message || "Erro ao carregar contas. Tente novamente.", true);
-    } finally {
-        if (loadingItem) loadingItem.style.display = 'none';
-    }
-}
+            } catch (error) {
+                console.error("Erro ao carregar contas:", error);
+                showMessage(error.message || "Erro ao carregar contas. Tente novamente.", true);
+            } finally {
+                if (loadingItem) loadingItem.style.display = 'none';
+            }
+        }
         async function disableAccount(accountName, button) {
             const token = localStorage.getItem("token");
 
             if (!token) {
                 window.location.href = "login";
-                return;
-            }
-
-            if (!confirm(`Tem certeza que deseja desativar a conta "${accountName}"?`)) {
                 return;
             }
 
@@ -740,7 +722,7 @@ async function loadAccounts() {
                 }
 
                 console.log("✅ Conta desativada:", result.message);
-                showMessage(`Conta "${accountName}" desativada com sucesso!`);
+                showMessage(`Conta "${accountName}" desativada. Para reativar, adicione novamente.`);
 
                 // Remove a conta da interface
                 const listItem = button.parentElement;
@@ -760,51 +742,51 @@ async function loadAccounts() {
             window.location.href = "https://ganhesocial.com";
         }
 
- document.addEventListener("DOMContentLoaded", async function () {
-    const token = localStorage.getItem("token");
+        document.addEventListener("DOMContentLoaded", async function () {
+            const token = localStorage.getItem("token");
 
-    const menuToggle = document.getElementById('menuToggle');
-    const menuOverlay = document.getElementById('menuOverlay');
-    const menuContent = document.getElementById('menuContent');
-    const menuCloseBtn = document.getElementById('menuCloseBtn');
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-    function toggleMenu() {
-        if (!menuContent || !menuToggle) return;
-        menuContent.classList.toggle('active');
-        menuOverlay.classList.toggle('active');
+            function toggleMenu() {
+                if (!menuContent || !menuToggle) return;
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
 
-        const spans = menuToggle.querySelectorAll('span');
-        if (menuContent.classList.contains('active')) {
-            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-            spans[1].style.opacity = '0';
-            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-        } else {
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        }
-    }
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            }
 
-    function closeMenu() {
-        if (!menuContent || !menuToggle) return;
-        menuContent.classList.remove('active');
-        menuOverlay.classList.remove('active');
+            function closeMenu() {
+                if (!menuContent || !menuToggle) return;
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
 
-        const spans = menuToggle.querySelectorAll('span');
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
-    }
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }
 
-    if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
-    if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
-    if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
+            if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
+            if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
+            if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
 
-    // carregar contas
-    await loadAccounts();
+            // carregar contas
+            await loadAccounts();
 
-    document.body.classList.add('loaded');
-});
+            document.body.classList.add('loaded');
+        });
     </script>
 </body>
 
