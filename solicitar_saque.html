@@ -8,21 +8,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #f8f9fa;
-            --text-light: #212529;
-            --container-light: #ffffff;
-            --button-light: #007bff;
+            --bg-light: #000000;
+            --text-light: #000000;
+            --container-light: #000000;
+            --button-light: #ffffff;
             --success-color: #28a745;
             --pending-color: #ffc107;
             --failed-color: #dc3545;
-            --border-light: #dee2e6;
-            --hover-light: #f1f1f1;
+            --border-light: #333333;
+            --hover-light: #000000;
             --shadow-light: rgba(0, 0, 0, 0.1);
 
             --bg-dark: #121212;
             --text-dark: #e0e0e0;
             --container-dark: #1e1e1e;
-            --button-dark: #1a73e8;
+
             --success-dark: #34a853;
             --pending-dark: #f9ab00;
             --failed-dark: #ea4335;
@@ -82,31 +82,11 @@
             margin-right: 10px;
         }
 
-        .balance-chip {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .balance-chip:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .balance-amount {
-            font-weight: 700;
-        }
-
         /* Main Container */
         .main-container {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 30px 0px 0px;
+            max-width: 900px;
+            margin: 10px auto 0;
         }
 
         .container {
@@ -128,7 +108,7 @@
 
         .container-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 600;
         }
 
@@ -141,7 +121,8 @@
             margin-bottom: 20px;
         }
 
-        .input-box, .select-box {
+        .input-box,
+        .select-box {
             width: 100%;
             padding: 12px 15px;
             margin-top: 8px;
@@ -151,15 +132,15 @@
             color: var(--text-light);
             font-size: 1rem;
             transition: var(--transition);
+            box-sizing: border-box;
         }
 
-        .input-box:focus, .select-box:focus {
-            border-color: var(--button-light);
+        .input-box:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
 
-        .withdraw-button, .back-button {
+        .withdraw-button,
+        .back-button {
             width: 100%;
             padding: 12px;
             margin-top: 15px;
@@ -362,13 +343,15 @@
                 border-color: var(--border-dark);
             }
 
-            .input-box, .select-box {
+            .input-box,
+            .select-box {
                 background-color: var(--container-dark);
                 border-color: var(--border-dark);
                 color: var(--text-dark);
             }
 
-            .input-box:focus, .select-box:focus {
+            .input-box:focus,
+            .select-box:focus {
                 border-color: var(--button-dark);
                 box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
             }
@@ -435,13 +418,22 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 15px;
+        @media (min-width: 768px) {
+
+            .input-box,
+            .select-box {
+                width: 900px;
+                max-width: 100%;
             }
 
             .container-header {
                 padding: 15px;
+            }
+
+            .container-header h2 {
+                margin: 0;
+                font-size: 1.0rem;
+                font-weight: 600;
             }
 
             .container-body {
@@ -478,6 +470,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -620,13 +613,8 @@
                 </div>
 
                 <div class="info-box">
-                    <div class="info-title"><i class="fas fa-percentage"></i> Taxa de Saque</div>
-                    <div class="info-content">Não há taxa de saque.</div>
-                </div>
-
-                <div class="info-box">
                     <div class="info-title"><i class="fas fa-clock"></i> Prazos</div>
-                    <div class="info-content">O prazo médio para os pagamentos são de até 2 horas, mas geralmente são de imediatos.</div>
+                    <div class="info-content">O prazo máximo para os pagamentos são de até 24 horas.</div>
                 </div>
 
                 <div class="info-box">
@@ -635,18 +623,19 @@
                 </div>
 
                 <div class="form-group">
-                    <input type="text" id="amount" class="input-box" placeholder="Valor (R$)" oninput="formatCurrency(this)">
+                    <input type="text" id="amount" class="input-box" placeholder="Valor" oninput="formatCurrency(this)">
                 </div>
 
                 <div class="form-group" id="pixFields">
-                    <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX CPF" maxlength="14" oninput="maskCPF(this)">
+                    <input type="text" id="pixKey" class="input-box" placeholder="Chave PIX CPF" maxlength="14"
+                        oninput="maskCPF(this)">
                     <div id="cpfError" class="error-message">Informe um CPF válido com 11 dígitos</div>
                 </div>
 
                 <p class="info-text">Saldo disponível: <strong><span id="availableBalance">R$ 0,00</span></strong></p>
 
                 <button class="withdraw-button" onclick="requestWithdraw()">
-                    <i class="fas fa-paper-plane"></i> Solicitar Saque
+                    <i class=""></i> Solicitar Saque
                 </button>
             </div>
         </div>
@@ -709,28 +698,12 @@
             window.location.href = "https://ganhesocial.com";
         }
 
-        function showAlert(message, type = 'error') {
-            const alertBox = document.getElementById('alertBox');
-            alertBox.textContent = message;
-            alertBox.className = `alert-message alert-${type}`;
-            alertBox.style.display = 'block';
-            
-            // Remove a notificação após 5 segundos
-            setTimeout(() => {
-                alertBox.style.opacity = '0';
-                setTimeout(() => {
-                    alertBox.style.display = 'none';
-                    alertBox.style.opacity = '1';
-                }, 300);
-            }, 5000);
-        }
-
         async function loadWithdrawData() {
             const token = localStorage.getItem("token");
 
             if (!token) {
                 setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com";
+
                 }, 2000);
                 return;
             }
