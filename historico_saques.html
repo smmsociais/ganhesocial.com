@@ -30,7 +30,6 @@
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
 
-
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
@@ -91,7 +90,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            backdrop-filter: blur(5px);
             transition: var(--transition);
         }
 
@@ -142,6 +140,7 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             border-radius: var(--card-radius);
+            margin-bottom: 20px;
         }
 
         .withdrawal-table {
@@ -160,7 +159,6 @@
             border-bottom: 2px solid var(--border-light);
             position: sticky;
             top: 0;
-            backdrop-filter: blur(5px);
         }
 
         .withdrawal-table tbody tr {
@@ -210,6 +208,10 @@
         .empty-state {
             text-align: center;
             padding: 40px 20px;
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            margin: 20px 0;
+            box-shadow: 0 4px 20px var(--shadow-light);
         }
 
         .empty-state-icon {
@@ -242,6 +244,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
         }
 
         .btn-primary:hover {
@@ -255,6 +258,8 @@
             justify-content: center;
             padding: 20px 0;
             margin-top: 20px;
+            align-items: center;
+            gap: 10px;
         }
 
         .pagination button {
@@ -262,10 +267,13 @@
             border: 1px solid var(--border-light);
             color: var(--text-light);
             padding: 8px 15px;
-            margin: 0 5px;
             border-radius: 6px;
             cursor: pointer;
             transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
         }
 
         .pagination button:hover {
@@ -283,38 +291,9 @@
             cursor: not-allowed;
         }
 
-        /* Filter Controls */
-        .filter-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-label {
+        .page-info {
+            margin: 0 15px;
             font-weight: 600;
-            color: var(--text-light);
-        }
-
-        .filter-select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-light);
-            background-color: var(--container-light);
-            color: var(--text-light);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .filter-select:hover {
-            border-color: #adb5bd;
         }
 
         /* Menu Styles */
@@ -345,7 +324,6 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             display: none;
-            backdrop-filter: blur(3px);
         }
 
         .menu-content {
@@ -470,6 +448,10 @@
                 color: var(--text-dark);
             }
 
+            .empty-state {
+                background: var(--container-dark);
+            }
+
             .menu-content {
                 background: var(--container-dark);
                 box-shadow: 2px 0 15px var(--shadow-dark);
@@ -485,16 +467,6 @@
 
             .menu-footer {
                 border-color: var(--border-dark);
-            }
-
-            .filter-select {
-                background-color: var(--container-dark);
-                color: var(--text-dark);
-                border-color: var(--border-dark);
-            }
-
-            .filter-select:hover {
-                border-color: #555;
             }
 
             .pagination button {
@@ -539,19 +511,6 @@
                 padding: 10px 8px;
                 font-size: 0.9rem;
             }
-
-            .filter-controls {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .filter-group {
-                width: 100%;
-            }
-
-            .filter-select {
-                width: 100%;
-            }
         }
 
         @media (max-width: 576px) {
@@ -580,6 +539,10 @@
 
             .empty-state-title {
                 font-size: 1.1rem;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
             }
         }
 
@@ -780,57 +743,51 @@
                 <h2><i class="fas fa-wallet"></i> Histórico de Saques</h2>
             </div>
             <div class="container-body">
-            </div>
-        </div>
-
-        <!-- Tabela de Saques -->
-        <div id="withdrawals-container">
-            <div class="table-responsive">
-                <table class="withdrawal-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Chave PIX</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="withdrawals-list">
-                        <!-- Loading State -->
-                        <tr id="loading-row">
-                            <td colspan="6">
-                                <div class="skeleton skeleton-text" style="width: 80%"></div>
-                                <div class="skeleton skeleton-text" style="width: 60%"></div>
-                                <div class="skeleton skeleton-text" style="width: 70%"></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div id="no-withdrawals" class="empty-state" style="display: none;">
-                <div class="empty-state-icon">
-                    <i class="fas fa-wallet"></i>
+                <!-- Tabela de Saques -->
+                <div id="withdrawals-container">
+                    <div class="table-responsive">
+                        <table class="withdrawal-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Chave PIX</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-list">
+                                <!-- Loading State -->
+                                <tr id="loading-row">
+                                    <td colspan="4">
+                                        <div class="skeleton skeleton-text" style="width: 80%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 60%"></div>
+                                        <div class="skeleton skeleton-text" style="width: 70%"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="no-withdrawals" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <h3 class="empty-state-title">Nenhum saque realizado ainda</h3>
+                        <p class="empty-state-description">Quando você realizar saques, eles aparecerão aqui.</p>
+                        <a href="solicitar_saque" class="btn-primary">
+                            <i class="fas fa-hand-holding-usd"></i> Solicitar Saque
+                        </a>
+                    </div>
                 </div>
-                <h3 class="empty-state-title">Nenhum saque realizado ainda</h3>
-                <p class="empty-state-description">Quando você realizar saques, eles aparecerão aqui.</p>
-                <a href="solicitar_saque" class="btn-primary">
-                    <i class="fas fa-hand-holding-usd"></i> Solicitar Saque
-                </a>
+
+                <!-- Paginação -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button id="prev-page" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+                    <span class="page-info" id="page-info">Página 1 de 1</span>
+                    <button id="next-page">Próxima <i class="fas fa-chevron-right"></i></button>
+                </div>
             </div>
         </div>
-
-        <!-- Paginação -->
-        <div class="pagination" id="pagination" style="display: none;">
-            <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
-            <span id="page-info">Página 1 de 1</span>
-            <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
-        </div>
     </div>
-    </div>
-    </div>
-
-    <!-- Menu Overlay para Mobile -->
-    <div class="menu-overlay" id="menuOverlay"></div>
 
     <!-- Modal de Detalhes -->
     <div id="details-modal" class="modal" style="display: none;">
