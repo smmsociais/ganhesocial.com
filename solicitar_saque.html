@@ -639,7 +639,14 @@
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
-        
+
+            // Verifica se há uma mensagem de sucesso para exibir
+            const successMessage = localStorage.getItem("withdrawSuccess");
+            if (successMessage) {
+                showAlert(successMessage, 'success');
+                localStorage.removeItem("withdrawSuccess");
+            }
+
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -798,8 +805,7 @@
                 }
 
                 // Armazena a mensagem de sucesso e recarrega a página
-                localStorage.setItem("withdrawSuccess", "Saque solicitado com sucesso! O pagamento será processado imediatamente.");
-                window.location.reload();
+                localStorage.setItem("withdrawSuccess", "Saque solicitado com sucesso! O pagamento está em processamento.");
 
             } catch (error) {
                 showAlert(error.message);
