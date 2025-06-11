@@ -753,13 +753,6 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-            // Verifica se há uma mensagem de sucesso para exibir
-            const successMessage = localStorage.getItem("withdrawSuccess");
-            if (successMessage) {
-                showAlert(successMessage, 'success');
-                localStorage.removeItem("withdrawSuccess");
-            }
-
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
