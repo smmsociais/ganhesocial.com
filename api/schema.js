@@ -5,6 +5,7 @@ const ContaSchema = new mongoose.Schema({
   nomeConta: { type: String, required: true },
   id_tiktok: { type: String },
   id_fake: { type: String },
+  status: { type: String, default: "ativa" },
 });
 
 // 🔹 Schema para Histórico de Ações
