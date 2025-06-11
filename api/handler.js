@@ -160,25 +160,48 @@ if (url.startsWith("/api/contas")) {
         const user = await User.findOne({ token });
         if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-        if (method === "POST") {
-            const { nomeConta, id_conta, id_tiktok } = req.body;
+if (method === "POST") {
+    const { nomeConta, id_conta, id_tiktok } = req.body;
 
-            if (!nomeConta) {
-                return res.status(400).json({ error: "Nome da conta é obrigatório." });
-            }
+    if (!nomeConta) {
+        return res.status(400).json({ error: "Nome da conta é obrigatório." });
+    }
 
-            // Verifica se já existe esse nomeConta cadastrado por qualquer usuário
-            const contaExistente = await User.findOne({ "contas.nomeConta": nomeConta });
+    // 🔍 Verifica se a conta já existe neste próprio usuário
+    const contaExistente = user.contas.find(c => c.nomeConta === nomeConta);
 
-            if (contaExistente) {
-                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário" });
-            }
-
-            user.contas.push({ nomeConta, id_conta, id_tiktok, status: "ativa" });
-            await user.save();
-
-            return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
+    if (contaExistente) {
+        if (contaExistente.status === "ativa") {
+            return res.status(400).json({ error: "Esta conta já está ativa." });
         }
+
+        // ✅ Reativar a conta
+        contaExistente.status = "ativa";
+        contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
+        contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
+        contaExistente.dataDesativacao = undefined;
+
+        await user.save();
+
+        return res.status(200).json({ message: "Conta reativada com sucesso!" });
+    }
+
+    // 🔒 Verifica se nome já está em uso por outro usuário
+    const contaDeOutroUsuario = await User.findOne({
+        _id: { $ne: user._id },
+        "contas.nomeConta": nomeConta
+    });
+
+    if (contaDeOutroUsuario) {
+        return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
+    }
+
+    // ➕ Adiciona nova conta
+    user.contas.push({ nomeConta, id_conta, id_tiktok, status: "ativa" });
+    await user.save();
+
+    return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
+}
 
         if (method === "GET") {
             if (!user.contas || user.contas.length === 0) {
