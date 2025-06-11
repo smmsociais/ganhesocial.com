@@ -900,8 +900,6 @@
 
         async function loadWithdrawals() {
             const token = localStorage.getItem("token");
-            const statusFilter = document.getElementById('status-filter').value;
-            const periodFilter = document.getElementById('period-filter').value;
 
             if (!token) {
                 return;
