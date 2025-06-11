@@ -414,7 +414,7 @@
             }
 
             .container-header h2 {
-                font-size: 1.3rem;
+                font-size: 1.0rem;
             }
         }
 
@@ -448,11 +448,6 @@
         @media (max-width: 576px) {
             .header {
                 padding: 12px 15px;
-            }
-
-            .balance-chip {
-                padding: 6px 12px;
-                font-size: 0.9rem;
             }
 
             .info-title {
@@ -644,14 +639,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
-
-            // Verifica se há uma mensagem de sucesso para exibir
-            const successMessage = localStorage.getItem("withdrawSuccess");
-            if (successMessage) {
-                showAlert(successMessage, 'success');
-                localStorage.removeItem("withdrawSuccess");
-            }
-
+        
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
