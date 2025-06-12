@@ -124,33 +124,29 @@ await colecao.updateOne(
             // 9) Calcula meia-noite de amanhã em UTC (que equivale a 00:00 Brasília)
 const agora = new Date();
 
-// Fuso horário de Brasília é UTC-3 (ajuste se usar horário de verão real)
+// Fuso horário de Brasília (UTC-3)
 const offsetBrasilia = -3;
 
-// Calcula 00:00 de HOJE em Brasília
-const brasilMidnight = new Date(Date.UTC(
+// Calcula 00:00 de AMANHÃ no horário de Brasília
+const brasilMidnightTomorrow = new Date(Date.UTC(
   agora.getUTCFullYear(),
   agora.getUTCMonth(),
-  agora.getUTCDate(),
-  0 - offsetBrasilia, // corrige para UTC
+  agora.getUTCDate() + 1, // amanhã
+  0 - offsetBrasilia,
   0,
   0,
   0
 ));
 
-// Calcula expiresAt como 00:20 de HOJE (20 minutos depois da meia-noite)
-const expiresAt = new Date(brasilMidnight.getTime() + 0 * 60 * 1000); // 20 minutos
-
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
-    data: brasilMidnight, // agora busca exatamente meia-noite de HOJE
+    expiresAt: brasilMidnightTomorrow, // usaremos esse campo como chave única do dia
   },
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: expiresAt,
-      data: brasilMidnight,
+      expiresAt: brasilMidnightTomorrow,
     },
   },
   { upsert: true }
