@@ -136,7 +136,7 @@ const brasilMidnight = new Date(Date.UTC(
   brasilAgora.getUTCFullYear(),
   brasilAgora.getUTCMonth(),
   brasilAgora.getUTCDate() + 1, // amanhã em Brasília
-  3,  // 00:00 BRT = 03:00 UTC
+  0,  // 00:00 BRT = 03:00 UTC
   0,
   0,
   0
