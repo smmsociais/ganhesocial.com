@@ -125,13 +125,13 @@ await colecao.updateOne(
 const agora = new Date();
 
 // Fuso horário de Brasília (UTC-3)
-const offsetBrasilia = -3;
+const offsetBrasilia = 0;
 
 // Calcula 00:00 de AMANHÃ no horário de Brasília
 const brasilMidnightTomorrow = new Date(Date.UTC(
   agora.getUTCFullYear(),
   agora.getUTCMonth(),
-  agora.getUTCDate() + 1, // amanhã
+  agora.getUTCDate(),
   0 - offsetBrasilia,
   0,
   0,
