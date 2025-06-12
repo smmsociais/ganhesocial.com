@@ -122,35 +122,43 @@ await colecao.updateOne(
             );
 
             // 9) Calcula meia-noite de amanhã em UTC (que equivale a 00:00 Brasília)
-            const agora = new Date();
-            const brasilMidnight = new Date(
-              Date.UTC(
-                agora.getUTCFullYear(),
-                agora.getUTCMonth(),
-                agora.getUTCDate() + 1,
-                0,
-                0,
-                0
-              )
-            );
+const agora = new Date();
 
-            // 10) Insere no Mongoose (DailyEarning)
+// Calcula o deslocamento de Brasília em relação ao UTC (considerando horário de verão etc.)
+const offsetBrasilia = -3; // Horário de Brasília padrão (UTC-3)
+// Se quiser automático, pode usar uma lib como luxon ou moment-timezone para timezone real com DST
+
+// Define a data de referência como meia-noite de hoje em Brasília
+const brasilMidnight = new Date(Date.UTC(
+  agora.getUTCFullYear(),
+  agora.getUTCMonth(),
+  agora.getUTCDate(),
+  0 - offsetBrasilia, // Converte para UTC
+  0,
+  0,
+  0
+));
+
+// Define a data limite como 24h depois
+const brasilNextMidnight = new Date(brasilMidnight);
+brasilNextMidnight.setUTCDate(brasilMidnight.getUTCDate() + 1);
+
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
     data: {
-      $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
-      $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
+      $gte: brasilMidnight,
+      $lt: brasilNextMidnight,
     },
   },
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: brasilMidnight,
-      data: new Date() // ⬅️ importante garantir que "data" seja inserido
+      expiresAt: brasilNextMidnight,
+      data: brasilMidnight, // sempre fixa à meia-noite de hoje
     },
   },
-  { upsert: true } // ⬅️ permite criar se não existir
+  { upsert: true }
 );
           }
 
