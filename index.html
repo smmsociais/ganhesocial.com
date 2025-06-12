@@ -4,58 +4,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ganhe Social - Engajamento</title>
+    <title>Ganhe Social</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #ffffff;
-            --text-light: #24292e;
-            --button-light: #0366d6;
-            --bg-dark: #0d1117;
-            --text-dark: #c9d1d9;
-            --button-dark: #58a6ff;
+            --bg-light: #1e1e1e;
+            --text-light: #d6d6d6;
+            --container-light: #313131;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #1e1e1e;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --bg-dark: #1e1e1e;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
         }
 
         body {
             background-color: var(--bg-light);
             color: var(--text-light);
-            font-family: 'Montserrat', sans-serif;
-            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
+            min-height: 100vh;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            color: white;
             position: relative;
-            width: 100%;
-        }
-
-        h1,
-        h2,
-        h3,
-        p,
-        span,
-        div {
-            word-break: break-word;
-        }
-
-        .text-content {
-            position: absolute;
-            top: -18%;
-            left: 10%;
-            max-width: 500px;
             z-index: 10;
         }
 
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 0;
-            padding: 0;
-            line-height: 1.2;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
-        .subtitle {
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            height: 32px;
+            margin-right: 0;
+            /* Remove a margem negativa */
+            margin-left: 100px;
+            /* Adiciona espaço à esquerda se necessário */
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
+        }
+
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: var(--border-light);
+            color: rgb(238, 238, 238);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0px;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #5cb85c 100%);
+            color: white;
+        }
+
+        .btn-blue {
+            background: var(--button-light);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            padding: 100px 0;
+            background: var(--bg-light);
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 0 0 100px;
+            /* Alterado para alinhar à esquerda */
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+            text-align: left;
+            /* Alinha o texto à esquerda */
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-light);
+            line-height: 1.3;
+            white-space: pre-line;
+            /* Permite quebras de linha */
+        }
+
+        .hero-subtitle {
             font-size: 1.5rem;
             font-family: 'Montserrat', sans-serif;
             font-weight: 400;
@@ -64,710 +179,668 @@
             line-height: 1.4;
         }
 
-        .button {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            color: white;
-            font-size: 1rem;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 30px;
-        }
-
-        .start-button {
-            background-color: #4CAF50;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .start-button:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-
-        .login-button {
-            background-color: #007BFF;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-            margin-right: 15px;
-        }
-
-        .login-button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        .buttons-below {
-            display: flex;
-            margin-top: 40px;
-            flex-wrap: wrap;
-        }
-
-        .logo {
-            position: absolute;
-            top: -610px;
-            left: 140px;
-            height: 40px;
-            width: auto;
-            z-index: 10;
-        }
-
-        @keyframes moveUpDown {
-            0% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-15px);
-            }
-
-            100% {
-                transform: translateY(0);
-            }
-        }
-
-        .features-section {
-            text-align: center;
-            padding: 80px 20px;
-            margin-top: 100vh;
-        }
-
-        .features-section2 {
-            position: relative;
-            width: 100%;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            padding: 60px 0;
-            margin-top: 0vh;
-        }
-
-        .features-section h2 {
-            font-size: 1.8rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin-bottom: 50px;
-        }
-
-        .features-section h2 {
-            font-size: 1.8rem;
-            font-family: 'Arial', sans-serif;
-            margin-bottom: 20px;
-        }
-
-        .feature-item {
-            margin-bottom: 60px;
-        }
-
-        .feature-image {
-            width: 80%;
-            max-width: 60px;
-            margin: 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-text {
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            margin-top: 15px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .hamburger-menu {
-            display: none;
-            position: absolute;
-            top: -95vh;
-            right: 2vw;
-            cursor: pointer;
-            z-index: 100;
-        }
-
-        .hamburger-icon {
-            width: 30px;
-            height: 3px;
-            background-color: var(--text-light);
-            margin: 6px 0;
-            transition: 0.4s;
-        }
-
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: -95vh;
-            right: 20px;
-            background-color: var(--bg-light);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            z-index: 99;
-            flex-direction: column;
-            gap: 15px;
-            width: 200px;
-        }
-
-        .mobile-menu.open {
-            display: flex;
-        }
-
-        @media (max-width: 768px) {
-            .hamburger-menu {
-                display: block;
-            }
-
-            .logo {
-                height: 2px;
-                left: 20px;
-            }
-
-            .text-content {
-                top: -85vh;
-                left: 5vw;
-                max-width: min(90%, 80vw);
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .subtitle {
-                font-size: 1.2rem;
-            }
-
-            .features-section {
-                padding: 40px 0;
-                margin-top: -200vh;
-            }
-
-            .features-section h2 {
-                font-size: 2rem;
-            }
-
-            .buttons-below {
-                flex-direction: row;
-                gap: 10px;
-            }
-
-            .login-button {
-                margin-right: 10px;
-                padding: 12px 20px;
-            }
-
-            .start-button {
-                padding: 12px 20px;
-            }
-        }
-
-        .image-top {
+        .hero-image {
             width: 45%;
             height: auto;
             position: absolute;
             top: -20%;
-            right: 0;
+            margin-left: 700px;
             transform: translateY(-50%);
             animation: moveUpDown 3s ease-in-out infinite;
             filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
         }
 
-        @media (max-width: 768px) {
-            .image-top {
-                width: min(120%, 200vw);
-                top: -15vh;
-                right: 0;
-                left: 14vw;
-                max-width: 65%;
-                object-fit: cover;
-                animation: none !important;
-            }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-start;
+            margin-top: 20px;
+            /* ou qualquer valor que você preferir */
+            flex-wrap: wrap;
         }
 
-        @media (max-width: 480px) {
-            .logo {
-                height: 3vh;
-                top: -95vh;
-                left: 5vw;
-            }
-
-            .buttons-below {
-                flex-direction: row;
-                gap: 8px;
-            }
-
-            .button {
-                padding: 12px 15px;
-                font-size: 0.9rem;
-                margin-top: 20px;
-            }
-
-            .login-button {
-                margin-right: 8px;
-            }
-
-            .features-section {
-                padding: 20px 10px;
-                margin-top: 100vh;
-            }
-
-            .features-section h2 {
-                font-size: 1.6rem;
-            }
+        /* Features Section */
+        .features-section {
+            padding: 80px 0;
+            background: var(--bg-light);
         }
 
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 50px;
+            color: var(--text-light);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .feature-card {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            padding: 30px;
+            box-shadow: 0 5px 15px var(--shadow-light);
+            transition: var(--transition);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow-light);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--button-light);
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+
+        .feature-description {
+            color: var(--text-light);
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 80px 0;
+            background: var(--bg-light);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .faq-item {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px var(--shadow-light);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            color: var(--text-light);
+            opacity: 0.9;
+            line-height: 1.6;
+            border-top: 1px solid transparent;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 20px 20px;
+            max-height: 500px;
+            border-top-color: var(--border-light);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 50px 0 20px;
+            color: var(--text-light);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-logo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .footer-logo img {
+            max-width: 150px;
+            height: auto;
+        }
+
+        .footer-description {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .footer-links h3,
+        .footer-contact h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+            opacity: 0.8;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            color: var(--button-light);
+        }
+
+        .footer-contact p {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 1px solid var(--border-light);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--bg-dark);
                 color: var(--text-dark);
             }
 
-            .logo {
-                color: #fff;
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
             }
 
-            .logo span:first-child {
-                color: #58a6ff;
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
             }
 
-            .logo span:last-child {
-                color: #4CAF50;
+            .feature-card {
+                background: var(--container-dark);
+                border-color: var(--border-dark);
+                box-shadow: 0 5px 15px var(--shadow-dark);
             }
 
-            h1,
-            .subtitle,
-            .features-section h2 {
+            .feature-title,
+            .feature-description,
+            .faq-question,
+            .faq-answer,
+            .footer-links h3,
+            .footer-contact h3,
+            .footer-links a {
                 color: var(--text-dark);
             }
 
-            .hamburger-icon {
-                background-color: var(--text-dark);
+            .footer {
+                background: #141414;
+                /* Vermelho escuro para o modo dark */
             }
 
-            .mobile-menu {
-                background-color: var(--bg-dark);
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
 
-            .feature-image {
-                box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
-            }
-
-            .feature-text {
-                color: var(--text-dark);
+            .footer-bottom {
+                border-color: var(--border-dark);
             }
         }
 
-        .info-section {
-            width: 100%;
-            padding: 40px 5%;
-            text-align: left;
-            box-sizing: border-box;
-        }
-
-        .info-item {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e0e0e0;
-            max-width: 100%;
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .info-title {
-            font-size: 1.5rem;
-            font-family: 'Arial', sans-serif;
-            font-weight: 700;
-            color: var(--text-light);
-            margin: 0 0 10px 0;
-            line-height: 1.3;
-            text-align: left;
-        }
-
-        .info-description {
-            font-size: 0.95rem;
-            font-family: 'Montserrat', sans-serif;
-            color: var(--text-light);
-            line-height: 1.5;
-            margin: 0;
-            text-align: left;
-            width: 100%;
-        }
-
-        .footer-contact-title {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: #fff;
-            width: 100%;
-            text-align: left;
-        }
-
-        @media (max-width: 768px) {
-            .footer-contact-title {
-                text-align: center;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .info-item {
-                border-bottom-color: #444;
-            }
-
-            .info-title,
-            .info-description {
-                color: var(--text-dark);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .info-section {
-                padding: 30px 5%;
-            }
-
-            .info-title {
-                font-size: 1.3rem;
-            }
-
-            .info-item {
-                margin-bottom: 25px;
-                padding-bottom: 15px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .info-section {
-                padding: 20px 5%;
-            }
-
-            .info-title {
-                font-size: 1.2rem;
-            }
-
-            .info-description {
-                font-size: 0.9rem;
-                line-height: 1.45;
-            }
-
-            .info-item {
-                margin-bottom: 20px;
-                padding-bottom: 10px;
-            }
-        }
-
-        .footer {
-            background-color: #000;
-            padding: 30px 0;
-            color: white;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .footer-content {
+        .header {
             display: flex;
-            flex-wrap: wrap;
             justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            gap: 40px;
-            width: 100%;
-            box-sizing: border-box;
+            align-items: center;
+            padding: 15px 25px;
+            color: white;
+            position: relative;
+            z-index: 10;
         }
 
-        .footer-logo {
-            flex: 1;
-            min-width: 0px;
-            display: flex;
-            align-items: flex-start;
-        }
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .hero-title {
+                font-size: 2.2rem;
+            }
 
-        .footer-logo img {
-            max-width: 150px;
-            height: auto;
-            transform: translateY(70px);
-        }
-
-        .footer-navigation {
-            flex: 1;
-            min-width: 200px;
-            text-align: left;
-        }
-
-        .footer-navigation h3 {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #fff;
-        }
-
-        .footer-navigation ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .footer-navigation li {
-            margin-bottom: 10px;
-        }
-
-        .footer-navigation a {
-            color: #ccc;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-navigation a:hover {
-            color: #fff;
-        }
-
-        .footer-contact {
-            flex: 1;
-            min-width: 200px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .footer-email {
-            font-size: 1.1rem;
-            color: #fff;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .footer {
-                background-color: #111;
+            .hero-subtitle {
+                font-size: 1.1rem;
             }
         }
 
         @media (max-width: 768px) {
-            .footer {
-                padding: 20px 0;
+            .hero-section {
+                padding: 80px 0;
             }
 
-            .footer-content {
-                flex-direction: column;
-                gap: 20px;
+            .logo {
+                height: 32px;
+                margin-right: 0;
+                /* Remove a margem negativa */
+                margin-left: 10px;
+                /* Adiciona espaço à esquerda se necessário */
             }
 
-            .footer-logo {
-                flex: 1;
-                min-width: 200px;
+            .hero-content {
+                margin: 0;
+                text-align: left;
+                padding-left: 5vw;
+                /* Remove white-space: nowrap para permitir quebras */
+                overflow-x: visible;
+                /* Altera para visible para permitir que o texto flua */
+            }
+
+            .hero-title {
+                top: -85vh;
+                left: 5vw;
+                max-width: min(90%, 80vw);
+                /* Remove nowrap e adiciona controle de palavras */
+                word-wrap: break-word;
+                white-space: normal;
+                /* Limita a 3 palavras por linha */
+                display: inline-block;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+                /* Remove nowrap e adiciona controle de palavras */
+                white-space: normal;
+                word-wrap: break-word;
+                /* Limita a 6 palavras por linha */
+                display: inline-block;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+                margin-bottom: 40px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
                 display: flex;
-                align-items: flex-start;
-                padding-top: 30px;
+                gap: 15px;
+                justify-content: flex-start;
+                margin-top: 20px;
+                /* ou qualquer valor que você preferir */
+                flex-wrap: wrap;
             }
 
-            .footer-logo img {
-                transform: translateY(-5px);
-            }
-
-            .footer-navigation {
-                min-width: 100%;
-                text-align: center;
-            }
-
-            .footer-contact {
-                align-items: center;
-                text-align: center;
-                width: 100%;
-            }
-
-            .footer-logo {
-                justify-content: center;
-            }
-
-            .footer-navigation {
-                text-align: center;
-            }
-
-            .footer-contact {
-                justify-content: center;
+            .btn-primary {
+                width: auto;
+                max-width: 300px;
+                justify-content: flex-start;
             }
         }
 
-        .footer-image {
-            width: 20px;
-            height: auto;
+        .hero-subtitle {
+            font-size: 1.5rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            color: var(--text-light);
+            margin: 20px 0 0 0;
+            line-height: 1.4;
+            /* Adiciona para versão desktop também */
+            white-space: normal;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+
+        .hero-image {
+            margin-top: 19px;
+            max-width: 5000%;
+            /* Opcional: faz a imagem ocupar mais espaço no mobile */
+        }
+
+        @media (max-width: 576px) {
+            .hero-section {
+                padding: 60px 0;
+            }
+
+            .button-group {
+                flex-direction: column;
+                /* Isso empilha os botões verticalmente */
+                align-items: flex-start;
+                justify-content: flex-start;
+                padding-left: 5vw;
+            }
+
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .feature-card {
+                padding: 20px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .hero-content .button-group {
+                flex-direction: row !important;
+                margin-top: 20px;
+                margin-left: -10px;
+                /* ou qualquer valor que você preferir */
+            }
+
+            .hero-content .btn-primary {
+                width: auto !important;
+                max-width: none !important;
+                margin-top: 20px;
+                margin-left: -10px;
+                /* ou qualquer valor que você preferir */
+            }
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <img class="logo" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png"
-        alt="Ganhe Social">
-
-    <img class="image-top" src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
-        alt="Logo Ganhe Social">
-
-    <div class="hamburger-menu" id="hamburgerMenu">
-        <div class="hamburger-icon"></div>
-        <div class="hamburger-icon"></div>
-        <div class="hamburger-icon"></div>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-        <button class="button login-button" onclick="goToLogin()">Login</button>
-        <button class="button start-button" onclick="startEarning()">Cadastrar</button>
-    </div>
-
-    <div class="text-content">
-        <h1>Ganhe Dinheiro Online Usando Suas Redes Sociais!</h1>
-        <p class="subtitle">Ganhe uma renda extra com suas redes sociais para seguir e curtir perfis e publicações.</p>
-
-        <div class="buttons-below">
-            <button class="button login-button" onclick="goToLogin()">Login</button>
-            <button class="button start-button" onclick="startEarning()">Começar a Ganhar</button>
+    <!-- Header -->
+    <header class="header">
+        <div class="left-header">
+            <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                alt="Logo GanheSocial" class="logo">
+            </a>
         </div>
-    </div>
-
-    <div class="features-section" id="como-funciona">
-        <h2>Como funciona o Ganhe Social?</h2>
-
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743307155886.png"
-                alt="Explicação do Ganhe Social">
-            <p class="feature-text">Depois de criar uma conta na plataforma, adicione um perfil que deseja, vá em
-                Realizar Ações e siga os perfis ou curta as publicações disponíveis.</p>
         </div>
-
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/Point%20Blur_Mar302025_005028.png"
-                alt="Demonstração do Ganhe Social">
-            <p class="feature-text">A cada ação que você realizar com suas redes sociais, você será recompensado com
-                um valor em R$.</p>
+        <button class="btn-primary" onclick="startEarning()">
+            </i> Cadastre-se
+        </button>
         </div>
+    </header>
 
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743309869152.png"
-                alt="Recompensas do Ganhe Social">
-            <p class="feature-text">Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor
-                por PIX. Os pagamentos são instantâneos!</p>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content fade-in">
+            <h1 class="hero-title">Ganhe Dinheiro Online Usando<br>Suas Redes Sociais!</h1>
+            <p class="hero-subtitle">Ganhe uma renda extra com suas redes sociais<br>para seguir e curtir perfis
+                e<br>publicações.</p>
+
+            <div class="button-group">
+                <button class="btn-primary btn-blue" onclick="startEarning()">
+                    </i> Login
+                </button>
+                <button class="btn-primary btn-success" onclick="startEarning()">
+                    </i> Começar a Ganhar
+                </button>
+            </div>
+
+            <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743299219029.png"
+                alt="Ilustração GanheSocial" class="hero-image floating">
         </div>
-    </div>
+    </section>
 
-    <div class="features-section2" id="vantagens">
-        <h2>Quais as vantagens de utilizar o Ganhe Social?</h2>
+    <!-- Features Section -->
+    <section class="features-section">
+        <h2 class="section-title">Como funciona o Ganhe Social?</h2>
 
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743358293720.png"
-                alt="Vantagens do Ganhe Social">
-            <p class="feature-text">Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e
-                o histórico de cada perfil.</p>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h3 class="feature-title">Cadastre-se e Adicione Perfis</h3>
+                <p class="feature-description">
+                    Depois de criar uma conta na plataforma, adicione um perfil que deseja, vá em Realizar Ações e siga
+                    os perfis ou curta as publicações disponíveis.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h3 class="feature-title">Ganhe com Cada Ação</h3>
+                <p class="feature-description">
+                    A cada ação que você realizar com suas redes sociais, você será recompensado com um valor em R$.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 class="feature-title">Saques Rápidos</h3>
+                <p class="feature-description">
+                    Ao atingir o limite mínimo para saque, você poderá realizar a retirada do valor por PIX. Os
+                    pagamentos são instantâneos!
+                </p>
+            </div>
         </div>
+    </section>
 
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743360125005.png"
-                alt="Histórico do Ganhe Social">
-            <p class="feature-text">Não há limites de ganhos, você poderá realizar quantas ações que quiser!</p>
+    <!-- Benefits Section -->
+    <section class="features-section">
+        <h2 class="section-title">Vantagens do Ganhe Social</h2>
+
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3 class="feature-title">Histórico Completo</h3>
+                <p class="feature-description">
+                    Você pode ter acesso ao seu histórico de ações realizadas, temos o histórico geral e o histórico de
+                    cada perfil.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-infinity"></i>
+                </div>
+                <h3 class="feature-title">Ganhos Ilimitados</h3>
+                <p class="feature-description">
+                    Não há limites de ganhos, você poderá realizar quantas ações que quiser!
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3 class="feature-title">Suporte 24/7</h3>
+                <p class="feature-description">
+                    Suporte rápido para atender as suas necessidades, estamos sempre disponíveis!
+                </p>
+            </div>
         </div>
+    </section>
 
-        <div class="feature-item">
-            <img class="feature-image"
-                src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743361279221.png"
-                alt="Ganhos ilimitados no Ganhe Social">
-            <p class="feature-text">Suporte 24/7 e super rápido para atender as suas necessidades, estamos sempre
-                disponíveis!</p>
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <h2 class="section-title">Dúvidas Frequentes</h2>
+
+        <div class="faq-container">
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    Como posso ganhar dinheiro com o Ganhe Social?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois que realizar o cadastro na
+                        plataforma, vá até a sessão de Adicionar Conta localizada no painel, escolha a rede social que
+                        deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão de Realizar Ações, escolha
+                        a rede social de preferência e selecione a conta que irá realizar as ações. A cada ação que
+                        realizar, você será pago por valores que estão disponíveis em nosso mercado.</p>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    Quanto a plataforma paga por cada ação realizada?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Pagamos R$ 0.004 á R$ 0.01 com ações de seguir, enquanto para curtir, pagamos o valor de R$
+                        0.001. Esses valores são variáveis, pois podem sofrer alterações a qualquer momento.</p>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    Qual o valor mínimo para saque?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>O valor mínimo para saque é de R$ 5,00.</p>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    Como recebo meu saque?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Você poderá receber seu pagamento através do PIX após vincular seus dados bancários corretamente.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    Em quanto tempo recebo meu saque?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Todos os nossos pagamentos são instantâneos. Caso tenha algum problema com o saque, não hesite em
+                        procurar ajuda imediatamente no nosso suporte.</p>
+                </div>
+            </div>
+
+            <div class="faq-item fade-in">
+                <div class="faq-question">
+                    O site é confiável?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Sim, nosso site é totalmente seguro e confiável. Não pedimos senha de suas redes sociais. Caso
+                        tenha dúvidas, procure por referências no YouTube por exemplo.</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="info-section" id="duvidas">
-        <div class="info-item">
-            <h2 class="info-title">Dúvidas Frequentes</h2>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Como posso ganhar dinheiro com o Ganhe Social?</h2>
-            <p class="info-description">Você pode ganhar dinheiro com o Ganhe Social da seguinte forma: depois
-                que realizar o cadastro na plataforma, vá até a sessão de Adicionar Conta localizada no painel,
-                escolha a rede social que deseja e vincule seu perfil. Após adicionar o perfil, vá até a sessão
-                de Realizar Ações, escolha a rede social de preferência e selecione a conta que irá realizar as
-                ações. A cada ação que realizar, você será pago por valores que estão disponíveis em nosso
-                mercado.</p>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Quanto a plataforma paga por cada ação realizada?</h2>
-            <p class="info-description">Pagamos R$ 0.004 á R$ 0.01 com ações de seguir, enquanto para curtir,
-                pagamos o valor de R$ 0.001. Esses valores são variáveis, pois podem sofrer alterações a
-                qualquer momento.</p>
-
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Qual o valor mínimo para saque?</h2>
-            <p class="info-description">O valor mínimo para saque é de R$ 5,00.</p>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Como recebo meu saque?</h2>
-            <p class="info-description">Você poderá receber seu pagamento através do PIX após vincular seus
-                dados bancários corretamente.</p>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Em quanto tempo recebo meu saque?</h2>
-            <p class="info-description">Todos os nossos pagamentos são instantâneos. Caso tenha algum problema
-                com o saque, não hesite em procurar ajuda imediatamente no nosso suporte.</p>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">O site é confiável?</h2>
-            <p class="info-description">Sim, nosso site é totalmente seguro e confiável. Não pedimos senha de
-                suas redes sociais. Caso tenha dúvidas, procure por referências no YouTube por exemplo.</p>
-        </div>
-
-        <div class="info-item">
-            <h2 class="info-title">Realizei uma ação e ela não foi contabilizada, por quê?</h2>
-            <p class="info-description">Nosso sistema faz verificações automaticamente de suas ações realizadas.
-                Verifique se a ação está em análise e se você realizou a ação corretamente na página 'Histórico
-                de Ações'. Além disso, você pode acompanhar as ações feitas por cada perfil na página de
-                gerenciamento de contas.</p>
-        </div>
-    </div>
-
+    <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1743480368999.png"
-                    alt="Ganhe Social Logo">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial">
+                <p class="footer-description">
+                    Plataforma para ganhar dinheiro com suas redes sociais de forma simples e segura.
+                </p>
             </div>
 
-            <div class="footer-navigation">
+            <div class="footer-links">
                 <h3>Navegação</h3>
                 <ul>
-                    <li><a href="#como-funciona">Como funciona o Ganhe Social?</a></li>
-                    <li><a href="#vantagens">Quais as vantagens de utilizar o Ganhe Social?</a></li>
-                    <li><a href="#duvidas">Dúvidas Frequentes</a></li>
+                    <li><a href="#como-funciona">Como funciona</a></li>
+                    <li><a href="#vantagens">Vantagens</a></li>
+                    <li><a href="#duvidas">Dúvidas</a></li>
                     <li><a href="signup">Cadastrar</a></li>
                     <li><a href="login">Login</a></li>
                 </ul>
             </div>
 
             <div class="footer-contact">
-                <h3 class="footer-contact-title">Contato</h3>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img class="footer-image"
-                        src="https://raw.githubusercontent.com/renissontk/ganhesocial.com/main/1745793982156.png"
-                        alt="Ícone de contato">
-                    <p class="footer-email">contato@ganhesocial.com</p>
-                </div>
+                <h3>Contato</h3>
+                <p>
+                    <i class="fas fa-envelope"></i> contato@ganhesocial.com
+                </p>
+                <p>
+                </p>
             </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025, GanheSocial.</p>
         </div>
     </footer>
 
     <script>
+        // Funções básicas
         function startEarning() {
             window.location.href = "signup";
         }
@@ -776,35 +849,24 @@
             window.location.href = "login";
         }
 
-        const hamburgerMenu = document.getElementById('hamburgerMenu');
-        const mobileMenu = document.getElementById('mobileMenu');
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentNode;
+                item.classList.toggle('active');
 
-        hamburgerMenu.addEventListener('click', function () {
-            mobileMenu.classList.toggle('open');
-
-            const icons = document.querySelectorAll('.hamburger-icon');
-            if (mobileMenu.classList.contains('open')) {
-                icons[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
-                icons[1].style.opacity = '0';
-                icons[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
-            } else {
-                icons[0].style.transform = 'none';
-                icons[1].style.opacity = '1';
-                icons[2].style.transform = 'none';
-            }
+                const icon = question.querySelector('i');
+                if (item.classList.contains('active')) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
         });
 
-        document.addEventListener('click', function (event) {
-            if (!hamburgerMenu.contains(event.target) && !mobileMenu.contains(event.target)) {
-                mobileMenu.classList.remove('open');
-                const icons = document.querySelectorAll('.hamburger-icon');
-                icons[0].style.transform = 'none';
-                icons[1].style.opacity = '1';
-                icons[2].style.transform = 'none';
-            }
-        });
-
-        // Scroll suave para todos os links âncora
+        // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -812,6 +874,24 @@
                     behavior: 'smooth',
                     block: 'start'
                 });
+            });
+        });
+
+        // Animation on scroll
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.fade-in');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            fadeElements.forEach(el => {
+                el.style.opacity = 0;
+                observer.observe(el);
             });
         });
     </script>
