@@ -125,14 +125,18 @@ await colecao.updateOne(
 const agora = new Date();
 
 // Fuso horário de Brasília (UTC-3)
-const offsetBrasilia = 0;
+const offsetBrasilia = -3;
 
-// Calcula 00:00 de AMANHÃ no horário de Brasília
-const brasilMidnightTomorrow = new Date(Date.UTC(
-  agora.getUTCFullYear(),
-  agora.getUTCMonth(),
-  agora.getUTCDate(),
-  0 - offsetBrasilia,
+// ⚠️ Queremos 00:00 do dia SEGUINTE no HORÁRIO DE BRASÍLIA,
+// então precisamos calcular a data de amanhã em Brasília
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+
+// Criamos 00:00 do dia seguinte em Brasília
+const brasilMidnight = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1, // amanhã em Brasília
+  3,  // 00:00 BRT = 03:00 UTC
   0,
   0,
   0
@@ -141,12 +145,12 @@ const brasilMidnightTomorrow = new Date(Date.UTC(
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
-    expiresAt: brasilMidnightTomorrow, // usaremos esse campo como chave única do dia
+    expiresAt: brasilMidnight, // agora é 00:00 de amanhã em BRT (03:00 UTC)
   },
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: brasilMidnightTomorrow,
+      expiresAt: brasilMidnight,
     },
   },
   { upsert: true }
