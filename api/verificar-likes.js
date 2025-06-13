@@ -128,35 +128,36 @@ console.log("🕒 Agora (UTC):", agora.toISOString());
 // Fuso horário de Brasília (UTC-3)
 const offsetBrasilia = -3;
 
-// Converte para "agora em Brasília"
+// Converte agora para "agora em Brasília"
 const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
 console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
 
-// ✅ Corrigido: queremos 00:00 de HOJE em Brasília (que é 03:00 UTC do mesmo dia)
-const brasilMidnight = new Date(Date.UTC(
+// ✅ Queremos 00:00 de AMANHÃ em Brasília (03:00 UTC do dia seguinte)
+const brasilMidnightTomorrow = new Date(Date.UTC(
   brasilAgora.getUTCFullYear(),
   brasilAgora.getUTCMonth(),
-  brasilAgora.getUTCDate(), // sem +1
-  3,  // 00:00 BRT = 03:00 UTC
+  brasilAgora.getUTCDate() + 1, // AMANHÃ
+  3, // 00:00 BRT = 03:00 UTC
   0,
   0,
   0
 ));
-console.log("🕛 Meia-noite Brasília (UTC):", brasilMidnight.toISOString());
+console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
 
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
-    expiresAt: brasilMidnight,
+    expiresAt: brasilMidnightTomorrow,
   },
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: brasilMidnight,
+      expiresAt: brasilMidnightTomorrow,
     },
   },
   { upsert: true }
 );
+
 
 }
           // 11) Notifica smmsociais.com, se houver id_pedido
