@@ -121,31 +121,33 @@ await colecao.updateOne(
               { $inc: { saldo: valor } }
             );
 
-            // 9) Calcula meia-noite de amanhã em UTC (que equivale a 00:00 Brasília)
+// 9) Calcula meia-noite de amanhã em UTC (que equivale a 00:00 Brasília)
 const agora = new Date();
+console.log("🕒 Agora (UTC):", agora.toISOString());
 
 // Fuso horário de Brasília (UTC-3)
 const offsetBrasilia = -3;
 
-// ⚠️ Queremos 00:00 do dia SEGUINTE no HORÁRIO DE BRASÍLIA,
-// então precisamos calcular a data de amanhã em Brasília
+// Calcula a hora atual em Brasília
 const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
 
 // Criamos 00:00 do dia seguinte em Brasília
 const brasilMidnight = new Date(Date.UTC(
   brasilAgora.getUTCFullYear(),
   brasilAgora.getUTCMonth(),
   brasilAgora.getUTCDate() + 1, // amanhã em Brasília
-  0,  // 00:00 BRT = 03:00 UTC
+  3,  // 00:00 BRT = 03:00 UTC
   0,
   0,
   0
 ));
+console.log("🕛 Meia-noite Brasília (UTC):", brasilMidnight.toISOString());
 
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
-    expiresAt: brasilMidnight, // agora é 00:00 de amanhã em BRT (03:00 UTC)
+    expiresAt: brasilMidnight, // 00:00 do dia seguinte em Brasília, salvo em UTC
   },
   {
     $inc: { valor },
@@ -155,8 +157,7 @@ await DailyEarning.updateOne(
   },
   { upsert: true }
 );
-          }
-
+}
           // 11) Notifica smmsociais.com, se houver id_pedido
           if (valid.id_pedido) {
             try {
