@@ -582,11 +582,10 @@
             return username.startsWith('@') ? username.substring(1) : username;
         }
 
-async function addAccount() {
+ async function addAccount() {
     const inputField = document.getElementById('accountName');
     let accountName = inputField.value.trim();
     const messageBox = document.getElementById('messageBox');
-
     messageBox.style.display = 'none';
 
     if (!accountName) {
@@ -605,8 +604,8 @@ async function addAccount() {
     }
 
     try {
-        // 1) Chamar a rota /api/contas
-        const res1 = await fetch("https://ganhesocial.com/api/contas", {
+        // 🔔 Primeiro: API local (salvar a conta no seu próprio banco)
+        const localResponse = await fetch("/api/contas", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -617,27 +616,25 @@ async function addAccount() {
                 plataforma: "tiktok"
             })
         });
+        const localData = await localResponse.json();
+        if (!localResponse.ok) throw new Error(localData.error || "Erro ao salvar localmente");
 
-        const data1 = await res1.json();
-        if (!res1.ok) throw new Error(data1.error || "Erro ao adicionar conta localmente.");
-
-        // 2) Chamar a rota /api/adicionar-conta-externa
-        const res2 = await fetch("https://ganhesocial.com/api/adicionar-conta-externa", {
+        // 🔔 Segundo: API externa (enviar a conta para o site de terceiros)
+        const externalResponse = await fetch("https://ganhesocialcom-production.up.railway.app/api/adicionar-conta-externa", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
                 nomeConta: accountName,
-                token // se a API exigir o token no corpo, senão pode remover
+                token: token
             })
         });
+        const externalData = await externalResponse.json();
+        if (!externalResponse.ok) throw new Error(externalData.error || "Erro ao adicionar no site externo");
 
-        const data2 = await res2.json();
-        if (!res2.ok) throw new Error(data2.error || "Erro ao adicionar conta no site externo.");
-
-        showMessage(`Conta "${accountName}" adicionada com sucesso no sistema e no site externo!`);
+        // ✅ Se tudo deu certo
+        showMessage(`Conta "${accountName}" adicionada com sucesso localmente e no site externo!`);
         inputField.value = "";
 
     } catch (error) {
