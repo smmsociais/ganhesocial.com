@@ -612,7 +612,7 @@
         if (!res1.ok) throw new Error(data1.error);
 
         // ➕ Adiciona no site externo (Railway)
-        const res2 = await fetch("https://ganhesocialcom-production.up.railway.app/api/adicionar-conta-externa", {
+        const res2 = await fetch("https://ganhesocial.com/api/adicionar-conta-externa", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
