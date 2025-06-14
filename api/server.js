@@ -5,8 +5,12 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import dotenv from "dotenv";
+
 import buscarAcaoRouter from "./buscar_acao.js";
-import dotenv from 'dotenv';
+import adicionarContaExterna from "./adicionar-conta-externa.js"; // ✅ Importa sua nova rota
+import { User } from "./schema.js"; // ✅ Usa o schema centralizado
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +18,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-// Middleware para CORS
+// ✅ Middleware CORS bem configurado
 const allowedOrigins = ["https://ganhesocial.com", "https://api.ganhesocial.com"];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -24,45 +28,41 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type",
-  preflightContinue: false,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
-// Middleware para permitir o envio de dados JSON
-app.use(express.json()); // Substituindo body-parser
+// ✅ Middleware JSON
+app.use(express.json());
 
-// Servir arquivos estáticos da pasta 'frontend'
+// ✅ Servir arquivos estáticos da pasta frontend
 app.use(express.static(path.join(__dirname, "frontend")));
 
-// Rota para servir o index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
-// Conectar ao MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("🔥 Conectado ao MongoDB!"))
-  .catch((err) => console.error("Erro ao conectar:", err));
+// ✅ Conectar MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("🔥 Conectado ao MongoDB!"))
+.catch(err => console.error("❌ Erro ao conectar no MongoDB:", err));
 
-// Criar um modelo para usuários
-const UserSchema = new mongoose.Schema({
-  nome: String,
-  email: String,
-  senha: String,
-});
-const User = mongoose.model("User", UserSchema);
-
-// Rota para cadastro
+// ✅ Rota de cadastro simples (exemplo)
 app.post("/api/cadastrar", async (req, res) => {
   try {
-    console.log("📩 Recebendo dados:", req.body);
     const { nome, email, senha } = req.body;
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios!" });
+    }
+
+    const usuarioExistente = await User.findOne({ email });
+    if (usuarioExistente) {
+      return res.status(400).json({ error: "Usuário já cadastrado!" });
     }
 
     const novoUsuario = new User({ nome, email, senha });
@@ -70,13 +70,14 @@ app.post("/api/cadastrar", async (req, res) => {
 
     res.status(201).json({ message: "Usuário cadastrado com sucesso!" });
   } catch (error) {
-    console.error("❌ Erro ao cadastrar usuário:", error);
-    res.status(500).json({ error: error.message || "Erro ao cadastrar usuário" });
+    console.error("❌ Erro ao cadastrar:", error);
+    res.status(500).json({ error: "Erro interno" });
   }
 });
 
-// Usando o router corretamente
+// ✅ Importar suas rotas
 app.use("/api", buscarAcaoRouter);
+app.use("/api", adicionarContaExterna); // ✅ Nova rota externa adicionada
 
-// Exportando corretamente no ESM
+// ✅ Exportar app para usar no server.js ou Railway
 export default app;
