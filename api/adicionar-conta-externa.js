@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
-import { connectDB, User } from "./schema.js";
+import connectDB from './db.js';
+import User from "./schema.js";
 
 const router = express.Router();
 
