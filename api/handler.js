@@ -1363,5 +1363,31 @@ const novaAcao = new ActionHistory({
   }
 };
 
+// Rota: /api/proxy_bind_tk
+if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Método não permitido' });
+  }
+
+ const { nome_usuario } = req.query;
+
+  if (!nome_usuario) {
+    return res.status(400).json({ error: 'Parâmetro nome_usuario é obrigatório' });
+  }
+
+  try {
+    const url = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nome_usuario)}`;
+
+    const response = await fetch(url);
+    const data = await response.text(); // A API externa parece retornar texto plano
+
+    return res.status(200).json({ status: 'SUCESSO', resposta: data });
+
+  } catch (error) {
+    console.error('Erro ao consultar API externa:', error);
+    return res.status(500).json({ error: 'Erro ao consultar API externa' });
+  }
+};
+
     return res.status(404).json({ error: "Rota não encontrada." });
 }
