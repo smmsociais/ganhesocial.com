@@ -53,7 +53,6 @@
             border-left: 3px solid white;
         }
 
-        /* Header ajustado para mobile */
         .header {
             display: flex;
             justify-content: space-between;
@@ -61,60 +60,47 @@
             padding: 15px 20px;
             background-color: var(--container-light);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 4;
         }
 
         .left-header {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 30px;
         }
 
         .right-header {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
         .logo {
             height: 32px;
+            margin-right: 29px;
         }
 
         .container {
             background: var(--container-light);
-            padding: 15px;
-            border-radius: 0;
-            box-shadow: none;
-            width: 100%;
-            max-width: none;
-            margin: 0 auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1700px;
+            margin: 30px auto;
             transition: background 0.3s;
-        }
-
-        @media (min-width: 992px) {
-            .container {
-                border-radius: 10px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                width: 90%;
-                max-width: 1700px;
-                margin: 30px auto;
-                padding: 25px;
-            }
         }
 
         h2 {
             text-align: left;
             margin-bottom: 10px;
-            color: var(--text-light);
-            font-size: 1.2em;
+            color: rgb(233, 233, 233);
+            font-size: 1.0em;
         }
 
         .history-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 0.9em;
         }
 
@@ -175,18 +161,18 @@
 
         /* Container da tabela ajustado para mobile */
         .table-container {
-            max-height: calc(100vh - 200px);
+            max-height: 60vh;
             overflow-y: auto;
             border-radius: 8px;
             border: 1px solid #dee2e6;
-            margin-bottom: 15px;
-            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch; /* Melhora a rolagem no iOS */
         }
 
         /* Garante que a tabela não ultrapasse o container */
         .table-container table {
             width: 100%;
-            min-width: 600px;
+            min-width: 600px; /* Mínimo para não quebrar a tabela */
         }
 
         .pagination {
@@ -194,7 +180,7 @@
             justify-content: center;
             align-items: center;
             gap: 5px;
-            margin-top: 15px;
+            margin-top: 20px;
             flex-wrap: wrap;
         }
 
@@ -500,10 +486,9 @@
 
         @media (max-width: 768px) {
             .container {
-                width: 100%;
+                width: 95%;
                 padding: 15px;
-                margin: 0;
-                border-radius: 0;
+                margin: 15px auto;
             }
 
             .history-table {
@@ -526,12 +511,12 @@
 
             /* Ajustes específicos para mobile */
             .table-container {
-                max-height: calc(100vh - 180px);
+                max-height: 55vh;
                 overflow-x: auto;
             }
 
             .main-container {
-                padding-bottom: 15px;
+                padding-bottom: 20px;
             }
         }
 
@@ -617,6 +602,67 @@
                 transform: translateX(100%);
             }
         }
+
+/* Adicionar estas regras ao CSS existente */
+
+/* Header mobile */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--container-light);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 4;
+}
+
+.left-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    height: 32px;
+}
+
+/* Menu toggle */
+.menu-toggle {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.menu-toggle span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background-color: var(--text-light);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Ajustes para tema escuro */
+@media (prefers-color-scheme: dark) {
+    .header {
+        background-color: var(--container-dark);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .menu-toggle span {
+        background-color: var(--text-dark);
+    }
+}
+
+/* Esconder o header quando o menu está aberto */
+body.menu-open .header {
+    display: none;
+}
+        
     </style>
 </head>
 
@@ -649,21 +695,21 @@
     <!-- Overlay do Menu -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
-    <!-- Header para Mobile - Ajustado para ficar igual ao primeiro código -->
-    <div class="header desktop-header">
-        <div class="left-header">
-            <div class="menu-toggle" id="menuToggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <!-- Logo para mobile (no header) -->
-            <a href="dashboard" class="logo-mobile">
-                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
-                    alt="Logo GanheSocial" class="logo">
-            </a>
+<!-- Substituir o header atual por este: -->
+<div class="header">
+    <div class="left-header">
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
+        <!-- Logo para mobile (no header) -->
+        <a href="dashboard" class="logo-mobile">
+            <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                alt="Logo GanheSocial" class="logo">
+        </a>
     </div>
+</div>
 
     <!-- Conteúdo Principal -->
     <div class="main-container">
