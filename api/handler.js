@@ -812,91 +812,109 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 }
 }
 
-// Rota: /api/get_user (GET)
+// Rota: /api/tiktok/get_user (GET)
 if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
-    await connectDB();
-    const { token, nome_usuario } = req.query;
+  await connectDB();
+  let { token, nome_usuario } = req.query;
 
-    if (!token || !nome_usuario) {
-        return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
+  // Normaliza nome de usuário
+  if (!token || !nome_usuario) {
+    return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
+  }
+
+  nome_usuario = nome_usuario.trim().toLowerCase();
+
+  function generateFakeTikTokId() {
+    const prefix = "74";
+    const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
+    return prefix + randomDigits;
+  }
+
+  try {
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    function generateFakeTikTokId() {
-        const prefix = "74";
-        const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
-        return prefix + randomDigits;
+    // Verifica se a conta TikTok já está vinculada a outro usuário
+    const contaJaRegistrada = await User.findOne({
+      "contas.nomeConta": nome_usuario,
+      token: { $ne: token }
+    });
+
+    if (contaJaRegistrada) {
+      return res.status(200).json({
+        status: 'fail',
+        message: 'Essa conta TikTok já está vinculada a outro usuário.'
+      });
     }
 
-    try {
-        const usuario = await User.findOne({ token });
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado. Token inválido." });
-        }
+    // Consulta API externa
+    const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+    const bindResponse = await axios.get(bindTkUrl);
+    const bindData = bindResponse.data;
 
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
-        const bindResponse = await axios.get(bindTkUrl);
-        const bindData = bindResponse.data;
+    if (bindData.error === "TOKEN_INCORRETO") {
+      return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
+    }
 
-        if (bindData.error === "TOKEN_INCORRETO") {
-            return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
-        }
+    const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
 
-        const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
+    // Caso o usuário não seja encontrado na API externa
+    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
+      let fakeId;
 
-        // Caso o usuário não seja encontrado na API externa
-if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-    let fakeId;
-
-    if (contaIndex !== -1) {
-        // Se já existe um id_fake salvo, reutiliza ele
+      if (contaIndex !== -1) {
+        // Já existe, apenas atualiza
         fakeId = usuario.contas[contaIndex].id_fake || generateFakeTikTokId();
         usuario.contas[contaIndex].id_tiktok = null;
         usuario.contas[contaIndex].id_fake = fakeId;
         usuario.contas[contaIndex].status = "Pendente";
-    } else {
-        // Nova conta, gera novo id_fake
+      } else {
+        // Nova conta, adiciona
         fakeId = generateFakeTikTokId();
         usuario.contas.push({
-            nomeConta: nome_usuario,
-            id_tiktok: null,
-            id_fake: fakeId,
-            status: "Pendente"
+          nomeConta: nome_usuario,
+          id_tiktok: null,
+          id_fake: fakeId,
+          status: "Pendente"
         });
+      }
+
+      await usuario.save();
+      return res.status(200).json({
+        status: "success",
+        id_tiktok: fakeId
+      });
+    }
+
+    // Conta válida com ID retornado
+    const returnedId = bindData.id_tiktok || generateFakeTikTokId();
+    const isFake = !bindData.id_tiktok;
+
+    if (contaIndex !== -1) {
+      usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
+      usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
+      usuario.contas[contaIndex].status = "ativa";
+    } else {
+      usuario.contas.push({
+        nomeConta: nome_usuario,
+        id_tiktok: isFake ? null : returnedId,
+        id_fake: isFake ? returnedId : null,
+        status: "ativa"
+      });
     }
 
     await usuario.save();
     return res.status(200).json({
-        status: "success",
-        id_tiktok: fakeId
+      status: "success",
+      id_tiktok: returnedId
     });
-}
-        // Se veio um id_tiktok válido da API externa
-        const returnedId = bindData.id_tiktok || generateFakeTikTokId();
-        const isFake = !bindData.id_tiktok;
 
-        if (contaIndex !== -1) {
-            usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
-            usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
-            usuario.contas[contaIndex].status = "ativa";
-        } else {
-            usuario.contas.push({
-                nomeConta: nome_usuario,
-                id_tiktok: isFake ? null : returnedId,
-                id_fake: isFake ? returnedId : null,
-                status: "ativa"
-            });
-        }
-
-        await usuario.save();
-        return res.status(200).json({
-            status: "success",
-            id_tiktok: returnedId
-        });
-
-    } catch (error) {
-        console.error("Erro ao processar requisição:", error.response?.data || error.message);
-        return res.status(500).json({ error: "Erro interno ao processar requisição." });
-    }
+  } catch (error) {
+    console.error("Erro ao processar requisição:", error.response?.data || error.message);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  }
 }
 
 // Rota: /api/get_action (GET)
