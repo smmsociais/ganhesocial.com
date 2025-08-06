@@ -877,13 +877,13 @@ if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
         if (contaIndex !== -1) {
             usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
             usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
-            usuario.contas[contaIndex].status = "Ativa";
+            usuario.contas[contaIndex].status = "ativa";
         } else {
             usuario.contas.push({
                 nomeConta: nome_usuario,
                 id_tiktok: isFake ? null : returnedId,
                 id_fake: isFake ? returnedId : null,
-                status: "Ativa"
+                status: "ativa"
             });
         }
 
