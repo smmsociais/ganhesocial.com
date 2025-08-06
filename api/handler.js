@@ -44,7 +44,7 @@ const formatarValorRanking = (valor) => {
             return res.status(400).json({ error: "Nome de usuário é obrigatório." });
         }
 
-        const urlBind = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nomeUsuario}`;
+        const urlBind = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nomeUsuario}`;
 
         try {
 const { data } = await axios.get(urlBind);
@@ -70,7 +70,7 @@ if (url.startsWith("/api/buscar_acao") && method === "GET") {
         return res.status(400).json({ error: "ID da conta é obrigatório." });
     }
 
-    const urlAction = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
+    const urlAction = `https://api.ganharnoinsta.com/get_action.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_conta}&is_tiktok=1&tipo=1`;
 
     try {
         await connectDB();
@@ -833,7 +833,7 @@ if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
             return res.status(403).json({ error: "Acesso negado. Token inválido." });
         }
 
-        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
+        const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
         const bindResponse = await axios.get(bindTkUrl);
         const bindData = bindResponse.data;
 
@@ -1003,7 +1003,7 @@ if (tipo === "2") {
 // 🔁 Se não for tipo 2, continua buscando na API externa
 console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
 
-const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=afc012ec-a318-433d-b3c0-5bf07cd29430&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
+const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
 const response = await axios.get(apiURL);
 const data = response.data;
 
@@ -1158,7 +1158,7 @@ if (tipo_acao === 'curtir') {
 
       // 🔐 Confirmar ação via API externa
       const payload = {
-        token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+        token: "944c736c-6408-465d-9129-0b2f11ce0971",
         sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
         id_conta: id_tiktok,
         id_pedido: id_action,
