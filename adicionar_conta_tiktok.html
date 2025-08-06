@@ -565,125 +565,125 @@
         </div>
     </div>
 
-<script>
-    // Função para exibir mensagens na página
-    function showMessage(message, isError = false) {
-        const messageBox = document.getElementById('messageBox');
-        messageBox.textContent = message;
-        messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
-        messageBox.style.display = 'block';
-        messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Função para formatar o nome de usuário (remover @ se existir)
-    function formatUsername(username) {
-        return username.startsWith('@') ? username.substring(1) : username;
-    }
-
-    async function addAccount() {
-        const inputField = document.getElementById('accountName');
-        let accountName = inputField.value.trim();
-        const messageBox = document.getElementById('messageBox');
-
-        messageBox.style.display = 'none';
-
-        if (!accountName) {
-            showMessage("Por favor, insira o nome de usuário do TikTok.", true);
-            inputField.value = "";
-            return;
+    <script>
+        // Função para exibir mensagens na página
+        function showMessage(message, isError = false) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = isError ? 'message-box error-message' : 'message-box success-message';
+            messageBox.style.display = 'block';
+            messageBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        accountName = formatUsername(accountName);
-
-        const token = localStorage.getItem("token");
-        if (!token) {
-            showMessage("Você precisa estar logado para adicionar uma conta.", true);
-            window.location.href = "/login";
-            return;
+        // Função para formatar o nome de usuário (remover @ se existir)
+        function formatUsername(username) {
+            return username.startsWith('@') ? username.substring(1) : username;
         }
 
-        try {
-            const response = await fetch("https://ganhesocial.com/api/contas", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    nomeConta: accountName,
-                    plataforma: "tiktok"
-                })
-            });
+        async function addAccount() {
+            const inputField = document.getElementById('accountName');
+            let accountName = inputField.value.trim();
+            const messageBox = document.getElementById('messageBox');
 
-            const data = await response.json();
+            messageBox.style.display = 'none';
 
-            if (!response.ok) {
-                throw new Error(data?.error || "Erro ao adicionar conta");
+            if (!accountName) {
+                showMessage("Por favor, insira o nome de usuário do TikTok.", true);
+                inputField.value = "";
+                return;
             }
 
-            showMessage(`Conta "${accountName}" adicionada com sucesso!`);
-            inputField.value = "";
+            accountName = formatUsername(accountName);
 
-            // 🔄 Chamada à API externa após sucesso
+            const token = localStorage.getItem("token");
+            if (!token) {
+                showMessage("Você precisa estar logado para adicionar uma conta.", true);
+                window.location.href = "/login";
+                return;
+            }
+
             try {
-                const bindResponse = await fetch(`http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(accountName)}`);
-                const bindText = await bindResponse.text();
-                console.log("Resposta da API externa:", bindText);
-            } catch (bindError) {
-                console.warn("Erro ao notificar API externa:", bindError);
+                const response = await fetch("https://ganhesocial.com/api/contas", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        nomeConta: accountName,
+                        plataforma: "tiktok"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data?.error || "Erro ao adicionar conta");
+                }
+
+                showMessage(`Conta "${accountName}" adicionada com sucesso!`);
+                inputField.value = "";
+
+                // 🔄 Chamada à API externa após sucesso
+                try {
+                    const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
+                    const bindText = await bindResponse.text();
+                    console.log("Resposta da API externa:", bindText);
+                } catch (bindError) {
+                    console.warn("Erro ao notificar API externa:", bindError);
+                }
+
+            } catch (error) {
+                showMessage(error.message, true);
+                inputField.value = "";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "https://ganhesocial.com";
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("token");
+
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
+
+            function toggleMenu() {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
             }
 
-        } catch (error) {
-            showMessage(error.message, true);
-            inputField.value = "";
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem("token");
-        window.location.href = "https://ganhesocial.com";
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const token = localStorage.getItem("token");
-
-        const menuToggle = document.getElementById('menuToggle');
-        const menuOverlay = document.getElementById('menuOverlay');
-        const menuContent = document.getElementById('menuContent');
-        const menuCloseBtn = document.getElementById('menuCloseBtn');
-
-        function toggleMenu() {
-            menuContent.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
-
-            const spans = menuToggle.querySelectorAll('span');
-            if (menuContent.classList.contains('active')) {
-                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-            } else {
+            function closeMenu() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             }
-        }
 
-        function closeMenu() {
-            menuContent.classList.remove('active');
-            menuOverlay.classList.remove('active');
-            const spans = menuToggle.querySelectorAll('span');
-            spans[0].style.transform = 'none';
-            spans[1].style.opacity = '1';
-            spans[2].style.transform = 'none';
-        }
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
 
-        menuToggle.addEventListener('click', toggleMenu);
-        menuCloseBtn.addEventListener('click', closeMenu);
-        menuOverlay.addEventListener('click', closeMenu);
-
-        document.body.classList.add('loaded');
-    });
-</script>
+            document.body.classList.add('loaded');
+        });
+    </script>
 </body>
 
 </html>
