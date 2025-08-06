@@ -703,61 +703,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Conteúdo Principal -->
-    <div class="main-container">
-        <div class="container fade-in">
-            <div class="container-header">
-                <h2 id="pageTitle"><i class="fas fa-history"></i> Histórico de Ações</h2>
-            </div>
-            <div class="container-body">
-                <!-- Container da tabela com scroll -->
-                <div class="table-container">
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Rede Social</th>
-                                <th>Usuário</th>
-                                <th>Tipo</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyList">
-                            <!-- Loading State -->
-                            <tr id="loading-row">
-                                <td colspan="6">
-                                    <div class="skeleton skeleton-text" style="width: 80%"></div>
-                                    <div class="skeleton skeleton-text" style="width: 60%"></div>
-                                    <div class="skeleton skeleton-text" style="width: 70%"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div id="no-actions" class="empty-state" style="display: none;">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <h3 class="empty-state-title">Nenhuma ação realizada ainda</h3>
-                    <p class="empty-state-description">Quando você realizar ações, elas aparecerão aqui.</p>
-                    <a href="realizar_acoes" class="btn-primary">
-                        <i class="fas fa-tasks"></i> Realizar Ações
-                    </a>
-                </div>
-            </div>
-            
-            <div class="pagination-info" id="paginationInfo">
-                <i class="fas fa-spinner fa-spin"></i> Carregando...
-            </div>
-            <div class="pagination" id="pagination">
-                <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
-            </div>
-        </div>
-    </div>
-
+    
     <script>
         function logout() {
             localStorage.removeItem("token");
