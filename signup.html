@@ -181,9 +181,17 @@
         /* Estilo para centralizar o reCAPTCHA */
         .g-recaptcha {
             display: flex;
+            justify-content: center;
             margin: 15px 0;
             transform: scale(0.85);
+            transform-origin: center;
         }
+
+.recaptcha-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
 
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
@@ -332,26 +340,27 @@
         <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo-signup">
         <h1 class="signup-title">Crie sua conta</h1>
 
-        <form id="cadastroForm">
-            <div class="input-group">
-                <label for="email">E-mail</label>
-                <input type="email" id="email" placeholder="Digite seu e-mail" required>
-            </div>
+<form id="cadastroForm">
+    <div class="input-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="Digite seu e-mail" required>
+    </div>
 
-            <div class="input-group">
-                <label for="senha">Senha</label>
-                <input type="password" id="senha" placeholder="Crie uma senha" required>
-            </div>
+    <div class="input-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="Crie uma senha" required>
+    </div>
 
-            <div class="input-group">
-                <label for="confirmarSenha">Confirmar Senha</label>
-                <input type="password" id="confirmarSenha" placeholder="Confirme sua senha" required>
-            </div>
+    <div class="input-group">
+        <label for="confirmarSenha">Confirmar Senha</label>
+        <input type="password" id="confirmarSenha" placeholder="Confirme sua senha" required>
+    </div>
 
-            <p class="terms-text">Ao se cadastrar, você concorda com os nossos <a href="#">Termos de Uso</a> e <a
-                    href="#">Políticas de Privacidade</a>.</p>
+    <p class="terms-text">Ao se cadastrar, você concorda com os nossos <a href="#">Termos de Uso</a> e <a href="#">Políticas de Privacidade</a>.</p>
 
-            <div class="g-recaptcha" data-sitekey="6LevCZ4rAAAAAHmKfPDqa_iDnX45hmSOjrzfdHO4"></div>
+    <!-- reCAPTCHA centralizado -->
+    <div class="recaptcha-container">
+        <div class="g-recaptcha" data-sitekey="6LevCZ4rAAAAAHmKfPDqa_iDnX45hmSOjrzfdHO4"></div>
 
             <button type="submit" class="btn-signup" id="signupButton">
                 Cadastrar
