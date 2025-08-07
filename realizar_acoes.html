@@ -937,13 +937,14 @@ async function fetchAction() {
                 return false;
             }
 
-            await tentarBuscarSMM();
+            await tentarBuscarSMM(); // Chama de fato
 
 async function tentarBuscarLocal() {
     try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
 
         if (!response.ok) {
+            // Evita que apareça o erro 404 no console
             return false;
         }
 
@@ -961,10 +962,12 @@ async function tentarBuscarLocal() {
         }
 
     } catch (e) {
-        console.error("Erro ao buscar ação:", e);
+        // Você pode logar aqui se quiser
+        // console.error("Erro ao buscar ação:", e);
     }
     return false;
 }
+
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
