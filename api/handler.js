@@ -557,37 +557,49 @@ if (url.startsWith("/api/login")) {
 
 // Rota: /api/signup
 if (url.startsWith("/api/signup")) {
-        if (req.method !== "POST") {
-            return res.status(405).json({ error: "Método não permitido." });
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
+    }
+
+    await connectDB();
+
+    const { email, senha, recaptchaToken } = req.body;
+
+    if (!email || !senha || !recaptchaToken) {
+        return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+    }
+
+    try {
+        // ✅ Verificar reCAPTCHA
+        const recaptchaSecret = process.env.RECAPTCHA_SECRET; // certifique-se de definir isso no ambiente
+        const { data } = await axios.post(`https://www.google.com/recaptcha/api/siteverify`, null, {
+            params: {
+                secret: recaptchaSecret,
+                response: recaptchaToken,
+            },
+        });
+
+        if (!data.success || data.score < 0.5) {
+            return res.status(400).json({ error: "Falha na verificação do reCAPTCHA." });
         }
-    
-        await connectDB();
-    
-        const { email, senha } = req.body;
-    
-        if (!email || !senha) {
-            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+
+        const emailExiste = await User.findOne({ email });
+        if (emailExiste) {
+            return res.status(400).json({ error: "E-mail já está cadastrado." });
         }
-    
-        try {
-    
-            const emailExiste = await User.findOne({ email });
-            if (emailExiste) {
-                return res.status(400).json({ error: "E-mail já está cadastrado." });
-            }
-    
-            // Gerar token único
-            const token = crypto.randomBytes(32).toString("hex");
-    
-            const novoUsuario = new User({ email, senha, token });
-            await novoUsuario.save();
-    
-            return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
-        } catch (error) {
-            console.error("Erro ao cadastrar usuário:", error);
-            return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
-        }
-    };
+
+        // Gerar token único
+        const token = crypto.randomBytes(32).toString("hex");
+
+        const novoUsuario = new User({ email, senha, token });
+        await novoUsuario.save();
+
+        return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
+    } catch (error) {
+        console.error("Erro ao cadastrar usuário:", error);
+        return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
+    }
+}
 
 // Rota: /api/change-password
 if (url.startsWith("/api/change-password")) {
