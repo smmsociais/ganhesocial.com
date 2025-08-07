@@ -841,7 +841,6 @@
                         localStorage.setItem("id_conta", "fallback_" + selectedAccount);
                         localStorage.setItem("conta_invalida", "true");
                     } else {
-                        document.getElementById("statusMessage").textContent = "Erro ao vincular conta.";
                         return;
                     }
                 }
@@ -851,8 +850,6 @@
                 ativarSelecaoTipoAcao();
 
             } catch (error) {
-                console.error("Erro na requisição:", error);
-                document.getElementById("statusMessage").textContent = "Erro na requisição.";
             }
         }
 
@@ -937,10 +934,8 @@ async function fetchAction() {
                         await processarAcao(data, "smm");
                         return true;
                     } else {
-                        console.log("Nenhuma ação SMM encontrada.");
                     }
                 } catch (e) {
-                    console.error("Erro ao buscar ação SMM:", e);
                 }
                 return false;
             }
@@ -1010,7 +1005,6 @@ async function fetchAction() {
                             profileImg.src = "";
                         }
                     } catch (e) {
-                        console.error("Erro ao carregar avatar:", e);
                         profileImg.style.display = "none";
                         profileImg.src = "";
                     }
@@ -1062,8 +1056,6 @@ async function fetchAction() {
                 }
 
             } catch (error) {
-                console.error("Erro ao buscar ações:", error);
-                document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
             }
 
 // Função para exibir a contagem regressiva animada com círculo de carregamento
@@ -1217,9 +1209,6 @@ async function confirmAction() {
                     })
                 });
 
-                const data = await response.json();
-                console.log("Resposta ao pular ação:", data);
-
                 // Buscar próxima ação
                 fetchAction();
             } catch (error) {
@@ -1287,11 +1276,8 @@ async function confirmAction() {
             try {
                 // Validação básica
                 if (!acao.nome_usuario || !acao.id_pedido || !acao.id_conta || !acao.url_dir || !acao.tipo_acao) {
-                    console.error("🚨 Dados ausentes ou inválidos na ação:", acao);
                     return;
                 }
-
-                console.log("📤 Enviando ação pendente:", acao);
 
                 const response = await fetch("/api/registrar_acao_pendente", {
                     method: "POST",
@@ -1302,16 +1288,11 @@ async function confirmAction() {
                     body: JSON.stringify(acao)
                 });
 
-                const data = await response.json();
-                console.log("📥 Resposta da API registrar_acao_pendente:", data);
-
                 if (data.status !== "success") {
-                    console.warn("⚠️ Resposta com status diferente de 'success'", data);
                     throw new Error("Falha ao registrar ação pendente.");
                 }
 
             } catch (error) {
-                console.error("❌ Erro ao registrar ação pendente:", error);
             }
         }
 
