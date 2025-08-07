@@ -344,8 +344,10 @@
             <p class="terms-text">Ao se cadastrar, você concorda com os nossos <a href="#">Termos de Uso</a> e <a
                     href="#">Políticas de Privacidade</a>.</p>
 
+            <div class="g-recaptcha" data-sitekey="6LevCZ4rAAAAAHmKfPDqa_iDnX45hmSOjrzfdHO4"></div>
+
             <button type="submit" class="btn-signup" id="signupButton">
-                </i> Cadastrar
+                Cadastrar
             </button>
         </form>
 
@@ -355,88 +357,94 @@
 
         <p id="statusMessage" class="status-message"></p>
     </div>
-
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            document.body.classList.add('loaded')
+            document.body.classList.add('loaded');
 
             const token = localStorage.getItem("token");
             if (token) {
                 window.location.href = "/dashboard";
             }
-        });
 
-        document.getElementById("cadastroForm").addEventListener("submit", async function (event) {
-            event.preventDefault();
+            document.getElementById("cadastroForm").addEventListener("submit", async function (event) {
+                event.preventDefault();
 
-            const email = document.getElementById("email").value.trim();
-            const senha = document.getElementById("senha").value.trim();
-            const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
-            const statusMessage = document.getElementById("statusMessage");
-            const signupButton = document.getElementById("signupButton");
+                const email = document.getElementById("email").value.trim();
+                const senha = document.getElementById("senha").value.trim();
+                const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
+                const statusMessage = document.getElementById("statusMessage");
+                const signupButton = document.getElementById("signupButton");
 
-            // Reset status message
-            statusMessage.textContent = "";
-            statusMessage.className = "status-message";
+                // Reset status message
+                statusMessage.textContent = "";
+                statusMessage.className = "status-message";
 
-            // Validações
-            if (!email || !senha || !confirmarSenha) {
-                statusMessage.textContent = "Preencha todos os campos!";
-                statusMessage.classList.add("error-message");
-                return;
-            }
-
-            if (!/^\S+@\S+\.\S+$/.test(email)) {
-                statusMessage.textContent = "Por favor, insira um e-mail válido!";
-                statusMessage.classList.add("error-message");
-                return;
-            }
-
-            if (senha !== confirmarSenha) {
-                statusMessage.textContent = "As senhas não coincidem!";
-                statusMessage.classList.add("error-message");
-                return;
-            }
-
-            if (senha.length < 6) {
-                statusMessage.textContent = "A senha deve ter pelo menos 6 caracteres!";
-                statusMessage.classList.add("error-message");
-                return;
-            }
-
-            try {
-                // Show loading state
-                signupButton.classList.add("loading");
-                signupButton.disabled = true;
-
-                const response = await fetch("https://ganhesocial.com/api/signup", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, senha })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    statusMessage.textContent = "Cadastro realizado com sucesso! Redirecionando...";
-                    statusMessage.classList.add("success-message");
-
-                    localStorage.setItem("token", data.token);
-                    setTimeout(() => {
-                        window.location.href = "/dashboard";
-                    }, 1500);
-                } else {
-                    statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
+                // Validações
+                if (!email || !senha || !confirmarSenha) {
+                    statusMessage.textContent = "Preencha todos os campos!";
                     statusMessage.classList.add("error-message");
+                    return;
                 }
-            } catch (error) {
-                console.error("Cadastro error:", error);
-                statusMessage.textContent = "Erro ao conectar-se ao servidor.";
-                statusMessage.classList.add("error-message");
-            } finally {
-                signupButton.classList.remove("loading");
-                signupButton.disabled = false;
-            }
+
+                if (!/^\S+@\S+\.\S+$/.test(email)) {
+                    statusMessage.textContent = "Por favor, insira um e-mail válido!";
+                    statusMessage.classList.add("error-message");
+                    return;
+                }
+
+                if (senha !== confirmarSenha) {
+                    statusMessage.textContent = "As senhas não coincidem!";
+                    statusMessage.classList.add("error-message");
+                    return;
+                }
+
+                if (senha.length < 6) {
+                    statusMessage.textContent = "A senha deve ter pelo menos 6 caracteres!";
+                    statusMessage.classList.add("error-message");
+                    return;
+                }
+
+                // ✅ Captura o token do reCAPTCHA
+                const recaptchaToken = grecaptcha.getResponse();
+                if (!recaptchaToken) {
+                    statusMessage.textContent = "Por favor, verifique o reCAPTCHA!";
+                    statusMessage.classList.add("error-message");
+                    return;
+                }
+
+                try {
+                    signupButton.classList.add("loading");
+                    signupButton.disabled = true;
+
+                    const response = await fetch("https://ganhesocial.com/api/signup", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, senha, recaptchaToken })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        statusMessage.textContent = "Cadastro realizado com sucesso! Redirecionando...";
+                        statusMessage.classList.add("success-message");
+                        localStorage.setItem("token", data.token);
+                        setTimeout(() => {
+                            window.location.href = "/dashboard";
+                        }, 1500);
+                    } else {
+                        statusMessage.textContent = data.error || "Erro ao cadastrar usuário.";
+                        statusMessage.classList.add("error-message");
+                    }
+                } catch (error) {
+                    console.error("Cadastro error:", error);
+                    statusMessage.textContent = "Erro ao conectar-se ao servidor.";
+                    statusMessage.classList.add("error-message");
+                } finally {
+                    signupButton.classList.remove("loading");
+                    signupButton.disabled = false;
+                }
+            });
         });
     </script>
 </body>
