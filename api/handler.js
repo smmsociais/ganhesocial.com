@@ -97,7 +97,7 @@ if (url.startsWith("/api/buscar_acao") && method === "GET") {
                 unique_id: data.unique_id || null
             });
         } else {
-            return res.status(404).json({ error: "Nenhuma ação encontrada." });
+            return res.status(200).json({ error: "Nenhuma ação encontrada." });
         }
     } catch (error) {
         console.error("Erro ao buscar ação:", error);
@@ -129,7 +129,7 @@ if (url.startsWith("/api/confirmar_acao") && method === "POST") {
         });
 
         if (confirmResponse.data.status !== "success") {
-            return res.status(200).json({ error: "Erro ao confirmar ação.", detalhes: confirmResponse.data });
+            return res.status(400).json({ error: "Erro ao confirmar ação.", detalhes: confirmResponse.data });
         }
 
         return res.status(200).json({
