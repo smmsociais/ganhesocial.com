@@ -937,27 +937,34 @@ async function fetchAction() {
                 return false;
             }
 
-            await tentarBuscarSMM(); // Chama de fato
+            await tentarBuscarSMM();
 
-            async function tentarBuscarLocal() {
-                try {
-                    const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-                    const data = await response.json();
-                    if (data.status === "ENCONTRADA") {
-                        document.getElementById("warningMessage").style.display = "none";
-                        if (parseFloat(data.quantidade_pontos) === 4) {
-                            return "ignorarLocalERepetirSMM";
-                        }
-                        await processarAcao(data, "local");
-                        return true;
-                    } else if (data.error === "Nenhuma ação encontrada.") {
-                        return "repetirSMM";
-                    }
-                } catch (e) {
-                }
-                return false;
+async function tentarBuscarLocal() {
+    try {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const data = await response.json();
+
+        if (data.status === "ENCONTRADA") {
+            document.getElementById("warningMessage").style.display = "none";
+            if (parseFloat(data.quantidade_pontos) === 4) {
+                return "ignorarLocalERepetirSMM";
             }
+            await processarAcao(data, "local");
+            return true;
+        } else if (data.error === "Nenhuma ação encontrada.") {
+            return "repetirSMM";
+        }
 
+    } catch (e) {
+        console.error("Erro ao buscar ação:", e);
+    }
+    return false;
+}
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
