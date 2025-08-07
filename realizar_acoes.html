@@ -450,6 +450,22 @@
             background-color: rgba(220, 53, 69, 0.1);
         }
 
+.loading-circle {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}        
+
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
@@ -1034,25 +1050,33 @@
                 document.getElementById("statusMessage").textContent = "Erro ao buscar ações.";
             }
 
-            // Função para exibir a contagem regressiva animada
-            function exibirContagemRegressiva() {
-                let contador = 3;
-                const statusElement = document.getElementById("statusMessage");
+// Função para exibir a contagem regressiva animada com círculo de carregamento
+function exibirContagemRegressiva() {
+    let contador = 3;
+    const statusElement = document.getElementById("statusMessage");
+    
+    // Atualiza o HTML com o círculo de carregamento e texto
+    statusElement.innerHTML = `
+        <div class="loading-circle"></div>
+        <span>Nenhuma ação disponível no momento. Tentando novamente em ${contador}...</span>
+    `;
+    
+    const statusText = statusElement.querySelector("span");
 
-                // Função que atualiza a mensagem a cada segundo
-                function atualizarMensagem() {
-                    if (contador > 0) {
-                        statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-                        contador--;
-                        setTimeout(atualizarMensagem, 1000);
-                    } else {
-                        fetchAction();
-                    }
-                }
+    // Função que atualiza a mensagem a cada segundo
+    function atualizarMensagem() {
+        if (contador > 0) {
+            statusText.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+            contador--;
+            setTimeout(atualizarMensagem, 1000);
+        } else {
+            fetchAction();
+        }
+    }
 
-                // Inicia a contagem
-                atualizarMensagem();
-            }
+    // Inicia a contagem
+    atualizarMensagem();
+}
         }
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
