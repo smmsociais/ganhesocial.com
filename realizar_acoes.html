@@ -764,8 +764,6 @@
 
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
-
-
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
@@ -817,8 +815,6 @@
                 return;
             }
 
-            console.log("Conta selecionada para vincular:", selectedAccount);
-
             try {
                 const response = await fetch("/api/vincular_conta", {
                     method: 'POST',
@@ -828,9 +824,6 @@
                     },
                     body: JSON.stringify({ nomeUsuario: selectedAccount })
                 });
-
-                const data = await response.json();
-                console.log("Resposta da API /vincular_conta:", data);
 
                 if (data.id_conta) {
                     localStorage.setItem("id_conta", data.id_conta);
@@ -945,7 +938,6 @@ async function fetchAction() {
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-                    const data = await response.json();
                     if (data.status === "ENCONTRADA") {
                         document.getElementById("warningMessage").style.display = "none";
                         if (parseFloat(data.quantidade_pontos) === 4) {
@@ -957,7 +949,6 @@ async function fetchAction() {
                         return "repetirSMM";
                     }
                 } catch (e) {
-                    console.error("Erro ao buscar ação local:", e);
                 }
                 return false;
             }
