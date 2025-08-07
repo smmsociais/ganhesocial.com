@@ -1171,9 +1171,23 @@ async function confirmAction() {
         }
 
         async function skipAction() {
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-            document.getElementById("skipButton").style.display = "none";
-            document.getElementById("actionContent").style.opacity = "0";
+    const statusElement = document.getElementById("statusMessage");
+    const actionContent = document.getElementById("actionContent");
+    const confirmButton = document.getElementById("confirmButton");
+    const profileImage = document.getElementById("profileImage");
+
+        // Mostra o carregamento
+    statusElement.innerHTML = `
+        <div class="loading-message">Buscando ações, aguarde...</div>
+        <div class="loading-circle-container">
+            <div class="loading-circle"></div>
+        </div>
+    `;
+
+    // Oculta elementos visuais da ação atual
+    actionContent.style.opacity = "0";
+    confirmButton.style.display = "none";
+    profileImage.style.display = "none";
 
             try {
                 const tipo = document.getElementById("actionType").value;
