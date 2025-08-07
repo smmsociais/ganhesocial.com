@@ -181,11 +181,8 @@
         /* Estilo para centralizar o reCAPTCHA */
         .g-recaptcha {
             display: flex;
-            justify-content: center;
             margin: 15px 0;
             transform: scale(0.85);
-            /* Opcional: ajusta o tamanho se necessário */
-            transform-origin: center;
         }
 
         /* Dark Mode Styles */
@@ -369,23 +366,7 @@
     </div>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Observa mudanças no DOM para detectar quando o iframe do recaptcha aparece
-    const observer = new MutationObserver(function(mutations) {
-        const recaptchaPopup = document.querySelector('.grecaptcha-badge iframe');
-        if (recaptchaPopup) {
-            // Centraliza o popup
-            recaptchaPopup.style.left = '50%';
-            recaptchaPopup.style.transform = 'translateX(-50%)';
-            recaptchaPopup.style.right = 'auto';
-        }
-    });
-
-    // Começa a observar o documento
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+        document.addEventListener("DOMContentLoaded", function () {
             document.body.classList.add('loaded');
 
             const token = localStorage.getItem("token");
