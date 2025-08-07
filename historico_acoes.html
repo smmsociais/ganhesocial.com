@@ -514,6 +514,7 @@
 <body>
     <!-- Menu Lateral para Desktop -->
     <div class="menu-content" id="menuContent">
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
@@ -590,11 +591,14 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("token");
+            const urlParams = new URLSearchParams(window.location.search);
+            const nomeUsuario = urlParams.get('usuario');
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
             menuToggle.addEventListener('click', function () {
                 menuContent.classList.toggle('active');
@@ -620,6 +624,18 @@
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             });
+
+            function closeMenu() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }
+
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
 
             // Configurações de paginação
             const itemsPerPage = 100;
@@ -774,4 +790,3 @@
 </body>
 
 </html>
-
