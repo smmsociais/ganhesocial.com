@@ -129,7 +129,7 @@ if (url.startsWith("/api/confirmar_acao") && method === "POST") {
         });
 
         if (confirmResponse.data.status !== "success") {
-            return res.status(400).json({ error: "Erro ao confirmar ação.", detalhes: confirmResponse.data });
+            return res.status(200).json({ error: "Erro ao confirmar ação.", detalhes: confirmResponse.data });
         }
 
         return res.status(200).json({
