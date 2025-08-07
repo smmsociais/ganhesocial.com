@@ -764,6 +764,8 @@
 
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
+
+
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
@@ -824,6 +826,8 @@
                     },
                     body: JSON.stringify({ nomeUsuario: selectedAccount })
                 });
+
+                const data = await response.json();
 
                 if (data.id_conta) {
                     localStorage.setItem("id_conta", data.id_conta);
@@ -938,6 +942,7 @@ async function fetchAction() {
             async function tentarBuscarLocal() {
                 try {
                     const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
+                    const data = await response.json();
                     if (data.status === "ENCONTRADA") {
                         document.getElementById("warningMessage").style.display = "none";
                         if (parseFloat(data.quantidade_pontos) === 4) {
