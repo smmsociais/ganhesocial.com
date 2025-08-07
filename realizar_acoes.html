@@ -1100,23 +1100,27 @@ function exibirContagemRegressiva() {
             document.getElementById("confirmButton").style.display = "block";
         }
 
-        async function confirmAction() {
-            const selectedAccount = document.getElementById("accountSelect").value;
-            if (!selectedAccount || !currentActionData) return;
+async function confirmAction() {
+    const selectedAccount = document.getElementById("accountSelect").value;
+    if (!selectedAccount || !currentActionData) return;
 
-    // Atualizado para mostrar o círculo de carregamento
     const statusElement = document.getElementById("statusMessage");
+    const actionContent = document.getElementById("actionContent");
+    const confirmButton = document.getElementById("confirmButton");
+    const profileImage = document.getElementById("profileImage");
+
+    // Mostra o carregamento
     statusElement.innerHTML = `
         <div class="loading-message">Buscando ações, aguarde...</div>
         <div class="loading-circle-container">
             <div class="loading-circle"></div>
         </div>
     `;
-    
-    document.getElementById("actionContent").style.opacity = "0";
-            document.getElementById("actionContent").style.opacity = "0";
-            document.getElementById("confirmButton").style.display = "none";
-            document.getElementById("profileImage").style.display = "none";
+
+    // Oculta elementos visuais da ação atual
+    actionContent.style.opacity = "0";
+    confirmButton.style.display = "none";
+    profileImage.style.display = "none";
 
             let confirmData;
             try {
