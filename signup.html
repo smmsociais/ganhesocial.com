@@ -161,6 +161,23 @@
             display: block;
         }
 
+        .terms-text {
+            margin: 15px 0;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .terms-text a {
+            color: var(--button-light);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .terms-text a:hover {
+            text-decoration: underline;
+        }
+
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
@@ -209,6 +226,14 @@
             .success-message {
                 background-color: rgba(52, 168, 83, 0.1);
                 color: var(--success-dark);
+            }
+
+            .terms-text {
+                color: var(--text-dark);
+            }
+
+            .terms-text a {
+                color: var(--button-dark);
             }
         }
 
@@ -315,6 +340,9 @@
                 <label for="confirmarSenha">Confirmar Senha</label>
                 <input type="password" id="confirmarSenha" placeholder="Confirme sua senha" required>
             </div>
+
+            <p class="terms-text">Ao se cadastrar, você concorda com os nossos <a href="#">Termos de Uso</a> e <a
+                    href="#">Políticas de Privacidade</a>.</p>
 
             <button type="submit" class="btn-signup" id="signupButton">
                 </i> Cadastrar
