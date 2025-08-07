@@ -117,7 +117,7 @@ if (url.startsWith("/api/confirmar_acao") && method === "POST") {
         const confirmUrl = "https://api.ganharnoinsta.com/confirm_action.php";
 
         const payload = {
-            token: "afc012ec-a318-433d-b3c0-5bf07cd29430",
+            token: "944c736c-6408-465d-9129-0b2f11ce0971",
             sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
             id_conta,
             id_pedido,
