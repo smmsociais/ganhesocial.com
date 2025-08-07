@@ -450,22 +450,30 @@
             background-color: rgba(220, 53, 69, 0.1);
         }
 
+.loading-message {
+    margin-bottom: 15px; /* Espaço entre a mensagem e o círculo */
+    text-align: center;
+}
+
+.loading-circle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .loading-circle {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(0,0,0,0.3);
+    width: 40px; /* Tamanho maior */
+    height: 40px; /* Tamanho maior */
+    border: 4px solid rgba(255, 255, 255, 0.3); /* Branco com transparência */
     border-radius: 50%;
-    border-top-color: #000;
+    border-top-color: #ffffff; /* Branco sólido */
     animation: spin 1s linear infinite;
-    margin-right: 8px;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}        
-
+}
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
             body {
@@ -1055,18 +1063,20 @@ function exibirContagemRegressiva() {
     let contador = 3;
     const statusElement = document.getElementById("statusMessage");
     
-    // Atualiza o HTML com o círculo de carregamento e texto
+    // Atualiza o HTML com a mensagem acima e o círculo abaixo
     statusElement.innerHTML = `
-        <div class="loading-circle"></div>
-        <span>Nenhuma ação disponível no momento. Tentando novamente em ${contador}...</span>
+        <div class="loading-message">Nenhuma ação disponível no momento. Tentando novamente em ${contador}...</div>
+        <div class="loading-circle-container">
+            <div class="loading-circle"></div>
+        </div>
     `;
     
-    const statusText = statusElement.querySelector("span");
+    const loadingMessage = statusElement.querySelector(".loading-message");
 
     // Função que atualiza a mensagem a cada segundo
     function atualizarMensagem() {
         if (contador > 0) {
-            statusText.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+            loadingMessage.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
             contador--;
             setTimeout(atualizarMensagem, 1000);
         } else {
