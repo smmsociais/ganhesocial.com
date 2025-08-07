@@ -1104,8 +1104,16 @@ function exibirContagemRegressiva() {
             const selectedAccount = document.getElementById("accountSelect").value;
             if (!selectedAccount || !currentActionData) return;
 
-            // Esconde o conteúdo da ação enquanto processa a confirmação
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
+    // Atualizado para mostrar o círculo de carregamento
+    const statusElement = document.getElementById("statusMessage");
+    statusElement.innerHTML = `
+        <div class="loading-message">Buscando ações, aguarde...</div>
+        <div class="loading-circle-container">
+            <div class="loading-circle"></div>
+        </div>
+    `;
+    
+    document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("actionContent").style.opacity = "0";
             document.getElementById("confirmButton").style.display = "none";
             document.getElementById("profileImage").style.display = "none";
