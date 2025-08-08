@@ -904,32 +904,39 @@ function ativarSelecaoTipoAcao() {
 
 async function fetchAction() {
     console.trace("📡 fetchAction chamado");
+
+    if (fetchEmAndamento) {
+        console.log("⏳ fetchAction ignorado — já em andamento");
+        return;
+    }
+    fetchEmAndamento = true;
+
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
-    const contaInvalida = localStorage.getItem("conta_invalida") === "true";
-
     const statusElement = document.getElementById("statusMessage");
 
-    // Bloqueia se conta ou tipo de ação não estiverem definidos
-    if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+    if (!id_conta || !token || id_conta === "null" || !actionType) {
         statusElement.textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
         document.getElementById("actionContent").style.opacity = "1";
+        fetchEmAndamento = false;
         return;
     }
 
-    // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-        statusElement.textContent = "Tipo de ação inválido.";
+        statusElement.textContent = "Tipo de ação inválida.";
+        fetchEmAndamento = false;
         return;
     }
 
-    if (document.getElementById("actionType").disabled) return;
+    if (document.getElementById("actionType").disabled) {
+        fetchEmAndamento = false;
+        return;
+    }
 
     document.getElementById("warningMessage").style.display = "none";
 
-    // ✅ Só mostra "Buscando ações..." se NÃO estiver em contagem regressiva
     if (!statusElement.dataset.contagem) {
         statusElement.innerHTML = `
             <div class="loading-message">Buscando ações, aguarde...</div>
