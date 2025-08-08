@@ -908,7 +908,6 @@ function ativarSelecaoTipoAcao() {
 async function fetchAction() {
     console.trace("📡 fetchAction chamado");
 
-    // Previne chamadas simultâneas
     if (fetchEmAndamento) {
         console.log("⏳ fetchAction ignorado — já em andamento");
         return;
@@ -920,7 +919,6 @@ async function fetchAction() {
     const actionType = document.getElementById("actionType").value;
     const statusElement = document.getElementById("statusMessage");
 
-    // Validações iniciais
     if (!id_conta || !token || id_conta === "null" || !actionType) {
         statusElement.textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
@@ -930,7 +928,7 @@ async function fetchAction() {
     }
 
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-        statusElement.textContent = "Tipo de ação inválido.";
+        statusElement.textContent = "Tipo de ação inválida.";
         fetchEmAndamento = false;
         return;
     }
@@ -942,7 +940,6 @@ async function fetchAction() {
 
     document.getElementById("warningMessage").style.display = "none";
 
-    // Só mostra "Buscando ações..." se NÃO estiver em contagem regressiva
     if (!statusElement.dataset.contagem) {
         statusElement.innerHTML = `
             <div class="loading-message">Buscando ações, aguarde...</div>
@@ -955,6 +952,16 @@ async function fetchAction() {
     document.getElementById("actionContent").style.opacity = "0";
 
     try {
+        // Tenta buscar via SMM primeiro
+        const encontrada = await tentarBuscarSMM(id_conta, token, actionType, statusElement);
+
+        if (encontrada) {
+            console.log("✅ Ação SMM encontrada");
+            fetchEmAndamento = false;
+            return;
+        }
+
+        // Se não encontrou no SMM, tenta rota principal
         const response = await fetch(`/api/get_action?tipo=${actionType}&id_conta=${id_conta}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -963,11 +970,10 @@ async function fetchAction() {
 
         if (response.ok && data && data.acao) {
             console.log("✅ Ação recebida:", data);
-            // Aqui você renderiza a ação
             renderAction(data);
         } else {
             console.warn("⚠ Nenhuma ação disponível, iniciando contagem regressiva...");
-            exibirContagemRegressiva(5, fetchActionDebounced); // tenta novamente após 5 segundos
+            exibirContagemRegressiva(5, fetchActionDebounced);
         }
 
     } catch (error) {
@@ -978,30 +984,22 @@ async function fetchAction() {
     }
 }
 
-// Cria a função com debounce
-const fetchActionDebounced = debounce(fetchAction, 500);
+async function tentarBuscarSMM(id_conta, token, actionType, statusElement) {
+    try {
+        const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
+        const data = await response.json();
 
-    // Função de tentativa de busca
-    async function tentarBuscarSMM() {
-        try {
-            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
-            const data = await response.json();
-
-            if (data.status === "ENCONTRADA") {
-                document.getElementById("warningMessage").style.display = "none";
-                
-                // ✅ Remove indicador de contagem, caso estivesse ativo
-                statusElement.removeAttribute("data-contagem");
-
-                await processarAcao(data, "smm");
-                return true;
-            }
-        } catch (e) {
-            console.error("Erro ao buscar ação SMM:", e);
+        if (data.status === "ENCONTRADA") {
+            document.getElementById("warningMessage").style.display = "none";
+            statusElement.removeAttribute("data-contagem");
+            await processarAcao(data, "smm");
+            return true;
         }
-
-        return false;
+    } catch (e) {
+        console.error("Erro ao buscar ação SMM:", e);
     }
+    return false;
+}
 
     // Inicia a busca
     const encontrada = await tentarBuscarSMM();
