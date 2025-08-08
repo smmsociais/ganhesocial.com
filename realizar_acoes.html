@@ -765,6 +765,7 @@
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
+
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
@@ -849,22 +850,21 @@
             }
         }
 
-        let isFirstFetchAfterChange = true;
+        let isFirstFetchAfterChange = false;
 
 function ativarSelecaoTipoAcao() {
   const select = document.getElementById("actionType");
   select.disabled = false;
 
-  if (!select.dataset.listenerAdded) {
-    select.addEventListener("change", () => {
-      atualizaTextoBotao(select.value);
-      isFirstFetchAfterChange = true; // sinaliza que o próximo fetch é o primeiro após a troca
-      fetchAction();
-    });
+  // ——— Apenas uma vez: adiciona o listener ———
+select.addEventListener("change", () => {
+  atualizaTextoBotao(select.value);
+  isFirstFetchAfterChange = true;   // sinaliza que o próximo fetch é o primeiro após a troca
+  fetchAction();
+});
 
     select.dataset.listenerAdded = "true";
   }
-}
 
 // ——— Lá fora, só uma vez no load ———
 document.addEventListener("DOMContentLoaded", () => {
@@ -889,38 +889,43 @@ function atualizaTextoBotao(value) {
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
-    const actionType = document.getElementById("actionType")?.value;
+    const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
+    // Bloqueia se conta ou tipo de ação não estiverem definidos
+    if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+        document.getElementById("warningMessage").style.display = "block";
+        document.getElementById("actionContent").style.opacity = "1";
+        return;
+    }
+
+    // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-        clearActionUI();
-        const statusMessage = document.getElementById("statusMessage");
-        if (statusMessage) statusMessage.textContent = "Tipo de ação inválido.";
+        document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
         return;
     }
 
-    if (document.getElementById("actionType")?.disabled) {
-        clearActionUI();
-        return;
-    }
+    if (document.getElementById("actionType").disabled) return;
 
-    const warningMessage = document.getElementById("warningMessage");
-    if (warningMessage) warningMessage.style.display = "none";
-
-    // Exibe loader
+    document.getElementById("warningMessage").style.display = "none";
+    
+    // Atualizado para mostrar o círculo de carregamento
     const statusElement = document.getElementById("statusMessage");
-    if (statusElement) {
-        statusElement.innerHTML = `
-            <div class="loading-message">Buscando ações, aguarde...</div>
-            <div class="loading-circle-container">
-                <div class="loading-circle"></div>
-            </div>
-        `;
-    }
+    statusElement.innerHTML = `
+        <div class="loading-message">Buscando ações, aguarde...</div>
+        <div class="loading-circle-container">
+            <div class="loading-circle"></div>
+        </div>
+    `;
 
-    const actionContent = document.getElementById("actionContent");
-    if (actionContent) actionContent.style.opacity = "0";
-
+      // Se for o primeiro fetch após a troca, só mostre o loader e saia
+  if (isFirstFetchAfterChange) {
+    isFirstFetchAfterChange = false;    // reset pra não bloquear os próximos
+    return;                             // não renderiza actionContent nem profileImage
+  }
+    
+    document.getElementById("actionContent").style.opacity = "0";
             async function tentarBuscarSMM() {
                 try {
                     const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
@@ -964,78 +969,77 @@ async function tentarBuscarLocal() {
     }
     return false;
 }
-async function processarAcao(data, origem, ocultar = false) {
-    currentActionData = { ...data, origem };
+            async function processarAcao(data, origem) {
+                document.getElementById("skipButton").style.display = "inline-block";
+                document.getElementById("statusMessage").textContent = "";
+                document.getElementById("username").textContent = data.nome_usuario;
 
-    if (ocultar) {
-        // Não renderiza visualmente nada, apenas salva os dados
-        return;
-    }
+                // Atualiza o texto da ação com base no tipo selecionado
+                const actionType = document.getElementById("actionType").value;
+                let actionText = "Seguir";
 
-    document.getElementById("skipButton").style.display = "inline-block";
-    document.getElementById("statusMessage").textContent = "";
-    document.getElementById("username").textContent = data.nome_usuario;
+                if (data.url_dir && data.url_dir.includes("/video/")) {
+                    actionText = "Curtir";
+                } else if (actionType === "seguir_curtir") {
+                    actionText = origem === "local" ? "Seguir" : "Seguir";
+                } else if (actionType === "curtir") {
+                    actionText = "Curtir";
+                }
 
-    const actionType = document.getElementById("actionType").value;
-    let actionText = "Seguir";
+                document.getElementById("actionText").textContent = actionText;
 
-    if (data.url_dir && data.url_dir.includes("/video/")) {
-        actionText = "Curtir";
-    } else if (actionType === "seguir_curtir") {
-        actionText = "Seguir";
-    } else if (actionType === "curtir") {
-        actionText = "Curtir";
-    }
+                const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+                const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
+                const profileImg = document.getElementById("profileImage");
+                document.getElementById("actionUrl").href = url;
 
-    document.getElementById("actionText").textContent = actionText;
+                if (data.url_dir && data.url_dir.includes("/video/")) {
+                    // Não carrega imagem de perfil para ações de Curtir
+                    profileImg.style.display = "none";
+                    profileImg.src = "";
+                } else {
+                    try {
+                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+                        const userInfo = await resUserInfo.json();
 
-    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-    const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
-    const profileImg = document.getElementById("profileImage");
-    document.getElementById("actionUrl").href = url;
+                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                            profileImg.src = userInfo.data.user.avatarLarger;
+                            profileImg.style.display = "block";
+                            localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
 
-    if (data.url_dir && data.url_dir.includes("/video/")) {
-        profileImg.style.display = "none";
-        profileImg.src = "";
-    } else {
-        try {
-            const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-            const userInfo = await resUserInfo.json();
+                        } else {
+                            profileImg.style.display = "none";
+                            profileImg.src = "";
+                        }
+                    } catch (e) {
+                        profileImg.style.display = "none";
+                        profileImg.src = "";
+                    }
+                }
+                let valorFinal;
 
-            if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                profileImg.src = userInfo.data.user.avatarLarger;
-                profileImg.style.display = "block";
-                localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
-            } else {
-                profileImg.style.display = "none";
-                profileImg.src = "";
+                const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
+
+                if (isCurtir) {
+                    valorFinal = "0.001";
+                } else if (origem === "smm") {
+                    valorFinal = "0.006";
+                } else {
+                    const pontos = parseFloat(data.quantidade_pontos || 0);
+                    const valorBruto = pontos / 1000;
+                    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+                    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+                }
+                document.getElementById("points").textContent = `R$ ${valorFinal}`;
+                document.getElementById("confirmButton").style.display = "none";
+
+                currentActionData = {
+                    ...data,
+                    origem
+                };
+                document.getElementById("actionContent").style.display = "block";
+                document.getElementById("actionContent").style.opacity = "1";
             }
-        } catch (e) {
-            profileImg.style.display = "none";
-            profileImg.src = "";
-        }
-    }
-
-    let valorFinal;
-    const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
-
-    if (isCurtir) {
-        valorFinal = "0.001";
-    } else if (origem === "smm") {
-        valorFinal = "0.006";
-    } else {
-        const pontos = parseFloat(data.quantidade_pontos || 0);
-        const valorBruto = pontos / 1000;
-        let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-        valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-    }
-
-    document.getElementById("points").textContent = `R$ ${valorFinal}`;
-    document.getElementById("confirmButton").style.display = "none";
-
-    document.getElementById("actionContent").style.display = "block";
-    document.getElementById("actionContent").style.opacity = "1";
-}
 
             try {
                 const tipoAcao = document.getElementById("actionType").value;
