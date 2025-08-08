@@ -893,8 +893,18 @@ async function fetchAction() {
     const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
+    // Função para limpar a interface visual
+    function clearActionUI() {
+        document.getElementById("profileImage").src = "";
+        document.getElementById("username").textContent = "";
+        document.getElementById("pointsValue").textContent = "";
+        document.getElementById("btnConfirmarAcao").disabled = true;
+        document.getElementById("actionContent").style.opacity = "0";
+    }
+
     // Bloqueia se conta ou tipo de ação não estiverem definidos
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+        clearActionUI();
         document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
         document.getElementById("actionContent").style.opacity = "1";
@@ -903,15 +913,19 @@ async function fetchAction() {
 
     // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
+        clearActionUI();
         document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
         return;
     }
 
-    if (document.getElementById("actionType").disabled) return;
+    if (document.getElementById("actionType").disabled) {
+        clearActionUI();
+        return;
+    }
 
     document.getElementById("warningMessage").style.display = "none";
-    
-    // Atualizado para mostrar o círculo de carregamento
+
+    // Mostra o círculo de carregamento
     const statusElement = document.getElementById("statusMessage");
     statusElement.innerHTML = `
         <div class="loading-message">Buscando ações, aguarde...</div>
@@ -920,11 +934,12 @@ async function fetchAction() {
         </div>
     `;
 
-let ocultarPrimeiraAcao = false;
-if (isFirstFetchAfterChange) {
-  isFirstFetchAfterChange = false;
-  ocultarPrimeiraAcao = true; // apenas flag para não exibir visualmente
-}
+    // Se for o primeiro fetch após a troca, só mostre o loader e saia
+    if (isFirstFetchAfterChange) {
+        clearActionUI();
+        isFirstFetchAfterChange = false;
+        return;
+    }
     
     document.getElementById("actionContent").style.opacity = "0";
             async function tentarBuscarSMM() {
