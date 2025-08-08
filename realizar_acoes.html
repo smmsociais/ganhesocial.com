@@ -852,7 +852,15 @@
 
  console.log("⚙️ ativarSelecaoTipoAcao foi chamada");
        
- let inicializou = false;
+let fetchTimeout;
+function fetchActionDebounced() {
+  clearTimeout(fetchTimeout);
+  fetchTimeout = setTimeout(() => {
+    fetchAction();
+  }, 200);
+}
+
+let inicializou = false;
 
 function ativarSelecaoTipoAcao() {
     const id_conta = localStorage.getItem("id_conta");
@@ -862,7 +870,6 @@ function ativarSelecaoTipoAcao() {
         const select = document.getElementById("actionType");
         select.disabled = false;
 
-        // Adiciona o listener apenas uma vez
         if (!select.dataset.listenerAdded) {
             select.addEventListener("change", () => {
                 const actionType = select.value;
@@ -873,14 +880,13 @@ function ativarSelecaoTipoAcao() {
                         actionType === "curtir" ? "Curtir" :
                         actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-                    fetchAction();
+                    fetchActionDebounced();
                 }
             });
 
             select.dataset.listenerAdded = "true";
         }
 
-        // Apenas na inicialização da página, evita duplas chamadas
         if (!inicializou) {
             inicializou = true;
             const preSelectedAction = select.value;
@@ -890,14 +896,14 @@ function ativarSelecaoTipoAcao() {
                     preSelectedAction === "curtir" ? "Curtir" :
                     preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-                fetchAction();
+                fetchActionDebounced();
             }
         }
     }
 }
 
-async function fetchAction() {
-    console.trace("📡 fetchAction chamado");
+async function fetchActionDebounced() {
+    console.trace("📡 fetchActionDebounced chamado");
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
