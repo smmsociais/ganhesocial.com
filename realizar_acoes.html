@@ -920,11 +920,11 @@ async function fetchAction() {
         </div>
     `;
 
-      // Se for o primeiro fetch após a troca, só mostre o loader e saia
-  if (isFirstFetchAfterChange) {
-    isFirstFetchAfterChange = false;    // reset pra não bloquear os próximos
-    return;                             // não renderiza actionContent nem profileImage
-  }
+let ocultarPrimeiraAcao = false;
+if (isFirstFetchAfterChange) {
+  isFirstFetchAfterChange = false;
+  ocultarPrimeiraAcao = true; // apenas flag para não exibir visualmente
+}
     
     document.getElementById("actionContent").style.opacity = "0";
             async function tentarBuscarSMM() {
@@ -970,11 +970,11 @@ async function tentarBuscarLocal() {
     }
     return false;
 }
-async function processarAcao(data, origem) {
-    // Ignora a primeira ação após troca de tipo
-    if (window.isFirstFetchAfterChange) {
-        window.isFirstFetchAfterChange = false;
-        currentActionData = { ...data, origem };
+async function processarAcao(data, origem, ocultar = false) {
+    currentActionData = { ...data, origem };
+
+    if (ocultar) {
+        // Não renderiza visualmente nada, apenas salva os dados
         return;
     }
 
@@ -1039,10 +1039,6 @@ async function processarAcao(data, origem) {
     document.getElementById("points").textContent = `R$ ${valorFinal}`;
     document.getElementById("confirmButton").style.display = "none";
 
-    currentActionData = {
-        ...data,
-        origem
-    };
     document.getElementById("actionContent").style.display = "block";
     document.getElementById("actionContent").style.opacity = "1";
 }
