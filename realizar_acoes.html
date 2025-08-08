@@ -1168,29 +1168,30 @@ async function tentarBuscarLocal() {
                 document.getElementById("actionContent").style.opacity = "1";
             }
 
-            try {
-                const tipoAcao = document.getElementById("actionType").value;
-                const encontrouSMM = await tentarBuscarSMM();
+    try {
+        const tipoAcao = document.getElementById("actionType").value;
+        const encontrouSMM = await tentarBuscarSMM();
 
-                if (!encontrouSMM) {
-                    let resultadoLocal = false;
+        if (!encontrouSMM) {
+            let resultadoLocal = false;
 
-                    if (!contaInvalida && tipoAcao !== "curtir") {
-                        resultadoLocal = await tentarBuscarLocal();
-                    }
-
-                    if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                        const novaTentativa = await tentarBuscarSMM();
-                        if (!novaTentativa) {
-                            exibirContagemRegressiva();
-                        }
-                    } else if (!resultadoLocal) {
-                        exibirContagemRegressiva();
-                    }
-                }
-
-            } catch (error) {
+            if (!contaInvalida && tipoAcao !== "curtir") {
+                resultadoLocal = await tentarBuscarLocal();
             }
+
+            if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+                const novaTentativa = await tentarBuscarSMM();
+                if (!novaTentativa) {
+                    exibirContagemRegressiva();
+                }
+            } else if (!resultadoLocal) {
+                exibirContagemRegressiva();
+            }
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
