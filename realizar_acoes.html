@@ -887,6 +887,18 @@ function atualizaTextoBotao(value) {
     "";
 }
 
+function clearActionUI() {
+  const avatar = document.getElementById("userAvatar");
+  const username = document.getElementById("username");
+  const uniqueId = document.getElementById("uniqueId");
+  const valorPontos = document.getElementById("valorPontos");
+
+  if (avatar) avatar.src = "";
+  if (username) username.textContent = "";
+  if (uniqueId) uniqueId.textContent = "";
+  if (valorPontos) valorPontos.textContent = "";
+}
+
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
