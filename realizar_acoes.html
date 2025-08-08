@@ -856,15 +856,16 @@ function ativarSelecaoTipoAcao() {
   const select = document.getElementById("actionType");
   select.disabled = false;
 
-  // ——— Apenas uma vez: adiciona o listener ———
-select.addEventListener("change", () => {
-  atualizaTextoBotao(select.value);
-  isFirstFetchAfterChange = true;   // sinaliza que o próximo fetch é o primeiro após a troca
-  fetchAction();
-});
+  if (!select.dataset.listenerAdded) {
+    select.addEventListener("change", () => {
+      atualizaTextoBotao(select.value);
+      isFirstFetchAfterChange = true; // sinaliza que o próximo fetch é o primeiro após a troca
+      fetchAction();
+    });
 
     select.dataset.listenerAdded = "true";
   }
+}
 
 // ——— Lá fora, só uma vez no load ———
 document.addEventListener("DOMContentLoaded", () => {
