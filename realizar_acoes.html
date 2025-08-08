@@ -887,88 +887,64 @@
                 }
             }
         }
-let isFetchingAction = false; // controle de concorrência global
-
 async function fetchAction() {
-    if (isFetchingAction) return;
-    isFetchingAction = true;
-
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
+    // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
+    if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+        document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
+        document.getElementById("warningMessage").style.display = "block";
+        document.getElementById("actionContent").style.opacity = "1";
+        return;
+    }
+
+    // 🚫 Bloqueia se tipo de ação não for um dos válidos
+    if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
+        document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
+        return;
+    }
+
+    if (document.getElementById("actionType").disabled) return;
+
+    document.getElementById("warningMessage").style.display = "none";
+    
+    // Atualizado para mostrar o círculo de carregamento
     const statusElement = document.getElementById("statusMessage");
-    const warningMessage = document.getElementById("warningMessage");
-    const actionContent = document.getElementById("actionContent");
+    statusElement.innerHTML = `
+        <div class="loading-message">Buscando ações, aguarde...</div>
+        <div class="loading-circle-container">
+            <div class="loading-circle"></div>
+        </div>
+    `;
+    
+    document.getElementById("actionContent").style.opacity = "0";
+            async function tentarBuscarSMM() {
+                try {
+                    const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
+                    const data = await response.json();
 
-    try {
-        // Validações iniciais
-        if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
-            statusElement.textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
-            warningMessage.style.display = "block";
-            actionContent.style.opacity = "1";
-            return;
-        }
-
-        if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
-            statusElement.textContent = "Tipo de ação inválido.";
-            return;
-        }
-
-        if (document.getElementById("actionType").disabled) return;
-
-        // Mostra carregando
-        warningMessage.style.display = "none";
-        statusElement.innerHTML = `
-            <div class="loading-message">Buscando ações, aguarde...</div>
-            <div class="loading-circle-container">
-                <div class="loading-circle"></div>
-            </div>
-        `;
-        actionContent.style.opacity = "0";
-
-        // Tenta buscar ação
-        const encontrou = await tentarBuscarSMM();
-        if (!encontrou) {
-            // Se não encontrou, mostra aviso
-            statusElement.textContent = "Nenhuma ação disponível no momento.";
-            warningMessage.style.display = "block";
-            actionContent.style.opacity = "1";
-        }
-
-    } catch (err) {
-        console.error("Erro em fetchAction:", err);
-        statusElement.textContent = "Erro ao buscar ação. Tente novamente.";
-        warningMessage.style.display = "block";
-        actionContent.style.opacity = "1";
-    } finally {
-        isFetchingAction = false;
-    }
-
-    async function tentarBuscarSMM() {
-        try {
-            const response = await fetch(`/api/buscar_acao_smm?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
-            const data = await response.json();
-
-            if (data.status === "ENCONTRADA") {
-                warningMessage.style.display = "none";
-                await processarAcao(data, "smm");
-                return true;
+                    if (data.status === "ENCONTRADA") {
+                        document.getElementById("warningMessage").style.display = "none";
+                        await processarAcao(data, "smm");
+                        return true;
+                    } else {
+                    }
+                } catch (e) {
+                }
+                return false;
             }
-        } catch (e) {
-            console.error("Erro ao buscar ação SMM:", e);
-        }
-        return false;
-    }
 
-            await tentarBuscarSMM();
+            await tentarBuscarSMM(); // Chama de fato
 
 async function tentarBuscarLocal() {
     try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
 
         if (!response.ok) {
+            // Evita que apareça o erro 404 no console
             return false;
         }
 
@@ -986,9 +962,12 @@ async function tentarBuscarLocal() {
         }
 
     } catch (e) {
+        // Você pode logar aqui se quiser
+        // console.error("Erro ao buscar ação:", e);
     }
     return false;
 }
+
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
