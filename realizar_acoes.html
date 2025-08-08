@@ -907,7 +907,7 @@ function ativarSelecaoTipoAcao() {
 
 let tentativasSemAcoes = 0;
 const maxTentativas = 1;     // depois de X tentativas, faz backoff maior
-const pausaLongaMs = 3_000; // 1 minuto de pausa quando atingir maxTentativas
+const pausaLongaMs = _000; // 1 minuto de pausa quando atingir maxTentativas
 
 function fetchActionDebounced() {
   // evita agendar se já estamos em pausa longa
