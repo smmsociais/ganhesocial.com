@@ -854,6 +854,7 @@
 let contagemEmAndamento = false;
 let fetchTimeout;
 let contagemTimeout;
+let pausaTimeout;
 let buscando = false;
 
 function fetchActionDebounced() {
@@ -1039,7 +1040,6 @@ async function fetchAction() {
       return false;
     }
 
-    // --- MOVI tentarBuscarLocal para cá para ter acesso a id_conta/token/actionType ---
     async function tentarBuscarLocal() {
       try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
@@ -1063,7 +1063,6 @@ async function fetchAction() {
       }
       return false;
     }
-    // -------------------------------------------------------------------------------
 
     // **Aqui** chamamos as tentativas e usamos await sem erro
     const encontrouSMM = await tentarBuscarSMM();
