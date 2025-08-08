@@ -850,16 +850,6 @@
             }
         }
 
- console.log("⚙️ ativarSelecaoTipoAcao foi chamada");
-       
-let fetchTimeout;
-function fetchActionDebounced() {
-  clearTimeout(fetchTimeout);
-  fetchTimeout = setTimeout(() => {
-    fetchAction();
-  }, 200);
-}
-
 let inicializou = false;
 
 function ativarSelecaoTipoAcao() {
@@ -880,7 +870,7 @@ function ativarSelecaoTipoAcao() {
                         actionType === "curtir" ? "Curtir" :
                         actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-                    fetchActionDebounced();
+                    fetchAction();
                 }
             });
 
@@ -896,14 +886,14 @@ function ativarSelecaoTipoAcao() {
                     preSelectedAction === "curtir" ? "Curtir" :
                     preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-                fetchActionDebounced();
+                fetchAction();
             }
         }
     }
 }
 
-async function fetchActionDebounced() {
-    console.trace("📡 fetchActionDebounced chamado");
+async function fetchAction() {
+    console.trace("📡 fetchAction chamado");
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
@@ -980,7 +970,6 @@ async function tentarBuscarLocal() {
     }
     return false;
 }
-
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
@@ -1102,7 +1091,7 @@ function exibirContagemRegressiva() {
             setTimeout(atualizarMensagem, 1000);
         } else {
             contagemEmAndamento = false; // ✅ libera para futuras contagens
-            fetchActionDebounced();      // ✅ chamada única
+            fetchAction();      // ✅ chamada única
         }
     }
 
@@ -1180,7 +1169,7 @@ async function confirmAction() {
 
             // Busca nova ação sem mostrar o conteúdo da anterior
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-            fetchActionDebounced();
+            fetchAction();
         }
 
         async function skipAction() {
