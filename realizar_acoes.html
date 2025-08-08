@@ -765,7 +765,6 @@
     <!-- Menu Overlay para Mobile -->
     <div class="menu-overlay" id="menuOverlay"></div>
 
-
     <script>
         // O restante do JavaScript permanece exatamente igual
         document.addEventListener("DOMContentLoaded", async function () {
@@ -888,15 +887,24 @@ function atualizaTextoBotao(value) {
 }
 
 function clearActionUI() {
-  const avatar = document.getElementById("userAvatar");
-  const username = document.getElementById("username");
-  const uniqueId = document.getElementById("uniqueId");
-  const valorPontos = document.getElementById("valorPontos");
+    const username = document.getElementById("username");
+    const actionText = document.getElementById("actionText");
+    const points = document.getElementById("points");
+    const profileImage = document.getElementById("profileImage");
+    const confirmButton = document.getElementById("confirmButton");
+    const skipButton = document.getElementById("skipButton");
+    const actionUrl = document.getElementById("actionUrl");
 
-  if (avatar) avatar.src = "";
-  if (username) username.textContent = "";
-  if (uniqueId) uniqueId.textContent = "";
-  if (valorPontos) valorPontos.textContent = "";
+    if (username) username.textContent = "";
+    if (actionText) actionText.textContent = "";
+    if (points) points.textContent = "";
+    if (profileImage) {
+        profileImage.src = "";
+        profileImage.style.display = "none";
+    }
+    if (confirmButton) confirmButton.style.display = "none";
+    if (skipButton) skipButton.style.display = "none";
+    if (actionUrl) actionUrl.href = "#";
 }
 
 async function fetchAction() {
@@ -906,13 +914,22 @@ async function fetchAction() {
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
     // Função para limpar a interface visual
-    function clearActionUI() {
-        document.getElementById("profileImage").src = "";
-        document.getElementById("username").textContent = "";
-        document.getElementById("pointsValue").textContent = "";
-        document.getElementById("btnConfirmarAcao").disabled = true;
-        document.getElementById("actionContent").style.opacity = "0";
+function clearActionUI() {
+    const profileImage = document.getElementById("profileImage");
+    const username = document.getElementById("username");
+    const points = document.getElementById("points");
+    const confirmButton = document.getElementById("confirmButton");
+
+    if (profileImage) {
+        profileImage.src = "";
+        profileImage.style.display = "none";
     }
+    if (username) username.textContent = "";
+    if (points) points.textContent = "";
+    if (confirmButton) confirmButton.style.display = "none";
+
+    document.getElementById("actionContent").style.opacity = "0";
+}
 
     // Bloqueia se conta ou tipo de ação não estiverem definidos
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
