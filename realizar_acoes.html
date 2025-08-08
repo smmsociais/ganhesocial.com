@@ -850,35 +850,50 @@
             }
         }
 
-        function ativarSelecaoTipoAcao() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+ let inicializou = false;
 
-            if (id_conta && token && id_conta !== "null") {
-                const select = document.getElementById("actionType");
-                select.disabled = false;
+function ativarSelecaoTipoAcao() {
+    const id_conta = localStorage.getItem("id_conta");
+    const token = localStorage.getItem("token");
 
-                // Adiciona listener só uma vez
-                if (!select.dataset.listenerAdded) {
-                    select.addEventListener("change", () => {
-                        const actionType = select.value;
-                        const id_conta = localStorage.getItem("id_conta");
+    if (id_conta && token && id_conta !== "null") {
+        const select = document.getElementById("actionType");
+        select.disabled = false;
 
-                        if (id_conta && id_conta !== "null" && actionType !== "") {
-                            document.getElementById("actionText").textContent =
-                                actionType === "curtir" ? "Curtir" :
-                                    actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+        // Adiciona o listener apenas uma vez
+        if (!select.dataset.listenerAdded) {
+            select.addEventListener("change", () => {
+                const actionType = select.value;
+                const id_conta = localStorage.getItem("id_conta");
 
-                            fetchAction();
-                        }
-                    });
+                if (id_conta && id_conta !== "null" && actionType !== "") {
+                    document.getElementById("actionText").textContent =
+                        actionType === "curtir" ? "Curtir" :
+                        actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-                    select.dataset.listenerAdded = "true";
+                    fetchAction();
                 }
+            });
 
-                }
+            select.dataset.listenerAdded = "true";
+        }
+
+        // Apenas na inicialização da página, evita duplas chamadas
+        if (!inicializou) {
+            inicializou = true;
+            const preSelectedAction = select.value;
+
+            if (preSelectedAction && preSelectedAction !== "") {
+                document.getElementById("actionText").textContent =
+                    preSelectedAction === "curtir" ? "Curtir" :
+                    preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+
+                fetchAction();
             }
-            
+        }
+    }
+}
+
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
