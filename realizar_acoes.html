@@ -850,6 +850,19 @@
             }
         }
 
+let fetchTimeout = null;
+let fetchEmAndamento = false;
+let contagemEmAndamento = false;
+
+// Função debounce (500ms padrão)
+function debounce(fn, delay = 500) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
 let inicializou = false;
 
 function ativarSelecaoTipoAcao() {
@@ -892,43 +905,6 @@ function ativarSelecaoTipoAcao() {
     }
 }
 
-// Variáveis de controle fora da função para persistirem entre execuções
-let fetchTimeout = null;
-let fetchEmAndamento = false;
-let contagemEmAndamento = false;
-
-// Função debounce (500ms padrão)
-function debounce(fn, delay = 500) {
-    let timer;
-    return function (...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-    };
-}
-
-// Contagem regressiva para tentar novamente
-function exibirContagemRegressiva(segundos, callback) {
-    const statusElement = document.getElementById("statusMessage");
-    contagemEmAndamento = true;
-    statusElement.dataset.contagem = "true";
-
-    let contador = segundos;
-    statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-
-    const interval = setInterval(() => {
-        contador--;
-        if (contador > 0) {
-            statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-        } else {
-            clearInterval(interval);
-            delete statusElement.dataset.contagem;
-            contagemEmAndamento = false;
-            if (typeof callback === "function") callback();
-        }
-    }, 1000);
-}
-
-// Função principal
 async function fetchAction() {
     console.trace("📡 fetchAction chamado");
 
@@ -1156,7 +1132,29 @@ async function tentarBuscarLocal() {
 
             } catch (error) {
             }
-            
+
+// Contagem regressiva para tentar novamente
+function exibirContagemRegressiva(segundos, callback) {
+    const statusElement = document.getElementById("statusMessage");
+    contagemEmAndamento = true;
+    statusElement.dataset.contagem = "true";
+
+    let contador = segundos;
+    statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+
+    const interval = setInterval(() => {
+        contador--;
+        if (contador > 0) {
+            statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+        } else {
+            clearInterval(interval);
+            delete statusElement.dataset.contagem;
+            contagemEmAndamento = false;
+            if (typeof callback === "function") callback();
+        }
+    }, 1000);
+}
+
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
