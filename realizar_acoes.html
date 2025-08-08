@@ -959,7 +959,6 @@ function exibirContagemRegressiva(segundos = 3) {
       // Se atingimos o máximo de tentativas, fazemos pausa longa
       if (tentativasSemAcoes >= maxTentativas) {
         console.log(`Atingiu ${tentativasSemAcoes} tentativas sem ação. Pausando por ${pausaLongaMs/1000}s.`);
-        statusElement.textContent = `Sem ações. Pausando por ${Math.round(pausaLongaMs/1000)}s antes de tentar novamente.`;
         setTimeout(() => {
           tentativasSemAcoes = 0;
           // só dispara se não houver busca em andamento
