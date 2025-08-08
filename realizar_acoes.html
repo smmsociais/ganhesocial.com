@@ -850,21 +850,19 @@
             }
         }
 
-        let isFirstFetchAfterChange = false;
-
 function ativarSelecaoTipoAcao() {
   const select = document.getElementById("actionType");
   select.disabled = false;
 
   // ——— Apenas uma vez: adiciona o listener ———
-select.addEventListener("change", () => {
-  atualizaTextoBotao(select.value);
-  isFirstFetchAfterChange = true;   // sinaliza que o próximo fetch é o primeiro após a troca
-  fetchAction();
-});
-
+  if (!select.dataset.listenerAdded) {
+    select.addEventListener("change", () => {
+      atualizaTextoBotao(select.value);
+      fetchAction();
+    });
     select.dataset.listenerAdded = "true";
   }
+}
 
 // ——— Lá fora, só uma vez no load ———
 document.addEventListener("DOMContentLoaded", () => {
@@ -892,7 +890,7 @@ async function fetchAction() {
     const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
-    // Bloqueia se conta ou tipo de ação não estiverem definidos
+    // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
         document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
@@ -900,7 +898,7 @@ async function fetchAction() {
         return;
     }
 
-    // Bloqueia se tipo de ação não for um dos válidos
+    // 🚫 Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
         document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
         return;
@@ -918,12 +916,6 @@ async function fetchAction() {
             <div class="loading-circle"></div>
         </div>
     `;
-
-      // Se for o primeiro fetch após a troca, só mostre o loader e saia
-  if (isFirstFetchAfterChange) {
-    isFirstFetchAfterChange = false;    // reset pra não bloquear os próximos
-    return;                             // não renderiza actionContent nem profileImage
-  }
     
     document.getElementById("actionContent").style.opacity = "0";
             async function tentarBuscarSMM() {
@@ -942,13 +934,14 @@ async function fetchAction() {
                 return false;
             }
 
-            await tentarBuscarSMM();
+            await tentarBuscarSMM(); // Chama de fato
 
 async function tentarBuscarLocal() {
     try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
 
         if (!response.ok) {
+            // Evita que apareça o erro 404 no console
             return false;
         }
 
@@ -966,9 +959,12 @@ async function tentarBuscarLocal() {
         }
 
     } catch (e) {
+        // Você pode logar aqui se quiser
+        // console.error("Erro ao buscar ação:", e);
     }
     return false;
 }
+
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
                 document.getElementById("statusMessage").textContent = "";
