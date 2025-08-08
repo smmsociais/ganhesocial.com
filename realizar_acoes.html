@@ -991,6 +991,7 @@ async function fetchAction() {
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
     const statusElement = document.getElementById("statusMessage");
+    const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
     // Bloqueios iniciais
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
@@ -1039,24 +1040,57 @@ async function fetchAction() {
       return false;
     }
 
-    const encontrada = await tentarBuscarSMM();
+    // --- MOVI tentarBuscarLocal para cá para ter acesso a id_conta/token/actionType ---
+    async function tentarBuscarLocal() {
+      try {
+        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}&tipo=${actionType}`);
+        if (!response.ok) {
+          return false;
+        }
+        const data = await response.json();
 
-    if (!encontrada) {
+        if (data.status === "ENCONTRADA") {
+          document.getElementById("warningMessage").style.display = "none";
+          if (parseFloat(data.quantidade_pontos) === 4) {
+            return "ignorarLocalERepetirSMM";
+          }
+          await processarAcao(data, "local");
+          return true;
+        } else if (data.error === "Nenhuma ação encontrada.") {
+          return "repetirSMM";
+        }
+      } catch (e) {
+        console.error("Erro ao buscar ação local:", e);
+      }
+      return false;
+    }
+    // -------------------------------------------------------------------------------
+
+    // **Aqui** chamamos as tentativas e usamos await sem erro
+    const encontrouSMM = await tentarBuscarSMM();
+
+    if (!encontrouSMM) {
       tentativasSemAcoes++;
       console.log(`Nenhuma ação encontrada (tentativa ${tentativasSemAcoes}/${maxTentativas}).`);
 
-      // Se já estourou maxTentativas, exibir contagem e depois pausar (exibirContagem já tratará isso)
-      if (tentativasSemAcoes >= maxTentativas) {
-        // garante que exibirContagemRegressiva saiba que entrou em pausa longa
-        exibirContagemRegressiva(3);
-      } else {
-        // comportamento normal: tentar de novo após contagem curta
-        exibirContagemRegressiva(3);
+      let resultadoLocal = false;
+
+      if (!contaInvalida && actionType !== "curtir") {
+        resultadoLocal = await tentarBuscarLocal();
+      }
+
+      if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
+        const novaTentativa = await tentarBuscarSMM();
+        if (!novaTentativa) {
+          exibirContagemRegressiva();
+        }
+      } else if (!resultadoLocal) {
+        exibirContagemRegressiva();
       }
     } else {
-      // se encontrou, possibilita próxima busca quando o usuário confirmar ou outro evento ocorrer
       console.log("Ação encontrada — tentativas resetadas.");
     }
+
   } finally {
     buscando = false;
   }
@@ -1069,32 +1103,6 @@ document.getElementById("actionType")?.addEventListener("change", () => {
 window.addEventListener("storage", (e) => {
   if (e.key === "id_conta") tentativasSemAcoes = 0;
 });
-
-async function tentarBuscarLocal() {
-    try {
-        const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
-
-        if (!response.ok) {
-            return false;
-        }
-
-        const data = await response.json();
-
-        if (data.status === "ENCONTRADA") {
-            document.getElementById("warningMessage").style.display = "none";
-            if (parseFloat(data.quantidade_pontos) === 4) {
-                return "ignorarLocalERepetirSMM";
-            }
-            await processarAcao(data, "local");
-            return true;
-        } else if (data.error === "Nenhuma ação encontrada.") {
-            return "repetirSMM";
-        }
-
-    } catch (e) {
-    }
-    return false;
-}
 
             async function processarAcao(data, origem) {
                 document.getElementById("skipButton").style.display = "inline-block";
@@ -1167,31 +1175,6 @@ async function tentarBuscarLocal() {
                 document.getElementById("actionContent").style.display = "block";
                 document.getElementById("actionContent").style.opacity = "1";
             }
-
-    try {
-        const tipoAcao = document.getElementById("actionType").value;
-        const encontrouSMM = await tentarBuscarSMM();
-
-        if (!encontrouSMM) {
-            let resultadoLocal = false;
-
-            if (!contaInvalida && tipoAcao !== "curtir") {
-                resultadoLocal = await tentarBuscarLocal();
-            }
-
-            if (resultadoLocal === "ignorarLocalERepetirSMM" || resultadoLocal === "repetirSMM") {
-                const novaTentativa = await tentarBuscarSMM();
-                if (!novaTentativa) {
-                    exibirContagemRegressiva();
-                }
-            } else if (!resultadoLocal) {
-                exibirContagemRegressiva();
-            }
-        }
-
-    } catch (error) {
-        console.error(error);
-    }
 
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
