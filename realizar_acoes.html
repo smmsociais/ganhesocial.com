@@ -850,50 +850,47 @@
             }
         }
 
-        function ativarSelecaoTipoAcao() {
-            const id_conta = localStorage.getItem("id_conta");
-            const token = localStorage.getItem("token");
+function ativarSelecaoTipoAcao() {
+  const select = document.getElementById("actionType");
+  select.disabled = false;
 
-            if (id_conta && token && id_conta !== "null") {
-                const select = document.getElementById("actionType");
-                select.disabled = false;
+  // ——— Apenas uma vez: adiciona o listener ———
+  if (!select.dataset.listenerAdded) {
+    select.addEventListener("change", () => {
+      atualizaTextoBotao(select.value);
+      fetchAction();
+    });
+    select.dataset.listenerAdded = "true";
+  }
+}
 
-                // Adiciona listener só uma vez
-                if (!select.dataset.listenerAdded) {
-                    select.addEventListener("change", () => {
-                        const actionType = select.value;
-                        const id_conta = localStorage.getItem("id_conta");
+// ——— Lá fora, só uma vez no load ———
+document.addEventListener("DOMContentLoaded", () => {
+  ativarSelecaoTipoAcao();
 
-                        if (id_conta && id_conta !== "null" && actionType !== "") {
-                            document.getElementById("actionText").textContent =
-                                actionType === "curtir" ? "Curtir" :
-                                    actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+  // Se quiser o fetch inicial, faça aqui:
+  const select = document.getElementById("actionType");
+  if (select.value) {
+    atualizaTextoBotao(select.value);
+    fetchAction();
+  }
+});
 
-                            fetchAction();
-                        }
-                    });
+function atualizaTextoBotao(value) {
+  document.getElementById("actionText").textContent =
+    value === "curtir"          ? "Curtir" :
+    value === "seguir_curtir" ? "Seguir e Curtir" :
+    value === "seguir"        ? "Seguir" :
+    "";
+}
 
-                    select.dataset.listenerAdded = "true";
-                }
-
-                // Se já tiver uma ação selecionada, chama fetchAction diretamente
-                const preSelectedAction = select.value;
-                if (preSelectedAction && preSelectedAction !== "") {
-                    document.getElementById("actionText").textContent =
-                        preSelectedAction === "curtir" ? "Curtir" :
-                            preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
-
-                    fetchAction();
-                }
-            }
-        }
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
-    // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
+    // Bloqueia se conta ou tipo de ação não estiverem definidos
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
         document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
@@ -901,7 +898,7 @@ async function fetchAction() {
         return;
     }
 
-    // 🚫 Bloqueia se tipo de ação não for um dos válidos
+    // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
         document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
         return;
@@ -937,7 +934,7 @@ async function fetchAction() {
                 return false;
             }
 
-            await tentarBuscarSMM(); // Chama de fato
+            await tentarBuscarSMM();
 
 async function tentarBuscarLocal() {
     try {
@@ -962,8 +959,6 @@ async function tentarBuscarLocal() {
         }
 
     } catch (e) {
-        // Você pode logar aqui se quiser
-        // console.error("Erro ao buscar ação:", e);
     }
     return false;
 }
