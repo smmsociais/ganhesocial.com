@@ -850,40 +850,43 @@
             }
         }
 
-function ativarSelecaoTipoAcao() {
-  const select = document.getElementById("actionType");
-  select.disabled = false;
+        function ativarSelecaoTipoAcao() {
+            const id_conta = localStorage.getItem("id_conta");
+            const token = localStorage.getItem("token");
 
-  // ——— Apenas uma vez: adiciona o listener ———
-  if (!select.dataset.listenerAdded) {
-    select.addEventListener("change", () => {
-      atualizaTextoBotao(select.value);
-      fetchAction();
-    });
-    select.dataset.listenerAdded = "true";
-  }
-}
+            if (id_conta && token && id_conta !== "null") {
+                const select = document.getElementById("actionType");
+                select.disabled = false;
 
-// ——— Lá fora, só uma vez no load ———
-document.addEventListener("DOMContentLoaded", () => {
-  ativarSelecaoTipoAcao();
+                // Adiciona listener só uma vez
+                if (!select.dataset.listenerAdded) {
+                    select.addEventListener("change", () => {
+                        const actionType = select.value;
+                        const id_conta = localStorage.getItem("id_conta");
 
-  // Se quiser o fetch inicial, faça aqui:
-  const select = document.getElementById("actionType");
-  if (select.value) {
-    atualizaTextoBotao(select.value);
-    fetchAction();
-  }
-});
+                        if (id_conta && id_conta !== "null" && actionType !== "") {
+                            document.getElementById("actionText").textContent =
+                                actionType === "curtir" ? "Curtir" :
+                                    actionType === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
 
-function atualizaTextoBotao(value) {
-  document.getElementById("actionText").textContent =
-    value === "curtir"          ? "Curtir" :
-    value === "seguir_curtir" ? "Seguir e Curtir" :
-    value === "seguir"        ? "Seguir" :
-    "";
-}
+                            fetchAction();
+                        }
+                    });
 
+                    select.dataset.listenerAdded = "true";
+                }
+
+                // Se já tiver uma ação selecionada, chama fetchAction diretamente
+                const preSelectedAction = select.value;
+                if (preSelectedAction && preSelectedAction !== "") {
+                    document.getElementById("actionText").textContent =
+                        preSelectedAction === "curtir" ? "Curtir" :
+                            preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
+
+                    fetchAction();
+                }
+            }
+        }
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
