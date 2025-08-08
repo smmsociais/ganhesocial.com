@@ -1296,12 +1296,20 @@ async function confirmAction() {
                     })
                 });
 
-                // Buscar próxima ação
-                fetchActionDebounced();
-            } catch (error) {
-                console.error("Erro ao registrar ação pulada:", error);
-            }
-        }
+    // --- NOVO: resetar flags/pause para permitir nova busca imediata ---
+    tentativasSemAcoes = 0;
+    clearTimeout(contagemTimeout);        // cancela contagem em andamento (se houver)
+    clearTimeout(pausaTimeout);           // cancela pausa longa (se você implementar pausaTimeout)
+    const statusElement = document.getElementById("statusMessage");
+    statusElement?.removeAttribute("data-contagem");
+    // ---------------------------------------------------------------
+
+    // Buscar próxima ação (agende imediatamente)
+    fetchActionDebounced();
+  } catch (error) {
+    console.error("Erro ao registrar ação pulada:", error);
+  }
+}
         async function loadAccounts() {
             try {
                 const token = localStorage.getItem("token");
