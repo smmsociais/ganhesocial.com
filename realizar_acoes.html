@@ -907,13 +907,12 @@ function ativarSelecaoTipoAcao() {
 }
 
 let tentativasSemAcoes = 0;
-const maxTentativas = 1;     // depois de X tentativas, faz backoff maior
-const pausaLongaMs = 1_000; // 1 minuto de pausa quando atingir maxTentativas
+const maxTentativas = 1;
+const pausaLongaMs = 1_000;
 
 function fetchActionDebounced() {
   // evita agendar se já estamos em pausa longa
   if (tentativasSemAcoes >= maxTentativas) {
-    console.log("fetchActionDebounced: atingiu maxTentativas — aguardando pausa longa.");
     return;
   }
 
@@ -959,7 +958,6 @@ function exibirContagemRegressiva(segundos = 3) {
 
       // Se atingimos o máximo de tentativas, fazemos pausa longa
       if (tentativasSemAcoes >= maxTentativas) {
-        console.log(`Atingiu ${tentativasSemAcoes} tentativas sem ação. Pausando por ${pausaLongaMs/1000}s.`);
         setTimeout(() => {
           tentativasSemAcoes = 0;
           // só dispara se não houver busca em andamento
@@ -977,11 +975,8 @@ function exibirContagemRegressiva(segundos = 3) {
 
 // Versão atualizada do fetchAction com flags e backoff
 async function fetchAction() {
-  console.trace("📡 fetchAction chamado");
-
   // Proteção: evita chamadas concorrentes
   if (buscando) {
-    console.log("Já está buscando — ignorando chamada.");
     return;
   }
 
@@ -1069,7 +1064,6 @@ async function fetchAction() {
 
     if (!encontrouSMM) {
       tentativasSemAcoes++;
-      console.log(`Nenhuma ação encontrada (tentativa ${tentativasSemAcoes}/${maxTentativas}).`);
 
       let resultadoLocal = false;
 
@@ -1086,7 +1080,6 @@ async function fetchAction() {
         exibirContagemRegressiva();
       }
     } else {
-      console.log("Ação encontrada — tentativas resetadas.");
     }
 
   } finally {
@@ -1297,16 +1290,14 @@ async function confirmAction() {
 
     // --- NOVO: resetar flags/pause para permitir nova busca imediata ---
     tentativasSemAcoes = 0;
-    clearTimeout(contagemTimeout);        // cancela contagem em andamento (se houver)
-    clearTimeout(pausaTimeout);           // cancela pausa longa (se você implementar pausaTimeout)
+    clearTimeout(contagemTimeout);
+    clearTimeout(pausaTimeout);
     const statusElement = document.getElementById("statusMessage");
     statusElement?.removeAttribute("data-contagem");
-    // ---------------------------------------------------------------
 
     // Buscar próxima ação (agende imediatamente)
     fetchActionDebounced();
   } catch (error) {
-    console.error("Erro ao registrar ação pulada:", error);
   }
 }
         async function loadAccounts() {
