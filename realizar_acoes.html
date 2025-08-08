@@ -876,24 +876,16 @@
                     select.dataset.listenerAdded = "true";
                 }
 
-                // Se já tiver uma ação selecionada, chama fetchAction diretamente
-                const preSelectedAction = select.value;
-                if (preSelectedAction && preSelectedAction !== "") {
-                    document.getElementById("actionText").textContent =
-                        preSelectedAction === "curtir" ? "Curtir" :
-                            preSelectedAction === "seguir_curtir" ? "Seguir e Curtir" : "Seguir";
-
-                    fetchAction();
                 }
             }
-        }
+            
 async function fetchAction() {
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
     const contaInvalida = localStorage.getItem("conta_invalida") === "true";
 
-    // 🚫 Bloqueia se conta ou tipo de ação não estiverem definidos
+    // Bloqueia se conta ou tipo de ação não estiverem definidos
     if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
         document.getElementById("statusMessage").textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
@@ -901,7 +893,7 @@ async function fetchAction() {
         return;
     }
 
-    // 🚫 Bloqueia se tipo de ação não for um dos válidos
+    // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
         document.getElementById("statusMessage").textContent = "Tipo de ação inválido.";
         return;
@@ -937,14 +929,13 @@ async function fetchAction() {
                 return false;
             }
 
-            await tentarBuscarSMM(); // Chama de fato
+            await tentarBuscarSMM();
 
 async function tentarBuscarLocal() {
     try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
 
         if (!response.ok) {
-            // Evita que apareça o erro 404 no console
             return false;
         }
 
@@ -962,8 +953,6 @@ async function tentarBuscarLocal() {
         }
 
     } catch (e) {
-        // Você pode logar aqui se quiser
-        // console.error("Erro ao buscar ação:", e);
     }
     return false;
 }
@@ -1246,8 +1235,6 @@ async function confirmAction() {
                 }
 
                 const accountSelect = document.getElementById("accountSelect");
-
-                // ✅ Corrigido: placeholder com atributos corretos
                 accountSelect.innerHTML = '<option value="" disabled selected hidden>Selecione uma conta</option>';
 
                 accounts.forEach((account) => {
