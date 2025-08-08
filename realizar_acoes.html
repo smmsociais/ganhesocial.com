@@ -1101,6 +1101,7 @@ function exibirContagemRegressiva() {
 
     let contador = 3;
     const statusElement = document.getElementById("statusMessage");
+    if (!statusElement) return; // segurança
 
     statusElement.dataset.contagem = "true";
     statusElement.innerHTML = `
@@ -1109,8 +1110,9 @@ function exibirContagemRegressiva() {
             <div class="loading-circle"></div>
         </div>
     `;
-    
+
     const loadingMessage = statusElement.querySelector(".loading-message");
+    if (!loadingMessage) return;
 
     function atualizarMensagem() {
         if (contador > 0) {
@@ -1118,9 +1120,9 @@ function exibirContagemRegressiva() {
             contador--;
             setTimeout(atualizarMensagem, 1000);
         } else {
-            contagemEmAndamento = false; // ✅ libera para futuras contagens
+            contagemEmAndamento = false;              // ✅ libera futuras contagens
             statusElement.removeAttribute("data-contagem");
-            fetchActionDebounced();      // ✅ chamada única
+            fetchActionDebounced();                  // ✅ chamada única após a contagem
         }
     }
 
