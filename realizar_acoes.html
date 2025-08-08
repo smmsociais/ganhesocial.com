@@ -1077,12 +1077,15 @@ async function tentarBuscarLocal() {
             } catch (error) {
             }
 
-// Função para exibir a contagem regressiva animada com círculo de carregamento
+let contagemEmAndamento = false; // ⬅️ controle global
+
 function exibirContagemRegressiva() {
+    if (contagemEmAndamento) return; // ⛔ impede chamadas simultâneas
+    contagemEmAndamento = true;
+
     let contador = 3;
     const statusElement = document.getElementById("statusMessage");
     
-    // Atualiza o HTML com a mensagem acima e o círculo abaixo
     statusElement.innerHTML = `
         <div class="loading-message">Nenhuma ação disponível no momento. Tentando novamente em ${contador}...</div>
         <div class="loading-circle-container">
@@ -1092,21 +1095,20 @@ function exibirContagemRegressiva() {
     
     const loadingMessage = statusElement.querySelector(".loading-message");
 
-    // Função que atualiza a mensagem a cada segundo
     function atualizarMensagem() {
         if (contador > 0) {
             loadingMessage.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
             contador--;
             setTimeout(atualizarMensagem, 1000);
         } else {
-            fetchActionDebounced();
+            contagemEmAndamento = false; // ✅ libera para futuras contagens
+            fetchActionDebounced();      // ✅ chamada única
         }
     }
 
-    // Inicia a contagem
     atualizarMensagem();
 }
-        }
+}
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
@@ -1178,7 +1180,7 @@ async function confirmAction() {
 
             // Busca nova ação sem mostrar o conteúdo da anterior
             document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-            fetchAction();
+            fetchActionDebounced();
         }
 
         async function skipAction() {
@@ -1229,7 +1231,7 @@ async function confirmAction() {
                 });
 
                 // Buscar próxima ação
-                fetchAction();
+                fetchActionDebounced();
             } catch (error) {
                 console.error("Erro ao registrar ação pulada:", error);
             }
