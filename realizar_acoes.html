@@ -850,16 +850,6 @@
             }
         }
 
-let contagemEmAndamento = false;   
-let fetchTimeout;
-
-function fetchActionDebounced() {
-  clearTimeout(fetchTimeout);
-  fetchTimeout = setTimeout(() => {
-    fetchAction();
-  }, 200);
-}
-
 let inicializou = false;
 
 function ativarSelecaoTipoAcao() {
@@ -902,34 +892,81 @@ function ativarSelecaoTipoAcao() {
     }
 }
 
+// Variáveis de controle fora da função para persistirem entre execuções
+let fetchTimeout = null;
+let fetchEmAndamento = false;
+let contagemEmAndamento = false;
+
+// Função debounce (500ms padrão)
+function debounce(fn, delay = 500) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+// Contagem regressiva para tentar novamente
+function exibirContagemRegressiva(segundos, callback) {
+    const statusElement = document.getElementById("statusMessage");
+    contagemEmAndamento = true;
+    statusElement.dataset.contagem = "true";
+
+    let contador = segundos;
+    statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+
+    const interval = setInterval(() => {
+        contador--;
+        if (contador > 0) {
+            statusElement.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
+        } else {
+            clearInterval(interval);
+            delete statusElement.dataset.contagem;
+            contagemEmAndamento = false;
+            if (typeof callback === "function") callback();
+        }
+    }, 1000);
+}
+
+// Função principal
 async function fetchAction() {
     console.trace("📡 fetchAction chamado");
+
+    // Previne chamadas simultâneas
+    if (fetchEmAndamento) {
+        console.log("⏳ fetchAction ignorado — já em andamento");
+        return;
+    }
+    fetchEmAndamento = true;
+
     const id_conta = localStorage.getItem("id_conta");
     const token = localStorage.getItem("token");
     const actionType = document.getElementById("actionType").value;
-    const contaInvalida = localStorage.getItem("conta_invalida") === "true";
-
     const statusElement = document.getElementById("statusMessage");
 
-    // Bloqueia se conta ou tipo de ação não estiverem definidos
-    if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
+    // Validações iniciais
+    if (!id_conta || !token || id_conta === "null" || !actionType) {
         statusElement.textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
         document.getElementById("warningMessage").style.display = "block";
         document.getElementById("actionContent").style.opacity = "1";
+        fetchEmAndamento = false;
         return;
     }
 
-    // Bloqueia se tipo de ação não for um dos válidos
     if (!["seguir", "curtir", "seguir_curtir"].includes(actionType)) {
         statusElement.textContent = "Tipo de ação inválido.";
+        fetchEmAndamento = false;
         return;
     }
 
-    if (document.getElementById("actionType").disabled) return;
+    if (document.getElementById("actionType").disabled) {
+        fetchEmAndamento = false;
+        return;
+    }
 
     document.getElementById("warningMessage").style.display = "none";
 
-    // ✅ Só mostra "Buscando ações..." se NÃO estiver em contagem regressiva
+    // Só mostra "Buscando ações..." se NÃO estiver em contagem regressiva
     if (!statusElement.dataset.contagem) {
         statusElement.innerHTML = `
             <div class="loading-message">Buscando ações, aguarde...</div>
@@ -940,6 +977,33 @@ async function fetchAction() {
     }
 
     document.getElementById("actionContent").style.opacity = "0";
+
+    try {
+        const response = await fetch(`/api/get_action?tipo=${actionType}&id_conta=${id_conta}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data && data.acao) {
+            console.log("✅ Ação recebida:", data);
+            // Aqui você renderiza a ação
+            renderAction(data);
+        } else {
+            console.warn("⚠ Nenhuma ação disponível, iniciando contagem regressiva...");
+            exibirContagemRegressiva(5, fetchActionDebounced); // tenta novamente após 5 segundos
+        }
+
+    } catch (error) {
+        console.error("❌ Erro ao buscar ação:", error);
+        statusElement.textContent = "Erro ao buscar ação. Tente novamente.";
+    } finally {
+        fetchEmAndamento = false;
+    }
+}
+
+// Cria a função com debounce
+const fetchActionDebounced = debounce(fetchAction, 500);
 
     // Função de tentativa de busca
     async function tentarBuscarSMM() {
@@ -1092,41 +1156,7 @@ async function tentarBuscarLocal() {
 
             } catch (error) {
             }
-
-function exibirContagemRegressiva() {
-    if (contagemEmAndamento) return; // ⛔ impede chamadas simultâneas
-    contagemEmAndamento = true;
-
-    let contador = 3;
-    const statusElement = document.getElementById("statusMessage");
-    if (!statusElement) return; // segurança
-
-    statusElement.dataset.contagem = "true";
-    statusElement.innerHTML = `
-        <div class="loading-message">Nenhuma ação disponível no momento. Tentando novamente em ${contador}...</div>
-        <div class="loading-circle-container">
-            <div class="loading-circle"></div>
-        </div>
-    `;
-
-    const loadingMessage = statusElement.querySelector(".loading-message");
-    if (!loadingMessage) return;
-
-    function atualizarMensagem() {
-        if (contador > 0) {
-            loadingMessage.textContent = `Nenhuma ação disponível no momento. Tentando novamente em ${contador}...`;
-            contador--;
-            setTimeout(atualizarMensagem, 1000);
-        } else {
-            contagemEmAndamento = false;              // ✅ libera futuras contagens
-            statusElement.removeAttribute("data-contagem");
-            fetchActionDebounced();                  // ✅ chamada única após a contagem
-        }
-    }
-
-    atualizarMensagem();
-}
-}
+            
         function showConfirmButton() {
             document.getElementById("confirmButton").style.display = "block";
         }
