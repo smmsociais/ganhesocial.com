@@ -850,10 +850,9 @@
             }
         }
 
- console.log("⚙️ ativarSelecaoTipoAcao foi chamada");
- let contagemEmAndamento = false;
-       
+let contagemEmAndamento = false;   
 let fetchTimeout;
+
 function fetchActionDebounced() {
   clearTimeout(fetchTimeout);
   fetchTimeout = setTimeout(() => {
@@ -1093,8 +1092,6 @@ async function tentarBuscarLocal() {
 
             } catch (error) {
             }
-
-let contagemEmAndamento = false; // ⬅️ controle global
 
 function exibirContagemRegressiva() {
     if (contagemEmAndamento) return; // ⛔ impede chamadas simultâneas
