@@ -1001,14 +1001,6 @@ async function tentarBuscarSMM(id_conta, token, actionType, statusElement) {
     return false;
 }
 
-    // Inicia a busca
-    const encontrada = await tentarBuscarSMM();
-
-    // Se não encontrou, inicia contagem regressiva
-    if (!encontrada) {
-        exibirContagemRegressiva(); // essa função já lida com status e contagem
-    }
-
 async function tentarBuscarLocal() {
     try {
         const response = await fetch(`/api/buscar_acao?id_conta=${id_conta}&token=${token}`);
