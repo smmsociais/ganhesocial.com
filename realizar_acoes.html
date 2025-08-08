@@ -969,77 +969,82 @@ async function tentarBuscarLocal() {
     }
     return false;
 }
-            async function processarAcao(data, origem) {
-                document.getElementById("skipButton").style.display = "inline-block";
-                document.getElementById("statusMessage").textContent = "";
-                document.getElementById("username").textContent = data.nome_usuario;
+async function processarAcao(data, origem) {
+    // Ignora a primeira ação após troca de tipo
+    if (window.isFirstFetchAfterChange) {
+        window.isFirstFetchAfterChange = false;
+        currentActionData = { ...data, origem };
+        return;
+    }
 
-                // Atualiza o texto da ação com base no tipo selecionado
-                const actionType = document.getElementById("actionType").value;
-                let actionText = "Seguir";
+    document.getElementById("skipButton").style.display = "inline-block";
+    document.getElementById("statusMessage").textContent = "";
+    document.getElementById("username").textContent = data.nome_usuario;
 
-                if (data.url_dir && data.url_dir.includes("/video/")) {
-                    actionText = "Curtir";
-                } else if (actionType === "seguir_curtir") {
-                    actionText = origem === "local" ? "Seguir" : "Seguir";
-                } else if (actionType === "curtir") {
-                    actionText = "Curtir";
-                }
+    const actionType = document.getElementById("actionType").value;
+    let actionText = "Seguir";
 
-                document.getElementById("actionText").textContent = actionText;
+    if (data.url_dir && data.url_dir.includes("/video/")) {
+        actionText = "Curtir";
+    } else if (actionType === "seguir_curtir") {
+        actionText = "Seguir";
+    } else if (actionType === "curtir") {
+        actionText = "Curtir";
+    }
 
-                const tiktokUsername = data.nome_usuario.replace(/^@/, '');
-                const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
-                const profileImg = document.getElementById("profileImage");
-                document.getElementById("actionUrl").href = url;
+    document.getElementById("actionText").textContent = actionText;
 
-                if (data.url_dir && data.url_dir.includes("/video/")) {
-                    // Não carrega imagem de perfil para ações de Curtir
-                    profileImg.style.display = "none";
-                    profileImg.src = "";
-                } else {
-                    try {
-                        const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
-                        const userInfo = await resUserInfo.json();
+    const tiktokUsername = data.nome_usuario.replace(/^@/, '');
+    const url = data.url_dir || `https://www.tiktok.com/@${tiktokUsername}`;
+    const profileImg = document.getElementById("profileImage");
+    document.getElementById("actionUrl").href = url;
 
-                        if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
-                            profileImg.src = userInfo.data.user.avatarLarger;
-                            profileImg.style.display = "block";
-                            localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
+    if (data.url_dir && data.url_dir.includes("/video/")) {
+        profileImg.style.display = "none";
+        profileImg.src = "";
+    } else {
+        try {
+            const resUserInfo = await fetch(`/api/user-info?unique_id=${tiktokUsername}`);
+            const userInfo = await resUserInfo.json();
 
-                        } else {
-                            profileImg.style.display = "none";
-                            profileImg.src = "";
-                        }
-                    } catch (e) {
-                        profileImg.style.display = "none";
-                        profileImg.src = "";
-                    }
-                }
-                let valorFinal;
-
-                const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
-
-                if (isCurtir) {
-                    valorFinal = "0.001";
-                } else if (origem === "smm") {
-                    valorFinal = "0.006";
-                } else {
-                    const pontos = parseFloat(data.quantidade_pontos || 0);
-                    const valorBruto = pontos / 1000;
-                    let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-                    valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
-                }
-                document.getElementById("points").textContent = `R$ ${valorFinal}`;
-                document.getElementById("confirmButton").style.display = "none";
-
-                currentActionData = {
-                    ...data,
-                    origem
-                };
-                document.getElementById("actionContent").style.display = "block";
-                document.getElementById("actionContent").style.opacity = "1";
+            if (userInfo.code === 0 && userInfo.data?.user?.avatarLarger) {
+                profileImg.src = userInfo.data.user.avatarLarger;
+                profileImg.style.display = "block";
+                localStorage.setItem("unique_id", userInfo.data.user.uniqueId);
+            } else {
+                profileImg.style.display = "none";
+                profileImg.src = "";
             }
+        } catch (e) {
+            profileImg.style.display = "none";
+            profileImg.src = "";
+        }
+    }
+
+    let valorFinal;
+    const isCurtir = (data.url_dir && data.url_dir.includes("/video/")) || actionType === "curtir";
+
+    if (isCurtir) {
+        valorFinal = "0.001";
+    } else if (origem === "smm") {
+        valorFinal = "0.006";
+    } else {
+        const pontos = parseFloat(data.quantidade_pontos || 0);
+        const valorBruto = pontos / 1000;
+        let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+        valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+    }
+
+    document.getElementById("points").textContent = `R$ ${valorFinal}`;
+    document.getElementById("confirmButton").style.display = "none";
+
+    currentActionData = {
+        ...data,
+        origem
+    };
+    document.getElementById("actionContent").style.display = "block";
+    document.getElementById("actionContent").style.opacity = "1";
+}
 
             try {
                 const tipoAcao = document.getElementById("actionType").value;
