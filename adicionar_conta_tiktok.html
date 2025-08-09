@@ -614,30 +614,43 @@
                 })
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data?.error || "Erro ao adicionar conta");
-            }
-
-            // Atualiza a página antes de mostrar a mensagem
-            window.location.reload();
-
-            // 🔄 Chamada à API externa após sucesso
-            try {
-                const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
-                const bindText = await bindResponse.text();
-                console.log("Resposta da API externa:", bindText);
-            } catch (bindError) {
-                console.warn("Erro ao notificar API externa:", bindError);
-            }
-
-        } catch (error) {
-            // Mostra mensagem de erro sem recarregar a página
-            showMessage(error.message, true);
-            inputField.value = "";
+    if (!response.ok) {
+            throw new Error(data?.error || "Erro ao adicionar conta");
         }
+
+        // Salvar mensagem no sessionStorage antes do reload
+        sessionStorage.setItem('addAccountMessage', 'Conta adicionada com sucesso!');
+        sessionStorage.setItem('addAccountMessageIsError', 'false');
+
+        window.location.reload();
+
+        // Chamada API externa (mantém igual)
+        try {
+            const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
+            const bindText = await bindResponse.text();
+            console.log("Resposta da API externa:", bindText);
+        } catch (bindError) {
+            console.warn("Erro ao notificar API externa:", bindError);
+        }
+
+    } catch (error) {
+        // Mensagem de erro sem reload
+        showMessage(error.message, true);
+        inputField.value = "";
     }
+}
+
+// Exibir mensagem após reload
+window.addEventListener('DOMContentLoaded', () => {
+    const msg = sessionStorage.getItem('addAccountMessage');
+    const isError = sessionStorage.getItem('addAccountMessageIsError') === 'true';
+
+    if (msg) {
+        showMessage(msg, isError);
+        sessionStorage.removeItem('addAccountMessage');
+        sessionStorage.removeItem('addAccountMessageIsError');
+    }
+});
 
     function logout() {
         localStorage.removeItem("token");
