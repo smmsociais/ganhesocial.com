@@ -116,34 +116,37 @@ await colecao.updateOne(
             );
             console.log(`   ✓ Saldo do usuário ${valid.user} incrementado em ${valor}`);
 
-            const agora = new Date();
-            const brasilMidnight = new Date(
-              Date.UTC(
-                agora.getUTCFullYear(),
-                agora.getUTCMonth(),
-                agora.getUTCDate() + 1,
-                0,
-                0,
-                0
-              )
-            );
+const agora = new Date();
+console.log("🕒 Agora (UTC):", agora.toISOString());
+
+const offsetBrasilia = -3;
+
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
+
+const brasilMidnightTomorrow = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1,
+  3,
+  0,
+  0,
+  0
+));
+console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
 
 await DailyEarning.updateOne(
   {
     userId: new ObjectId(valid.user),
-    data: {
-      $gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
-      $lt: new Date(new Date().setUTCHours(23, 59, 59, 999))
-    },
+    expiresAt: brasilMidnightTomorrow,
   },
   {
     $inc: { valor },
     $setOnInsert: {
-      expiresAt: brasilMidnight,
-      data: new Date() // ⬅️ importante garantir que "data" seja inserido
+      expiresAt: brasilMidnightTomorrow,
     },
   },
-  { upsert: true } // ⬅️ permite criar se não existir
+  { upsert: true }
 );
 
             console.log(`   ✓ Saldo e dailyearning atualizados para o usuário ${valid.user} em R$${valor}`);
