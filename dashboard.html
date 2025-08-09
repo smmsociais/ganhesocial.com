@@ -860,7 +860,6 @@
                 });
 
                 const data = await response.json();
-                console.log("Ranking recebido:", data);
 
                 if (!response.ok) {
                     throw new Error(data.error || "Erro ao buscar ranking.");
