@@ -85,7 +85,7 @@
         /* Main Container */
         .main-container {
             padding: 30px;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -591,14 +591,14 @@
         }
 
         // Preencher dados da conta quando a página carregar
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const username = getUrlParameter('username');
             if (username) {
                 // Atualiza a mensagem de sucesso com o nome de usuário
                 const successMessage = document.getElementById('successMessage');
                 successMessage.textContent = `Sua conta do TikTok (@${username}) foi adicionada com sucesso!`;
             }
-            
+
         });
 
         function logout() {
@@ -647,4 +647,5 @@
         });
     </script>
 </body>
+
 </html>
