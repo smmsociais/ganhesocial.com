@@ -1028,7 +1028,6 @@
 
                 // Bloqueios iniciais
                 if (!id_conta || !token || id_conta === "null" || !actionType || actionType === "") {
-                    if (statusElement) statusElement.textContent = "Selecione uma conta e um tipo de ação antes de buscar ações.";
                     document.getElementById("warningMessage").style.display = "block";
                     document.getElementById("actionContent").style.opacity = "1";
                     return;
