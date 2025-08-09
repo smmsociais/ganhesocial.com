@@ -781,11 +781,13 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
+            // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            menuToggle.addEventListener('click', function () {
+            function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
 
@@ -799,16 +801,7 @@
                     spans[1].style.opacity = '1';
                     spans[2].style.transform = 'none';
                 }
-            });
-
-            menuOverlay.addEventListener('click', function () {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            });
+            }
 
             function closeMenu() {
                 menuContent.classList.remove('active');
@@ -817,7 +810,11 @@
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
-            }            
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
 
             try {
                 await loadAccounts();
