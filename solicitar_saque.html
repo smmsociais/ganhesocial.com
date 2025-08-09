@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitar Saque - GanheSocial</title>
-    <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
+    <title>Solicitar Saque</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -29,7 +28,9 @@
             --failed-dark: #ea4335;
             --border-dark: #333333;
             --hover-dark: #2d2d2d;
-            --shadow-dark: rgba(0, 0, 0, 0.3) --card-radius: 12px;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
             --transition: all 0.3s ease;
         }
 
@@ -83,9 +84,9 @@
 
         /* Main Container */
         .main-container {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 30px 0px 0px;
+            max-width: 900px;
+            margin: 10px auto 0;
         }
 
         .container {
@@ -421,7 +422,7 @@
 
             .input-box,
             .select-box {
-                width: 1200px;
+                width: 900px;
                 max-width: 100%;
             }
 
@@ -555,7 +556,8 @@
 
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -585,7 +587,8 @@
             </div>
             <!-- Logo para mobile (no header) -->
             <a href="dashboard" class="logo-mobile">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+                <img src="https://raw.githubusercontent.com/GanheSocial/ganhesocial.com/main/1744065809737.png"
+                    alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
@@ -594,14 +597,14 @@
     <div class="main-container">
         <div class="container fade-in">
             <div class="container-header">
-                <h2></i> Solicitar Saque</h2>
+                <h2><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</h2>
             </div>
             <div class="container-body">
                 <div id="alertBox" class="alert-message"></div>
 
                 <div class="info-box">
                     <div class="info-title"><i class="fas fa-info-circle"></i> Valor Mínimo</div>
-                    <div class="info-content">O valor mínimo para saque é de R$ 5,00.</div>
+                    <div class="info-content">O valor mínimo para saque é de R$ 10,00.</div>
                 </div>
 
                 <div class="info-box">
@@ -764,8 +767,8 @@
             const pixKey = document.getElementById('pixKey').value.trim();
             const token = localStorage.getItem("token");
 
-            if (!amount || amount < 5) {
-                showAlert("O valor mínimo para saque é de R$ 5,00.");
+            if (!amount || amount < 10) {
+                showAlert("O valor mínimo para saque é de R$ 10,00.");
                 return;
             }
 
