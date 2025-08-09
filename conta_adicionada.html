@@ -560,7 +560,7 @@
     <div class="main-container">
         <div class="container fade-in">
             <div class="container-header">
-                <h2><i class="fab fa-tiktok"></i> Conta Adicionada com Sucesso</h2>
+                <h2></i> Conta Adicionada com Sucesso</h2>
             </div>
             <div class="container-body">
                 <div class="success-box bounce-in">
@@ -599,10 +599,6 @@
                 successMessage.textContent = `Sua conta do TikTok (@${username}) foi adicionada com sucesso!`;
             }
             
-            // Definir data atual
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('pt-BR');
-            document.getElementById('accountDate').textContent = formattedDate;
         });
 
         function logout() {
