@@ -810,45 +810,74 @@
         });
         let currentActionData = null;
 
-        async function bindAccount() {
-            const selectedAccount = document.getElementById("accountSelect").value?.trim();
+function limparUI() {
+  currentActionData = null;
+  tentativasSemAcoes = 0;
 
-            if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
-                return;
-            }
+  const username = document.getElementById("username");
+  const points = document.getElementById("points");
+  const actionText = document.getElementById("actionText");
+  const profileImage = document.getElementById("profileImage");
+  const actionUrl = document.getElementById("actionUrl");
+  const statusMessage = document.getElementById("statusMessage");
+  const actionContent = document.getElementById("actionContent");
 
-            try {
-                const response = await fetch("/api/vincular_conta", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ nomeUsuario: selectedAccount })
-                });
+  if (username) username.textContent = "";
+  if (points) points.textContent = "";
+  if (actionText) actionText.textContent = "";
+  if (profileImage) {
+    profileImage.src = "";
+    profileImage.style.display = "none";
+  }
+  if (actionUrl) actionUrl.href = "#";
+  if (statusMessage) statusMessage.textContent = "";
+  if (actionContent) {
+    actionContent.style.opacity = "0";
+    actionContent.style.display = "none";
+  }
+}
 
-                const data = await response.json();
+async function bindAccount() {
+  const selectedAccount = document.getElementById("accountSelect").value?.trim();
 
-                if (data.id_conta) {
-                    localStorage.setItem("id_conta", data.id_conta);
-                    localStorage.setItem("conta_invalida", "false");
-                } else {
-                    if (data.error === "WRONG_USER") {
-                        console.warn("WRONG_USER recebido, usando fallback.");
-                        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
-                        localStorage.setItem("conta_invalida", "true");
-                    } else {
-                        return;
-                    }
-                }
+  if (!selectedAccount || selectedAccount === "" || selectedAccount === "null") {
+    return;
+  }
 
-                // Habilita o select de tipo de ação, mas NÃO chama fetchAction ainda
-                document.getElementById("actionContent").style.display = "none";
-                ativarSelecaoTipoAcao();
+  try {
+    const response = await fetch("/api/vincular_conta", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ nomeUsuario: selectedAccount })
+    });
 
-            } catch (error) {
-            }
-        }
+    const data = await response.json();
+
+    if (data.id_conta) {
+      localStorage.setItem("id_conta", data.id_conta);
+      localStorage.setItem("conta_invalida", "false");
+    } else {
+      if (data.error === "WRONG_USER") {
+        console.warn("WRONG_USER recebido, usando fallback.");
+        localStorage.setItem("id_conta", "fallback_" + selectedAccount);
+        localStorage.setItem("conta_invalida", "true");
+      } else {
+        return;
+      }
+    }
+
+    limparUI();            // limpa UI e estados da conta antiga
+    ativarSelecaoTipoAcao(); // habilita seletor do tipo de ação
+
+    fetchAction();         // inicia busca para nova conta
+
+  } catch (error) {
+    console.error("Erro no bindAccount:", error);
+  }
+}
 
 // variáveis globais
 let contagemEmAndamento = false;
@@ -975,7 +1004,6 @@ function exibirContagemRegressiva(segundos = 3) {
 
 // Versão atualizada do fetchAction com flags e backoff
 async function fetchAction() {
-  // Proteção: evita chamadas concorrentes
   if (buscando) {
     return;
   }
