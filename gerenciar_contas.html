@@ -699,7 +699,6 @@
 
             try {
                 const url = `https://ganhesocial.com/api/contas?nomeConta=${encodeURIComponent(accountName)}`;
-                console.log("🔹 Enviando requisição DELETE para:", url);
 
                 const response = await fetch(url, {
                     method: "DELETE",
@@ -714,8 +713,6 @@
                 if (!response.ok) {
                     throw new Error(result.error || "Erro ao desativar conta.");
                 }
-
-                console.log("✅ Conta desativada:", result.message);
                 showMessage(`Conta "${accountName}" desativada. Para reativar, adicione novamente.`);
 
                 // Remove a conta da interface
