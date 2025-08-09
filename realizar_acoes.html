@@ -1200,75 +1200,77 @@ window.addEventListener("storage", (e) => {
         }
 
 async function confirmAction() {
-    const selectedAccount = document.getElementById("accountSelect").value;
-    if (!selectedAccount || !currentActionData) return;
+  const selectedAccount = document.getElementById("accountSelect").value;
+  if (!selectedAccount || !currentActionData) return;
 
-    const statusElement = document.getElementById("statusMessage");
-    const actionContent = document.getElementById("actionContent");
-    const confirmButton = document.getElementById("confirmButton");
-    const profileImage = document.getElementById("profileImage");
+  const statusElement = document.getElementById("statusMessage");
+  const actionContent = document.getElementById("actionContent");
+  const confirmButton = document.getElementById("confirmButton");
+  const profileImage = document.getElementById("profileImage");
 
-    // Mostra o carregamento
-    statusElement.innerHTML = `
-        <div class="loading-message">Buscando ações, aguarde...</div>
-        <div class="loading-circle-container">
-            <div class="loading-circle"></div>
-        </div>
-    `;
+  // Mostra carregamento
+  statusElement.innerHTML = `
+    <div class="loading-message">Buscando ações, aguarde...</div>
+    <div class="loading-circle-container">
+      <div class="loading-circle"></div>
+    </div>
+  `;
 
-    // Oculta elementos visuais da ação atual
-    actionContent.style.opacity = "0";
-    confirmButton.style.display = "none";
-    profileImage.style.display = "none";
+  // Oculta elementos da ação atual
+  actionContent.style.opacity = "0";
+  confirmButton.style.display = "none";
+  profileImage.style.display = "none";
 
-            let confirmData;
-            try {
-                if (currentActionData.origem !== 'smm') {
-                    const confirmResponse = await fetch("/api/confirmar_acao", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify({
-                            id_conta: localStorage.getItem("id_conta"),
-                            id_pedido: currentActionData.id_pedido,
-                        })
-                    });
+  try {
+    let confirmData;
 
-                    confirmData = await confirmResponse.json();
+    if (currentActionData.origem !== 'smm') {
+      const confirmResponse = await fetch("/api/confirmar_acao", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          id_conta: localStorage.getItem("id_conta"),
+          id_pedido: currentActionData.id_pedido,
+        })
+      });
 
-                    if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
-                        throw new Error("Erro ao confirmar ação.");
-                    }
-                } else {
-                    // Simula retorno básico para seguir com o restante da lógica
-                    confirmData = {
-                        valor: "0.007"
-                    };
-                }
+      confirmData = await confirmResponse.json();
 
-            } catch (error) {
-                console.error("Erro ao confirmar ação:", error);
-                return;
-            }
+      if (confirmData.status !== "success" || confirmData.message !== "CONFIRMOU_SUCESSO") {
+        throw new Error("Erro ao confirmar ação.");
+      }
+    } else {
+      confirmData = { valor: "0.007" };
+    }
 
-            await registrarAcaoPendente({
-                nome_usuario: selectedAccount,
-                id_pedido: currentActionData.id_pedido,
-                id_conta: localStorage.getItem("id_conta"),
-                url_dir: currentActionData.url_dir,
-                tipo_acao: currentActionData.tipo_acao,
-                quantidade_pontos: Number(currentActionData.quantidade_pontos),
-                valor_confirmacao: parseFloat(confirmData.valor),
-            });
-            const accountFound = true; // ou qualquer lógica para determinar isso
+    await registrarAcaoPendente({
+      nome_usuario: selectedAccount,
+      id_pedido: currentActionData.id_pedido,
+      id_conta: localStorage.getItem("id_conta"),
+      url_dir: currentActionData.url_dir,
+      tipo_acao: currentActionData.tipo_acao,
+      quantidade_pontos: Number(currentActionData.quantidade_pontos),
+      valor_confirmacao: parseFloat(confirmData.valor),
+    });
 
-            // Busca nova ação sem mostrar o conteúdo da anterior
-            document.getElementById("statusMessage").textContent = "Buscando ações, aguarde...";
-            fetchActionDebounced();
-        }
+    // Resetar tentativas para garantir nova busca ativa
+    tentativasSemAcoes = 0;
 
+    // Buscar próxima ação (de preferência chamando direto fetchAction para evitar delay)
+    await fetchAction();
+
+  } catch (error) {
+    console.error("Erro ao confirmar ação:", error);
+    statusElement.textContent = "Erro ao confirmar ação. Tente novamente.";
+    // Opcional: reexibir botão confirmar e elementos para tentar de novo
+    actionContent.style.opacity = "1";
+    confirmButton.style.display = "inline-block";
+    profileImage.style.display = "block";
+  }
+}
         async function skipAction() {
     const statusElement = document.getElementById("statusMessage");
     const actionContent = document.getElementById("actionContent");
