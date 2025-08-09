@@ -503,8 +503,7 @@
 
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
-                <img src="https://i.imgur.com/sQeLEVh.png"
-                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -614,43 +613,40 @@
                 })
             });
 
-    if (!response.ok) {
-            throw new Error(data?.error || "Erro ao adicionar conta");
+            const data = await response.json(); // Adicionado para parsear a resposta
+
+            if (!response.ok) {
+                throw new Error(data?.error || "Erro ao adicionar conta");
+            }
+
+            // Chamada API externa
+            try {
+                const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
+                const bindText = await bindResponse.text();
+                console.log("Resposta da API externa:", bindText);
+            } catch (bindError) {
+                console.warn("Erro ao notificar API externa:", bindError);
+            }
+
+            // Redirecionar para página de sucesso com o nome de usuário
+            window.location.href = `conta_adicionada.html?username=${encodeURIComponent(accountName)}`;
+
+        } catch (error) {
+            // Mensagem de erro sem redirecionamento
+            showMessage(error.message, true);
+            inputField.value = "";
         }
+    }
 
-        // Salvar mensagem no sessionStorage antes do reload
-        sessionStorage.setItem('addAccountMessage', 'Conta adicionada com sucesso!');
-        sessionStorage.setItem('addAccountMessageIsError', 'false');
-
-        window.location.reload();
-
-        // Chamada API externa (mantém igual)
-        try {
-            const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
-            const bindText = await bindResponse.text();
-            console.log("Resposta da API externa:", bindText);
-        } catch (bindError) {
-            console.warn("Erro ao notificar API externa:", bindError);
+    // Exibir mensagem de erro se houver (agora sem uso do sessionStorage)
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        
+        if (error) {
+            showMessage(decodeURIComponent(error), true);
         }
-
-    } catch (error) {
-        // Mensagem de erro sem reload
-        showMessage(error.message, true);
-        inputField.value = "";
-    }
-}
-
-// Exibir mensagem após reload
-window.addEventListener('DOMContentLoaded', () => {
-    const msg = sessionStorage.getItem('addAccountMessage');
-    const isError = sessionStorage.getItem('addAccountMessageIsError') === 'true';
-
-    if (msg) {
-        showMessage(msg, isError);
-        sessionStorage.removeItem('addAccountMessage');
-        sessionStorage.removeItem('addAccountMessageIsError');
-    }
-});
+    });
 
     function logout() {
         localStorage.removeItem("token");
