@@ -810,6 +810,15 @@
                 spans[2].style.transform = 'none';
             });
 
+            function closeMenu() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }            
+
             try {
                 await loadAccounts();
             } catch (error) {
