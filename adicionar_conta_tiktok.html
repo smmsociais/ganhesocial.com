@@ -623,9 +623,7 @@
                 try {
                     const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
                     const bindText = await bindResponse.text();
-                    console.log("Resposta da API externa:", bindText);
                 } catch (bindError) {
-                    console.warn("Erro ao notificar API externa:", bindError);
                 }
 
                 // Redirecionar para página de sucesso com o nome de usuário
