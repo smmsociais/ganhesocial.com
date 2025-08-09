@@ -560,14 +560,20 @@
     <div class="main-container">
         <div class="container fade-in">
             <div class="container-header">
-                <h2></i> Conta Adicionada com Sucesso</h2>
+                <h2><i class="fab fa-tiktok"></i> Conta Adicionada com Sucesso</h2>
             </div>
             <div class="container-body">
                 <div class="success-box bounce-in">
                     <div class="success-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <h3>Sua conta do TikTok foi adicionada com sucesso!</h3>
+                    <h3 id="successMessage">Sua conta do TikTok foi adicionada com sucesso!</h3>
+                </div>
+
+                <div class="account-details fade-in">
+                    <p><strong>Nome de usuário:</strong> <span id="accountUsername">-</span></p>
+                    <p><strong>Data de adição:</strong> <span id="accountDate">-</span></p>
+                    <p><strong>Status:</strong> <span class="status-badge" style="color: var(--success-color);">Ativa</span></p>
                 </div>
 
                 <div class="button-group">
@@ -592,22 +598,21 @@
         }
 
         // Preencher dados da conta quando a página carregar
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const username = getUrlParameter('username');
             if (username) {
-                document.getElementById('accountUsername').textContent = username;
+                // Atualiza a mensagem de sucesso com o nome de usuário
+                const successMessage = document.getElementById('successMessage');
+                successMessage.textContent = `Sua conta do TikTok (@${username}) foi adicionada com sucesso!`;
+                
+                // Preenche os detalhes da conta
+                document.getElementById('accountUsername').textContent = `@${username}`;
             }
-
+            
             // Definir data atual
             const today = new Date();
             const formattedDate = today.toLocaleDateString('pt-BR');
             document.getElementById('accountDate').textContent = formattedDate;
-
-            // Verificar se há mensagem de sucesso no sessionStorage
-            const successMsg = sessionStorage.getItem('addAccountSuccess');
-            if (successMsg) {
-                sessionStorage.removeItem('addAccountSuccess');
-            }
         });
 
         function logout() {
@@ -656,5 +661,4 @@
         });
     </script>
 </body>
-
 </html>
