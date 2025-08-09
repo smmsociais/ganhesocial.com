@@ -190,8 +190,14 @@
 
         /* Empty State */
         .empty-state {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 200px;
             padding: 40px 20px;
+            text-align: center;
         }
 
         .empty-state-icon {
@@ -210,6 +216,8 @@
         .empty-state-description {
             color: #6c757d;
             margin-bottom: 20px;
+            width: 100%;
+            text-align: center;
         }
 
         .btn-primary {
@@ -603,9 +611,7 @@
 
                 <!-- Empty State -->
                 <div id="no-accounts" class="empty-state" style="display: none;">
-                    <p class="empty-state-description">Nenhuma conta cadastrada, adicione uma conta para começar a
-                        ganhar</p>
-                    </a>
+                    <div class="empty-state-description">Nenhuma conta cadastrada, adicione uma conta para começar a ganhar</div>
                 </div>
             </div>
         </div>
