@@ -98,24 +98,40 @@
             font-size: 1.0em;
         }
 
+        /* Container da tabela ajustado para scroll com cabeçalho fixo */
+        .table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
         .history-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 0;
             font-size: 0.9em;
         }
 
-.history-table th {
-    background-color: var(--container-light); /* Cor de fundo igual ao container */
-    color: var(--text-light);
-    text-align: left;
-    padding: 12px 15px;
-    position: sticky;
-    top: 0;
-    z-index: 10; /* Garante que fique acima do conteúdo */
-    font-weight: 600;
-    border-bottom: 2px solid #dee2e6;
-}
+        .history-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .history-table th {
+            background-color: #f8f9fa;
+            color: #212529;
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+        }
 
         .history-table td {
             padding: 12px 15px;
@@ -161,22 +177,10 @@
             color: #666;
         }
 
-        /* Container da tabela ajustado para mobile */
-        .table-container {
-            max-height: 60vh;
-            overflow-y: auto;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            margin-bottom: 20px;
-            -webkit-overflow-scrolling: touch;
-            /* Melhora a rolagem no iOS */
-        }
-
         /* Garante que a tabela não ultrapasse o container */
         .table-container table {
             width: 100%;
             min-width: 600px;
-            /* Mínimo para não quebrar a tabela */
         }
 
         .pagination {
@@ -330,8 +334,8 @@
             }
 
             .history-table th {
-                background-color: var(--header-bg-dark);
-                color: var(--header-text-dark);
+                background-color: #1e1e1e;
+                color: var(--text-dark);
                 border-bottom: 2px solid var(--border-dark);
             }
 
