@@ -105,16 +105,17 @@
             font-size: 0.9em;
         }
 
-        .history-table th {
-            background-color: var(--header-bg-light);
-            color: var(--header-text-light);
-            text-align: left;
-            padding: 12px 15px;
-            position: sticky;
-            top: 0;
-            font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
-        }
+.history-table th {
+    background-color: var(--container-light); /* Cor de fundo igual ao container */
+    color: var(--text-light);
+    text-align: left;
+    padding: 12px 15px;
+    position: sticky;
+    top: 0;
+    z-index: 10; /* Garante que fique acima do conteúdo */
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
 
         .history-table td {
             padding: 12px 15px;
