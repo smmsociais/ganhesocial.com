@@ -465,17 +465,16 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 4px solid transparent; /* deixa a base transparente */
-    border-top-color: #4285f4; /* azul estilo Google */
-    border-left-color: #4285f4; /* um lado extra visível para criar um arco maior */
+    background: conic-gradient(
+        #4285f4 0deg 90deg, /* Cor do arco (azul Google) */
+        transparent 90deg 360deg /* Parte transparente */
+    );
     animation: spin 1s linear infinite;
-    box-sizing: border-box;
-    /* Deixa as pontas do arco arredondadas */
-    border-top-left-radius: 50%;
-    border-top-right-radius: 50%;
+    mask-image: radial-gradient(circle, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 71%);
+    -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 71%);
 }
 
-/* Animação */
+/* Animação de rotação */
 @keyframes spin {
     to {
         transform: rotate(360deg);
