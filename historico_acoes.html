@@ -243,7 +243,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 5;
+            z-index: 1000;
             display: none;
         }
 
@@ -257,7 +257,7 @@
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
             transition: left 0.3s ease;
             padding: 20px 0;
-            z-index: 6;
+            z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -464,6 +464,11 @@
             /* Esconde o header quando o menu está aberto */
             body.menu-open .header {
                 display: none;
+            }
+
+            /* Ajusta o z-index do cabeçalho da tabela quando o menu está aberto */
+            body.menu-open .history-table th {
+                z-index: 5;
             }
 
             /* Estilos para o botão de fechar no mobile */
