@@ -556,8 +556,7 @@
 
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
-                <img src="https://i.imgur.com/sQeLEVh.png"
-                    alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -587,8 +586,7 @@
             </div>
             <!-- Logo para mobile (no header) -->
             <a href="dashboard" class="logo-mobile">
-                <img src="https://i.imgur.com/sQeLEVh.png"
-                    alt="Logo GanheSocial" class="logo">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
@@ -604,7 +602,7 @@
 
                 <div class="info-box">
                     <div class="info-title"><i class="fas fa-info-circle"></i> Valor Mínimo</div>
-                    <div class="info-content">O valor mínimo para saque é de R$ 5,00.</div>
+                    <div class="info-content">O valor mínimo para saque é de R$ 0,01.</div>
                 </div>
 
                 <div class="info-box">
@@ -767,8 +765,8 @@
             const pixKey = document.getElementById('pixKey').value.trim();
             const token = localStorage.getItem("token");
 
-            if (!amount || amount < 5) {
-                showAlert("O valor mínimo para saque é de R$ 5,00.");
+            if (!amount || amount < 0) {
+                showAlert("O valor mínimo para saque é de R$ 0,01.");
                 return;
             }
 
