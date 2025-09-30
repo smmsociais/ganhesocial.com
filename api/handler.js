@@ -323,7 +323,7 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-  await connectDB();
+ await connectDB();
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -332,10 +332,7 @@ if (url.startsWith("/api/withdraw")) {
 
   const token = authHeader.split(" ")[1];
   const user = await User.findOne({ token });
-
-  if (!user) {
-    return res.status(401).json({ error: "Usuário não autenticado." });
-  }
+  if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
 
   try {
     if (method === "GET") {
@@ -349,43 +346,72 @@ if (url.startsWith("/api/withdraw")) {
       return res.status(200).json(saquesFormatados);
     }
 
-    if (method === "POST") {
-      const { amount, payment_method, payment_data } = req.body;
+    // === POST ===
+    const { amount, payment_method, payment_data } = req.body;
 
-      if (!amount || typeof amount !== "number" || amount <= 0) {
-        return res.status(400).json({ error: "Valor de saque inválido." });
-      }
-
-      if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-        return res.status(400).json({ error: "Dados de pagamento incompletos." });
-      }
-
-      if (user.saldo < amount) {
-        return res.status(400).json({ error: "Saldo insuficiente para saque." });
-      }
-
-      if (!user.pix_key) {
-        user.pix_key = payment_data.pix_key;
-        user.pix_key_type = payment_data.pix_key_type;
-      } else if (user.pix_key !== payment_data.pix_key) {
-        return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-      }
-
-      user.saldo -= amount;
-      user.saques.push({
-        valor: amount,
-        chave_pix: user.pix_key,
-        tipo_chave: user.pix_key_type,
-        status: "pendente",
-        data: new Date()
-      });
-
-      await user.save();
-      return res.status(200).json({ message: "Saque solicitado com sucesso." });
+    if (!amount || typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({ error: "Valor de saque inválido." });
     }
+
+    if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+      return res.status(400).json({ error: "Dados de pagamento incompletos." });
+    }
+
+    if (user.saldo < amount) {
+      return res.status(400).json({ error: "Saldo insuficiente para saque." });
+    }
+
+    if (!user.pix_key) {
+      user.pix_key = payment_data.pix_key;
+      user.pix_key_type = payment_data.pix_key_type;
+    } else if (user.pix_key !== payment_data.pix_key) {
+      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+    }
+
+    // Adiciona saque pendente
+    const novoSaque = {
+      valor: amount,
+      chave_pix: user.pix_key,
+      tipo_chave: user.pix_key_type,
+      status: "pendente",
+      data: new Date(),
+      asaasId: null
+    };
+    user.saldo -= amount;
+    user.saques.push(novoSaque);
+    await user.save();
+
+    // 🔹 Chamada ao PIX Out Asaas
+    const pixResponse = await fetch('https://www.asaas.com/api/v3/transfers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY
+      },
+      body: JSON.stringify({
+        value: amount,
+        operationType: 'PIX',
+        pixAddressKey: user.pix_key.replace(/\D/g, ''), // CPF sem pontuação
+        pixAddressKeyType: user.pix_key_type.toUpperCase()
+      })
+    });
+
+    const pixData = await pixResponse.json();
+
+    if (!pixResponse.ok) {
+      console.error("Erro PIX Asaas:", pixData);
+      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
+    }
+
+    // Atualiza o saque com o ID do Asaas
+    user.saques[user.saques.length - 1].asaasId = pixData.id;
+    await user.save();
+
+    res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
+
   } catch (error) {
     console.error("💥 Erro em /withdraw:", error);
-    return res.status(500).json({ error: "Erro ao processar saque." });
+    res.status(500).json({ error: "Erro ao processar saque." });
   }
 }
 
