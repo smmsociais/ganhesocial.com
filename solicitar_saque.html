@@ -604,7 +604,7 @@
 
                 <div class="info-box">
                     <div class="info-title"><i class="fas fa-info-circle"></i> Valor Mínimo</div>
-                    <div class="info-content">O valor mínimo para saque é de R$ 10,00.</div>
+                    <div class="info-content">O valor mínimo para saque é de R$ 5,00.</div>
                 </div>
 
                 <div class="info-box">
@@ -767,8 +767,8 @@
             const pixKey = document.getElementById('pixKey').value.trim();
             const token = localStorage.getItem("token");
 
-            if (!amount || amount < 10) {
-                showAlert("O valor mínimo para saque é de R$ 10,00.");
+            if (!amount || amount < 5) {
+                showAlert("O valor mínimo para saque é de R$ 5,00.");
                 return;
             }
 
