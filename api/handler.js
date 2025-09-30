@@ -323,6 +323,8 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(405).json({ error: "Método não permitido." });
   }
 
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+
  await connectDB();
 
   const authHeader = req.headers.authorization;
