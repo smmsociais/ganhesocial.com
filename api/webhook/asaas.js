@@ -1,6 +1,6 @@
 // /api/webhook/asaas.js
 import connectDB from "../db.js";
-import { User } from "./schema.js";
+import { User } from "../schema.js";
 
 export default async function handler(req, res) {
   try {
