@@ -33,7 +33,13 @@ const ActionHistorySchema = new mongoose.Schema({
 const WithdrawSchema = new mongoose.Schema({
   valor: { type: Number, required: true },
   chave_pix: { type: String, required: true },
-  tipo_chave: { type: String, default: "cpf" }
+  tipo_chave: { type: String, default: "cpf" },
+
+  // novos campos para integração Asaas
+  asaasId: { type: String, default: null },            // id da transferência no Asaas
+  externalReference: { type: String, default: null },  // referência externa que você gera
+  ownerName: { type: String, default: null },          // nome do titular (opcional)
+  bankAccount: { type: mongoose.Schema.Types.Mixed }   // guarda dados recebidos (agency/account/pix etc) - opcional
 }, {
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
