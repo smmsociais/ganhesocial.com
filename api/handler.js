@@ -1347,7 +1347,7 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
   }
 };
 
-// Rota: /api/withdraw (GET ou POST)
+// 🔹 Rota: /api/withdraw
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
     console.log("[DEBUG] Método não permitido:", method);
@@ -1451,45 +1451,47 @@ if (url.startsWith("/api/withdraw")) {
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
- // 🔹 Chamada PIX Out Asaas
-const payloadAsaas = {
-  value: Number(amount.toFixed(2)),
-  operationType: "PIX",
-  pixAddressKey: pixKey,
-  pixAddressKeyType: keyType,
-  externalReference,
+    // 🔹 Chamada PIX Out Asaas
+    const payloadAsaas = {
+      value: Number(amount.toFixed(2)),
+      operationType: "PIX",
+      pixAddressKey: pixKey,
+      pixAddressKeyType: keyType,
+      externalReference,
+      bankAccount: {
+        bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
+        accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+        ownerName: user.nome,
+        cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
+        type: "PAYMENT_ACCOUNT",
+        agencyDigit: "agencyDigit",
+        agency: "0001",
+        account: "54688818",
+        accountDigit: "2",
+        pixAddressKey: pixKey
+      }
+    };
+    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
 
-  // 🔹 Incluímos também bankAccount como fallback
-  bankAccount: {
-    bank: {
-      code: "260", // Nubank (ou mapeia pelo banco do usuário depois)
-      name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-      ispb: "18236120"
-    },
-    accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-    ownerName: user.nome,
-    cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null, // CPF direto
-    type: "PAYMENT_ACCOUNT", // CHECKING_ACCOUNT | SAVINGS_ACCOUNT | PAYMENT_ACCOUNT
-    agencyDigit:"agencyDigit",
-    agency: "0001", // Nubank usa 0001 (cheque se necessário)
-    account: "54688818", // Placeholder (Asaas pode ignorar se chave Pix for válida)
-    accountDigit: "2",
-    pixAddressKey: pixKey
-  }
-};
+    const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": ASAAS_API_KEY
+      },
+      body: JSON.stringify(payloadAsaas)
+    });
 
-console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
+    // 🔹 Tratamento seguro de resposta
+    let pixData;
+    try {
+      pixData = await pixResponse.json();
+    } catch (err) {
+      const text = await pixResponse.text();
+      console.error("[ERROR] Resposta não-JSON do Asaas:", text);
+      return res.status(pixResponse.status).json({ error: text });
+    }
 
-const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "access_token": ASAAS_API_KEY
-  },
-  body: JSON.stringify(payloadAsaas)
-});
-
-    const pixData = await pixResponse.json();
     console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
 
     if (!pixResponse.ok) {
@@ -1512,6 +1514,7 @@ const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
 }
+
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
