@@ -24,8 +24,6 @@ async function salvarAcaoComLimitePorUsuario(novaAcao) {
   await novaAcao.save();
 }
 
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-
 const formatarValorRanking = (valor) => {
   if (valor <= 1) return "1+";
   if (valor > 1 && valor < 5) return "1+";
@@ -1350,97 +1348,104 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
 };
 
 // Rota: /api/withdraw (GET ou POST)
- if (url.startsWith("/api/withdraw")) {
-    if (method !== "POST") {
-      return res.status(405).json({ error: "Método não permitido." });
-    }
-
-    await connectDB();
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Token ausente ou inválido." });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const user = await User.findOne({ token });
-
-    if (!user) {
-      return res.status(401).json({ error: "Usuário não autenticado." });
-    }
-
-    try {
-      const { amount, payment_data } = req.body;
-
-      if (!amount || amount < 5) {
-        return res.status(400).json({ error: "Valor de saque inválido." });
-      }
-
-      if (!payment_data?.pix_key || !payment_data?.pix_key_type) {
-        return res.status(400).json({ error: "Dados de pagamento incompletos." });
-      }
-
-      if (user.saldo < amount) {
-        return res.status(400).json({ error: "Saldo insuficiente para saque." });
-      }
-
-      // Salva chave PIX definitiva
-      if (!user.pix_key) {
-        user.pix_key = payment_data.pix_key;
-        user.pix_key_type = payment_data.pix_key_type;
-      }
-
-      // Cria saque pendente
-      const saque = {
-        valor: amount,
-        chave_pix: user.pix_key,
-        tipo_chave: user.pix_key_type,
-        status: "pendente",
-        data: new Date()
-      };
-
-      user.saldo -= amount;
-      user.saques.push(saque);
-      await user.save();
-
-      // 🔹 Chamada Pix Out no Asaas
-      const response = await fetch("https://www.asaas.com/api/v3/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": ASAAS_API_KEY
-        },
-        body: JSON.stringify({
-          value: amount,
-          operationType: "PIX",
-          pixAddressKey: user.pix_key,
-          pixAddressKeyType: user.pix_key_type.toUpperCase() // CPF, EMAIL, PHONE, CNPJ, EVP
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Erro Asaas:", data);
-        return res.status(500).json({ error: "Erro ao criar transferência no Asaas." });
-      }
-
-      // 🔹 Vincula ID do Asaas ao saque para atualização futura
-      saque.asaasTransferId = data.id;
-      saque.status = data.status || "aguardando_autorizacao";
-      await user.save();
-
-      return res.status(200).json({
-        message: "Saque solicitado com sucesso.",
-        saqueId: saque._id,
-        asaasId: data.id,
-        status: saque.status
-      });
-    } catch (error) {
-      console.error("💥 Erro em /withdraw:", error);
-      return res.status(500).json({ error: "Erro interno ao processar saque." });
-    }
+if (url.startsWith("/api/withdraw")) {
+  if (method !== "GET" && method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido." });
   }
+
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+
+ await connectDB();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token ausente ou inválido." });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const user = await User.findOne({ token });
+  if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+
+  try {
+    if (method === "GET") {
+      const saquesFormatados = user.saques.map(saque => ({
+        amount: saque.valor,
+        pixKey: saque.chave_pix,
+        keyType: saque.tipo_chave,
+        status: saque.status,
+        date: saque.data?.toISOString() || null
+      }));
+      return res.status(200).json(saquesFormatados);
+    }
+
+    // === POST ===
+    const { amount, payment_method, payment_data } = req.body;
+
+    if (!amount || typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({ error: "Valor de saque inválido." });
+    }
+
+    if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+      return res.status(400).json({ error: "Dados de pagamento incompletos." });
+    }
+
+    if (user.saldo < amount) {
+      return res.status(400).json({ error: "Saldo insuficiente para saque." });
+    }
+
+    if (!user.pix_key) {
+      user.pix_key = payment_data.pix_key;
+      user.pix_key_type = payment_data.pix_key_type;
+    } else if (user.pix_key !== payment_data.pix_key) {
+      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+    }
+
+    // Adiciona saque pendente
+    const novoSaque = {
+      valor: amount,
+      chave_pix: user.pix_key,
+      tipo_chave: user.pix_key_type,
+      status: "pendente",
+      data: new Date(),
+      asaasId: null
+    };
+    user.saldo -= amount;
+    user.saques.push(novoSaque);
+    await user.save();
+
+    // 🔹 Chamada ao PIX Out Asaas
+    const pixResponse = await fetch('https://www.asaas.com/api/v3/transfers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY
+      },
+      body: JSON.stringify({
+        value: amount,
+        operationType: 'PIX',
+        pixAddressKey: user.pix_key.replace(/\D/g, ''), // CPF sem pontuação
+        pixAddressKeyType: user.pix_key_type.toUpperCase()
+      })
+    });
+
+    const pixData = await pixResponse.json();
+
+    if (!pixResponse.ok) {
+      console.error("Erro PIX Asaas:", pixData);
+      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
+    }
+
+    // Atualiza o saque com o ID do Asaas
+    user.saques[user.saques.length - 1].asaasId = pixData.id;
+    await user.save();
+
+    res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
+
+  } catch (error) {
+    console.error("💥 Erro em /withdraw:", error);
+    res.status(500).json({ error: "Erro ao processar saque." });
+  }
+}
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
