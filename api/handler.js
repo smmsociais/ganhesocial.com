@@ -1354,168 +1354,136 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-  const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+  const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN; // <<<<< Mercado Pago
   await connectDB();
 
-    // 🔹 Autenticação
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      console.log("[DEBUG] Token ausente ou inválido:", authHeader);
-      return res.status(401).json({ error: "Token ausente ou inválido." });
-    }
-    const token = authHeader.split(" ")[1];
-    const user = await User.findOne({ token });
-    if (!user) {
-      console.log("[DEBUG] Usuário não encontrado para token:", token);
-      return res.status(401).json({ error: "Usuário não autenticado." });
-    }
-
-    try {
-      if (method === "GET") {
-        // Retorna histórico de saques
-        const saquesFormatados = user.saques.map(s => ({
-          amount: s.valor,
-          pixKey: s.chave_pix,
-          keyType: s.tipo_chave,
-          status: s.status,
-          date: s.data?.toISOString() || null
-        }));
-        console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
-        return res.status(200).json(saquesFormatados);
-      }
-
-      // 🔹 POST - Solicitar saque
-      const { amount, payment_method, payment_data } = req.body;
-      console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
-
-      // Validações básicas
-      if (!amount || typeof amount !== "number" || amount < 0) {
-        console.log("[DEBUG] Valor de saque inválido:", amount);
-        return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
-      }
-
-      if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-        console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
-        return res.status(400).json({ error: "Dados de pagamento incompletos." });
-      }
-
-      if (user.saldo < amount) {
-        console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
-        return res.status(400).json({ error: "Saldo insuficiente." });
-      }
-
-      // Normalize e valida tipo da chave PIX
-      const allowedTypes = ["CPF"];
-      const keyType = payment_data.pix_key_type.toUpperCase();
-      if (!allowedTypes.includes(keyType)) {
-        console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
-        return res.status(400).json({ error: "Tipo de chave PIX inválido." });
-      }
-
-      // Formata a chave para enviar ao Asaas
-      let pixKey = payment_data.pix_key;
-      if (keyType === "CPF" || keyType === "CNPJ") {
-        pixKey = pixKey.replace(/\D/g, "");
-        console.log("[DEBUG] Chave PIX formatada:", pixKey);
-      }
-
-      // Salva PIX do usuário se ainda não existir
-      if (!user.pix_key) {
-        user.pix_key = pixKey;
-        user.pix_key_type = keyType;
-        console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
-      } else if (user.pix_key !== pixKey) {
-        console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
-        return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-      }
-
-      // Cria referência externa única
-      const externalReference = `saque_${user._id}_${Date.now()}`;
-      console.log("[DEBUG] externalReference gerada:", externalReference);
-
-      // Adiciona saque pendente
-      const novoSaque = {
-        valor: amount,
-        chave_pix: pixKey,
-        tipo_chave: keyType,
-        status: "pendente",
-        data: new Date(),
-        asaasId: null,
-        externalReference,
-        ownerName: user.nome || null
-      };
-      console.log("[DEBUG] Novo saque criado:", novoSaque);
-
-      user.saldo -= amount;
-      user.saques.push(novoSaque);
-      await user.save();
-      console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
-
-      // 🔹 Chamada PIX Out Asaas
-      const payloadAsaas = {
-        value: Number(amount.toFixed(2)),
-        operationType: "PIX",
-        pixAddressKey: pixKey,
-        pixAddressKeyType: keyType,
-        externalReference,
-        bankAccount: {
-          bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
-          accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-          ownerName: user.nome,
-          cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
-          type: "PAYMENT_ACCOUNT",
-          agencyDigit: "agencyDigit",
-          agency: "0001",
-          account: "54688818",
-          accountDigit: "2",
-          pixAddressKey: pixKey
-        }
-      };
-
-      console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
-
-      const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": ASAAS_API_KEY
-        },
-        body: JSON.stringify(payloadAsaas)
-      });
-
-      // 🔹 Ler corpo como texto primeiro
-      const bodyText = await pixResponse.text();
-
-      let pixData;
-      try {
-        pixData = JSON.parse(bodyText);
-      } catch (err) {
-        console.error("[ERROR] Resposta não-JSON do Asaas:", bodyText);
-        return res.status(pixResponse.status).json({ error: bodyText });
-      }
-
-      console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
-
-      if (!pixResponse.ok) {
-        console.error("[DEBUG] Erro PIX Asaas:", pixData);
-        return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
-      }
-
-      // Atualiza saque com ID do Asaas
-      const index = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (index >= 0) {
-        user.saques[index].asaasId = pixData.id;
-        await user.save();
-        console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
-      }
-
-      return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
-
-    } catch (error) {
-      console.error("💥 Erro em /withdraw:", error);
-      return res.status(500).json({ error: "Erro ao processar saque." });
-    }
+  // 🔹 Autenticação
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
+    return res.status(401).json({ error: "Token ausente ou inválido." });
   }
+  const token = authHeader.split(" ")[1];
+  const user = await User.findOne({ token });
+  if (!user) {
+    console.log("[DEBUG] Usuário não encontrado para token:", token);
+    return res.status(401).json({ error: "Usuário não autenticado." });
+  }
+
+  try {
+    if (method === "GET") {
+      // Retorna histórico de saques
+      const saquesFormatados = user.saques.map(s => ({
+        amount: s.valor,
+        pixKey: s.chave_pix,
+        keyType: s.tipo_chave,
+        status: s.status,
+        date: s.data?.toISOString() || null
+      }));
+      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
+      return res.status(200).json(saquesFormatados);
+    }
+
+    // 🔹 POST - Solicitar saque
+    const { amount, payment_method, payment_data } = req.body;
+    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
+
+    // Validações
+    if (!amount || typeof amount !== "number" || amount < 0.01) {
+      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
+    }
+
+    if (!payment_method || !payment_data?.pix_key) {
+      return res.status(400).json({ error: "Dados de pagamento incompletos." });
+    }
+
+    if (user.saldo < amount) {
+      return res.status(400).json({ error: "Saldo insuficiente." });
+    }
+
+    // Salva PIX do usuário se ainda não existir
+    const pixKey = payment_data.pix_key;
+    if (!user.pix_key) {
+      user.pix_key = pixKey;
+      user.pix_key_type = "PIX";
+    } else if (user.pix_key !== pixKey) {
+      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+    }
+
+    // Cria referência única
+    const externalReference = `saque_${user._id}_${Date.now()}`;
+    console.log("[DEBUG] externalReference gerada:", externalReference);
+
+    // Adiciona saque pendente
+    const novoSaque = {
+      valor: amount,
+      chave_pix: pixKey,
+      tipo_chave: "PIX",
+      status: "pendente",
+      data: new Date(),
+      mpId: null,
+      externalReference,
+      ownerName: user.nome || null
+    };
+
+    user.saldo -= amount;
+    user.saques.push(novoSaque);
+    await user.save();
+    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
+
+    // 🔹 Chamada PIX Out Mercado Pago
+    const payloadMP = {
+      amount: Number(amount.toFixed(2)),
+      currency: "BRL",
+      target: {
+        type: "pix",
+        value: pixKey
+      },
+      description: `Saque usuário ${user._id} - ${externalReference}`
+    };
+
+    console.log("[DEBUG] Payload enviado ao Mercado Pago:", payloadMP);
+
+    const pixResponse = await fetch("https://api.mercadopago.com/v1/transfers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${MP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify(payloadMP)
+    });
+
+    const bodyText = await pixResponse.text();
+    let pixData;
+    try {
+      pixData = JSON.parse(bodyText);
+    } catch (err) {
+      console.error("[ERROR] Resposta não-JSON do Mercado Pago:", bodyText);
+      return res.status(pixResponse.status).json({ error: bodyText });
+    }
+
+    console.log("[DEBUG] Resposta Mercado Pago:", pixData, "Status HTTP:", pixResponse.status);
+
+    if (!pixResponse.ok) {
+      return res.status(400).json({ error: pixData.message || "Erro ao processar PIX" });
+    }
+
+    // Atualiza saque com ID Mercado Pago
+    const index = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (index >= 0) {
+      user.saques[index].mpId = pixData.id;
+      user.saques[index].status = "processando";
+      await user.save();
+    }
+
+    return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
+
+  } catch (error) {
+    console.error("💥 Erro em /withdraw:", error);
+    return res.status(500).json({ error: "Erro ao processar saque." });
+  }
+}
+
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
