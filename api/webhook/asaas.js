@@ -223,8 +223,21 @@ export default async function handler(req, res) {
     const isTransferEvent = (type === 'TRANSFER' && transfer) || (typeof event === 'string' && event.startsWith('TRANSFER'));
 
     if (isTransferEvent) {
-      const t = transfer || body;
-      console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status || event, externalReference: t.externalReference, value: t.value });
+// dentro do branch isTransferEvent, imediatamente após: const t = transfer || body;
+const t = transfer || body;
+console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status || event, externalReference: t.externalReference, value: t.value });
+
+// === Novo: se for TRANSFER CREATED / PENDING sem externalReference, tente criar saque local primeiro ===
+try {
+  if ((t.status === 'PENDING' || t.status === 'CREATED' || (event === 'TRANSFER_CREATED')) && !t.externalReference) {
+    console.log('[ASASS WEBHOOK] Transfer PENDING sem externalReference detectado — tentando criar saque local para UI (para permitir matching futuro).');
+    // aguardamos para garantir que o saque foi criado antes do matching
+    await createLocalSaqueIfNeeded(body);
+  }
+} catch (e) {
+  console.error('[ASASS WEBHOOK] Erro ao tentar createLocalSaqueIfNeeded previamente:', e);
+}
+// =================================================================================================
 
       await connectDB();
 
