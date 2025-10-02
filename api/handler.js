@@ -1350,20 +1350,25 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
 // Rota: /api/withdraw (GET ou POST)
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
+    console.log("[DEBUG] Método não permitido:", method);
     return res.status(405).json({ error: "Método não permitido." });
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-    await connectDB();
+  await connectDB();
 
   // 🔹 Autenticação
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
     return res.status(401).json({ error: "Token ausente ou inválido." });
   }
   const token = authHeader.split(" ")[1];
   const user = await User.findOne({ token });
-  if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+  if (!user) {
+    console.log("[DEBUG] Usuário não encontrado para token:", token);
+    return res.status(401).json({ error: "Usuário não autenticado." });
+  }
 
   try {
     if (method === "GET") {
@@ -1375,22 +1380,27 @@ if (url.startsWith("/api/withdraw")) {
         status: s.status,
         date: s.data?.toISOString() || null
       }));
+      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
       return res.status(200).json(saquesFormatados);
     }
 
     // 🔹 POST - Solicitar saque
     const { amount, payment_method, payment_data } = req.body;
+    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
     // Validações básicas
     if (!amount || typeof amount !== "number" || amount < 5) {
-      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
+      console.log("[DEBUG] Valor de saque inválido:", amount);
+      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$5,00)." });
     }
 
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+      console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
       return res.status(400).json({ error: "Dados de pagamento incompletos." });
     }
 
     if (user.saldo < amount) {
+      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
       return res.status(400).json({ error: "Saldo insuficiente." });
     }
 
@@ -1398,6 +1408,7 @@ if (url.startsWith("/api/withdraw")) {
     const allowedTypes = ["CPF"];
     const keyType = payment_data.pix_key_type.toUpperCase();
     if (!allowedTypes.includes(keyType)) {
+      console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
       return res.status(400).json({ error: "Tipo de chave PIX inválido." });
     }
 
@@ -1405,55 +1416,65 @@ if (url.startsWith("/api/withdraw")) {
     let pixKey = payment_data.pix_key;
     if (keyType === "CPF" || keyType === "CNPJ") {
       pixKey = pixKey.replace(/\D/g, "");
+      console.log("[DEBUG] Chave PIX formatada:", pixKey);
     }
 
     // Salva PIX do usuário se ainda não existir
     if (!user.pix_key) {
       user.pix_key = pixKey;
       user.pix_key_type = keyType;
+      console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
     } else if (user.pix_key !== pixKey) {
+      console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
       return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
     }
 
     // Cria referência externa única
     const externalReference = `saque_${user._id}_${Date.now()}`;
+    console.log("[DEBUG] externalReference gerada:", externalReference);
 
     // Adiciona saque pendente
-const novoSaque = {
-  valor: valor,
-  chave_pix: pixKey,
-  tipo_chave: keyType,
-  status: "pendente",
-  data: new Date(),
-  asaasId: null,
-  externalReference,
-  ownerName: user.nome || null
-};
+    const novoSaque = {
+      valor: amount,
+      chave_pix: pixKey,
+      tipo_chave: keyType,
+      status: "pendente",
+      data: new Date(),
+      asaasId: null,
+      externalReference,
+      ownerName: user.nome || null
+    };
+    console.log("[DEBUG] Novo saque criado:", novoSaque);
 
     user.saldo -= amount;
     user.saques.push(novoSaque);
     await user.save();
+    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
     // 🔹 Chamada PIX Out Asaas
+    const payloadAsaas = {
+      value: Number(amount.toFixed(2)),
+      operationType: "PIX",
+      pixAddressKey: pixKey,
+      pixAddressKeyType: keyType,
+      externalReference
+    };
+    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
+
     const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "access_token": ASAAS_API_KEY
       },
-      body: JSON.stringify({
-        value: Number(amount.toFixed(2)),
-        operationType: "PIX",
-        pixAddressKey: pixKey,
-        pixAddressKeyType: keyType,
-        externalReference
-      })
+      body: JSON.stringify(payloadAsaas)
     });
 
     const pixData = await pixResponse.json();
+    console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
 
     if (!pixResponse.ok) {
-      console.error("Erro PIX Asaas:", pixData);
+      console.error("[DEBUG] Erro PIX Asaas:", pixData);
       return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
     }
 
@@ -1462,6 +1483,7 @@ const novoSaque = {
     if (index >= 0) {
       user.saques[index].asaasId = pixData.id;
       await user.save();
+      console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
     }
 
     return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
