@@ -3,23 +3,20 @@ import connectDB from "../db.js";
 import { User } from "../schema.js";
 
 const WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN || null;
-const MATCH_WINDOW_MS = 1000 * 60 * 30; // 30 minutos - ajuste se quiser
+const MATCH_WINDOW_MS = 1000 * 60 * 30; // 30 minutos
 
-function now() {
-  return new Date().toISOString();
-}
+function now() { return new Date().toISOString(); }
 
 export default async function handler(req, res) {
   try {
     const body = req.body || {};
     const headers = req.headers || {};
 
-    // logs iniciais detalhados
     console.log(`[ASASS WEBHOOK] RECEIVED - ${now()}`);
     console.log("[ASASS WEBHOOK] headers:", headers);
     console.log("[ASASS WEBHOOK] body:", JSON.stringify(body, null, 2));
 
-    // valida token (se configurado no painel Asaas) - loga o token recebido também
+    // token validation (optional)
     if (WEBHOOK_TOKEN) {
       const incomingToken = headers["asaas-access-token"] || headers["Asaas-Access-Token"] || headers["x-asaas-token"];
       console.log("[ASASS WEBHOOK] incomingToken:", incomingToken);
@@ -29,12 +26,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // --- AUTORIZAÇÃO IMEDIATA (para evitar recusas por timeout) ---
-    // Tratar vários formatos que o Asaas pode enviar quando pede autorização:
-    // - body.event === "WITHDRAW_REQUESTED"
-    // - body.type === "WITHDRAW_REQUESTED"
-    // - body.event === "TRANSFER_PENDING" (variações)
-    // - body.type === "TRANSFER" && body.transfer?.status === "PENDING" && body.transfer?.authorized === false
+    // quick-detect validation events and authorize immediately
     const event = body?.event;
     const type = body?.type;
     const transfer = body?.transfer;
@@ -43,29 +35,38 @@ export default async function handler(req, res) {
       event === "WITHDRAW_REQUESTED" ||
       type === "WITHDRAW_REQUESTED" ||
       event === "TRANSFER_PENDING" ||
+      event === "TRANSFER_REQUESTED" ||
       (type === "TRANSFER" && transfer && transfer.status === "PENDING" && transfer.authorized === false);
 
     if (looksLikeValidationEvent) {
-      console.log("[ASASS WEBHOOK] Detected validation event - responding authorized:true immediately. event/type:", { event, type });
-      // Responder rápido com o formato exato esperado
+      console.log("[ASASS WEBHOOK] Validation event detected, replying authorized:true");
       return res.status(200).json({ authorized: true });
     }
 
-    // --- 2) Evento de TRANSFER (notificação de status) ---
-    if (type === "TRANSFER" && transfer) {
-      console.log("[ASASS WEBHOOK] TRANSFER received - processing:", {
-        id: transfer.id,
-        status: transfer.status,
-        externalReference: transfer.externalReference,
-        value: transfer.value
-      });
+    // handle transfer notifications coming as either:
+    // - body.type === "TRANSFER" && body.transfer
+    // - body.event === "TRANSFER_CONFIRMED" | "TRANSFER_FAILED" | "TRANSFER_PENDING"
+    const isTransferEvent =
+      (type === "TRANSFER" && transfer) ||
+      (typeof event === "string" && event.startsWith("TRANSFER"));
+
+    if (isTransferEvent) {
+      // normalize transfer object
+      const t = transfer || body;
+      console.log("[ASASS WEBHOOK] Processing transfer event:", { id: t.id, status: t.status || event });
 
       await connectDB();
 
-      const transferId = transfer.id;
-      const status = transfer.status; // PENDING | CONFIRMED | FAILED | ...
-      const externalReference = transfer.externalReference || null;
-      const bank = transfer.bankAccount || {};
+      const transferId = t.id;
+      const statusRaw = (t.status || event || "").toString();
+      // normalize status to CONFIRMED / FAILED / PENDING if possible
+      const statusNormalized = statusRaw.includes("CONFIRMED") ? "CONFIRMED"
+        : statusRaw.includes("FAILED") ? "FAILED"
+        : statusRaw.includes("PENDING") ? "PENDING"
+        : statusRaw.toUpperCase();
+
+      const externalReference = t.externalReference || null;
+      const bank = t.bankAccount || {};
 
       let user = null;
       let saque = null;
@@ -73,11 +74,11 @@ export default async function handler(req, res) {
       if (externalReference) {
         user = await User.findOne({ "saques.externalReference": externalReference });
       } else {
-        // fallback tolerante: tentar casar por chave PIX / cpf/cnpj / ownerName / valor + tempo
-        const pixKeyCandidate = bank.pixAddressKey || transfer.pixAddressKey || null;
+        // fallback matching by pixKey/cpf/ownerName/valor+recent
+        const pixKeyCandidate = bank.pixAddressKey || t.pixAddressKey || null;
         const cpfCnpjCandidate = bank.cpfCnpj ? bank.cpfCnpj.replace(/\D/g, "") : null;
         const ownerNameCandidate = bank.ownerName ? bank.ownerName.trim().toLowerCase() : null;
-        const valueCandidate = transfer.value;
+        const valueCandidate = t.value;
         const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
 
         user = await User.findOne({
@@ -99,43 +100,42 @@ export default async function handler(req, res) {
 
       if (!user) {
         console.warn("[ASASS WEBHOOK] Usuário/saque não encontrado para transferId:", transferId, "externalReference:", externalReference);
-        // retorna 200 para evitar retries infinitos do Asaas, mas registra para investigação
         return res.status(200).json({ success: true, message: "saque not found (ignored)" });
       }
 
-      // localizar saque exato dentro do user.saques
-      const matchPredicate = s => {
+      // find the exact saque
+      saque = user.saques.find(s => {
         if (externalReference) return s.externalReference === externalReference;
         const recent = (new Date(s.data)).getTime() >= (Date.now() - MATCH_WINDOW_MS);
-        const valueMatch = s.valor === transfer.value;
+        const valueMatch = s.valor === t.value;
         const pixMatch = bank.pixAddressKey ? (s.chave_pix === bank.pixAddressKey || s.chave_pix.replace(/\D/g, "") === bank.pixAddressKey) : false;
         const cpfMatch = bank.cpfCnpj ? (s.chave_pix.replace(/\D/g, "") === bank.cpfCnpj.replace(/\D/g, "")) : false;
         const ownerMatch = bank.ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === bank.ownerName.trim().toLowerCase()) : false;
         return s.status === "pendente" && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
-      };
+      });
 
-      saque = user.saques.find(matchPredicate);
       if (!saque) {
         console.warn("[ASASS WEBHOOK] Saque não encontrado mesmo após buscar usuário. transferId:", transferId);
         return res.status(200).json({ success: true, message: "saque not found (ignored)" });
       }
 
-      // atualiza status e grava asaasId se necessário
-      const newStatus = (status === "CONFIRMED") ? "pago" : (status === "FAILED" ? "falhou" : (status === "PENDING" ? "pendente" : String(status).toLowerCase()));
+      // map status
+      const newStatus = (statusNormalized === "CONFIRMED") ? "pago"
+        : (statusNormalized === "FAILED") ? "falhou"
+        : (statusNormalized === "PENDING") ? "pendente"
+        : statusNormalized.toLowerCase();
+
       saque.status = newStatus;
       if (!saque.asaasId) saque.asaasId = transferId;
-
-      // armazena informações bancárias retornadas (opcional, útil para debug)
       saque.bankAccount = bank;
 
       await user.save();
 
-      console.log("[ASASS WEBHOOK] Saque atualizado:", { userId: user._id, saqueExternal: saque.externalReference, novoStatus: newStatus });
+      console.log("[ASASS WEBHOOK] Saque atualizado:", { userId: user._id, saqueExternal: saque.externalReference, novoStatus: newStatus, failReason: t.failReason || null });
 
       return res.status(200).json({ success: true });
     }
 
-    // outros eventos
     console.log("[ASASS WEBHOOK] Evento não tratado. Keys:", Object.keys(body || {}));
     return res.status(200).json({ success: true, ignored: true });
 
