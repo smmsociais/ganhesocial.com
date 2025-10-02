@@ -1451,24 +1451,41 @@ if (url.startsWith("/api/withdraw")) {
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // 🔹 Chamada PIX Out Asaas
-    const payloadAsaas = {
-      value: Number(amount.toFixed(2)),
-      operationType: "PIX",
-      pixAddressKey: pixKey,
-      pixAddressKeyType: keyType,
-      externalReference
-    };
-    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
+ // 🔹 Chamada PIX Out Asaas
+const payloadAsaas = {
+  value: Number(amount.toFixed(2)),
+  operationType: "PIX",
+  pixAddressKey: pixKey,
+  pixAddressKeyType: keyType,
+  externalReference,
 
-    const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access_token": ASAAS_API_KEY
-      },
-      body: JSON.stringify(payloadAsaas)
-    });
+  // 🔹 Incluímos também bankAccount como fallback
+  bankAccount: {
+    bank: {
+      code: "260", // Nubank (ou mapeia pelo banco do usuário depois)
+      name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+      ispb: "18236120"
+    },
+    ownerName: user.nome,
+    cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null, // CPF direto
+    type: "PAYMENT_ACCOUNT", // CHECKING_ACCOUNT | SAVINGS_ACCOUNT | PAYMENT_ACCOUNT
+    agency: "0001", // Nubank usa 0001 (cheque se necessário)
+    account: "00000000", // Placeholder (Asaas pode ignorar se chave Pix for válida)
+    accountDigit: "0",
+    pixAddressKey: pixKey
+  }
+};
+
+console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
+
+const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "access_token": ASAAS_API_KEY
+  },
+  body: JSON.stringify(payloadAsaas)
+});
 
     const pixData = await pixResponse.json();
     console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
