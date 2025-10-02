@@ -1466,12 +1466,14 @@ const payloadAsaas = {
       name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
       ispb: "18236120"
     },
+    accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
     ownerName: user.nome,
     cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null, // CPF direto
     type: "PAYMENT_ACCOUNT", // CHECKING_ACCOUNT | SAVINGS_ACCOUNT | PAYMENT_ACCOUNT
+    agencyDigit:"agencyDigit",
     agency: "0001", // Nubank usa 0001 (cheque se necessário)
-    account: "00000000", // Placeholder (Asaas pode ignorar se chave Pix for válida)
-    accountDigit: "0",
+    account: "54688818", // Placeholder (Asaas pode ignorar se chave Pix for válida)
+    accountDigit: "2",
     pixAddressKey: pixKey
   }
 };
