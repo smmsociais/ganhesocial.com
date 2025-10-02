@@ -25,10 +25,10 @@ async function createLocalSaqueIfNeeded(payload) {
     const ownerName = (t.bankAccount && t.bankAccount.ownerName) || null;
     const externalReference = t.externalReference || null;
     const asaasId = t.id || null;
-    const value = t.value;
+    const value = typeof t.value === 'number' ? t.value : Number(t.value);
 
-    if (!pixKey || typeof value !== 'number' || value <= 0) {
-      console.log('[ASASS WEBHOOK] createLocalSaqueIfNeeded: falta pixKey ou value inválido, abortando.');
+    if (!pixKey || isNaN(value) || value <= 0) {
+      console.log('[ASASS WEBHOOK] createLocalSaqueIfNeeded: falta pixKey ou value inválido, abortando.', { pixKey, value });
       return;
     }
 
@@ -70,7 +70,9 @@ async function createLocalSaqueIfNeeded(payload) {
       asaasId: asaasId || null,
       externalReference: externalReference || `ui_${asaasId || Date.now()}`,
       ownerName: ownerName || user.nome || null,
-      bankAccount: t.bankAccount || null
+      bankAccount: t.bankAccount || null,
+      rawTransfer: t,                 // salva o JSON do transfer para suporte/auditoria
+      createdBy: 'webhook_ui_auto'    // meta para rastrear criação automática
     };
 
     user.saques.push(novoSaque);
@@ -98,8 +100,16 @@ async function handleValidationEvent(body, res) {
 
     console.log('[ASASS WEBHOOK][VALIDATION] dados:', { value, pixKey, cpf, ownerName });
 
+    // Tenta criar um saque local para o caso de saques iniciados pela interface (UI)
+    try {
+      await createLocalSaqueIfNeeded(body);
+    } catch (err) {
+      console.error('[ASASS WEBHOOK][VALIDATION] erro no createLocalSaqueIfNeeded:', err);
+      // não interrompe o fluxo principal; continuamos com a validação normal
+    }
+
     if (!value || isNaN(value) || value <= 0) {
-      console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: valor inválido.');
+      console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: valor inválido.' );
       return res.status(200).json({ authorized: false, reason: 'invalid_value' });
     }
 
@@ -131,9 +141,11 @@ async function handleValidationEvent(body, res) {
 
     // Regra 1: user + matchingSaque
     if (user && matchingSaque) {
-      console.log('[ASASS WEBHOOK][VALIDATION] Encontrado user + saque pendente. Autorizando.');
+      console.log('[ASASS WEBHOOK][VALIDATION] Encontrado user + saque pendente. Autorizando.', { userId: user._id, saqueExt: matchingSaque.externalReference });
       if (!matchingSaque.asaasId && t.id) matchingSaque.asaasId = t.id;
       if (!matchingSaque.externalReference && t.externalReference) matchingSaque.externalReference = t.externalReference;
+      // se não houver rawTransfer, salvar para auditoria
+      if (!matchingSaque.rawTransfer) matchingSaque.rawTransfer = t;
       await user.save();
       return res.status(200).json({ authorized: true });
     }
@@ -155,7 +167,9 @@ async function handleValidationEvent(body, res) {
         asaasId: t.id || null,
         externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
         ownerName: ownerName || user.nome || null,
-        bankAccount: bank || null
+        bankAccount: bank || null,
+        rawTransfer: t,                 // <<-- salva o JSON para suporte
+        createdBy: 'webhook_validation' // marca que foi criado durante validação
       };
 
       user.saldo = saldo - value; // reserva o valor
