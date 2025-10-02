@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     const event = req.body; // O Asaas envia JSON
 
     if (!event || !event.event) {
-      return res.status(400).json({ error: "Evento inválido" });
+      return res.status(400).json({ error: "Evento inválido" }); // ✅ return
     }
 
     // 🔹 Caso 1: Validação de saque (Asaas pergunta se deve autorizar)
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       // - Validar limites de segurança
       //
       // Exemplo simples: autorizar sempre
-      return res.status(200).json({ authorized: true });
+      return res.status(200).json({ authorized: true }); // ✅ return
     }
 
     await connectDB();
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       // Encontra o usuário pelo saque
       const user = await User.findOne({ "saques.asaasTransferId": transferId });
       if (!user) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+        return res.status(404).json({ error: "Usuário não encontrado" }); // ✅ return
       }
 
       // Atualiza o status do saque
@@ -39,11 +39,14 @@ export default async function handler(req, res) {
         saque.status = event.event === "TRANSFER_CONFIRMED" ? "pago" : "falhou";
         await user.save();
       }
+
+      return res.status(200).json({ success: true }); // ✅ return
     }
 
-    res.status(200).json({ success: true });
+    // 🔹 Se o evento não for nenhum dos tratados
+    return res.status(200).json({ success: true, ignored: true }); // ✅ return
   } catch (err) {
     console.error("Erro webhook Asaas:", err);
-    res.status(500).json({ error: "Erro ao processar webhook" });
+    return res.status(500).json({ error: "Erro ao processar webhook" }); // ✅ return
   }
 }
