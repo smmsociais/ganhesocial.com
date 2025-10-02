@@ -1353,9 +1353,9 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+  const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
 
- await connectDB();
+  await connectDB();
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -1375,7 +1375,7 @@ const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
         status: saque.status,
         date: saque.data?.toISOString() || null
       }));
-      return res.status(200).json(saquesFormatados);
+      return res.status(200).json(saquesFormatados); // ✅ return
     }
 
     // === POST ===
@@ -1432,18 +1432,18 @@ const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
 
     if (!pixResponse.ok) {
       console.error("Erro PIX Asaas:", pixData);
-      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
+      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" }); // ✅ return
     }
 
     // Atualiza o saque com o ID do Asaas
     user.saques[user.saques.length - 1].asaasId = pixData.id;
     await user.save();
 
-    res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
+    return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData }); // ✅ return
 
   } catch (error) {
     console.error("💥 Erro em /withdraw:", error);
-    res.status(500).json({ error: "Erro ao processar saque." });
+    return res.status(500).json({ error: "Erro ao processar saque." }); // ✅ return
   }
 }
 
