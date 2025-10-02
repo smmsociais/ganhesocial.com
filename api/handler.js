@@ -1395,7 +1395,7 @@ if (url.startsWith("/api/withdraw")) {
     }
 
     // Normalize e valida tipo da chave PIX
-    const allowedTypes = ["CPF", "CNPJ", "EMAIL", "PHONE"];
+    const allowedTypes = ["CPF"];
     const keyType = payment_data.pix_key_type.toUpperCase();
     if (!allowedTypes.includes(keyType)) {
       return res.status(400).json({ error: "Tipo de chave PIX inválido." });
