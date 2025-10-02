@@ -10,6 +10,7 @@ import { User } from "../schema.js";
 
 const WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN || null;
 const MATCH_WINDOW_MS = 1000 * 60 * 30; // 30 minutos
+const MAX_AUTOMATIC_UI = parseFloat(process.env.MAX_AUTOMATIC_UI || "0.00"); // valor máximo para autorizar UI sem usuário
 
 function now() { return new Date().toISOString(); }
 
@@ -20,7 +21,7 @@ async function createLocalSaqueIfNeeded(payload) {
 
     const t = payload.transfer || payload;
     const pixKeyRaw = (t.bankAccount && t.bankAccount.pixAddressKey) || t.pixAddressKey || null;
-    const pixKey = pixKeyRaw ? String(pixKeyRaw).replace(/\D/g, "") : null;
+    const pixKey = pixKeyRaw ? String(pixKeyRaw).replace(/[^0-9]/g, "") : null;
     const ownerName = (t.bankAccount && t.bankAccount.ownerName) || null;
     const externalReference = t.externalReference || null;
     const asaasId = t.id || null;
@@ -47,7 +48,7 @@ async function createLocalSaqueIfNeeded(payload) {
       // considera matches por externalReference / asaasId / mesma chave+valor+tempo
       if (s.externalReference && externalReference && s.externalReference === externalReference) return true;
       if (s.asaasId && asaasId && s.asaasId === asaasId) return true;
-      const sPix = (s.chave_pix || '').replace(/\D/g, '');
+      const sPix = (s.chave_pix || '').replace(/[^0-9]/g, '');
       const samePix = sPix === pixKey;
       const sameValue = Number(s.valor) === Number(value);
       const recent = new Date(s.data).getTime() >= cutoff.getTime();
@@ -81,6 +82,109 @@ async function createLocalSaqueIfNeeded(payload) {
   }
 }
 
+// Handler auxiliar para eventos de validação — usa regras em vez de depender do ID
+async function handleValidationEvent(body, res) {
+  try {
+    const t = body.transfer || body;
+    const value = typeof t.value === 'number' ? t.value : Number(t.value);
+    const bank = t.bankAccount || {};
+    const pixKeyRaw = bank.pixAddressKey || t.pixAddressKey || null;
+    const cpfRaw = bank.cpfCnpj || t.cpfCnpj || null;
+    const ownerNameRaw = bank.ownerName || t.ownerName || null;
+
+    const pixKey = pixKeyRaw ? String(pixKeyRaw).replace(/[^0-9]/g, '') : null;
+    const cpf = cpfRaw ? String(cpfRaw).replace(/[^0-9]/g, '') : null;
+    const ownerName = ownerNameRaw ? String(ownerNameRaw).trim() : null;
+
+    console.log('[ASASS WEBHOOK][VALIDATION] dados:', { value, pixKey, cpf, ownerName });
+
+    if (!value || isNaN(value) || value <= 0) {
+      console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: valor inválido.');
+      return res.status(200).json({ authorized: false, reason: 'invalid_value' });
+    }
+
+    await connectDB();
+
+    // 1) procurar usuário por pix_key
+    let user = null;
+    if (pixKey) {
+      user = await User.findOne({ $or: [ { pix_key: pixKey }, { 'saques.chave_pix': pixKey } ] });
+    }
+
+    // 2) fallback por cpf
+    if (!user && cpf) {
+      user = await User.findOne({ $or: [ { pix_key: cpf }, { 'saques.chave_pix': cpf } ] });
+    }
+
+    const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
+    let matchingSaque = null;
+    if (user) {
+      matchingSaque = user.saques.find(s => {
+        const sameValue = Number(s.valor) === Number(value);
+        const recent = new Date(s.data).getTime() >= cutoff.getTime();
+        const pixMatch = pixKey ? (s.chave_pix.replace(/[^0-9]/g, '') === pixKey) : false;
+        const cpfMatch = cpf ? (s.chave_pix.replace(/[^0-9]/g, '') === cpf) : false;
+        const ownerMatch = ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === ownerName.trim().toLowerCase()) : false;
+        return s.status === 'pendente' && recent && sameValue && (pixMatch || cpfMatch || ownerMatch);
+      });
+    }
+
+    // Regra 1: user + matchingSaque
+    if (user && matchingSaque) {
+      console.log('[ASASS WEBHOOK][VALIDATION] Encontrado user + saque pendente. Autorizando.');
+      if (!matchingSaque.asaasId && t.id) matchingSaque.asaasId = t.id;
+      if (!matchingSaque.externalReference && t.externalReference) matchingSaque.externalReference = t.externalReference;
+      await user.save();
+      return res.status(200).json({ authorized: true });
+    }
+
+    // Regra 2: user encontrado mas sem matchingSaque -> reservar e criar saque
+    if (user && (!matchingSaque)) {
+      const saldo = Number(user.saldo || 0);
+      if (saldo < value) {
+        console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: saldo insuficiente no user:', { userId: user._id, saldo, value });
+        return res.status(200).json({ authorized: false, reason: 'insufficient_balance' });
+      }
+
+      const newSaque = {
+        valor: value,
+        chave_pix: pixKey || (cpf || null),
+        tipo_chave: cpf ? 'CPF' : (pixKey ? 'CPF' : 'UNKNOWN'),
+        status: 'pendente',
+        data: new Date(),
+        asaasId: t.id || null,
+        externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
+        ownerName: ownerName || user.nome || null,
+        bankAccount: bank || null
+      };
+
+      user.saldo = saldo - value; // reserva o valor
+      user.saques.push(newSaque);
+      await user.save();
+      console.log('[ASASS WEBHOOK][VALIDATION] User encontrado, saque criado e autorizado:', newSaque.externalReference);
+      return res.status(200).json({ authorized: true });
+    }
+
+    // Regra 3: sem usuário -> política para UI
+    if (!user) {
+      if (value <= MAX_AUTOMATIC_UI && MAX_AUTOMATIC_UI > 0) {
+        console.log('[ASASS WEBHOOK][VALIDATION] Nenhum user encontrado, valor <= MAX_AUTOMATIC_UI; autorizando:', value);
+        return res.status(200).json({ authorized: true, note: 'auto_allowed_small_ui' });
+      }
+
+      console.log('[ASASS WEBHOOK][VALIDATION] Nenhum usuário encontrado e valor acima do limiar. Rejeitando.');
+      return res.status(200).json({ authorized: false, reason: 'no_user_match' });
+    }
+
+    console.log('[ASASS WEBHOOK][VALIDATION] Fallback: rejeitando por segurança.');
+    return res.status(200).json({ authorized: false, reason: 'fallback_deny' });
+
+  } catch (err) {
+    console.error('[ASASS WEBHOOK][VALIDATION] erro interno:', err);
+    return res.status(200).json({ authorized: false, reason: 'internal_error' });
+  }
+}
+
 export default async function handler(req, res) {
   try {
     const body = req.body || {};
@@ -90,7 +194,6 @@ export default async function handler(req, res) {
     console.log('[ASASS WEBHOOK] headers:', headers);
     console.log('[ASASS WEBHOOK] body:', JSON.stringify(body, null, 2));
 
-    // valida token (opcional)
     if (WEBHOOK_TOKEN) {
       const incomingToken = headers['asaas-access-token'] || headers['Asaas-Access-Token'] || headers['x-asaas-token'];
       console.log('[ASASS WEBHOOK] incomingToken:', incomingToken);
@@ -100,8 +203,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Detectar eventos de validação que exigem resposta rápida do seu servidor.
-    // Possíveis formatos: body.event === 'WITHDRAW_REQUESTED', 'TRANSFER_PENDING', 'TRANSFER_REQUESTED'
     const event = body?.event;
     const type = body?.type;
     const transfer = body?.transfer;
@@ -115,24 +216,13 @@ export default async function handler(req, res) {
       (type === 'TRANSFER' && transfer && transfer.status === 'PENDING' && transfer.authorized === false);
 
     if (looksLikeValidationEvent) {
-      console.log('[ASASS WEBHOOK] Validation event detected. Will respond authorized:true immediately. event/type:', { event, type });
-
-      // Fire-and-forget: tentar criar um saque local para transferências iniciadas pela interface
-      // mas NÃO bloqueie a resposta — assim evitamos timeouts e recusas.
-      // Observação: em ambientes serverless, tarefas em background podem ser interrompidas após resposta.
-      createLocalSaqueIfNeeded(body).catch(err => {
-        console.error('[ASASS WEBHOOK] Erro em background createLocalSaqueIfNeeded:', err);
-      });
-
-      // Responder rapidamente autorizando. Ajuste lógica se quiser validar por regras.
-      return res.status(200).json({ authorized: true });
+      // use o handler que aplica regras (autoriza por dados bancários/pix/valor)
+      return handleValidationEvent(body, res);
     }
 
-    // Tratar notificações de transferências: tanto em body.type === 'TRANSFER' quanto em event === 'TRANSFER_*'
     const isTransferEvent = (type === 'TRANSFER' && transfer) || (typeof event === 'string' && event.startsWith('TRANSFER'));
 
     if (isTransferEvent) {
-      // Normalizar o objeto de transferência
       const t = transfer || body;
       console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status || event, externalReference: t.externalReference, value: t.value });
 
@@ -154,9 +244,8 @@ export default async function handler(req, res) {
       if (externalReference) {
         user = await User.findOne({ 'saques.externalReference': externalReference });
       } else {
-        // fallback: procurar por saque pendente com mesma chave/valor/tempo
         const pixKeyCandidate = bank.pixAddressKey || t.pixAddressKey || null;
-        const cpfCnpjCandidate = bank.cpfCnpj ? String(bank.cpfCnpj).replace(/\D/g, '') : null;
+        const cpfCnpjCandidate = bank.cpfCnpj ? String(bank.cpfCnpj).replace(/[^0-9]/g, '') : null;
         const ownerNameCandidate = bank.ownerName ? bank.ownerName.trim().toLowerCase() : null;
         const valueCandidate = t.value;
         const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
@@ -180,17 +269,15 @@ export default async function handler(req, res) {
 
       if (!user) {
         console.warn('[ASASS WEBHOOK] Usuário/saque não encontrado para transferId:', transferId, 'externalReference:', externalReference);
-        // Responda 200 para evitar retries infinitos do Asaas; registre para investigação.
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
 
-      // localizar o saque exato
       saque = user.saques.find(s => {
         if (externalReference) return s.externalReference === externalReference;
         const recent = (new Date(s.data)).getTime() >= (Date.now() - MATCH_WINDOW_MS);
         const valueMatch = Number(s.valor) === Number(t.value);
-        const pixMatch = bank.pixAddressKey ? (s.chave_pix === bank.pixAddressKey || s.chave_pix.replace(/\D/g, '') === bank.pixAddressKey) : false;
-        const cpfMatch = bank.cpfCnpj ? (s.chave_pix.replace(/\D/g, '') === String(bank.cpfCnpj).replace(/\D/g, '')) : false;
+        const pixMatch = bank.pixAddressKey ? (s.chave_pix === bank.pixAddressKey || s.chave_pix.replace(/[^0-9]/g, '') === bank.pixAddressKey) : false;
+        const cpfMatch = bank.cpfCnpj ? (s.chave_pix.replace(/[^0-9]/g, '') === String(bank.cpfCnpj).replace(/[^0-9]/g, '')) : false;
         const ownerMatch = bank.ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === bank.ownerName.trim().toLowerCase()) : false;
         return s.status === 'pendente' && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
       });
@@ -200,7 +287,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
 
-      // atualizar status, asaasId, bankAccount e failReason
       const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
         : (statusNormalized === 'FAILED') ? 'falhou'
         : (statusNormalized === 'PENDING') ? 'pendente'
