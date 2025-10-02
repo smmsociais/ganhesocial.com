@@ -1,43 +1,33 @@
-// /api/webhook/asaas.js
+// api/webhook/asaas.js
 import connectDB from "../db.js";
 import { User } from "../schema.js";
 
-/**
- * Webhook handler robusto para Asaas
- * - trata WITHDRAW_REQUESTED (autoriza)
- * - trata TRANSFER (atualiza status)
- * - tenta casar por externalReference; se null, tenta casar por pixKey+amount+recentTimestamp
- */
-
-const WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN; // opcional — configure no painel Asaas
-
-// tempo de busca por coincidência quando externalReference for null (ms)
-const MATCH_WINDOW_MS = 1000 * 60 * 10; // 10 minutos
+const WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN || null;
+const MATCH_WINDOW_MS = 1000 * 60 * 30; // 30 minutos - ajuste se quiser
 
 export default async function handler(req, res) {
   try {
     const body = req.body || {};
 
-    // Validar token de webhook (se tiver configurado no painel)
+    // valida token (se configurado no painel Asaas)
     if (WEBHOOK_TOKEN) {
       const incomingToken = req.headers["asaas-access-token"] || req.headers["Asaas-Access-Token"] || req.headers["x-asaas-token"];
       if (!incomingToken || incomingToken !== WEBHOOK_TOKEN) {
-        console.warn("Webhook: token inválido", incomingToken);
+        console.warn("[ASSS WEBHOOK] Token inválido:", incomingToken);
         return res.status(401).json({ error: "invalid webhook token" });
       }
     }
 
-    // --- 1) Validação de saque (Asaas pergunta se autoriza) ---
-    // Pode vir com body.event === "WITHDRAW_REQUESTED" ou formato diferente; cheque com optional chaining
-    if (body?.event === "WITHDRAW_REQUESTED" || (body?.type === "WITHDRAW_REQUESTED")) {
-      // Se quiser, você pode inspecionar body.transfer (valor, externalReference, pixKey) antes de autorizar
+    // --- 1) Validação de saque (autorizar) ---
+    // Trata payloads com event === "WITHDRAW_REQUESTED" ou type === "WITHDRAW_REQUESTED"
+    if (body?.event === "WITHDRAW_REQUESTED" || body?.type === "WITHDRAW_REQUESTED") {
       console.log("[ASASS WEBHOOK] WITHDRAW_REQUESTED recebido:", {
         externalReference: body?.transfer?.externalReference ?? body?.externalReference,
         amount: body?.transfer?.value ?? body?.value,
-        pix: body?.transfer?.pixAddressKey ?? body?.transfer?.bankAccount?.pixAddressKey
+        pix: body?.transfer?.bankAccount?.pixAddressKey ?? body?.transfer?.pixAddressKey
       });
 
-      // Regra de exemplo: autorizar sempre. Substitua por regras suas se desejar.
+      // regra: autorizar sempre (substitua por regras suas se desejar)
       return res.status(200).json({ authorized: true });
     }
 
@@ -47,59 +37,65 @@ export default async function handler(req, res) {
         id: body.transfer.id,
         status: body.transfer.status,
         externalReference: body.transfer.externalReference,
-        value: body.transfer.value,
+        value: body.transfer.value
       });
 
       await connectDB();
 
       const transfer = body.transfer;
       const transferId = transfer.id;
-      const status = transfer.status; // PENDING | CONFIRMED | FAILED | etc.
+      const status = transfer.status; // PENDING | CONFIRMED | FAILED | ...
       const externalReference = transfer.externalReference || null;
+      const bank = transfer.bankAccount || {};
 
       let user = null;
       let saque = null;
 
       if (externalReference) {
-        // Busca direta por externalReference
+        // busca direta pelo externalReference
         user = await User.findOne({ "saques.externalReference": externalReference });
       } else {
-        // Quando externalReference for nulo (ex.: criação via painel),
-        // tente casar por chave PIX + valor + janela de tempo (últimos MATCH_WINDOW_MS)
-        const pixKeyCandidate = transfer.bankAccount?.pixAddressKey || transfer.pixAddressKey || null;
+        // fallback tolerante: tentar casar por chave PIX / cpf/cnpj / ownerName / valor + tempo
+        const pixKeyCandidate = bank.pixAddressKey || transfer.pixAddressKey || null;
+        const cpfCnpjCandidate = bank.cpfCnpj ? bank.cpfCnpj.replace(/\D/g, "") : null;
+        const ownerNameCandidate = bank.ownerName ? bank.ownerName.trim().toLowerCase() : null;
         const valueCandidate = transfer.value;
+        const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
 
-        if (pixKeyCandidate && valueCandidate != null) {
-          // procura usuário que tenha um saque pendente com mesma chave, mesmo valor e data recente
-          const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
-
-          user = await User.findOne({
-            saques: {
-              $elemMatch: {
-                chave_pix: { $in: [pixKeyCandidate, pixKeyCandidate.replace(/\D/g, "")] },
-                valor: valueCandidate,
-                status: "pendente",
-                data: { $gte: cutoff }
-              }
+        // procura usuário com saque pendente do mesmo valor e data recente (e que contenha alguma pista)
+        user = await User.findOne({
+          saques: {
+            $elemMatch: {
+              status: "pendente",
+              valor: valueCandidate,
+              data: { $gte: cutoff },
+              $or: [
+                { chave_pix: pixKeyCandidate },
+                { chave_pix: { $regex: pixKeyCandidate || "" } },
+                { chave_pix: cpfCnpjCandidate },
+                { ownerName: ownerNameCandidate } // se você gravou ownerName no saque
+              ]
             }
-          });
-        }
+          }
+        });
       }
 
       if (!user) {
         console.warn("[ASASS WEBHOOK] Usuário/saque não encontrado para transferId:", transferId, "externalReference:", externalReference);
-        // Responda 200 para não ficar re-enviando (ou 404 se preferir). Retornar 200 evita retries contínuos.
+        // Responda 200 para evitar retries infinitos; coloque alerta/monitoramento se quiser.
         return res.status(200).json({ success: true, message: "saque not found (ignored)" });
       }
 
-      // localiza o saque correspondente
+      // localizar saque exato dentro do user.saques
       const matchPredicate = s => {
         if (externalReference) return s.externalReference === externalReference;
-        // se externalReference nulo usamos o casamento por chave+valor
-        const pixMatch = (transfer.bankAccount?.pixAddressKey && (s.chave_pix === transfer.bankAccount.pixAddressKey || s.chave_pix === transfer.bankAccount.pixAddressKey.replace(/\D/g, "")));
-        const valueMatch = (s.valor === transfer.value);
+        // fallback: casar por valor + pix key/cpf/owner + pendente + tempo
         const recent = (new Date(s.data)).getTime() >= (Date.now() - MATCH_WINDOW_MS);
-        return pixMatch && valueMatch && s.status === "pendente" && recent;
+        const valueMatch = s.valor === transfer.value;
+        const pixMatch = bank.pixAddressKey ? (s.chave_pix === bank.pixAddressKey || s.chave_pix.replace(/\D/g, "") === bank.pixAddressKey) : false;
+        const cpfMatch = bank.cpfCnpj ? (s.chave_pix.replace(/\D/g, "") === bank.cpfCnpj.replace(/\D/g, "")) : false;
+        const ownerMatch = bank.ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === bank.ownerName.trim().toLowerCase()) : false;
+        return s.status === "pendente" && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
       };
 
       saque = user.saques.find(matchPredicate);
@@ -108,14 +104,14 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: "saque not found (ignored)" });
       }
 
-      // atualiza status previsível
-      const newStatus = (status === "CONFIRMED") ? "pago" : (status === "FAILED" ? "falhou" : (status === "PENDING" ? "pendente" : status.toLowerCase()));
+      // atualiza status e grava asaasId se necessário
+      const newStatus = (status === "CONFIRMED") ? "pago" : (status === "FAILED" ? "falhou" : (status === "PENDING" ? "pendente" : String(status).toLowerCase()));
       saque.status = newStatus;
+      if (!saque.asaasId) saque.asaasId = transferId;
 
-      // se ainda não tem asaasId, grava
-      if (!saque.asaasId) saque.asaasId = transfer.id;
+      // também armazena informações bancárias retornadas (opcional)
+      saque.bankAccount = bank;
 
-      // grava mudanças
       await user.save();
 
       console.log("[ASASS WEBHOOK] Saque atualizado:", { userId: user._id, saqueExternal: saque.externalReference, novoStatus: newStatus });
@@ -123,8 +119,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // --- Outros eventos ou formatos não tratados ---
-    console.log("[ASASS WEBHOOK] Evento não tratado. Body keys:", Object.keys(body || {}));
+    // outros eventos
+    console.log("[ASASS WEBHOOK] Evento não tratado. Keys:", Object.keys(body || {}));
     return res.status(200).json({ success: true, ignored: true });
 
   } catch (err) {
