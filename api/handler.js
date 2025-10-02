@@ -1429,9 +1429,7 @@ if (url.startsWith("/api/withdraw")) {
         return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
       }
 
-      // Cria referência externa única
-      const externalReference = `saque_${user._id}_${Date.now()}`;
-      console.log("[DEBUG] externalReference gerada:", externalReference);
+
 
       // Adiciona saque pendente
       const novoSaque = {
@@ -1441,7 +1439,6 @@ if (url.startsWith("/api/withdraw")) {
         status: "pendente",
         data: new Date(),
         asaasId: null,
-        externalReference,
         ownerName: user.nome || null
       };
       console.log("[DEBUG] Novo saque criado:", novoSaque);
@@ -1457,7 +1454,6 @@ if (url.startsWith("/api/withdraw")) {
         operationType: "PIX",
         pixAddressKey: pixKey,
         pixAddressKeyType: keyType,
-        externalReference,
         bankAccount: {
           bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
           accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
