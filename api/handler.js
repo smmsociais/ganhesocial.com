@@ -1383,7 +1383,7 @@ if (url.startsWith("/api/withdraw")) {
 
     // Validações básicas
     if (!amount || typeof amount !== "number" || amount < 5) {
-      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$5,00)." });
+      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
     }
 
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
