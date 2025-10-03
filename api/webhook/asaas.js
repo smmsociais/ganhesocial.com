@@ -1,4 +1,3 @@
-// api/webhook/asaas.js
 import connectDB from "../db.js";
 import { User } from "../schema.js";
 
@@ -82,17 +81,17 @@ async function findOrCreateSaqueForUITransfer(t) {
 
 /**
  * handleValidationEvent
- * Responde IMEDIATAMENTE (authorized: true) para evitar timeouts/autorizações externas.
- * Faz todo o matching/criação/atualização em background (setTimeout).
+ * Responde IMEDIATAMENTE com status APPROVED/REFUSED conforme doc (evita timeouts do Asaas).
+ * Faz o matching/criação/atualização em background (setTimeout).
  */
 async function handleValidationEvent(body, res) {
   try {
     const t = body.transfer || body;
 
-    // RESPONDE IMEDIATAMENTE COM authorized: true
+    // RESPONDE IMEDIATAMENTE COM status: "APPROVED"
     // (se preferir restringir, altere aqui)
-    console.log('[ASASS WEBHOOK][VALIDATION] QUICK RESPOND authorized:true for id:', t?.id);
-    res.status(200).json({ authorized: true });
+    console.log('[ASASS WEBHOOK][VALIDATION] QUICK RESPOND status:APPROVED for id:', t?.id);
+    res.status(200).json({ status: "APPROVED" });
 
     // PROCESSAMENTO EM BACKGROUND (não bloqueia resposta)
     setTimeout(async () => {
@@ -193,7 +192,7 @@ async function handleValidationEvent(body, res) {
   } catch (err) {
     console.error('[ASASS WEBHOOK][VALIDATION] Erro imediato:', err);
     // se algo grave ocorreu antes de responder, garantimos enviar algo (deny)
-    try { res.status(200).json({ authorized: false, reason: 'internal_error' }); } catch(e){}
+    try { res.status(200).json({ status: "REFUSED", refuseReason: 'internal_error' }); } catch(e){}
     return;
   }
 }
