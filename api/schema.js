@@ -49,7 +49,7 @@ const WithdrawSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['PENDING', 'pago', 'falhou'],
+    enum: ['PENDING', 'DONE', 'FAIL'],
     default: 'PENDING'
   },
 
