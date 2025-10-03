@@ -30,7 +30,7 @@ const ActionHistorySchema = new mongoose.Schema({
 });
 
 // 🔹 Schema para Histórico de Saques
-// 🔹 Schema para Histórico de Saques (RECOMENDADO)
+// 🔹 Schema para Histórico de Saques (compatível com Asaas)
 const WithdrawSchema = new mongoose.Schema({
   valor: { type: Number, required: true },
 
@@ -49,13 +49,13 @@ const WithdrawSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['PENDING', 'DONE', 'FAIL'],
+    enum: ['PENDING', 'DONE', 'FAILED', 'CANCELLED'], // usa exatamente os do Asaas
     default: 'PENDING'
   },
 
   // integração Asaas
-  asaasId: { type: String, default: null, index: true },           // id da transferência no Asaas
-  externalReference: { type: String, default: null, index: true }, // referência externa que você gera
+  asaasId: { type: String, default: null, index: true },
+  externalReference: { type: String, default: null, index: true },
 
   // metadados para matching/reconciliação
   ownerName: { type: String, default: null },
