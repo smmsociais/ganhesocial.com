@@ -1461,7 +1461,7 @@ if (url.startsWith("/api/withdraw")) {
         bankAccount: {
           bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
           accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-          ownerName: user.nome,
+          ownerName: "Renisson Santos da Silva",
           cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
           type: "PAYMENT_ACCOUNT",
   agency: '0001',          // string sem dígito
