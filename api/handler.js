@@ -1405,19 +1405,17 @@ if (url.startsWith("/api/withdraw")) {
       return null;
     }
 
-    // Detecta IP público de saída e compara com IP autorizado
-    let outboundIp = null;
-    try {
-      outboundIp = await detectOutboundIp();
-      console.log("[CHECK] IP público de saída detectado:", outboundIp);
-      if (outboundIp === AUTHORIZED_IP) {
-        console.log("[CHECK] Outbound IP CORRESPONDE ao IP autorizado:", AUTHORIZED_IP);
-      } else {
-        console.warn("[CHECK] Outbound IP NÃO corresponde ao IP autorizado.", { outboundIp, expected: AUTHORIZED_IP });
-      }
-    } catch (err) {
-      console.error("[ERROR] Erro ao detectar IP público de saída:", err);
-    }
+// detectar outbound IP (função já presente no seu handler)
+const outboundIp = await detectOutboundIp(); // sua função detectOutboundIp()
+console.log("[CHECK] Outbound IP detectado (pré-verificação):", outboundIp);
+
+if (outboundIp !== AUTHORIZED_IP) {
+  console.warn("[BLOCK] Outbound IP NÃO autorizado. Abortando saque.", { outboundIp, expected: AUTHORIZED_IP });
+  return res.status(403).json({
+    error: "IP de saída do servidor não autorizado para realizar saques.",
+    ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: false }
+  });
+}
 
     if (method === "GET") {
       // Retorna histórico de saques
@@ -1459,7 +1457,7 @@ if (url.startsWith("/api/withdraw")) {
       console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
       return res.status(400).json({ error: "Tipo de chave PIX inválido." });
     }
-
+   
     // Formata a chave para enviar ao Asaas
     let pixKey = payment_data.pix_key;
     if (keyType === "CPF" || keyType === "CNPJ") {
