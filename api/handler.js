@@ -1453,12 +1453,24 @@ if (url.startsWith("/api/withdraw")) {
 
       // 🔹 Chamada PIX Out Asaas
       const payloadAsaas = {
-  value: Number(amount.toFixed(2)),
-  operationType: "PIX",
-  pixAddressKey: pixKey,
-  pixAddressKeyType: keyType,
-  externalReference
-};
+        value: Number(amount.toFixed(2)),
+        operationType: "PIX",
+        pixAddressKey: pixKey,
+        pixAddressKeyType: keyType,
+        externalReference,
+        bankAccount: {
+          bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
+          accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+          ownerName: user.nome,
+          cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
+          type: "PAYMENT_ACCOUNT",
+  agency: '0001',          // string sem dígito
+  agencyDigit: '9',        // string com o dígito correto, ou null/omit
+  account: '54688818',     // string sem dígito
+  accountDigit: '2',       // string com o dígito
+  pixAddressKey: pixKey
+        }
+      };
 
       console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
 
