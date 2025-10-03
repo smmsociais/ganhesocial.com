@@ -30,19 +30,45 @@ const ActionHistorySchema = new mongoose.Schema({
 });
 
 // 🔹 Schema para Histórico de Saques
+// 🔹 Schema para Histórico de Saques (RECOMENDADO)
 const WithdrawSchema = new mongoose.Schema({
   valor: { type: Number, required: true },
-  chave_pix: { type: String, required: true },
-  tipo_chave: { type: String, default: "cpf" },
 
-  // novos campos para integração Asaas
-  asaasId: { type: String, default: null },            // id da transferência no Asaas
-  externalReference: { type: String, default: null },  // referência externa que você gera
-  ownerName: { type: String, default: null },          // nome do titular (opcional)
-  bankAccount: { type: mongoose.Schema.Types.Mixed }   // guarda dados recebidos (agency/account/pix etc) - opcional
+  // sempre grave chave em formato "apenas dígitos" para CPF/CNPJ ou texto para EMAIL/PHONE
+  chave_pix: {
+    type: String,
+    required: true,
+    set: v => v ? String(v).replace(/[^0-9]/g, '') : v // remove formatação automaticamente
+  },
+
+  tipo_chave: {
+    type: String,
+    enum: ['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'UNKNOWN'],
+    default: 'CPF'
+  },
+
+  status: {
+    type: String,
+    enum: ['pendente', 'pago', 'falhou'],
+    default: 'pendente'
+  },
+
+  // integração Asaas
+  asaasId: { type: String, default: null, index: true },           // id da transferência no Asaas
+  externalReference: { type: String, default: null, index: true }, // referência externa que você gera
+
+  // metadados para matching/reconciliação
+  ownerName: { type: String, default: null },
+  bankAccount: { type: mongoose.Schema.Types.Mixed, default: null },
+
+  // auditoria / suporte
+  failReason: { type: String, default: null },
+  rawTransfer: { type: mongoose.Schema.Types.Mixed, default: null },
+  createdBy: { type: String, default: null } // ex: 'webhook_ui_auto' | 'webhook_validation' | 'api_withdraw'
 }, {
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
+
 
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
