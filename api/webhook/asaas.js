@@ -64,7 +64,7 @@ async function createLocalSaqueIfNeeded(payload) {
     const novoSaque = {
       valor: value,
       chave_pix: pixKey,
-      tipo_chave: 'CPF', // ajuste se precisar inferir
+      tipo_chave: 'CPF', // ajuste se precisar inferir dinamicamente
       status: 'pendente',
       data: new Date(),
       asaasId: asaasId || null,
@@ -144,7 +144,6 @@ async function handleValidationEvent(body, res) {
       console.log('[ASASS WEBHOOK][VALIDATION] Encontrado user + saque pendente. Autorizando.', { userId: user._id, saqueExt: matchingSaque.externalReference });
       if (!matchingSaque.asaasId && t.id) matchingSaque.asaasId = t.id;
       if (!matchingSaque.externalReference && t.externalReference) matchingSaque.externalReference = t.externalReference;
-      // se não houver rawTransfer, salvar para auditoria
       if (!matchingSaque.rawTransfer) matchingSaque.rawTransfer = t;
       await user.save();
       return res.status(200).json({ authorized: true });
@@ -186,11 +185,11 @@ async function handleValidationEvent(body, res) {
         return res.status(200).json({ authorized: true, note: 'auto_allowed_small_ui' });
       }
 
-      console.log('[ASASS WEBHOOK][VALIDATION] Nenhum usuário encontrado e valor acima do limiar. Rejeitando.');
+      console.log('[ASASS WEBHOOK][VALIDATION] Nenhum usuário encontrado e valor acima do limiar. Rejeitando.' );
       return res.status(200).json({ authorized: false, reason: 'no_user_match' });
     }
 
-    console.log('[ASASS WEBHOOK][VALIDATION] Fallback: rejeitando por segurança.');
+    console.log('[ASASS WEBHOOK][VALIDATION] Fallback: rejeitando por segurança.' );
     return res.status(200).json({ authorized: false, reason: 'fallback_deny' });
 
   } catch (err) {
@@ -226,7 +225,6 @@ export default async function handler(req, res) {
       type === 'WITHDRAW_REQUESTED' ||
       event === 'TRANSFER_PENDING' ||
       event === 'TRANSFER_REQUESTED' ||
-      event === 'WITHDRAW_REQUESTED' ||
       (type === 'TRANSFER' && transfer && transfer.status === 'PENDING' && transfer.authorized === false);
 
     if (looksLikeValidationEvent) {
@@ -237,21 +235,19 @@ export default async function handler(req, res) {
     const isTransferEvent = (type === 'TRANSFER' && transfer) || (typeof event === 'string' && event.startsWith('TRANSFER'));
 
     if (isTransferEvent) {
-// dentro do branch isTransferEvent, imediatamente após: const t = transfer || body;
-const t = transfer || body;
-console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status || event, externalReference: t.externalReference, value: t.value });
+      const t = transfer || body;
+      console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status || event, externalReference: t.externalReference, value: t.value });
 
-// === Novo: se for TRANSFER CREATED / PENDING sem externalReference, tente criar saque local primeiro ===
-try {
-  if ((t.status === 'PENDING' || t.status === 'CREATED' || (event === 'TRANSFER_CREATED')) && !t.externalReference) {
-    console.log('[ASASS WEBHOOK] Transfer PENDING sem externalReference detectado — tentando criar saque local para UI (para permitir matching futuro).');
-    // aguardamos para garantir que o saque foi criado antes do matching
-    await createLocalSaqueIfNeeded(body);
-  }
-} catch (e) {
-  console.error('[ASASS WEBHOOK] Erro ao tentar createLocalSaqueIfNeeded previamente:', e);
-}
-// =================================================================================================
+      // === Novo: se for TRANSFER CREATED / PENDING sem externalReference, tente criar saque local primeiro ===
+      try {
+        if ((t.status === 'PENDING' || t.status === 'CREATED' || (event === 'TRANSFER_CREATED')) && !t.externalReference) {
+          console.log('[ASASS WEBHOOK] Transfer PENDING sem externalReference detectado — tentando criar saque local para UI (para permitir matching futuro).');
+          await createLocalSaqueIfNeeded(body);
+        }
+      } catch (e) {
+        console.error('[ASASS WEBHOOK] Erro ao tentar createLocalSaqueIfNeeded previamente:', e);
+      }
+      // =================================================================================================
 
       await connectDB();
 
@@ -259,6 +255,7 @@ try {
       const statusRaw = (t.status || event || '').toString();
       const statusNormalized = statusRaw.includes('CONFIRMED') ? 'CONFIRMED'
         : statusRaw.includes('FAILED') ? 'FAILED'
+        : statusRaw.includes('DONE') ? 'CONFIRMED' // alguns eventos usam DONE
         : statusRaw.includes('PENDING') ? 'PENDING'
         : statusRaw.toUpperCase();
 
@@ -268,52 +265,98 @@ try {
       let user = null;
       let saque = null;
 
-      if (externalReference) {
+      // 1) procurar por saques já atrelados ao asaasId
+      user = await User.findOne({ 'saques.asaasId': transferId });
+      if (user) {
+        saque = user.saques.find(s => s.asaasId === transferId);
+        console.log('[ASASS WEBHOOK] Encontrado por asaasId.');
+      }
+
+      // 2) se não, procurar por externalReference se existir
+      if (!user && externalReference) {
         user = await User.findOne({ 'saques.externalReference': externalReference });
-      } else {
+        if (user) saque = user.saques.find(s => s.externalReference === externalReference);
+        console.log('[ASASS WEBHOOK] Procurou por externalReference:', externalReference, 'achou:', !!saque);
+      }
+
+      // 3) se não, procurar por externalReference ui_<transferId> (criados por fallback)
+      if (!user) {
+        const uiRef = `ui_${transferId}`;
+        user = await User.findOne({ 'saques.externalReference': uiRef });
+        if (user) saque = user.saques.find(s => s.externalReference === uiRef);
+        if (saque) console.log('[ASASS WEBHOOK] Encontrado por uiRef:', uiRef);
+      }
+
+      // 4) fallback tolerante: pixKey + valor + janela de tempo
+      if (!user) {
         const pixKeyCandidate = bank.pixAddressKey || t.pixAddressKey || null;
         const cpfCnpjCandidate = bank.cpfCnpj ? String(bank.cpfCnpj).replace(/[^0-9]/g, '') : null;
         const ownerNameCandidate = bank.ownerName ? bank.ownerName.trim().toLowerCase() : null;
         const valueCandidate = t.value;
         const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
 
-        user = await User.findOne({
-          saques: {
-            $elemMatch: {
-              status: 'pendente',
-              valor: valueCandidate,
-              data: { $gte: cutoff },
-              $or: [
-                { chave_pix: pixKeyCandidate },
-                { chave_pix: { $regex: pixKeyCandidate || '' } },
-                { chave_pix: cpfCnpjCandidate },
-                { ownerName: ownerNameCandidate }
-              ]
+        if (valueCandidate != null) {
+          user = await User.findOne({
+            saques: {
+              $elemMatch: {
+                status: 'pendente',
+                valor: valueCandidate,
+                data: { $gte: cutoff }
+              }
+            }
+          });
+
+          if (user) {
+            saque = user.saques.find(s => {
+              const recent = (new Date(s.data)).getTime() >= (Date.now() - MATCH_WINDOW_MS);
+              const valueMatch = Number(s.valor) === Number(valueCandidate);
+              const pixMatch = pixKeyCandidate ? (s.chave_pix === pixKeyCandidate || s.chave_pix.replace(/\D/g, '') === String(pixKeyCandidate).replace(/\D/g, '')) : false;
+              const cpfMatch = cpfCnpjCandidate ? (s.chave_pix.replace(/\D/g, '') === cpfCnpjCandidate) : false;
+              const ownerMatch = ownerNameCandidate ? (s.ownerName && s.ownerName.trim().toLowerCase() === ownerNameCandidate) : false;
+              return s.status === 'pendente' && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
+            });
+
+            if (saque) console.log('[ASASS WEBHOOK] Encontrado por fallback (pix+valor+tempo).');
+          }
+        }
+      }
+
+      // 5) Se nada encontrado e status PENDING => tentar criar saque local (salva asaasId e ui_<id>)
+      if (!user && statusNormalized === 'PENDING') {
+        try {
+          console.log('[ASASS WEBHOOK] Nenhum user encontrado e transfer PENDING -> tentando createLocalSaqueIfNeeded agora.');
+          await createLocalSaqueIfNeeded({ transfer: t });
+          // tentar buscar novamente por ui_<id> ou asaasId
+          const uiRef = `ui_${transferId}`;
+          user = await User.findOne({ 'saques.externalReference': uiRef });
+          if (user) saque = user.saques.find(s => s.externalReference === uiRef || s.asaasId === transferId);
+          if (!user) {
+            // tentar por pix_key
+            const pixKeyCandidate = bank.pixAddressKey ? String(bank.pixAddressKey).replace(/[^0-9]/g, '') : null;
+            if (pixKeyCandidate) {
+              user = await User.findOne({ $or: [ { pix_key: pixKeyCandidate }, { 'saques.chave_pix': pixKeyCandidate } ] });
+              if (user) {
+                saque = user.saques.find(s => (s.asaasId === transferId) || (s.externalReference === `ui_${transferId}`) || (s.valor === t.value && s.chave_pix && s.chave_pix.replace(/\D/g,'') === pixKeyCandidate));
+              }
             }
           }
-        });
+        } catch (errCreate) {
+          console.error('[ASASS WEBHOOK] Erro ao createLocalSaqueIfNeeded no fluxo PENDING:', errCreate);
+        }
       }
 
       if (!user) {
         console.warn('[ASASS WEBHOOK] Usuário/saque não encontrado para transferId:', transferId, 'externalReference:', externalReference);
+        // opcional: salvar em coleção unmatched_transfers para investigação manual
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
-
-      saque = user.saques.find(s => {
-        if (externalReference) return s.externalReference === externalReference;
-        const recent = (new Date(s.data)).getTime() >= (Date.now() - MATCH_WINDOW_MS);
-        const valueMatch = Number(s.valor) === Number(t.value);
-        const pixMatch = bank.pixAddressKey ? (s.chave_pix === bank.pixAddressKey || s.chave_pix.replace(/[^0-9]/g, '') === bank.pixAddressKey) : false;
-        const cpfMatch = bank.cpfCnpj ? (s.chave_pix.replace(/[^0-9]/g, '') === String(bank.cpfCnpj).replace(/[^0-9]/g, '')) : false;
-        const ownerMatch = bank.ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === bank.ownerName.trim().toLowerCase()) : false;
-        return s.status === 'pendente' && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
-      });
 
       if (!saque) {
-        console.warn('[ASASS WEBHOOK] Saque não encontrado mesmo após buscar usuário. transferId:', transferId);
+        console.warn('[ASASS WEBHOOK] User encontrado mas saque exato não localizado. userId:', user._id);
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
 
+      // atualizar status previsível
       const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
         : (statusNormalized === 'FAILED') ? 'falhou'
         : (statusNormalized === 'PENDING') ? 'pendente'
@@ -326,7 +369,7 @@ try {
 
       await user.save();
 
-      console.log('[ASASS WEBHOOK] Saque atualizado:', { userId: user._id, saqueExternal: saque.externalReference, novoStatus: newStatus, failReason: t.failReason || null });
+      console.log('[ASASS WEBHOOK] Saque atualizado:', { userId: String(user._id), saqueExternal: saque.externalReference, novoStatus: newStatus, failReason: t.failReason || null });
 
       return res.status(200).json({ success: true });
     }
