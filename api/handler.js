@@ -1438,10 +1438,10 @@ if (url.startsWith("/api/withdraw")) {
         valor: amount,
         chave_pix: pixKey,
         tipo_chave: keyType,
-        status: "pendente",
+        status: "PENDING",
         data: new Date(),
         asaasId: null,
-        externalReference: null,
+        externalReference,
         ownerName: "Renisson Santos da Silva",
       };
       console.log("[DEBUG] Novo saque criado:", novoSaque);
@@ -1457,7 +1457,7 @@ if (url.startsWith("/api/withdraw")) {
         operationType: "PIX",
         pixAddressKey: pixKey,
         pixAddressKeyType: keyType,
-        externalReference: null,
+        externalReference,
         bankAccount: {
           bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
           accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
