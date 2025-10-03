@@ -49,8 +49,8 @@ const WithdrawSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['pendente', 'pago', 'falhou'],
-    default: 'pendente'
+    enum: ['PENDING', 'pago', 'falhou'],
+    default: 'PENDING'
   },
 
   // integração Asaas
