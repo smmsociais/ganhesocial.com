@@ -52,7 +52,7 @@ async function createLocalSaqueIfNeeded(payload) {
       const samePix = sPix === pixKey;
       const sameValue = Number(s.valor) === Number(value);
       const recent = new Date(s.data).getTime() >= cutoff.getTime();
-      return s.status === 'pendente' && samePix && sameValue && recent;
+      return s.status === 'PENDING' && samePix && sameValue && recent;
     });
 
     if (existing) {
@@ -65,7 +65,7 @@ async function createLocalSaqueIfNeeded(payload) {
       valor: value,
       chave_pix: pixKey,
       tipo_chave: 'CPF', // ajuste se precisar inferir dinamicamente
-      status: 'pendente',
+      status: 'PENDING',
       data: new Date(),
       asaasId: asaasId || null,
       externalReference: externalReference || `ui_${asaasId || Date.now()}`,
@@ -161,7 +161,7 @@ async function handleValidationEvent(body, res) {
         valor: value,
         chave_pix: pixKey || (cpf || null),
         tipo_chave: cpf ? 'CPF' : (pixKey ? 'CPF' : 'UNKNOWN'),
-        status: 'pendente',
+        status: 'PENDING',
         data: new Date(),
         asaasId: t.id || null,
         externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
@@ -299,7 +299,7 @@ export default async function handler(req, res) {
           user = await User.findOne({
             saques: {
               $elemMatch: {
-                status: 'pendente',
+                status: 'PENDING',
                 valor: valueCandidate,
                 data: { $gte: cutoff }
               }
@@ -313,7 +313,7 @@ export default async function handler(req, res) {
               const pixMatch = pixKeyCandidate ? (s.chave_pix === pixKeyCandidate || s.chave_pix.replace(/\D/g, '') === String(pixKeyCandidate).replace(/\D/g, '')) : false;
               const cpfMatch = cpfCnpjCandidate ? (s.chave_pix.replace(/\D/g, '') === cpfCnpjCandidate) : false;
               const ownerMatch = ownerNameCandidate ? (s.ownerName && s.ownerName.trim().toLowerCase() === ownerNameCandidate) : false;
-              return s.status === 'pendente' && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
+              return s.status === 'PENDING' && recent && valueMatch && (pixMatch || cpfMatch || ownerMatch);
             });
 
             if (saque) console.log('[ASASS WEBHOOK] Encontrado por fallback (pix+valor+tempo).');
@@ -357,9 +357,9 @@ export default async function handler(req, res) {
       }
 
       // atualizar status previsível
-      const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
-        : (statusNormalized === 'FAILED') ? 'falhou'
-        : (statusNormalized === 'PENDING') ? 'pendente'
+      const newStatus = (statusNormalized === 'DONE') ? 'DONE'
+        : (statusNormalized === 'FAILED') ? 'FAILED'
+        : (statusNormalized === 'PENDING') ? 'PENDING'
         : statusNormalized.toLowerCase();
 
       saque.status = newStatus;
