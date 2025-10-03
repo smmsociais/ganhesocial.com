@@ -323,10 +323,10 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
 
-      // mapear status para seu sistema
-      const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
-        : (statusNormalized === 'FAILED') ? 'falhou'
-        : (statusNormalized === 'PENDING') ? 'pendente'
+      // atualizar status previsível
+      const newStatus = (statusNormalized === 'DONE') ? 'DONE'
+        : (statusNormalized === 'FAILED') ? 'FAILED'
+        : (statusNormalized === 'PENDING') ? 'PENDING'
         : statusNormalized.toLowerCase();
 
       saque.status = newStatus;
