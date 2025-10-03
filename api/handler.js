@@ -1355,167 +1355,226 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+  const AUTHORIZED_IP = "138.185.59.102"; // IP que você autorizou no Asaas
   await connectDB();
 
-    // 🔹 Autenticação
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      console.log("[DEBUG] Token ausente ou inválido:", authHeader);
-      return res.status(401).json({ error: "Token ausente ou inválido." });
-    }
-    const token = authHeader.split(" ")[1];
-    const user = await User.findOne({ token });
-    if (!user) {
-      console.log("[DEBUG] Usuário não encontrado para token:", token);
-      return res.status(401).json({ error: "Usuário não autenticado." });
-    }
-
-    try {
-      if (method === "GET") {
-        // Retorna histórico de saques
-        const saquesFormatados = user.saques.map(s => ({
-          amount: s.valor,
-          pixKey: s.chave_pix,
-          keyType: s.tipo_chave,
-          status: s.status,
-          date: s.data?.toISOString() || null
-        }));
-        console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
-        return res.status(200).json(saquesFormatados);
-      }
-
-      // 🔹 POST - Solicitar saque
-      const { amount, payment_method, payment_data } = req.body;
-      console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
-
-      // Validações básicas
-      if (!amount || typeof amount !== "number" || amount < 0) {
-        console.log("[DEBUG] Valor de saque inválido:", amount);
-        return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
-      }
-
-      if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-        console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
-        return res.status(400).json({ error: "Dados de pagamento incompletos." });
-      }
-
-      if (user.saldo < amount) {
-        console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
-        return res.status(400).json({ error: "Saldo insuficiente." });
-      }
-
-      // Normalize e valida tipo da chave PIX
-      const allowedTypes = ["CPF"];
-      const keyType = payment_data.pix_key_type.toUpperCase();
-      if (!allowedTypes.includes(keyType)) {
-        console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
-        return res.status(400).json({ error: "Tipo de chave PIX inválido." });
-      }
-
-      // Formata a chave para enviar ao Asaas
-      let pixKey = payment_data.pix_key;
-      if (keyType === "CPF" || keyType === "CNPJ") {
-        pixKey = pixKey.replace(/\D/g, "");
-        console.log("[DEBUG] Chave PIX formatada:", pixKey);
-      }
-
-      // Salva PIX do usuário se ainda não existir
-      if (!user.pix_key) {
-        user.pix_key = pixKey;
-        user.pix_key_type = keyType;
-        console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
-      } else if (user.pix_key !== pixKey) {
-        console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
-        return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-      }
-
-      // Cria referência externa única
-      const externalReference = `saque_${user._id}_${Date.now()}`;
-      console.log("[DEBUG] externalReference gerada:", externalReference);
-
-      // Adiciona saque pendente
-      const novoSaque = {
-        valor: amount,
-        chave_pix: pixKey,
-        tipo_chave: keyType,
-        status: "PENDING",
-        data: new Date(),
-        asaasId: null,
-        externalReference,
-        ownerName: "Renisson Santos da Silva",
-      };
-      console.log("[DEBUG] Novo saque criado:", novoSaque);
-
-      user.saldo -= amount;
-      user.saques.push(novoSaque);
-      await user.save();
-      console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
-
-      // 🔹 Chamada PIX Out Asaas
-      const payloadAsaas = {
-        value: Number(amount.toFixed(2)),
-        operationType: "PIX",
-        pixAddressKey: pixKey,
-        pixAddressKeyType: keyType,
-        externalReference,
-        bankAccount: {
-          bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
-          accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-          ownerName: "Renisson Santos da Silva",
-          cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
-          type: "PAYMENT_ACCOUNT",
-  agency: '0001',          // string sem dígito
-  agencyDigit: '9',        // string com o dígito correto, ou null/omit
-  account: '54688818',     // string sem dígito
-  accountDigit: '2',       // string com o dígito
-  pixAddressKey: pixKey
-        }
-      };
-
-      console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
-
-      const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": ASAAS_API_KEY
-        },
-        body: JSON.stringify(payloadAsaas)
-      });
-
-      // 🔹 Ler corpo como texto primeiro
-      const bodyText = await pixResponse.text();
-
-      let pixData;
-      try {
-        pixData = JSON.parse(bodyText);
-      } catch (err) {
-        console.error("[ERROR] Resposta não-JSON do Asaas:", bodyText);
-        return res.status(pixResponse.status).json({ error: bodyText });
-      }
-
-      console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
-
-      if (!pixResponse.ok) {
-        console.error("[DEBUG] Erro PIX Asaas:", pixData);
-        return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
-      }
-
-      // Atualiza saque com ID do Asaas
-      const index = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (index >= 0) {
-        user.saques[index].asaasId = pixData.id;
-        await user.save();
-        console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
-      }
-
-      return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
-
-    } catch (error) {
-      console.error("💥 Erro em /withdraw:", error);
-      return res.status(500).json({ error: "Erro ao processar saque." });
-    }
+  // 🔹 Autenticação
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
+    return res.status(401).json({ error: "Token ausente ou inválido." });
   }
+  const token = authHeader.split(" ")[1];
+  console.log("[DEBUG] Token (mascarado) recebido:", token ? `${token.slice(0,8)}...` : null);
+
+  const user = await User.findOne({ token });
+  if (!user) {
+    console.log("[DEBUG] Usuário não encontrado para token (mascarado):", token ? `${token.slice(0,8)}...` : null);
+    return res.status(401).json({ error: "Usuário não autenticado." });
+  }
+
+  try {
+    // --- LOG: IPs de origem (quem fez a requisição ao seu endpoint)
+    const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
+    const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
+    const remoteAddr = req.socket?.remoteAddress || null;
+    console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
+
+    // Função para detectar IP público de saída (usa api.ipify.org)
+    async function detectOutboundIp() {
+      try {
+        // tenta API JSON
+        const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" } });
+        if (!r.ok) throw new Error(`status ${r.status}`);
+        const j = await r.json();
+        if (j && j.ip) return j.ip.toString().trim();
+      } catch (err) {
+        console.warn("[WARN] Falha ao detectar IP em api.ipify.org:", err.message || err);
+      }
+
+      // fallback: ifconfig.co (texto puro)
+      try {
+        const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" } });
+        if (!r2.ok) throw new Error(`status ${r2.status}`);
+        const text = (await r2.text()).trim();
+        if (text) return text;
+      } catch (err) {
+        console.warn("[WARN] Falha no fallback ifconfig.co:", err.message || err);
+      }
+
+      return null;
+    }
+
+    // Detecta IP público de saída e compara com IP autorizado
+    let outboundIp = null;
+    try {
+      outboundIp = await detectOutboundIp();
+      console.log("[CHECK] IP público de saída detectado:", outboundIp);
+      if (outboundIp === AUTHORIZED_IP) {
+        console.log("[CHECK] Outbound IP CORRESPONDE ao IP autorizado:", AUTHORIZED_IP);
+      } else {
+        console.warn("[CHECK] Outbound IP NÃO corresponde ao IP autorizado.", { outboundIp, expected: AUTHORIZED_IP });
+      }
+    } catch (err) {
+      console.error("[ERROR] Erro ao detectar IP público de saída:", err);
+    }
+
+    if (method === "GET") {
+      // Retorna histórico de saques
+      const saquesFormatados = user.saques.map(s => ({
+        amount: s.valor,
+        pixKey: s.chave_pix,
+        keyType: s.tipo_chave,
+        status: s.status,
+        date: s.data?.toISOString() || null
+      }));
+      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
+      return res.status(200).json(saquesFormatados);
+    }
+
+    // 🔹 POST - Solicitar saque
+    const { amount, payment_method, payment_data } = req.body;
+    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
+
+    // Validações básicas
+    if (!amount || typeof amount !== "number" || amount < 0) {
+      console.log("[DEBUG] Valor de saque inválido:", amount);
+      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
+    }
+
+    if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+      console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
+      return res.status(400).json({ error: "Dados de pagamento incompletos." });
+    }
+
+    if (user.saldo < amount) {
+      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
+      return res.status(400).json({ error: "Saldo insuficiente." });
+    }
+
+    // Normalize e valida tipo da chave PIX
+    const allowedTypes = ["CPF"];
+    const keyType = payment_data.pix_key_type.toUpperCase();
+    if (!allowedTypes.includes(keyType)) {
+      console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
+      return res.status(400).json({ error: "Tipo de chave PIX inválido." });
+    }
+
+    // Formata a chave para enviar ao Asaas
+    let pixKey = payment_data.pix_key;
+    if (keyType === "CPF" || keyType === "CNPJ") {
+      pixKey = pixKey.replace(/\D/g, "");
+      console.log("[DEBUG] Chave PIX formatada:", pixKey);
+    }
+
+    // Salva PIX do usuário se ainda não existir
+    if (!user.pix_key) {
+      user.pix_key = pixKey;
+      user.pix_key_type = keyType;
+      console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
+    } else if (user.pix_key !== pixKey) {
+      console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
+      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+    }
+
+    // Cria referência externa única
+    const externalReference = `saque_${user._id}_${Date.now()}`;
+    console.log("[DEBUG] externalReference gerada:", externalReference);
+
+    // Adiciona saque pendente
+    const novoSaque = {
+      valor: amount,
+      chave_pix: pixKey,
+      tipo_chave: keyType,
+      status: "PENDING",
+      data: new Date(),
+      asaasId: null,
+      externalReference,
+      ownerName: "Renisson Santos da Silva",
+    };
+    console.log("[DEBUG] Novo saque criado:", novoSaque);
+
+    user.saldo -= amount;
+    user.saques.push(novoSaque);
+    await user.save();
+    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
+
+    // 🔹 Chamada PIX Out Asaas
+    const payloadAsaas = {
+      value: Number(amount.toFixed(2)),
+      operationType: "PIX",
+      pixAddressKey: pixKey,
+      pixAddressKeyType: keyType,
+      externalReference,
+      bankAccount: {
+        bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
+        accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+        ownerName: "Renisson Santos da Silva",
+        cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
+        type: "PAYMENT_ACCOUNT",
+        agency: '0001',
+        agencyDigit: '9',
+        account: '54688818',
+        accountDigit: '2',
+        pixAddressKey: pixKey
+      }
+    };
+
+    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
+
+    const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": ASAAS_API_KEY
+      },
+      body: JSON.stringify(payloadAsaas)
+    });
+
+    // 🔹 Ler corpo como texto primeiro
+    const bodyText = await pixResponse.text();
+
+    let pixData;
+    try {
+      pixData = JSON.parse(bodyText);
+    } catch (err) {
+      console.error("[ERROR] Resposta não-JSON do Asaas:", bodyText);
+      // inclui status e resultado da checagem de IP no retorno
+      return res.status(pixResponse.status).json({ error: bodyText, ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
+    }
+
+    console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
+
+    if (!pixResponse.ok) {
+      console.error("[DEBUG] Erro PIX Asaas:", pixData);
+      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX", ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
+    }
+
+    // Atualiza saque com ID do Asaas
+    const index = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (index >= 0) {
+      user.saques[index].asaasId = pixData.id;
+      await user.save();
+      console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
+    }
+
+    // Retorna resultado + resultado da checagem de IP
+    return res.status(200).json({
+      message: "Saque solicitado com sucesso. PIX enviado!",
+      data: pixData,
+      ipCheck: {
+        outboundIp,
+        expected: AUTHORIZED_IP,
+        matches: outboundIp === AUTHORIZED_IP,
+        origin: { xForwardedFor: xff, xRealIp, remoteAddr }
+      }
+    });
+
+  } catch (error) {
+    console.error("💥 Erro em /withdraw:", error);
+    return res.status(500).json({ error: "Erro ao processar saque." });
+  }
+}
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
