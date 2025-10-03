@@ -414,9 +414,9 @@ export default async function handler(req, res) {
       }
 
       // atualizar status previsível
-      const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
-        : (statusNormalized === 'FAILED') ? 'falhou'
-        : (statusNormalized === 'PENDING') ? 'pendente'
+      const newStatus = (statusNormalized === 'DONE') ? 'DONE'
+        : (statusNormalized === 'FAILED') ? 'FAILED'
+        : (statusNormalized === 'PENDING') ? 'PENDING'
         : statusNormalized.toLowerCase();
 
       saque.status = newStatus;
