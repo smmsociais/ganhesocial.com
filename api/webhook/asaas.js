@@ -84,7 +84,7 @@ async function createLocalSaqueIfNeeded(payload) {
   }
 }
 
-// Handler auxiliar para eventos de validação — usa regras em vez de depender do ID
+// Handler auxiliar para eventos de validação — agora responde rápido e faz gravações em background
 async function handleValidationEvent(body, res) {
   try {
     const t = body.transfer || body;
@@ -98,102 +98,159 @@ async function handleValidationEvent(body, res) {
     const cpf = cpfRaw ? String(cpfRaw).replace(/[^0-9]/g, '') : null;
     const ownerName = ownerNameRaw ? String(ownerNameRaw).trim() : null;
 
-    console.log('[ASASS WEBHOOK][VALIDATION] dados:', { value, pixKey, cpf, ownerName });
+    console.log('[ASASS WEBHOOK][VALIDATION] (fast) dados:', { id: t.id, value, pixKey, cpf, ownerName });
 
-    // Tenta criar um saque local para o caso de saques iniciados pela interface (UI)
-    try {
-      await createLocalSaqueIfNeeded(body);
-    } catch (err) {
-      console.error('[ASASS WEBHOOK][VALIDATION] erro no createLocalSaqueIfNeeded:', err);
-      // não interrompe o fluxo principal; continuamos com a validação normal
-    }
-
+    // validação rápida: valor inválido -> negar rápido
     if (!value || isNaN(value) || value <= 0) {
-      console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: valor inválido.' );
+      console.log('[ASASS WEBHOOK][VALIDATION] invalid value -> deny');
+      console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'invalid_value' });
       return res.status(200).json({ authorized: false, reason: 'invalid_value' });
     }
 
-    await connectDB();
+    // tenta achar user/saque rapidamente (conexão DB pode demorar; minimizamos queries)
+    try {
+      await connectDB();
+    } catch (errConn) {
+      console.error('[ASASS WEBHOOK][VALIDATION] connectDB error (will deny):', errConn);
+      console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'db_connect_error' });
+      return res.status(200).json({ authorized: false, reason: 'db_connect_error' });
+    }
 
-    // 1) procurar usuário por pix_key
+    // busca rápida por externalReference direto
     let user = null;
-    if (pixKey) {
-      user = await User.findOne({ $or: [ { pix_key: pixKey }, { 'saques.chave_pix': pixKey } ] });
-    }
-
-    // 2) fallback por cpf
-    if (!user && cpf) {
-      user = await User.findOne({ $or: [ { pix_key: cpf }, { 'saques.chave_pix': cpf } ] });
-    }
-
-    const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
     let matchingSaque = null;
-    if (user) {
-      matchingSaque = user.saques.find(s => {
-        const sameValue = Number(s.valor) === Number(value);
-        const recent = new Date(s.data).getTime() >= cutoff.getTime();
-        const pixMatch = pixKey ? (s.chave_pix.replace(/[^0-9]/g, '') === pixKey) : false;
-        const cpfMatch = cpf ? (s.chave_pix.replace(/[^0-9]/g, '') === cpf) : false;
-        const ownerMatch = ownerName ? (s.ownerName && s.ownerName.trim().toLowerCase() === ownerName.trim().toLowerCase()) : false;
-        return s.status === 'pendente' && recent && sameValue && (pixMatch || cpfMatch || ownerMatch);
-      });
+
+    if (t.externalReference) {
+      user = await User.findOne({ 'saques.externalReference': t.externalReference }, { 'saques.$': 1, saldo: 1 });
+      if (user && user.saques && user.saques.length) matchingSaque = user.saques[0];
     }
 
-    // Regra 1: user + matchingSaque
+    // fallback por pixKey + valor recente (uma única query)
+    if (!user && pixKey) {
+      const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
+      user = await User.findOne({
+        saques: {
+          $elemMatch: {
+            status: 'PENDING',
+            valor: value,
+            data: { $gte: cutoff },
+            chave_pix: pixKey
+          }
+        }
+      }, { saques: 1, saldo: 1 });
+      if (user && user.saques) {
+        matchingSaque = user.saques.find(s => (s.chave_pix && s.chave_pix.replace(/\D/g,'') === pixKey && Number(s.valor) === Number(value)));
+      }
+    }
+
+    // RULE 1: user + matchingSaque -> authorize quickly and background-save details
     if (user && matchingSaque) {
-      console.log('[ASASS WEBHOOK][VALIDATION] Encontrado user + saque pendente. Autorizando.', { userId: user._id, saqueExt: matchingSaque.externalReference });
-      if (!matchingSaque.asaasId && t.id) matchingSaque.asaasId = t.id;
-      if (!matchingSaque.externalReference && t.externalReference) matchingSaque.externalReference = t.externalReference;
-      if (!matchingSaque.rawTransfer) matchingSaque.rawTransfer = t;
-      await user.save();
-      return res.status(200).json({ authorized: true });
+      console.log('[ASASS WEBHOOK][VALIDATION] Found user+saque -> quick authorize', { userId: user._id, saqueExt: matchingSaque.externalReference });
+      console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: true });
+
+      // respondemos IMEDIATAMENTE
+      res.status(200).json({ authorized: true });
+
+      // EM BACKGROUND: atualiza matchingSaque com asaasId/rawTransfer se necessário
+      (async () => {
+        try {
+          // Re-fetch full user doc to modify array element safely
+          const fullUser = await User.findOne({ _id: user._id });
+          if (!fullUser) {
+            console.warn('[ASASS WEBHOOK][VALIDATION][BG] fullUser not found for background update', user._id);
+            return;
+          }
+          const s = fullUser.saques.find(x => {
+            if (t.externalReference && x.externalReference) return x.externalReference === t.externalReference;
+            if (x.asaasId && t.id) return x.asaasId === t.id;
+            return x.chave_pix && x.chave_pix.replace(/\D/g,'') === (pixKey || '') && Number(x.valor) === Number(value);
+          });
+          if (s) {
+            if (!s.asaasId && t.id) s.asaasId = t.id;
+            if (!s.externalReference && t.externalReference) s.externalReference = t.externalReference;
+            if (!s.rawTransfer) s.rawTransfer = t;
+            await fullUser.save();
+            console.log('[ASASS WEBHOOK][VALIDATION][BG] backfill saved for saque:', s.externalReference || t.id);
+          } else {
+            console.log('[ASASS WEBHOOK][VALIDATION][BG] saque não encontrado no fullUser para backfill', { userId: user._id, tId: t.id });
+          }
+        } catch (errBg) {
+          console.error('[ASASS WEBHOOK][VALIDATION][BG] background save error:', errBg);
+        }
+      })();
+
+      return; // já respondemos, não executar mais
     }
 
-    // Regra 2: user encontrado mas sem matchingSaque -> reservar e criar saque
-    if (user && (!matchingSaque)) {
+    // RULE 2: user found but no matchingSaque -> check balance and quick authorize/deny
+    if (user && !matchingSaque) {
       const saldo = Number(user.saldo || 0);
       if (saldo < value) {
-        console.log('[ASASS WEBHOOK][VALIDATION] Rejeitado: saldo insuficiente no user:', { userId: user._id, saldo, value });
+        console.log('[ASASS WEBHOOK][VALIDATION] user found but insufficient balance -> deny', { userId: user._id, saldo, value });
+        console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'insufficient_balance' });
         return res.status(200).json({ authorized: false, reason: 'insufficient_balance' });
       }
 
-      const newSaque = {
-        valor: value,
-        chave_pix: pixKey || (cpf || null),
-        tipo_chave: cpf ? 'CPF' : (pixKey ? 'CPF' : 'UNKNOWN'),
-        status: 'PENDING',
-        data: new Date(),
-        asaasId: t.id || null,
-        externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
-        ownerName: ownerName || user.nome || null,
-        bankAccount: bank || null,
-        rawTransfer: t,                 // <<-- salva o JSON para suporte
-        createdBy: 'webhook_validation' // marca que foi criado durante validação
-      };
+      // autorizar rápido e criar a reserva em background
+      console.log('[ASASS WEBHOOK][VALIDATION] user found and sufficient balance -> quick authorize & create in background', { userId: user._id, value });
+      console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: true });
+      res.status(200).json({ authorized: true });
 
-      user.saldo = saldo - value; // reserva o valor
-      user.saques.push(newSaque);
-      await user.save();
-      console.log('[ASASS WEBHOOK][VALIDATION] User encontrado, saque criado e autorizado:', newSaque.externalReference);
-      return res.status(200).json({ authorized: true });
+      (async () => {
+        try {
+          const fullUser = await User.findOne({ _id: user._id });
+          if (!fullUser) {
+            console.warn('[ASASS WEBHOOK][VALIDATION][BG] fullUser not found for reserve creation', user._id);
+            return;
+          }
+
+          const newSaque = {
+            valor: value,
+            chave_pix: pixKey || (cpf || null),
+            tipo_chave: cpf ? 'CPF' : (pixKey ? 'CPF' : 'UNKNOWN'),
+            status: 'PENDING',
+            data: new Date(),
+            asaasId: t.id || null,
+            externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
+            ownerName: ownerName || fullUser.nome || null,
+            bankAccount: bank || null,
+            rawTransfer: t,
+            createdBy: 'webhook_validation'
+          };
+
+          fullUser.saldo = Number(fullUser.saldo || 0) - Number(value);
+          fullUser.saques.push(newSaque);
+          await fullUser.save();
+          console.log('[ASASS WEBHOOK][VALIDATION][BG] created reserva and saved:', newSaque.externalReference);
+        } catch (errBgCreate) {
+          console.error('[ASASS WEBHOOK][VALIDATION][BG] erro ao criar saque em background:', errBgCreate);
+        }
+      })();
+
+      return;
     }
 
-    // Regra 3: sem usuário -> política para UI
+    // RULE 3: no user -> policy: allow small amounts if configured, otherwise deny
     if (!user) {
       if (value <= MAX_AUTOMATIC_UI && MAX_AUTOMATIC_UI > 0) {
-        console.log('[ASASS WEBHOOK][VALIDATION] Nenhum user encontrado, valor <= MAX_AUTOMATIC_UI; autorizando:', value);
+        console.log('[ASASS WEBHOOK][VALIDATION] no user but small value -> auto allow', { value });
+        console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: true, note: 'auto_allowed_small_ui' });
         return res.status(200).json({ authorized: true, note: 'auto_allowed_small_ui' });
       }
 
-      console.log('[ASASS WEBHOOK][VALIDATION] Nenhum usuário encontrado e valor acima do limiar. Rejeitando.' );
+      console.log('[ASASS WEBHOOK][VALIDATION] no user found -> deny', { value });
+      console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'no_user_match' });
       return res.status(200).json({ authorized: false, reason: 'no_user_match' });
     }
 
-    console.log('[ASASS WEBHOOK][VALIDATION] Fallback: rejeitando por segurança.' );
+    // fallback deny (shouldn't reach)
+    console.log('[ASASS WEBHOOK][VALIDATION] fallback deny');
+    console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'fallback_deny' });
     return res.status(200).json({ authorized: false, reason: 'fallback_deny' });
 
   } catch (err) {
-    console.error('[ASASS WEBHOOK][VALIDATION] erro interno:', err);
+    console.error('[ASASS WEBHOOK][VALIDATION] unexpected error:', err);
+    console.log('[ASASS WEBHOOK][VALIDATION] RESPONDING:', { authorized: false, reason: 'internal_error' });
     return res.status(200).json({ authorized: false, reason: 'internal_error' });
   }
 }
@@ -357,15 +414,28 @@ export default async function handler(req, res) {
       }
 
       // atualizar status previsível
-      const newStatus = (statusNormalized === 'DONE') ? 'DONE'
-        : (statusNormalized === 'FAILED') ? 'FAILED'
-        : (statusNormalized === 'PENDING') ? 'PENDING'
+      const newStatus = (statusNormalized === 'CONFIRMED') ? 'pago'
+        : (statusNormalized === 'FAILED') ? 'falhou'
+        : (statusNormalized === 'PENDING') ? 'pendente'
         : statusNormalized.toLowerCase();
 
       saque.status = newStatus;
       if (!saque.asaasId) saque.asaasId = transferId;
       saque.bankAccount = bank;
       if (t.failReason) saque.failReason = t.failReason;
+
+      // se falhou, opcionalmente faça reembolso automático (atenção à sua política)
+      if (newStatus === 'falhou') {
+        if (!saque.refunded) {
+          const refundAmount = Number(saque.valor || 0);
+          user.saldo = Number(user.saldo || 0) + refundAmount;
+          saque.refunded = true;
+          saque.refundAt = new Date();
+          console.log('[ASASS WEBHOOK] Reembolsando valor do saque FAILED em background:', { userId: user._id, refundAmount });
+        } else {
+          console.log('[ASASS WEBHOOK] Saque já marcado como reembolsado:', saque.externalReference);
+        }
+      }
 
       await user.save();
 
