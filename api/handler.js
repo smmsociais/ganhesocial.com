@@ -1438,7 +1438,7 @@ if (url.startsWith("/api/withdraw")) {
         valor: amount,
         chave_pix: pixKey,
         tipo_chave: keyType,
-        status: "PENDING",
+        status: "pending",
         data: new Date(),
         asaasId: null,
         externalReference,
