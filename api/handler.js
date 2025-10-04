@@ -1347,17 +1347,20 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
   }
 };
 
-// Rota: /api/withdraw
+// Handler para /api/withdraw
+// Preserva o padrão original, adiciona: pré-validação de outbound IP, rollback em falha,
+// logs mais robustos e retorno com ipCheck.
+
+// Dependências presumidas: fetch (node 18+ ou node-fetch), connectDB, User model, express-like req/res
+
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
     console.log("[DEBUG] Método não permitido:", method);
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-  const ASAAS_API_KEY = process.env.ASAAS_API_KEY; // ainda pode ser útil para debug/fallback
-  const AUTHORIZED_IP = process.env.AUTHORIZED_IP || "138.185.59.102"; // IP autorizado no painel Asaas
-  const RELAY_URL = (process.env.RELAY_URL || "").replace(/\/$/, ""); // ex: "http://138.185.59.102:8080"
-  const RELAY_TOKEN = process.env.RELAY_TOKEN; // token que o relay espera
+  const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+  const AUTHORIZED_IP = "138.185.59.102"; // IP autorizado no painel Asaas
   await connectDB();
 
   // 🔹 Autenticação
@@ -1375,67 +1378,55 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(401).json({ error: "Usuário não autenticado." });
   }
 
-  // utilitário: fetch com timeout (Node 18+ tem AbortController)
-  async function fetchWithTimeout(url, opts = {}, ms = 7000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), ms);
+  // Função utilitária: detecta IP público de saída do servidor
+  async function detectOutboundIp() {
+    // tenta api.ipify.org
     try {
-      const r = await fetch(url, { ...opts, signal: controller.signal });
-      clearTimeout(id);
-      return r;
+      const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && j.ip) return j.ip.toString().trim();
+      }
     } catch (err) {
-      clearTimeout(id);
-      throw err;
+      console.warn("[WARN] detectOutboundIp: api.ipify.org falhou:", err?.message || err);
     }
-  }
 
-  // funçao utilitário local (mantive para logs de origem)
-  function getOriginIps() {
-    const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
-    const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
-    const remoteAddr = req.socket?.remoteAddress || null;
-    return { xForwardedFor: xff, xRealIp, remoteAddr };
+    // fallback ifconfig.co
+    try {
+      const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r2.ok) {
+        const text = (await r2.text()).trim();
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn("[WARN] detectOutboundIp: ifconfig.co falhou:", err?.message || err);
+    }
+
+    return null;
   }
 
   try {
     // --- LOG: IPs de origem (quem chamou sua rota)
-    const originIps = getOriginIps();
-    console.log("[CHECK] IPs de origem:", originIps);
+    const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
+    const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
+    const remoteAddr = req.socket?.remoteAddress || null;
+    console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
 
-    // --- Verifique se o relay está configurado
-    if (!RELAY_URL || !RELAY_TOKEN) {
-      console.error("[CONFIG] Relay nao configurado (RELAY_URL/RELAY_TOKEN ausentes).");
-      return res.status(500).json({ error: "Relay nao configurado no backend." });
+    // Detecta outbound IP ANTES de alterar o banco
+    let outboundIp = null;
+    try {
+      outboundIp = await detectOutboundIp();
+      console.log("[CHECK] IP público de saída detectado (pré):", outboundIp);
+    } catch (err) {
+      console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
     }
 
-// substitui a seção que consulta relay /health
-let relayOutboundIp = null;
-try {
-  console.log("[CHECK] Consultando relay /health em:", `${RELAY_URL}/health`);
-  const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 3000);
-  if (h.ok) {
-    const hj = await h.json();
-    relayOutboundIp = hj.outboundIp || hj.ip || null;
-    console.log("[CHECK] Relay /health respondeu:", hj);
-  } else {
-    const txt = await h.text().catch(() => null);
-    console.warn("[WARN] Relay /health retornou status:", h.status, "body:", txt);
-  }
-} catch (err) {
-  console.warn("[WARN] Falha ao consultar relay /health. Detalhe:", {
-    message: err?.message || String(err),
-    stack: err?.stack,
-    RELAY_URL,
-  });
-  // mantemos relayOutboundIp === null para bloquear por segurança
-}
-
-    // Bloquear se o relay nao estiver saindo do IP autorizado
-    if (!relayOutboundIp || relayOutboundIp !== AUTHORIZED_IP) {
-      console.warn("[BLOCK] Relay outbound IP NAO autorizado. Abortando saque.", { relayOutboundIp, expected: AUTHORIZED_IP });
+    // Se não bate com o autorizado, bloqueia e NÃO altera saldo/DB
+    if (!outboundIp || outboundIp !== AUTHORIZED_IP) {
+      console.warn("[BLOCK] Outbound IP não autorizado. Abortando antes de criar saque.", { outboundIp, expected: AUTHORIZED_IP });
       return res.status(403).json({
-        error: "Relay outbound IP nao autorizado para realizar saques.",
-        ipCheck: { relayOutboundIp, expected: AUTHORIZED_IP, matches: relayOutboundIp === AUTHORIZED_IP, origin: originIps }
+        error: "IP de saída do servidor não autorizado para realizar saques.",
+        ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
       });
     }
 
@@ -1520,7 +1511,7 @@ try {
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // 🔹 Monta payload para enviar ao relay (que por sua vez chamará Asaas)
+    // 🔹 Chamada PIX Out Asaas
     const payloadAsaas = {
       value: Number(amount.toFixed(2)),
       operationType: "PIX",
@@ -1541,106 +1532,58 @@ try {
       }
     };
 
-    console.log("[DEBUG] Payload que será enviado ao relay:", payloadAsaas);
+    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
 
-    // 🔹 Envia para o relay
-    let relayResp, relayText, relayData;
+    let pixResponse, bodyText, pixData;
     try {
-      relayResp = await fetchWithTimeout(`${RELAY_URL}/relay/withdraw`, {
+      pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-relay-token": RELAY_TOKEN
+          "access_token": ASAAS_API_KEY
         },
-        body: JSON.stringify(payloadAsaas)
-      }, 15000);
+        body: JSON.stringify(payloadAsaas),
+        // optional: timeout handling in your fetch library
+      });
 
-      relayText = await relayResp.text();
-      try { relayData = JSON.parse(relayText); } catch (err) { relayData = relayText; }
+      bodyText = await pixResponse.text();
+      try { pixData = JSON.parse(bodyText); } catch (err) { pixData = null; }
 
-      console.log("[DEBUG] Relay response status:", relayResp.status, "bodyPreview:", typeof relayText === "string" ? relayText.slice(0,400) : relayText);
+      console.log("[DEBUG] Resposta Asaas (status):", pixResponse.status, "bodyText:", bodyText.slice ? bodyText.slice(0,200) : bodyText);
 
-      if (!relayResp.ok) {
-        // rollback: marcar como FAILED e restituir saldo
+      if (!pixResponse.ok) {
+        // marca saque como FAILED e restaura saldo
         const idx = user.saques.findIndex(s => s.externalReference === externalReference);
         if (idx >= 0) {
           user.saques[idx].status = "FAILED";
-          user.saques[idx].failureReason = relayData?.errors?.[0]?.description || relayText || `relay_status_${relayResp.status}`;
+          user.saques[idx].failureReason = pixData?.errors?.[0]?.description || bodyText;
         }
-        user.saldo += amount;
+        user.saldo += amount; // rollback do saldo
         await user.save();
 
-        console.error("[ERROR] Relay/Asaas retornou erro (rollback aplicado):", relayData || relayText);
-        return res.status(400).json({ error: relayData?.errors?.[0]?.description || relayText, ipCheck: { relayOutboundIp, expected: AUTHORIZED_IP, matches: relayOutboundIp === AUTHORIZED_IP } });
+        console.error("[ERROR] Erro PIX Asaas (rollback aplicado):", pixData || bodyText);
+        return res.status(400).json({ error: pixData?.errors?.[0]?.description || bodyText, ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
       }
 
-// sucesso: atualiza saque com ID retornado pelo Asaas via relay
-const index = user.saques.findIndex(s => s.externalReference === externalReference);
-if (index >= 0) {
-  user.saques[index].asaasId = relayData?.id || null;
-
-  // Tenta descobrir os valores permitidos pelo enum do schema (compatível com subdocument array)
-  let allowedStatuses = [];
-  try {
-    // caso o campo 'saques' seja um array de subdocumentos com schema próprio
-    allowedStatuses = User.schema.path('saques')?.caster?.schema?.path('status')?.enumValues || [];
-  } catch (e) {
-    allowedStatuses = [];
-  }
-  // fallback (outra forma de declaração possível)
-  if (!allowedStatuses || allowedStatuses.length === 0) {
-    try {
-      allowedStatuses = User.schema.path('saques.status')?.enumValues || [];
-    } catch (e) {
-      allowedStatuses = [];
-    }
-  }
-
-  // Ordem de preferência de status (você pode ajustar)
-  const preferred = ['COMPLETED','SUCCESS','DONE','SETTLED','PAID','FINISHED','OK','CONFIRMED','PROCESSING','PENDING','FAILED'];
-
-  // Escolhe o primeiro preferido que seja aceito pelo schema; se não houver enum definido, usa 'COMPLETED'
-  let chosenStatus = 'COMPLETED';
-  if (Array.isArray(allowedStatuses) && allowedStatuses.length > 0) {
-    const found = preferred.find(s => allowedStatuses.includes(s));
-    chosenStatus = found || allowedStatuses[0] || 'PENDING';
-  } else {
-    // sem enum no schema conhecido, manter comportamento desejado
-    chosenStatus = 'COMPLETED';
-  }
-
-  // Aplica e salva com proteção contra validação
-  try {
-    user.saques[index].status = chosenStatus;
-    await user.save();
-    console.log("[DEBUG] Saque atualizado com status:", chosenStatus, "asaasId:", relayData?.id);
-  } catch (saveErr) {
-    // Em caso de erro de validação inesperado, faz rollback parcial (marca como FAILED e devolve saldo)
-    console.error("[ERROR] Falha ao salvar saque após relay:", saveErr);
-    try {
-      // marca o saque como FAILED (se possível) e devolve saldo
-      if (user.saques[index]) {
-        user.saques[index].status = allowedStatuses.includes('FAILED') ? 'FAILED' : (allowedStatuses[0] || 'PENDING');
-        user.saques[index].failureReason = `save_error_after_relay: ${String(saveErr.message || saveErr)}`;
+      // sucesso: atualiza saque com ID do Asaas
+      const index = user.saques.findIndex(s => s.externalReference === externalReference);
+      if (index >= 0) {
+        user.saques[index].asaasId = pixData.id;
+        user.saques[index].status = "COMPLETED";
+        await user.save();
+        console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
       }
-      user.saldo += amount;
-      await user.save();
-    } catch (rollbackErr) {
-      console.error("[ERROR] Falha durante rollback apos erro de save:", rollbackErr);
-    }
-    return res.status(500).json({ error: "Erro ao atualizar saque no banco após resposta do relay.", details: String(saveErr) });
-  }
-}
+
       // Retorna resultado + ipCheck
       return res.status(200).json({
-        message: "Saque solicitado com sucesso (via relay).",
-        data: relayData,
-        ipCheck: { relayOutboundIp, expected: AUTHORIZED_IP, matches: relayOutboundIp === AUTHORIZED_IP, origin: originIps }
+        message: "Saque solicitado com sucesso. PIX enviado!",
+        data: pixData,
+        ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
       });
 
     } catch (err) {
-      // exceção inesperada durante a chamada ao relay -> rollback
-      console.error("[ERROR] Excecao ao chamar relay:", err);
+      // erro inesperado durante o fetch -> rollback
+      console.error("[ERROR] Exceção durante chamada Asaas:", err);
       const idx2 = user.saques.findIndex(s => s.externalReference === externalReference);
       if (idx2 >= 0) {
         user.saques[idx2].status = "FAILED";
@@ -1648,7 +1591,7 @@ if (index >= 0) {
       }
       user.saldo += amount;
       await user.save();
-      return res.status(500).json({ error: "Erro ao processar PIX via relay (excecao)", details: String(err), ipCheck: { relayOutboundIp, expected: AUTHORIZED_IP, matches: relayOutboundIp === AUTHORIZED_IP } });
+      return res.status(500).json({ error: "Erro ao processar PIX (exceção)", details: String(err), ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
     }
 
   } catch (error) {
