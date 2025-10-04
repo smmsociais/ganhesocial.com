@@ -36,8 +36,6 @@
     { "source": "/api/registrar_acao_pendente", "destination": "/api/handler.js" },
     { "source": "/api/ranking", "destination": "/api/handler.js" },
     { "source": "/api/pular_acao", "destination": "/api/handler.js" },
-    { "source": "/api/proxy_bind_tk", "destination": "/api/handler.js" },
-    { "source": "/api/withdraw/force", "destination": "/api/handler.js" },
-    { "source": "/api/withdraw/pending", "destination": "/api/handler.js" }
+    { "source": "/api/proxy_bind_tk", "destination": "/api/handler.js" }
   ]
 }
