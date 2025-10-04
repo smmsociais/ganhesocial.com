@@ -1347,6 +1347,7 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
   }
 };
 
+// Rota: /api/withdraw
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
     console.log("[DEBUG] Método não permitido:", method);
@@ -1411,7 +1412,6 @@ if (url.startsWith("/api/withdraw")) {
 let relayOutboundIp = null;
 try {
   console.log("[CHECK] Consultando relay /health em:", `${RELAY_URL}/health`);
-  // aumento timeout para 15s
   const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 15000);
   if (h.ok) {
     const hj = await h.json();
@@ -1422,9 +1422,12 @@ try {
     console.warn("[WARN] Relay /health retornou status:", h.status, "body:", txt);
   }
 } catch (err) {
-  // loga a causa do fetch failed com detalhe (mensagem + stack)
-  console.warn("[WARN] Falha ao consultar relay /health:", err && err.message ? err.message : String(err));
-  // não faz abort here — mantemos relayOutboundIp === null e vamos bloqueiar por segurança
+  console.warn("[WARN] Falha ao consultar relay /health. Detalhe:", {
+    message: err?.message || String(err),
+    stack: err?.stack,
+    RELAY_URL,
+  });
+  // mantemos relayOutboundIp === null para bloquear por segurança
 }
 
     // Bloquear se o relay nao estiver saindo do IP autorizado
