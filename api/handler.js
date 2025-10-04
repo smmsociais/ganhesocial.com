@@ -1347,7 +1347,6 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
   }
 };
 
-// Rota simplificada: /api/withdraw (chama Asaas imediatamente, sem checagem de IP)
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
     console.log("[DEBUG] Método não permitido:", method);
@@ -1355,7 +1354,33 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+  const AUTHORIZED_IPS = (process.env.ASAAS_AUTHORIZED_IPS || "44.199.245.103,3.87.201.30,3.235.228.44,3.236.147.104")
+    .split(",").map(s => s.trim()).filter(Boolean);
+
   await connectDB();
+
+  // util: detectar ip público de saída (logs apenas)
+  async function detectOutboundIp() {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && j.ip) return j.ip.toString().trim();
+      }
+    } catch (err) {
+      console.warn("[WARN] detectOutboundIp: api.ipify.org falhou:", err?.message || err);
+    }
+    try {
+      const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r2.ok) {
+        const text = (await r2.text()).trim();
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn("[WARN] detectOutboundIp: ifconfig.co falhou:", err?.message || err);
+    }
+    return null;
+  }
 
   // Autenticação básica do usuário
   const authHeader = req.headers.authorization;
@@ -1372,8 +1397,23 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(401).json({ error: "Usuário não autenticado." });
   }
 
-  // --- GET: retorna histórico de saques
+  // log IPs de origem (quem chamou sua rota)
+  const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
+  const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
+  const remoteAddr = req.socket?.remoteAddress || null;
+  console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
+
+  // detecta outbound IP (apenas para log)
+  let outboundIp = null;
+  try {
+    outboundIp = await detectOutboundIp();
+    console.log("[CHECK] IP público de saída detectado:", outboundIp);
+  } catch (err) {
+    console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
+  }
+
   if (method === "GET") {
+    // Retorna histórico de saques
     const saquesFormatados = user.saques.map(s => ({
       amount: s.valor,
       pixKey: s.chave_pix,
@@ -1386,7 +1426,7 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(200).json(saquesFormatados);
   }
 
-  // --- POST: criar saque e chamar Asaas imediatamente
+  // ------------------ POST: criar saque e enviar direto ao Asaas ------------------
   const { amount, payment_method, payment_data } = req.body;
   console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
@@ -1435,7 +1475,7 @@ if (url.startsWith("/api/withdraw")) {
   const externalReference = `saque_${user._id}_${Date.now()}`;
   console.log("[DEBUG] externalReference gerada:", externalReference);
 
-  // Adiciona saque PENDING e debita saldo (antes de chamar Asaas)
+  // Adiciona saque PENDING e debita saldo antes de chamar Asaas (auditoria)
   const novoSaque = {
     valor: amount,
     chave_pix: pixKey,
@@ -1474,14 +1514,12 @@ if (url.startsWith("/api/withdraw")) {
     }
   };
 
-  // Chama Asaas imediatamente
+  // Chamada direta ao Asaas (sem checagem de IP)
   try {
+    console.log("[FLOW] Enviando requisição ao Asaas (sem checagem de IP) — outboundIp logged above.");
     const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access_token": ASAAS_API_KEY
-      },
+      headers: { "Content-Type": "application/json", "access_token": ASAAS_API_KEY },
       body: JSON.stringify(payloadAsaas)
     });
 
@@ -1498,13 +1536,15 @@ if (url.startsWith("/api/withdraw")) {
         user.saques[idx].status = "FAILED";
         user.saques[idx].failureReason = pixData?.errors?.[0]?.description || bodyText;
         user.saques[idx].lastAttemptAt = new Date();
-        user.saques[idx].attempts = (user.saques[idx].attempts || 0) + 1;
       }
       user.saldo += amount; // rollback do saldo
       await user.save();
 
       console.error("[ERROR] Erro PIX Asaas (rollback aplicado):", pixData || bodyText);
-      return res.status(400).json({ error: pixData?.errors?.[0]?.description || bodyText });
+      return res.status(400).json({
+        error: pixData?.errors?.[0]?.description || bodyText,
+        ipCheck: { outboundIp, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
+      });
     }
 
     // sucesso: atualiza saque com ID do Asaas
@@ -1514,14 +1554,15 @@ if (url.startsWith("/api/withdraw")) {
       user.saques[index].status = "COMPLETED";
       user.saques[index].completedAt = new Date();
       user.saques[index].lastAttemptAt = new Date();
-      user.saques[index].attempts = (user.saques[index].attempts || 0) + 1;
       await user.save();
       console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData?.id);
     }
 
+    // Retorna resultado + ipCheck (mostrando o IP detectado para que você possa registrá-lo no painel Asaas se quiser)
     return res.status(200).json({
       message: "Saque solicitado com sucesso. PIX enviado!",
-      data: pixData
+      data: pixData,
+      ipCheck: { outboundIp, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
     });
 
   } catch (err) {
@@ -1532,11 +1573,14 @@ if (url.startsWith("/api/withdraw")) {
       user.saques[idx2].status = "FAILED";
       user.saques[idx2].failureReason = String(err);
       user.saques[idx2].lastAttemptAt = new Date();
-      user.saques[idx2].attempts = (user.saques[idx2].attempts || 0) + 1;
     }
     user.saldo += amount;
     await user.save();
-    return res.status(500).json({ error: "Erro ao processar PIX (exceção)", details: String(err) });
+    return res.status(500).json({
+      error: "Erro ao processar PIX (exceção)",
+      details: String(err),
+      ipCheck: { outboundIp, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
+    });
   }
 }
 
