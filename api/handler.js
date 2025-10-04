@@ -1360,7 +1360,7 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-  const AUTHORIZED_IP = "138.185.59.102"; // IP autorizado no painel Asaas
+  const AUTHORIZED_IP = "44.199.245.103"; // IP autorizado no painel Asaas
   await connectDB();
 
   // 🔹 Autenticação
