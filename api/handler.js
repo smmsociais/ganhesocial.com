@@ -1412,7 +1412,7 @@ if (url.startsWith("/api/withdraw")) {
 let relayOutboundIp = null;
 try {
   console.log("[CHECK] Consultando relay /health em:", `${RELAY_URL}/health`);
-  const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 15000);
+  const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 3000);
   if (h.ok) {
     const hj = await h.json();
     relayOutboundIp = hj.outboundIp || hj.ip || null;
