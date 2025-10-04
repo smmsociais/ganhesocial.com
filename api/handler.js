@@ -1360,7 +1360,12 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-  const AUTHORIZED_IP = "44.199.245.103"; // IP autorizado no painel Asaas
+  // Lista de IPs autorizados: pode ser definida aqui ou via env ASAAS_AUTHORIZED_IPS = "44.199.245.103,3.87.201.30,..."
+  const AUTHORIZED_IPS = (process.env.ASAAS_AUTHORIZED_IPS
+    ? process.env.ASAAS_AUTHORIZED_IPS.split(",")
+    : ["44.199.245.103", "3.87.201.30", "3.235.228.44", "3.236.147.104"]
+  ).map(ip => ip.toString().trim()).filter(Boolean);
+
   await connectDB();
 
   // 🔹 Autenticação
@@ -1380,7 +1385,6 @@ if (url.startsWith("/api/withdraw")) {
 
   // Função utilitária: detecta IP público de saída do servidor
   async function detectOutboundIp() {
-    // tenta api.ipify.org
     try {
       const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
       if (r.ok) {
@@ -1391,7 +1395,6 @@ if (url.startsWith("/api/withdraw")) {
       console.warn("[WARN] detectOutboundIp: api.ipify.org falhou:", err?.message || err);
     }
 
-    // fallback ifconfig.co
     try {
       const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
       if (r2.ok) {
@@ -1403,6 +1406,13 @@ if (url.startsWith("/api/withdraw")) {
     }
 
     return null;
+  }
+
+  // util: verifica se o ip está autorizado
+  function isIpAuthorized(ip) {
+    if (!ip) return false;
+    const clean = ip.toString().trim();
+    return AUTHORIZED_IPS.includes(clean);
   }
 
   try {
@@ -1421,12 +1431,17 @@ if (url.startsWith("/api/withdraw")) {
       console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
     }
 
-    // Se não bate com o autorizado, bloqueia e NÃO altera saldo/DB
-    if (!outboundIp || outboundIp !== AUTHORIZED_IP) {
-      console.warn("[BLOCK] Outbound IP não autorizado. Abortando antes de criar saque.", { outboundIp, expected: AUTHORIZED_IP });
+    // Se não bate com os autorizados, bloqueia e NÃO altera saldo/DB
+    if (!outboundIp || !isIpAuthorized(outboundIp)) {
+      console.warn("[BLOCK] Outbound IP não autorizado. Abortando antes de criar saque.", { outboundIp, expected: AUTHORIZED_IPS });
       return res.status(403).json({
         error: "IP de saída do servidor não autorizado para realizar saques.",
-        ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
+        ipCheck: {
+          outboundIp,
+          expected: AUTHORIZED_IPS,
+          matches: isIpAuthorized(outboundIp),
+          origin: { xForwardedFor: xff, xRealIp, remoteAddr }
+        }
       });
     }
 
@@ -1543,7 +1558,6 @@ if (url.startsWith("/api/withdraw")) {
           "access_token": ASAAS_API_KEY
         },
         body: JSON.stringify(payloadAsaas),
-        // optional: timeout handling in your fetch library
       });
 
       bodyText = await pixResponse.text();
@@ -1562,7 +1576,7 @@ if (url.startsWith("/api/withdraw")) {
         await user.save();
 
         console.error("[ERROR] Erro PIX Asaas (rollback aplicado):", pixData || bodyText);
-        return res.status(400).json({ error: pixData?.errors?.[0]?.description || bodyText, ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
+        return res.status(400).json({ error: pixData?.errors?.[0]?.description || bodyText, ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) } });
       }
 
       // sucesso: atualiza saque com ID do Asaas
@@ -1578,7 +1592,7 @@ if (url.startsWith("/api/withdraw")) {
       return res.status(200).json({
         message: "Saque solicitado com sucesso. PIX enviado!",
         data: pixData,
-        ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP, origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
+        ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp), origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
       });
 
     } catch (err) {
@@ -1591,7 +1605,7 @@ if (url.startsWith("/api/withdraw")) {
       }
       user.saldo += amount;
       await user.save();
-      return res.status(500).json({ error: "Erro ao processar PIX (exceção)", details: String(err), ipCheck: { outboundIp, expected: AUTHORIZED_IP, matches: outboundIp === AUTHORIZED_IP } });
+      return res.status(500).json({ error: "Erro ao processar PIX (exceção)", details: String(err), ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) } });
     }
 
   } catch (error) {
