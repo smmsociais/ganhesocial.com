@@ -1576,10 +1576,6 @@ if (url.startsWith("/api/withdraw")) {
     }
   }
 
-  // Se não autorizado: aguarda 30s para você adicionar o IP no painel Asaas, depois tenta
-  console.log("[FLOW] Outbound IP não autorizado. Aguardando 30s para permitir adição manual no painel Asaas...");
-  await sleep(30000); // <-- espera 30 segundos
-
   // detecta novamente
   let outboundIpAfterWait = null;
   try {
