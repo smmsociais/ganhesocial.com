@@ -1353,37 +1353,20 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
 
 // Dependências presumidas: fetch (node 18+ ou node-fetch), connectDB, User model, express-like req/res
 
+// --- Início: rota /api/withdraw (sub-rotas /force e /pending incluídas)
 if (url.startsWith("/api/withdraw")) {
-  if (method !== "GET" && method !== "POST") {
-    console.log("[DEBUG] Método não permitido:", method);
-    return res.status(405).json({ error: "Método não permitido." });
-  }
-
+  // configuração via env (ou valores padrão)
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-  // Lista de IPs autorizados: pode ser definida aqui ou via env ASAAS_AUTHORIZED_IPS = "44.199.245.103,3.87.201.30,..."
-  const AUTHORIZED_IPS = (process.env.ASAAS_AUTHORIZED_IPS
-    ? process.env.ASAAS_AUTHORIZED_IPS.split(",")
-    : ["44.199.245.103", "3.87.201.30", "3.235.228.44", "3.236.147.104", "44.198.178.67","44.220.246.46", "98.82.12.221", "52.70.133.83", "13.222.191.13"]
-  ).map(ip => ip.toString().trim()).filter(Boolean);
+  const ASAAS_AUTHORIZED_IPS = (process.env.ASAAS_AUTHORIZED_IPS || "44.199.245.103,3.87.201.30,3.235.228.44,3.236.147.104")
+    .split(",").map(s => s.trim()).filter(Boolean);
+  const ASAAS_MAX_RETRIES = Number(process.env.ASAAS_MAX_RETRIES ?? 12);
+  const ASAAS_INITIAL_DELAY_SEC = Number(process.env.ASAAS_INITIAL_DELAY_SEC ?? 60);
+  const ASAAS_MAX_WAIT_MIN = Number(process.env.ASAAS_MAX_WAIT_MIN ?? 120); // tempo máximo total de espera
+  const ADMIN_FORCE_SECRET = process.env.ADMIN_FORCE_SECRET || null;
 
   await connectDB();
 
-  // 🔹 Autenticação
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
-    return res.status(401).json({ error: "Token ausente ou inválido." });
-  }
-  const token = authHeader.split(" ")[1];
-  console.log("[DEBUG] Token (mascarado) recebido:", token ? `${token.slice(0,8)}...` : null);
-
-  const user = await User.findOne({ token });
-  if (!user) {
-    console.log("[DEBUG] Usuário não encontrado para token (mascarado):", token ? `${token.slice(0,8)}...` : null);
-    return res.status(401).json({ error: "Usuário não autenticado." });
-  }
-
-  // Função utilitária: detecta IP público de saída do servidor
+  // util: detectar ip público de saída
   async function detectOutboundIp() {
     try {
       const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
@@ -1394,7 +1377,6 @@ if (url.startsWith("/api/withdraw")) {
     } catch (err) {
       console.warn("[WARN] detectOutboundIp: api.ipify.org falhou:", err?.message || err);
     }
-
     try {
       const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
       if (r2.ok) {
@@ -1404,215 +1386,324 @@ if (url.startsWith("/api/withdraw")) {
     } catch (err) {
       console.warn("[WARN] detectOutboundIp: ifconfig.co falhou:", err?.message || err);
     }
-
     return null;
   }
 
-  // util: verifica se o ip está autorizado
   function isIpAuthorized(ip) {
     if (!ip) return false;
-    const clean = ip.toString().trim();
-    return AUTHORIZED_IPS.includes(clean);
+    return ASAAS_AUTHORIZED_IPS.includes(ip.toString().trim());
   }
 
-  try {
-    // --- LOG: IPs de origem (quem chamou sua rota)
-    const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
-    const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
-    const remoteAddr = req.socket?.remoteAddress || null;
-    console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
+  // --- attempt logic (idempotente)
+  async function attemptAsaasTransfer(externalReference, attempt = 1) {
+    console.log(`[ATTEMPT] tentativa #${attempt} -> ${externalReference}`);
+    await connectDB();
+    const user = await User.findOne({ "saques.externalReference": externalReference });
+    if (!user) {
+      console.warn("[ATTEMPT] saque não encontrado para externalReference:", externalReference);
+      return;
+    }
+    const idx = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (idx < 0) return;
+    const saque = user.saques[idx];
 
-    // Detecta outbound IP ANTES de alterar o banco
+    if (saque.status && saque.status !== "PENDING") {
+      console.log("[ATTEMPT] saque não está PENDING:", saque.status);
+      return;
+    }
+
+    // detectar outbound ip atual
     let outboundIp = null;
     try {
       outboundIp = await detectOutboundIp();
-      console.log("[CHECK] IP público de saída detectado (pré):", outboundIp);
+      console.log("[ATTEMPT] outboundIp detectado:", outboundIp);
     } catch (err) {
-      console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
+      console.warn("[ATTEMPT] detectOutboundIp falhou:", err?.message || err);
     }
 
-    // Se não bate com os autorizados, bloqueia e NÃO altera saldo/DB
+    // se ainda não autorizado, atualiza metadata e agenda próxima tentativa (sem chamar Asaas)
     if (!outboundIp || !isIpAuthorized(outboundIp)) {
-      console.warn("[BLOCK] Outbound IP não autorizado. Abortando antes de criar saque.", { outboundIp, expected: AUTHORIZED_IPS });
-      return res.status(403).json({
-        error: "IP de saída do servidor não autorizado para realizar saques.",
-        ipCheck: {
-          outboundIp,
-          expected: AUTHORIZED_IPS,
-          matches: isIpAuthorized(outboundIp),
-          origin: { xForwardedFor: xff, xRealIp, remoteAddr }
-        }
-      });
+      console.log("[ATTEMPT] Outbound IP não autorizado ainda. Agendando próximo attempt.");
+      user.saques[idx].attempts = (user.saques[idx].attempts || 0) + 1;
+      user.saques[idx].lastAttemptAt = new Date();
+      const nextDelaySec = Math.min(ASAAS_INITIAL_DELAY_SEC * Math.pow(2, (user.saques[idx].attempts - 1)), ASAAS_MAX_WAIT_MIN * 60);
+      user.saques[idx].nextAttemptAt = new Date(Date.now() + nextDelaySec * 1000);
+      await user.save();
+
+      // programar in-process tentativa futura
+      scheduleTransferAttempt(externalReference, user.saques[idx].attempts + 1, nextDelaySec);
+      return;
     }
 
-    if (method === "GET") {
-      // Retorna histórico de saques
-      const saquesFormatados = user.saques.map(s => ({
-        amount: s.valor,
-        pixKey: s.chave_pix,
-        keyType: s.tipo_chave,
-        status: s.status,
-        date: s.data?.toISOString() || null
-      }));
-      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
-      return res.status(200).json(saquesFormatados);
-    }
-
-    // 🔹 POST - Solicitar saque
-    const { amount, payment_method, payment_data } = req.body;
-    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
-
-    // Validações básicas
-    if (!amount || typeof amount !== "number" || amount <= 0) {
-      console.log("[DEBUG] Valor de saque inválido:", amount);
-      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
-    }
-
-    if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-      console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
-      return res.status(400).json({ error: "Dados de pagamento incompletos." });
-    }
-
-    if (user.saldo < amount) {
-      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
-      return res.status(400).json({ error: "Saldo insuficiente." });
-    }
-
-    // Normalize e valida tipo da chave PIX
-    const allowedTypes = ["CPF"];
-    const keyType = payment_data.pix_key_type.toUpperCase();
-    if (!allowedTypes.includes(keyType)) {
-      console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
-      return res.status(400).json({ error: "Tipo de chave PIX inválido." });
-    }
-
-    // Formata a chave para enviar ao Asaas
-    let pixKey = payment_data.pix_key;
-    if (keyType === "CPF" || keyType === "CNPJ") {
-      pixKey = pixKey.replace(/\D/g, "");
-      console.log("[DEBUG] Chave PIX formatada:", pixKey);
-    }
-
-    // Salva PIX do usuário se ainda não existir
-    if (!user.pix_key) {
-      user.pix_key = pixKey;
-      user.pix_key_type = keyType;
-      console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
-    } else if (user.pix_key !== pixKey) {
-      console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
-      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-    }
-
-    // Cria referência externa única
-    const externalReference = `saque_${user._id}_${Date.now()}`;
-    console.log("[DEBUG] externalReference gerada:", externalReference);
-
-    // Adiciona saque pendente (mas ainda não confirma com Asaas)
-    const novoSaque = {
-      valor: amount,
-      chave_pix: pixKey,
-      tipo_chave: keyType,
-      status: "PENDING",
-      data: new Date(),
-      asaasId: null,
-      externalReference,
-      ownerName: "Renisson Santos da Silva",
-    };
-    console.log("[DEBUG] Novo saque (pendente):", novoSaque);
-
-    // Atualiza DB: debita saldo e registra saque PENDING
-    user.saldo -= amount;
-    user.saques.push(novoSaque);
-    await user.save();
-    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
-
-    // 🔹 Chamada PIX Out Asaas
+    // monta payload igual ao seu original
     const payloadAsaas = {
-      value: Number(amount.toFixed(2)),
+      value: Number(Number(saque.valor).toFixed(2)),
       operationType: "PIX",
-      pixAddressKey: pixKey,
-      pixAddressKeyType: keyType,
-      externalReference,
+      pixAddressKey: saque.chave_pix,
+      pixAddressKeyType: saque.tipo_chave,
+      externalReference: saque.externalReference,
       bankAccount: {
         bank: { code: "260", name: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO", ispb: "18236120" },
         accountName: "NU PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
-        ownerName: "Renisson Santos da Silva",
-        cpfCnpj: user.pix_key_type === "CPF" ? pixKey : null,
+        ownerName: saque.ownerName || "Renisson Santos da Silva",
+        cpfCnpj: saque.tipo_chave === "CPF" ? saque.chave_pix : null,
         type: "PAYMENT_ACCOUNT",
         agency: '0001',
         agencyDigit: '9',
         account: '54688818',
         accountDigit: '2',
-        pixAddressKey: pixKey
+        pixAddressKey: saque.chave_pix
       }
     };
 
-    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
-
-    let pixResponse, bodyText, pixData;
     try {
-      pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
+      const resp = await fetch("https://www.asaas.com/api/v3/transfers", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": ASAAS_API_KEY
-        },
-        body: JSON.stringify(payloadAsaas),
+        headers: { "Content-Type": "application/json", "access_token": ASAAS_API_KEY },
+        body: JSON.stringify(payloadAsaas)
       });
+      const text = await resp.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch (e) { data = null; }
 
-      bodyText = await pixResponse.text();
-      try { pixData = JSON.parse(bodyText); } catch (err) { pixData = null; }
+      console.log("[ATTEMPT] Asaas status:", resp.status, "body:", text.slice ? text.slice(0,300) : text);
 
-      console.log("[DEBUG] Resposta Asaas (status):", pixResponse.status, "bodyText:", bodyText.slice ? bodyText.slice(0,200) : bodyText);
-
-      if (!pixResponse.ok) {
-        // marca saque como FAILED e restaura saldo
-        const idx = user.saques.findIndex(s => s.externalReference === externalReference);
-        if (idx >= 0) {
-          user.saques[idx].status = "FAILED";
-          user.saques[idx].failureReason = pixData?.errors?.[0]?.description || bodyText;
+      if (!resp.ok) {
+        // se erro possivelmente relacionado a IP ou transient, agenda nova tentativa se houver tentativas sobrando
+        const isIpError = resp.status === 403 || (data && /ip/i.test(JSON.stringify(data).toLowerCase()));
+        user.saques[idx].attempts = (user.saques[idx].attempts || 0) + 1;
+        user.saques[idx].lastAttemptAt = new Date();
+        if (isIpError && user.saques[idx].attempts < ASAAS_MAX_RETRIES) {
+          const nextDelay = Math.min(ASAAS_INITIAL_DELAY_SEC * Math.pow(2, user.saques[idx].attempts - 1), ASAAS_MAX_WAIT_MIN * 60);
+          user.saques[idx].nextAttemptAt = new Date(Date.now() + nextDelay * 1000);
+          await user.save();
+          scheduleTransferAttempt(externalReference, user.saques[idx].attempts + 1, nextDelay);
+          console.log("[ATTEMPT] Agendada nova tentativa por ip/error. attempts:", user.saques[idx].attempts);
+          return;
         }
-        user.saldo += amount; // rollback do saldo
-        await user.save();
 
-        console.error("[ERROR] Erro PIX Asaas (rollback aplicado):", pixData || bodyText);
-        return res.status(400).json({ error: pixData?.errors?.[0]?.description || bodyText, ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) } });
+        // falha definitiva -> marcar FAILED e rollback
+        user.saques[idx].status = "FAILED";
+        user.saques[idx].failureReason = data?.errors?.[0]?.description || text;
+        user.saldo += Number(saque.valor); // rollback
+        await user.save();
+        console.error("[ATTEMPT] Falha definitiva no envio para Asaas. Rolled back:", user.saques[idx].failureReason);
+        return;
       }
 
-      // sucesso: atualiza saque com ID do Asaas
-      const index = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (index >= 0) {
-        user.saques[index].asaasId = pixData.id;
-        user.saques[index].status = "COMPLETED";
-        await user.save();
-        console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
-      }
-
-      // Retorna resultado + ipCheck
-      return res.status(200).json({
-        message: "Saque solicitado com sucesso. PIX enviado!",
-        data: pixData,
-        ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp), origin: { xForwardedFor: xff, xRealIp, remoteAddr } }
-      });
+      // sucesso
+      if (data && data.id) user.saques[idx].asaasId = data.id;
+      user.saques[idx].status = "COMPLETED";
+      user.saques[idx].completedAt = new Date();
+      user.saques[idx].lastAttemptAt = new Date();
+      await user.save();
+      console.log("[ATTEMPT] Saque COMPLETED com sucesso:", user.saques[idx].asaasId);
+      return;
 
     } catch (err) {
-      // erro inesperado durante o fetch -> rollback
-      console.error("[ERROR] Exceção durante chamada Asaas:", err);
-      const idx2 = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (idx2 >= 0) {
-        user.saques[idx2].status = "FAILED";
-        user.saques[idx2].failureReason = String(err);
+      console.error("[ATTEMPT] Exceção ao chamar Asaas:", err);
+      user.saques[idx].attempts = (user.saques[idx].attempts || 0) + 1;
+      user.saques[idx].lastAttemptAt = new Date();
+
+      if (user.saques[idx].attempts < ASAAS_MAX_RETRIES) {
+        const nextDelay2 = Math.min(ASAAS_INITIAL_DELAY_SEC * Math.pow(2, user.saques[idx].attempts - 1), ASAAS_MAX_WAIT_MIN * 60);
+        user.saques[idx].nextAttemptAt = new Date(Date.now() + nextDelay2 * 1000);
+        await user.save();
+        scheduleTransferAttempt(externalReference, user.saques[idx].attempts + 1, nextDelay2);
+        return;
       }
-      user.saldo += amount;
+
+      // excedeu tentativas -> FAILED e rollback
+      user.saques[idx].status = "FAILED";
+      user.saques[idx].failureReason = String(err);
+      user.saldo += Number(saque.valor);
       await user.save();
-      return res.status(500).json({ error: "Erro ao processar PIX (exceção)", details: String(err), ipCheck: { outboundIp, expected: AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) } });
+    }
+  }
+
+  // --- scheduler in-process (não persistente)
+  function scheduleTransferAttempt(externalReference, nextAttempt = 1, delaySec = null) {
+    const computedDelay = delaySec ?? Math.min(ASAAS_INITIAL_DELAY_SEC * Math.pow(2, nextAttempt - 1), ASAAS_MAX_WAIT_MIN * 60);
+    console.log(`[SCHEDULER] Agendando tentaiva #${nextAttempt} para ${externalReference} em ${computedDelay}s`);
+    setTimeout(() => {
+      attemptAsaasTransfer(externalReference, nextAttempt).catch(err => console.error("[SCHEDULER] erro em attempt agendado:", err));
+    }, computedDelay * 1000);
+  }
+
+  // --- Sub-rotas administrativas:
+  // POST /api/withdraw/force  { externalReference }
+  // precisa de: Authorization Bearer <ADMIN_FORCE_SECRET> (admin)  OU  Bearer <userToken> se dono do saque
+  if (url.startsWith("/api/withdraw/force")) {
+    if (method !== "POST") return res.status(405).json({ error: "Método não permitido." });
+    const body = req.body || (await (async () => { try { return await new Promise(r => { let d=''; req.on('data',c=>d+=c); req.on('end',()=>r(JSON.parse(d||'{}')));}); } catch(e){return {}} })());
+    const externalReference = body?.externalReference || (req.query && req.query.externalReference);
+    if (!externalReference) return res.status(400).json({ error: "externalReference é obrigatório." });
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Autenticação necessária." });
+    const provided = authHeader.split(" ")[1];
+
+    // admin forcings
+    let isAdmin = false;
+    if (ADMIN_FORCE_SECRET && provided === ADMIN_FORCE_SECRET) isAdmin = true;
+
+    await connectDB();
+    const user = await User.findOne({ "saques.externalReference": externalReference });
+    if (!user) return res.status(404).json({ error: "Saque não encontrado." });
+    const idx = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (idx < 0) return res.status(404).json({ error: "Saque não encontrado." });
+    const saque = user.saques[idx];
+
+    // se não admin, só dono pode forçar
+    if (!isAdmin) {
+      const token = provided;
+      const owner = await User.findOne({ token });
+      if (!owner) return res.status(403).json({ error: "Somente admin ou dono do saque pode forçar." });
+      if (String(owner._id) !== String(user._id)) return res.status(403).json({ error: "Somente admin ou dono do saque pode forçar." });
     }
 
-  } catch (error) {
-    console.error("💥 Erro em /withdraw:", error);
-    return res.status(500).json({ error: "Erro ao processar saque." });
+    // dispara tentativa imediata (não altera status PENDING aqui; attemptAsaasTransfer faz checagens)
+    try {
+      // increment metadata e dispara attempt imediatamente na mesma execução
+      user.saques[idx].manualForceAt = new Date();
+      await user.save();
+      // chama diretamente (não bloqueante)
+      attemptAsaasTransfer(externalReference, (saque.attempts || 0) + 1).catch(e => console.error("[FORCE] erro em attemptAsaasTransfer:", e));
+      return res.status(202).json({ message: "Tentativa forçada iniciada. Verifique /api/withdraw/pending ou o histórico do saque." });
+    } catch (err) {
+      console.error("[FORCE] erro:", err);
+      return res.status(500).json({ error: "Erro ao forçar tentativa." });
+    }
+  } // fim force
+
+  // GET /api/withdraw/pending  (admin only) -> lista saques PENDING
+  if (url.startsWith("/api/withdraw/pending")) {
+    if (method !== "GET") return res.status(405).json({ error: "Método não permitido." });
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Autenticação necessária." });
+    const provided = authHeader.split(" ")[1];
+    if (!ADMIN_FORCE_SECRET || provided !== ADMIN_FORCE_SECRET) return res.status(403).json({ error: "Somente admin." });
+    await connectDB();
+    const pendentes = await User.aggregate([
+      { $unwind: "$saques" },
+      { $match: { "saques.status": "PENDING" } },
+      { $project: { userId: "$_id", userEmail: "$email", saque: "$saques" } },
+      { $sort: { "saque.data": -1 } }
+    ]);
+    return res.status(200).json(pendentes);
   }
-}
+
+  // --- Rota principal GET/POST (lista histórico / cria saque)
+  if (method !== "GET" && method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido." });
+  }
+
+  // Validação simples do Bearer token do usuário
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token ausente ou inválido." });
+  }
+  const token = authHeader.split(" ")[1];
+  const user = await User.findOne({ token });
+  if (!user) return res.status(401).json({ error: "Usuário não autenticado." });
+
+  // log IPs de origem
+  const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
+  const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
+  const remoteAddr = req.socket?.remoteAddress || null;
+  console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
+
+  // detecta outbound IP
+  let outboundIp = null;
+  try {
+    outboundIp = await detectOutboundIp();
+    console.log("[CHECK] IP público de saída detectado (pré):", outboundIp);
+  } catch (err) {
+    console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
+  }
+
+  if (method === "GET") {
+    const saquesFormatados = user.saques.map(s => ({
+      amount: s.valor,
+      pixKey: s.chave_pix,
+      keyType: s.tipo_chave,
+      status: s.status,
+      attempts: s.attempts || 0,
+      nextAttemptAt: s.nextAttemptAt || null,
+      date: s.data?.toISOString() || null
+    }));
+    return res.status(200).json(saquesFormatados);
+  }
+
+  // POST - criar saque
+  const { amount, payment_method, payment_data } = req.body;
+  if (!amount || typeof amount !== "number" || amount <= 0) return res.status(400).json({ error: "Valor de saque inválido." });
+  if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) return res.status(400).json({ error: "Dados de pagamento incompletos." });
+  if (user.saldo < amount) return res.status(400).json({ error: "Saldo insuficiente." });
+
+  const allowedTypes = ["CPF"];
+  const keyType = payment_data.pix_key_type.toUpperCase();
+  if (!allowedTypes.includes(keyType)) return res.status(400).json({ error: "Tipo de chave PIX inválido." });
+
+  let pixKey = payment_data.pix_key;
+  if (keyType === "CPF" || keyType === "CNPJ") pixKey = pixKey.replace(/\D/g, "");
+
+  if (!user.pix_key) {
+    user.pix_key = pixKey;
+    user.pix_key_type = keyType;
+  } else if (user.pix_key !== pixKey) {
+    return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+  }
+
+  const externalReference = `saque_${user._id}_${Date.now()}`;
+  const novoSaque = {
+    valor: amount,
+    chave_pix: pixKey,
+    tipo_chave: keyType,
+    status: "PENDING",
+    data: new Date(),
+    asaasId: null,
+    externalReference,
+    ownerName: user.name || "Renisson Santos da Silva",
+    attempts: 0,
+    lastAttemptAt: null,
+    nextAttemptAt: null
+  };
+
+  // debita saldo e persiste PENDING
+  user.saldo -= amount;
+  user.saques.push(novoSaque);
+  await user.save();
+
+  // se outbound ip já autorizado -> tenta enviar imediatamente (async)
+  if (outboundIp && isIpAuthorized(outboundIp)) {
+    // dispara tentativa imediata
+    attemptAsaasTransfer(externalReference, 1).catch(err => console.error("[MAIN] erro em attemptAsaasTransfer:", err));
+    return res.status(202).json({
+      message: "Saque registrado e tentativa de envio ao Asaas iniciada.",
+      externalReference,
+      ipCheck: { outboundIp, expected: ASAAS_AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) }
+    });
+  }
+
+  // se não autorizado -> agenda primeira tentativa e retorna 202 com instrução
+  // calcula nextAttempt
+  const nextDelay = Math.min(ASAAS_INITIAL_DELAY_SEC, ASAAS_MAX_WAIT_MIN * 60);
+  novoSaque.nextAttemptAt = new Date(Date.now() + nextDelay * 1000);
+  // atualiza no DB
+  user.saques[user.saques.length - 1] = novoSaque;
+  await user.save();
+
+  // schedule in-process primeira tentativa
+  scheduleTransferAttempt(externalReference, 1, nextDelay);
+
+  return res.status(202).json({
+    message: "Saque registrado como PENDING. IP público de saída do servidor não está autorizado no painel do Asaas. Tentativas automáticas foram agendadas.",
+    externalReference,
+    ipCheck: { outboundIp, expected: ASAAS_AUTHORIZED_IPS, matches: isIpAuthorized(outboundIp) }
+  });
+} // fim /api/withdraw
+// --- Fim do código
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
