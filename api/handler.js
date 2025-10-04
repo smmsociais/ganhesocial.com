@@ -1363,7 +1363,7 @@ if (url.startsWith("/api/withdraw")) {
   // Lista de IPs autorizados: pode ser definida aqui ou via env ASAAS_AUTHORIZED_IPS = "44.199.245.103,3.87.201.30,..."
   const AUTHORIZED_IPS = (process.env.ASAAS_AUTHORIZED_IPS
     ? process.env.ASAAS_AUTHORIZED_IPS.split(",")
-    : ["44.199.245.103", "3.87.201.30", "3.235.228.44", "3.236.147.104"]
+    : ["44.199.245.103", "3.87.201.30", "3.235.228.44", "3.236.147.104", "44.198.178.67","44.220.246.46", "98.82.12.221", "52.70.133.83", "13.222.191.13"]
   ).map(ip => ip.toString().trim()).filter(Boolean);
 
   await connectDB();
