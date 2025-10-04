@@ -1407,23 +1407,25 @@ if (url.startsWith("/api/withdraw")) {
       return res.status(500).json({ error: "Relay nao configurado no backend." });
     }
 
-    // --- Checar health do relay (pré-validação) para confirmar outbound IP do relay
-    let relayOutboundIp = null;
-    try {
-      console.log("[CHECK] Consultando relay /health em:", `${RELAY_URL}/health`);
-      const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 7000);
-      if (h.ok) {
-        const hj = await h.json();
-        // suporta várias formas de retorno: { outboundIp: "x.x.x.x" } ou { ip: "x.x.x.x" }
-        relayOutboundIp = hj.outboundIp || hj.ip || null;
-        console.log("[CHECK] Relay /health respondeu:", hj);
-      } else {
-        const txt = await h.text().catch(() => null);
-        console.warn("[WARN] Relay /health retornou status:", h.status, "body:", txt);
-      }
-    } catch (err) {
-      console.warn("[WARN] Falha ao consultar relay /health:", String(err));
-    }
+// substitui a seção que consulta relay /health
+let relayOutboundIp = null;
+try {
+  console.log("[CHECK] Consultando relay /health em:", `${RELAY_URL}/health`);
+  // aumento timeout para 15s
+  const h = await fetchWithTimeout(`${RELAY_URL}/health`, { method: "GET", headers: { Accept: "application/json" } }, 15000);
+  if (h.ok) {
+    const hj = await h.json();
+    relayOutboundIp = hj.outboundIp || hj.ip || null;
+    console.log("[CHECK] Relay /health respondeu:", hj);
+  } else {
+    const txt = await h.text().catch(() => null);
+    console.warn("[WARN] Relay /health retornou status:", h.status, "body:", txt);
+  }
+} catch (err) {
+  // loga a causa do fetch failed com detalhe (mensagem + stack)
+  console.warn("[WARN] Falha ao consultar relay /health:", err && err.message ? err.message : String(err));
+  // não faz abort here — mantemos relayOutboundIp === null e vamos bloqueiar por segurança
+}
 
     // Bloquear se o relay nao estiver saindo do IP autorizado
     if (!relayOutboundIp || relayOutboundIp !== AUTHORIZED_IP) {
