@@ -1574,15 +1574,63 @@ try {
         return res.status(400).json({ error: relayData?.errors?.[0]?.description || relayText, ipCheck: { relayOutboundIp, expected: AUTHORIZED_IP, matches: relayOutboundIp === AUTHORIZED_IP } });
       }
 
-      // sucesso: atualiza saque com ID retornado pelo Asaas via relay
-      const index = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (index >= 0) {
-        user.saques[index].asaasId = relayData?.id || null;
-        user.saques[index].status = "COMPLETED";
-        await user.save();
-        console.log("[DEBUG] Saque atualizado com ID Asaas (via relay):", relayData?.id);
-      }
+// sucesso: atualiza saque com ID retornado pelo Asaas via relay
+const index = user.saques.findIndex(s => s.externalReference === externalReference);
+if (index >= 0) {
+  user.saques[index].asaasId = relayData?.id || null;
 
+  // Tenta descobrir os valores permitidos pelo enum do schema (compatível com subdocument array)
+  let allowedStatuses = [];
+  try {
+    // caso o campo 'saques' seja um array de subdocumentos com schema próprio
+    allowedStatuses = User.schema.path('saques')?.caster?.schema?.path('status')?.enumValues || [];
+  } catch (e) {
+    allowedStatuses = [];
+  }
+  // fallback (outra forma de declaração possível)
+  if (!allowedStatuses || allowedStatuses.length === 0) {
+    try {
+      allowedStatuses = User.schema.path('saques.status')?.enumValues || [];
+    } catch (e) {
+      allowedStatuses = [];
+    }
+  }
+
+  // Ordem de preferência de status (você pode ajustar)
+  const preferred = ['COMPLETED','SUCCESS','DONE','SETTLED','PAID','FINISHED','OK','CONFIRMED','PROCESSING','PENDING','FAILED'];
+
+  // Escolhe o primeiro preferido que seja aceito pelo schema; se não houver enum definido, usa 'COMPLETED'
+  let chosenStatus = 'COMPLETED';
+  if (Array.isArray(allowedStatuses) && allowedStatuses.length > 0) {
+    const found = preferred.find(s => allowedStatuses.includes(s));
+    chosenStatus = found || allowedStatuses[0] || 'PENDING';
+  } else {
+    // sem enum no schema conhecido, manter comportamento desejado
+    chosenStatus = 'COMPLETED';
+  }
+
+  // Aplica e salva com proteção contra validação
+  try {
+    user.saques[index].status = chosenStatus;
+    await user.save();
+    console.log("[DEBUG] Saque atualizado com status:", chosenStatus, "asaasId:", relayData?.id);
+  } catch (saveErr) {
+    // Em caso de erro de validação inesperado, faz rollback parcial (marca como FAILED e devolve saldo)
+    console.error("[ERROR] Falha ao salvar saque após relay:", saveErr);
+    try {
+      // marca o saque como FAILED (se possível) e devolve saldo
+      if (user.saques[index]) {
+        user.saques[index].status = allowedStatuses.includes('FAILED') ? 'FAILED' : (allowedStatuses[0] || 'PENDING');
+        user.saques[index].failureReason = `save_error_after_relay: ${String(saveErr.message || saveErr)}`;
+      }
+      user.saldo += amount;
+      await user.save();
+    } catch (rollbackErr) {
+      console.error("[ERROR] Falha durante rollback apos erro de save:", rollbackErr);
+    }
+    return res.status(500).json({ error: "Erro ao atualizar saque no banco após resposta do relay.", details: String(saveErr) });
+  }
+}
       // Retorna resultado + ipCheck
       return res.status(200).json({
         message: "Saque solicitado com sucesso (via relay).",
