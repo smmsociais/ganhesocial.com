@@ -54,7 +54,7 @@ const WithdrawSchema = new mongoose.Schema({
   },
 
   // integração Asaas
-  asaasId: { type: String, default: null, index: true },
+  id: { type: String, default: null, index: true },
   externalReference: { type: String, default: null, index: true },
 
   // metadados para matching/reconciliação
