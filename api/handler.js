@@ -1357,6 +1357,29 @@ if (url.startsWith("/api/withdraw")) {
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
   await connectDB();
 
+
+  async function detectOutboundIp() {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && j.ip) return j.ip.toString().trim();
+      }
+    } catch (err) {
+      console.warn("[WARN] detectOutboundIp: api.ipify.org falhou:", err?.message || err);
+    }
+    try {
+      const r2 = await fetch("https://ifconfig.co/ip", { method: "GET", headers: { "User-Agent": "node-fetch" }, timeout: 5000 });
+      if (r2.ok) {
+        const text = (await r2.text()).trim();
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn("[WARN] detectOutboundIp: ifconfig.co falhou:", err?.message || err);
+    }
+    return null;
+  }
+
   // 🔹 Autenticação
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -1368,6 +1391,21 @@ if (url.startsWith("/api/withdraw")) {
   if (!user) {
     console.log("[DEBUG] Usuário não encontrado para token:", token);
     return res.status(401).json({ error: "Usuário não autenticado." });
+  }
+
+  // log IPs de origem (quem chamou sua rota)
+  const xff = (req.headers["x-forwarded-for"] || req.headers["X-Forwarded-For"] || "").toString();
+  const xRealIp = (req.headers["x-real-ip"] || req.headers["X-Real-Ip"] || "").toString();
+  const remoteAddr = req.socket?.remoteAddress || null;
+  console.log("[CHECK] IPs de origem:", { xForwardedFor: xff, xRealIp, remoteAddr });
+
+  // detecta outbound IP (apenas para log)
+  let outboundIp = null;
+  try {
+    outboundIp = await detectOutboundIp();
+    console.log("[CHECK] IP público de saída detectado:", outboundIp);
+  } catch (err) {
+    console.warn("[WARN] Falha ao detectar outbound IP (pré):", err?.message || err);
   }
 
   try {
