@@ -10,7 +10,6 @@ function now() { return new Date().toISOString(); }
 /**
  * findOrCreateSaqueForUITransfer
  * tenta encontrar usuário/saque por pix+valor e (se não encontrar) cria um saque 'ui_<id>'.
- * usado para transfers criadas via UI que não enviam externalReference.
  */
 async function findOrCreateSaqueForUITransfer(t) {
   try {
@@ -23,7 +22,9 @@ async function findOrCreateSaqueForUITransfer(t) {
       return null;
     }
 
-    // buscar usuário por chave pix ou em saques
+    const rawId = t.id || null;
+    const normalizedId = rawId ? String(rawId).split('&')[0] : null;
+
     const user = await User.findOne({
       $or: [
         { pix_key: pixKey },
@@ -36,7 +37,6 @@ async function findOrCreateSaqueForUITransfer(t) {
       return null;
     }
 
-    // verificar saque recente
     const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
     const existingSaque = user.saques.find(s =>
       (s.chave_pix && s.chave_pix.replace(/\D/g, '') === pixKey) &&
@@ -46,24 +46,22 @@ async function findOrCreateSaqueForUITransfer(t) {
     );
 
     if (existingSaque) {
-      // atualizar se precisar
-      if (!existingSaque.asaasId && t.id) existingSaque.asaasId = t.id;
-      if (!existingSaque.externalReference) existingSaque.externalReference = t.externalReference || `ui_${t.id}`;
+      if (!existingSaque.id && normalizedId) existingSaque.id = normalizedId;
+      if (!existingSaque.externalReference) existingSaque.externalReference = t.externalReference || `ui_${normalizedId}`;
       if (!existingSaque.rawTransfer) existingSaque.rawTransfer = t;
       await user.save();
-      console.log('[ASASS WEBHOOK] Saque existente atualizado para transfer UI:', existingSaque.externalReference || existingSaque.asaasId);
+      console.log('[ASASS WEBHOOK] Saque existente atualizado para transfer UI:', existingSaque.externalReference || existingSaque.id);
       return existingSaque;
     }
 
-    // criar novo saque para UI transfer
     const novoSaque = {
       valor: value,
       chave_pix: pixKey,
       tipo_chave: 'CPF',
       status: 'PENDING',
       data: new Date(),
-      asaasId: t.id || null,
-      externalReference: t.externalReference || `ui_${t.id}`,
+      id: normalizedId,
+      externalReference: t.externalReference || `ui_${normalizedId}`,
       ownerName: t.bankAccount?.ownerName || user.nome || null,
       rawTransfer: t,
       createdBy: 'webhook_ui_auto'
@@ -73,6 +71,7 @@ async function findOrCreateSaqueForUITransfer(t) {
     await user.save();
     console.log('[ASASS WEBHOOK] Saque criado para transferência UI:', novoSaque.externalReference);
     return novoSaque;
+
   } catch (err) {
     console.error('[ASASS WEBHOOK] Erro em findOrCreateSaqueForUITransfer:', err);
     return null;
@@ -81,19 +80,17 @@ async function findOrCreateSaqueForUITransfer(t) {
 
 /**
  * handleValidationEvent
- * Responde IMEDIATAMENTE com status APPROVED/REFUSED conforme doc (evita timeouts do Asaas).
- * Faz o matching/criação/atualização em background (setTimeout).
  */
 async function handleValidationEvent(body, res) {
   try {
     const t = body.transfer || body;
 
-    // RESPONDE IMEDIATAMENTE COM status: "APPROVED"
-    // (se preferir restringir, altere aqui)
-    console.log('[ASASS WEBHOOK][VALIDATION] QUICK RESPOND status:APPROVED for id:', t?.id);
+    const rawTransferId = (t && (t.id || t.transferId)) || body?.id || null;
+    const transferId = rawTransferId ? String(rawTransferId).split('&')[0] : null;
+
+    console.log('[ASASS WEBHOOK][VALIDATION] QUICK RESPOND status:APPROVED for id:', transferId);
     res.status(200).json({ status: "APPROVED" });
 
-    // PROCESSAMENTO EM BACKGROUND (não bloqueia resposta)
     setTimeout(async () => {
       try {
         await connectDB();
@@ -105,15 +102,13 @@ async function handleValidationEvent(body, res) {
         const cpf = cpfRaw ? String(cpfRaw).replace(/[^0-9]/g, '') : null;
         const ownerName = t.bankAccount?.ownerName || t.ownerName || null;
 
-        console.log('[ASASS WEBHOOK][VALIDATION][BG] Processando em background:', { id: t.id, value, pixKey, externalReference: t.externalReference });
+        console.log('[ASASS WEBHOOK][VALIDATION][BG] Processando em background:', { id: transferId, value, pixKey, externalReference: t.externalReference });
 
-        // tentar achar user por externalReference
         let user = null;
         if (t.externalReference) {
           user = await User.findOne({ 'saques.externalReference': t.externalReference });
         }
 
-        // se não, fallback por pixKey + valor
         if (!user && pixKey) {
           const cutoff = new Date(Date.now() - MATCH_WINDOW_MS);
           user = await User.findOne({
@@ -129,34 +124,29 @@ async function handleValidationEvent(body, res) {
         }
 
         if (!user && !t.externalReference) {
-          // possibilidade: transfer criada pela UI sem externalReference — tente criar/atualizar
           const created = await findOrCreateSaqueForUITransfer(t);
           if (created) {
-            console.log('[ASASS WEBHOOK][VALIDATION][BG] created saque for UI transfer in background:', created.externalReference || created.asaasId);
+            console.log('[ASASS WEBHOOK][VALIDATION][BG] created saque for UI transfer in background:', created.externalReference || created.id);
             return;
           }
         }
 
         if (user) {
-          // verificar se já existe saque correspondente
           const existingSaque = user.saques.find(s =>
             (t.externalReference && s.externalReference === t.externalReference) ||
-            (t.id && s.asaasId === t.id) ||
+            (transferId && s.id === transferId) ||
             (s.chave_pix && pixKey && s.chave_pix.replace(/\D/g, '') === pixKey && Number(s.valor) === Number(value) && s.status === 'PENDING')
           );
 
           if (existingSaque) {
-            // atualizar campos se necessário
-            if (!existingSaque.asaasId && t.id) existingSaque.asaasId = t.id;
+            if (!existingSaque.id && transferId) existingSaque.id = transferId;
             if (!existingSaque.externalReference && t.externalReference) existingSaque.externalReference = t.externalReference;
             if (!existingSaque.rawTransfer) existingSaque.rawTransfer = t;
             await user.save();
-            console.log('[ASASS WEBHOOK][VALIDATION][BG] Existing saque updated for transfer:', existingSaque.externalReference || existingSaque.asaasId);
+            console.log('[ASASS WEBHOOK][VALIDATION][BG] Existing saque updated for transfer:', existingSaque.externalReference || existingSaque.id);
             return;
           }
 
-          // se não existir, criar saque pendente (reserva) e decrementar saldo
-          // validamos saldo antes de criar
           const saldo = Number(user.saldo || 0);
           if (saldo >= value) {
             const novoSaque = {
@@ -165,8 +155,8 @@ async function handleValidationEvent(body, res) {
               tipo_chave: cpf ? 'CPF' : (pixKey ? 'CPF' : 'UNKNOWN'),
               status: 'PENDING',
               data: new Date(),
-              asaasId: t.id || null,
-              externalReference: t.externalReference || `ui_${t.id || Date.now()}`,
+              id: transferId,
+              externalReference: t.externalReference || `ui_${transferId || Date.now()}`,
               ownerName: ownerName || user.nome || null,
               rawTransfer: t,
               createdBy: 'webhook_validation_bg'
@@ -187,11 +177,9 @@ async function handleValidationEvent(body, res) {
       }
     }, 100);
 
-    // importante: já respondemos ao Asaas acima
     return;
   } catch (err) {
     console.error('[ASASS WEBHOOK][VALIDATION] Erro imediato:', err);
-    // se algo grave ocorreu antes de responder, garantimos enviar algo (deny)
     try { res.status(200).json({ status: "REFUSED", refuseReason: 'internal_error' }); } catch(e){}
     return;
   }
@@ -206,7 +194,6 @@ export default async function handler(req, res) {
     console.log('[ASASS WEBHOOK] headers:', Object.keys(headers));
     console.log('[ASASS WEBHOOK] body event/type:', body.event, body.type);
 
-    // Token de validação do webhook (se configurado)
     if (WEBHOOK_TOKEN) {
       const incomingToken = headers['asaas-access-token'] || headers['Asaas-Access-Token'] || headers['x-asaas-token'];
       console.log('[ASASS WEBHOOK] incomingToken present:', !!incomingToken);
@@ -220,7 +207,6 @@ export default async function handler(req, res) {
     const type = body?.type;
     const transfer = body?.transfer;
 
-    // EVENTOS DE VALIDAÇÃO — responder rápido sempre
     const isValidationEvent =
       event === 'WITHDRAW_REQUESTED' ||
       event === 'TRANSFER_PENDING' ||
@@ -231,25 +217,21 @@ export default async function handler(req, res) {
       return handleValidationEvent(body, res);
     }
 
-    // EVENTOS DE TRANSFERÊNCIA (status updates) — processar normalmente
     const isTransferEvent = (type === 'TRANSFER' && transfer) || (typeof event === 'string' && event.startsWith('TRANSFER'));
     if (isTransferEvent) {
       const t = transfer || body;
-      console.log('[ASASS WEBHOOK] Processing transfer event:', { id: t.id, status: t.status, externalReference: t.externalReference });
 
-      // para transfers UI sem externalReference, tente criar saque antes do matching
+      const rawTransferId = (t && (t.id || t.transferId)) || body?.id || null;
+      const transferId = rawTransferId ? String(rawTransferId).split('&')[0] : null;
+
+      console.log('[ASASS WEBHOOK] Processing transfer event:', { id: transferId, status: t.status, externalReference: t.externalReference });
+
       if (!t.externalReference && (t.status === 'PENDING' || event === 'TRANSFER_CREATED')) {
-        try {
-          await findOrCreateSaqueForUITransfer(t);
-        } catch (errUi) {
-          console.error('[ASASS WEBHOOK] findOrCreateSaqueForUITransfer error:', errUi);
-        }
+        try { await findOrCreateSaqueForUITransfer(t); } catch (errUi) { console.error(errUi); }
       }
 
-      // Conecta DB e faz matching/atualização de status
       await connectDB();
 
-      const transferId = t.id;
       const statusRaw = (t.status || event || '').toString();
       const statusNormalized = statusRaw.includes('CONFIRMED') ? 'CONFIRMED'
         : statusRaw.includes('FAILED') ? 'FAILED'
@@ -263,24 +245,20 @@ export default async function handler(req, res) {
       let user = null;
       let saque = null;
 
-      // 1) procurar por saques já atrelados ao asaasId
-      user = await User.findOne({ 'saques.asaasId': transferId });
-      if (user) saque = user.saques.find(s => s.asaasId === transferId);
+      user = await User.findOne({ 'saques.id': transferId });
+      if (user) saque = user.saques.find(s => s.id === transferId);
 
-      // 2) procurar por externalReference
       if (!user && externalReference) {
         user = await User.findOne({ 'saques.externalReference': externalReference });
         if (user) saque = user.saques.find(s => s.externalReference === externalReference);
       }
 
-      // 3) procurar por ui_<transferId>
       if (!user) {
         const uiRef = `ui_${transferId}`;
         user = await User.findOne({ 'saques.externalReference': uiRef });
         if (user) saque = user.saques.find(s => s.externalReference === uiRef);
       }
 
-      // 4) fallback por pixKey + valor + janela
       if (!user) {
         const pixKeyCandidate = bank.pixAddressKey || t.pixAddressKey || null;
         const cpfCnpjCandidate = bank.cpfCnpj ? String(bank.cpfCnpj).replace(/[^0-9]/g, '') : null;
@@ -322,18 +300,16 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'saque not found (ignored)' });
       }
 
-      // atualizar status previsível
       const newStatus = (statusNormalized === 'DONE') ? 'DONE'
         : (statusNormalized === 'FAILED') ? 'FAILED'
         : (statusNormalized === 'PENDING') ? 'PENDING'
         : statusNormalized.toLowerCase();
 
       saque.status = newStatus;
-      if (!saque.asaasId) saque.asaasId = transferId;
+      if (!saque.id) saque.id = transferId;
       saque.bankAccount = bank;
       if (t.failReason) saque.failReason = t.failReason;
 
-      // se falhou, opcionalmente reembolsa
       if (newStatus === 'falhou') {
         if (!saque.refunded) {
           const refundAmount = Number(saque.valor || 0);
