@@ -1357,19 +1357,6 @@ if (url.startsWith("/api/withdraw")) {
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
   await connectDB();
 
-  // 🔹 Autenticação
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
-    return res.status(401).json({ error: "Token ausente ou inválido." });
-  }
-  const token = authHeader.split(" ")[1];
-  const user = await User.findOne({ token });
-  if (!user) {
-    console.log("[DEBUG] Usuário não encontrado para token:", token);
-    return res.status(401).json({ error: "Usuário não autenticado." });
-  }
-
 // detectar webhook Asaas
 const asaasWebhookToken = req.headers['asaas-access-token'];
 if (asaasWebhookToken) {
@@ -1442,6 +1429,19 @@ if (asaasWebhookToken) {
     return res.status(500).json({ error: "Erro interno." });
   }
 }
+
+  // 🔹 Autenticação
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
+    return res.status(401).json({ error: "Token ausente ou inválido." });
+  }
+  const token = authHeader.split(" ")[1];
+  const user = await User.findOne({ token });
+  if (!user) {
+    console.log("[DEBUG] Usuário não encontrado para token:", token);
+    return res.status(401).json({ error: "Usuário não autenticado." });
+  }
 
   try {
     if (method === "GET") {
