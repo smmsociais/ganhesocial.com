@@ -1355,111 +1355,9 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-  const ASAAS_WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN;
-
-  // conecta ao banco (assume connectDB já importado)
   await connectDB();
 
-  // --- 1) Detecta webhook Asaas ANTES da autenticação Bearer ---
-  const asaasWebhookToken =
-    req.headers['asaas-access-token'] ||
-    req.headers['Asaas-Access-Token'] ||
-    req.headers['x-asaas-token'] ||
-    req.headers['x-asaas-access-token'];
-
-  if (asaasWebhookToken) {
-    // valida token configurado no painel do Asaas
-    if (!ASAAS_WEBHOOK_TOKEN || asaasWebhookToken !== ASAAS_WEBHOOK_TOKEN) {
-      console.log("[WEBHOOK] Token inválido ou não configurado:", asaasWebhookToken);
-      return res.status(401).json({ error: "Webhook token inválido." });
-    }
-
-    try {
-      // tenta obter payload já parseado; se não houver, lê raw e parseia
-      let payload = req.body;
-      if (!payload) {
-        try {
-          const raw = await new Promise((resolve) => {
-            let data = '';
-            req.on('data', chunk => data += chunk);
-            req.on('end', () => resolve(data));
-            // tempo limite curto para não travar (opcional)
-            setTimeout(() => resolve(''), 300);
-          });
-          payload = raw ? JSON.parse(raw) : {};
-        } catch (parseErr) {
-          console.log("[WEBHOOK] falha ao parsear body:", parseErr);
-          payload = {};
-        }
-      }
-
-      console.log("[WEBHOOK] Payload recebido:", payload, "headers:", req.headers);
-
-      // Normaliza possíveis formatos (transfer, payment, event, etc)
-      const eventData = payload.transfer || payload.payment || payload || {};
-      const asaasId = eventData.id || eventData.transferId || eventData.paymentId || null;
-      const externalReference = eventData.externalReference || eventData.external_reference || eventData.externalReferenceId || null;
-      const rawStatus = (eventData.status || eventData.paymentStatus || eventData.transferStatus || "");
-      const status = rawStatus ? String(rawStatus).toUpperCase() : "";
-
-      // Busca saque por externalReference primeiro, depois por asaasId
-      let userWebhook = null;
-      let saqueIndex = -1;
-
-      if (externalReference) {
-        userWebhook = await User.findOne({ "saques.externalReference": externalReference });
-        if (userWebhook) saqueIndex = userWebhook.saques.findIndex(s => s.externalReference === externalReference);
-      }
-
-      if (!userWebhook && asaasId) {
-        userWebhook = await User.findOne({ "saques.asaasId": asaasId });
-        if (userWebhook) saqueIndex = userWebhook.saques.findIndex(s => s.asaasId === asaasId);
-      }
-
-      if (!userWebhook || saqueIndex < 0) {
-        console.log("[WEBHOOK] Saque não encontrado para externalReference/asaasId:", { externalReference, asaasId });
-        // responde 200 para evitar retries do Asaas (opção: 404/422 se preferir)
-        return res.status(200).json({ message: "Recebido, mas saque não encontrado." });
-      }
-
-      // Idempotência: se status já igual, nada a fazer
-      const currentStatus = (userWebhook.saques[saqueIndex].status || "").toUpperCase();
-      if (currentStatus === status) {
-        console.log("[WEBHOOK] Evento duplicado ou sem mudança de status:", status);
-        return res.status(200).json({ message: "Sem alteração." });
-      }
-
-      // Mapeia status (adicione/ajuste mapeamentos conforme o Asaas retorna)
-      const allowedStatuses = ["PENDING", "CONFIRMED", "FAILED", "CANCELED", "COMPLETED"];
-      const newStatus = allowedStatuses.includes(status) ? status : (status || "UNKNOWN");
-
-      // Atualiza campos do saque
-      userWebhook.saques[saqueIndex].status = newStatus;
-      if (!userWebhook.saques[saqueIndex].asaasId && asaasId) userWebhook.saques[saqueIndex].asaasId = asaasId;
-      userWebhook.saques[saqueIndex].updatedAt = new Date();
-
-      // Estorno seguro: só estorna se ainda não foi estornado e se status for FAILED/CANCELED
-      if ((newStatus === "FAILED" || newStatus === "CANCELED") && !userWebhook.saques[saqueIndex].refunded) {
-        const valor = Number(userWebhook.saques[saqueIndex].valor || 0);
-        if (valor > 0) {
-          userWebhook.saldo = Number(userWebhook.saldo) + valor;
-          userWebhook.saques[saqueIndex].refunded = true;
-          console.log("[WEBHOOK] Estornando saldo:", { userId: userWebhook._id, valor });
-        }
-      }
-
-      await userWebhook.save();
-      console.log("[WEBHOOK] Saque atualizado:", { userId: userWebhook._id, saqueIndex, newStatus });
-
-      return res.status(200).json({ message: "Webhook processado." });
-    } catch (err) {
-      console.error("[WEBHOOK] Erro processando webhook:", err);
-      // retornar 500 fará Asaas tentar novamente; altere se preferir responder 200 após log
-      return res.status(500).json({ error: "Erro interno." });
-    }
-  } // fim webhook
-
-  // --- 2) Se não for webhook: exige Authorization Bearer e continua fluxo normal ---
+  // 🔹 Autenticação
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     console.log("[DEBUG] Token ausente ou inválido:", authHeader);
@@ -1473,169 +1371,123 @@ if (url.startsWith("/api/withdraw")) {
   }
 
   try {
-    // GET -> retorna histórico de saques do usuário
     if (method === "GET") {
+      // Retorna histórico de saques
       const saquesFormatados = user.saques.map(s => ({
         amount: s.valor,
         pixKey: s.chave_pix,
         keyType: s.tipo_chave,
         status: s.status,
-        date: s.data?.toISOString ? s.data.toISOString() : (s.data || null),
-        asaasId: s.asaasId || null,
-        externalReference: s.externalReference || null
+        date: s.data?.toISOString() || null
       }));
       console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
       return res.status(200).json(saquesFormatados);
     }
 
-    // POST -> solicita saque
-    if (method === "POST") {
-      // body defensivo
-      let body = req.body;
-      if (!body) {
-        try {
-          const raw = await new Promise((resolve) => {
-            let data = '';
-            req.on('data', chunk => data += chunk);
-            req.on('end', () => resolve(data));
-            setTimeout(() => resolve(''), 300);
-          });
-          body = raw ? JSON.parse(raw) : {};
-        } catch (e) {
-          body = {};
-        }
-      }
+    // 🔹 POST - Solicitar saque
+    const { amount, payment_method, payment_data } = req.body;
+    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
-      const { amount, payment_method, payment_data } = body;
-      console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
+    
+    if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
+      console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
+      return res.status(400).json({ error: "Dados de pagamento incompletos." });
+    }
 
-      if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-        console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
-        return res.status(400).json({ error: "Dados de pagamento incompletos." });
-      }
+    if (user.saldo < amount) {
+      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
+      return res.status(400).json({ error: "Saldo insuficiente." });
+    }
 
-      const valor = Number(amount);
-      if (isNaN(valor) || valor <= 0) {
-        console.log("[DEBUG] Valor inválido para saque:", amount);
-        return res.status(400).json({ error: "Valor de saque inválido." });
-      }
+    // Normalize e valida tipo da chave PIX
+    const allowedTypes = ["CPF"];
+    const keyType = payment_data.pix_key_type.toUpperCase();
+    if (!allowedTypes.includes(keyType)) {
+      console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
+      return res.status(400).json({ error: "Tipo de chave PIX inválido." });
+    }
 
-      if (Number(user.saldo) < valor) {
-        console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount: valor });
-        return res.status(400).json({ error: "Saldo insuficiente." });
-      }
+    // Formata a chave para enviar ao Asaas
+    let pixKey = payment_data.pix_key;
+    if (keyType === "CPF" || keyType === "CNPJ") {
+      pixKey = pixKey.replace(/\D/g, "");
+      console.log("[DEBUG] Chave PIX formatada:", pixKey);
+    }
 
-      // Normalize e valida tipo da chave PIX
-      const allowedTypes = ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"]; // ajuste se necessário
-      const keyType = String(payment_data.pix_key_type).toUpperCase();
-      if (!allowedTypes.includes(keyType)) {
-        console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
-        return res.status(400).json({ error: "Tipo de chave PIX inválido." });
-      }
+    // Salva PIX do usuário se ainda não existir
+    if (!user.pix_key) {
+      user.pix_key = pixKey;
+      user.pix_key_type = keyType;
+      console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
+    } else if (user.pix_key !== pixKey) {
+      console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
+      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
+    }
 
-      // Formata a chave
-      let pixKey = String(payment_data.pix_key || '').trim();
-      if (keyType === "CPF" || keyType === "CNPJ" || keyType === "PHONE") {
-        pixKey = pixKey.replace(/\D/g, "");
-        console.log("[DEBUG] Chave PIX formatada:", pixKey);
-      }
+    // Cria referência externa única
+    const externalReference = `saque_${user._id}_${Date.now()}`;
+    console.log("[DEBUG] externalReference gerada:", externalReference);
 
-      // Salva PIX do usuário se ainda não existir
-      if (!user.pix_key) {
-        user.pix_key = pixKey;
-        user.pix_key_type = keyType;
-        console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
-      } else if (user.pix_key !== pixKey) {
-        console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
-        return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-      }
+    // Adiciona saque pendente
+    const novoSaque = {
+      valor: amount,
+      chave_pix: pixKey,
+      tipo_chave: keyType,
+      status: "PENDING",
+      data: new Date(),
+      asaasId: null,
+      externalReference,
+      ownerName: user.nome || null
+    };
+    console.log("[DEBUG] Novo saque criado:", novoSaque);
 
-      // Cria referência externa única
-      const externalReference = `saque_${user._id}_${Date.now()}`;
-      console.log("[DEBUG] externalReference gerada:", externalReference);
+    user.saldo -= amount;
+    user.saques.push(novoSaque);
+    await user.save();
+    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-      // Adiciona saque pendente
-      const novoSaque = {
-        valor,
-        chave_pix: pixKey,
-        tipo_chave: keyType,
-        status: "PENDING",
-        data: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        asaasId: null,
-        externalReference,
-        ownerName: user.nome || null,
-        refunded: false
-      };
-      console.log("[DEBUG] Novo saque criado:", novoSaque);
+    // 🔹 Chamada PIX Out Asaas
+    const payloadAsaas = {
+      value: Number(amount.toFixed(2)),
+      operationType: "PIX",
+      pixAddressKey: pixKey,
+      pixAddressKeyType: keyType,
+      scheduleDate: "2025-10-05",
+      externalReference
+    };
+    console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
 
-      // Ajusta saldo local e persiste
-      user.saldo = Number(user.saldo) - valor;
-      user.saques.push(novoSaque);
+    const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": ASAAS_API_KEY
+      },
+      body: JSON.stringify(payloadAsaas)
+    });
+
+    const pixData = await pixResponse.json();
+    console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
+
+    if (!pixResponse.ok) {
+      console.error("[DEBUG] Erro PIX Asaas:", pixData);
+      return res.status(400).json({ error: pixData.errors?.[0]?.description || "Erro ao processar PIX" });
+    }
+
+    // Atualiza saque com ID do Asaas
+    const index = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (index >= 0) {
+      user.saques[index].asaasId = pixData.id;
       await user.save();
-      console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
+      console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
+    }
 
-      // Chamada PIX Out Asaas
-      if (!ASAAS_API_KEY) {
-        console.error("[DEBUG] ASAAS_API_KEY não configurado.");
-        return res.status(500).json({ error: "Erro de configuração: ASAAS_API_KEY ausente." });
-      }
-
-      const payloadAsaas = {
-        value: Number(Number(valor).toFixed(2)),
-        operationType: "PIX",
-        pixAddressKey: pixKey,
-        pixAddressKeyType: keyType,
-        externalReference
-      };
-      console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
-
-      const pixResponse = await fetch("https://www.asaas.com/api/v3/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": ASAAS_API_KEY
-        },
-        body: JSON.stringify(payloadAsaas)
-      });
-
-      const pixData = await pixResponse.json().catch(e => ({ error: "invalid-json", raw: e }));
-      console.log("[DEBUG] Resposta Asaas:", pixData, "Status HTTP:", pixResponse.status);
-
-      if (!pixResponse.ok) {
-        console.error("[DEBUG] Erro PIX Asaas:", pixData);
-        // marca como FAILED e estorna localmente (evita deixar o usuário com saldo negativo)
-        const idx = user.saques.findIndex(s => s.externalReference === externalReference);
-        if (idx >= 0) {
-          user.saques[idx].status = "FAILED";
-          if (!user.saques[idx].refunded) {
-            user.saldo = Number(user.saldo) + valor;
-            user.saques[idx].refunded = true;
-            console.log("[DEBUG] Erro Asaas: estornando saldo localmente:", { userId: user._id, valor });
-          }
-          await user.save();
-        }
-        return res.status(400).json({ error: pixData.errors?.[0]?.description || pixData.error || "Erro ao processar PIX" });
-      }
-
-      // Atualiza saque com ID do Asaas
-      const index = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (index >= 0) {
-        user.saques[index].asaasId = pixData.id;
-        user.saques[index].updatedAt = new Date();
-        await user.save();
-        console.log("[DEBUG] Saque atualizado com ID Asaas:", pixData.id);
-      }
-
-      return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
-    } // fim POST
+    return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado!", data: pixData });
 
   } catch (error) {
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
-} // fim rota /api/withdraw
-
+}
     return res.status(404).json({ error: "Rota não encontrada." });
 }
