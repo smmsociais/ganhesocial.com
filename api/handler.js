@@ -1370,6 +1370,79 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(401).json({ error: "Usuário não autenticado." });
   }
 
+// detectar webhook Asaas
+const asaasWebhookToken = req.headers['asaas-access-token'];
+if (asaasWebhookToken) {
+  // valida token configurado no backoffice do Asaas
+  if (asaasWebhookToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+    console.log("[WEBHOOK] Token inválido:", asaasWebhookToken);
+    return res.status(401).json({ error: "Webhook token inválido." });
+  }
+
+  try {
+    const payload = req.body || {};
+    console.log("[WEBHOOK] Payload recebido:", payload);
+
+    // Normaliza possíveis formatos (event.payment, transfer, etc)
+    const eventData = payload.transfer || payload.payment || payload || {};
+    const asaasId = eventData.id || eventData.transferId || null;
+    const externalReference = eventData.externalReference || eventData.external_reference || null;
+    const status = (eventData.status || eventData.paymentStatus || "").toUpperCase();
+
+    // Tenta encontrar o usuário/saque por externalReference primeiro, depois por asaasId
+    let user = null;
+    let saqueIndex = -1;
+
+    if (externalReference) {
+      user = await User.findOne({ "saques.externalReference": externalReference });
+      if (user) saqueIndex = user.saques.findIndex(s => s.externalReference === externalReference);
+    }
+
+    if (!user && asaasId) {
+      user = await User.findOne({ "saques.asaasId": asaasId });
+      if (user) saqueIndex = user.saques.findIndex(s => s.asaasId === asaasId);
+    }
+
+    if (!user || saqueIndex < 0) {
+      console.log("[WEBHOOK] Saque não encontrado para externalReference/asaasId:", { externalReference, asaasId });
+      // responda 200 para evitar retries se for um evento legítimo que você não consegue correlacionar
+      return res.status(200).json({ message: "Recebido, mas saque não encontrado." });
+    }
+
+    // Idempotência: se status já igual, nada a fazer
+    const currentStatus = (user.saques[saqueIndex].status || "").toUpperCase();
+    if (currentStatus === status) {
+      console.log("[WEBHOOK] Evento duplicado ou sem mudança de status:", status);
+      return res.status(200).json({ message: "Sem alteração." });
+    }
+
+    // Mapeie status do Asaas para seus statuses, ou use o próprio status do Asaas
+    // Exemplo simples:
+    const allowedStatuses = ["PENDING", "CONFIRMED", "FAILED", "CANCELED", "COMPLETED"];
+    const newStatus = allowedStatuses.includes(status) ? status : status || "UNKNOWN";
+
+    user.saques[saqueIndex].status = newStatus;
+    if (!user.saques[saqueIndex].asaasId && asaasId) user.saques[saqueIndex].asaasId = asaasId;
+    user.saques[saqueIndex].updatedAt = new Date();
+
+    // Se quiser, trate rollback/estorno de saldo quando transfer falhar (ex: FAILED)
+    if (currentStatus !== "COMPLETED" && (newStatus === "FAILED" || newStatus === "CANCELED")) {
+      // evita creditar duas vezes: cheque um flag ou currentStatus
+      user.saldo = Number(user.saldo) + Number(user.saques[saqueIndex].valor);
+      console.log("[WEBHOOK] Estornando saldo:", { userId: user._id, valor: user.saques[saqueIndex].valor });
+    }
+
+    await user.save();
+    console.log("[WEBHOOK] Saque atualizado:", { userId: user._id, saqueIndex, newStatus });
+
+    return res.status(200).json({ message: "Webhook processado." });
+  } catch (err) {
+    console.error("[WEBHOOK] Erro processando webhook:", err);
+    // retorne 500 para que Asaas tente novamente (ou registre e retorne 200 caso prefira evitar retries)
+    return res.status(500).json({ error: "Erro interno." });
+  }
+}
+
   try {
     if (method === "GET") {
       // Retorna histórico de saques
@@ -1388,7 +1461,7 @@ if (url.startsWith("/api/withdraw")) {
     const { amount, payment_method, payment_data } = req.body;
     console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
-    
+
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
       console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
       return res.status(400).json({ error: "Dados de pagamento incompletos." });
