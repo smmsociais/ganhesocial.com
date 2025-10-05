@@ -1388,12 +1388,7 @@ if (url.startsWith("/api/withdraw")) {
     const { amount, payment_method, payment_data } = req.body;
     console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
-    // Validações básicas
-    if (!amount || typeof amount !== "number" || amount < 5) {
-      console.log("[DEBUG] Valor de saque inválido:", amount);
-      return res.status(400).json({ error: "Valor de saque inválido (mínimo R$5,00)." });
-    }
-
+    
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
       console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
       return res.status(400).json({ error: "Dados de pagamento incompletos." });
