@@ -53,16 +53,7 @@ const WithdrawSchema = new mongoose.Schema({
     default: 'PENDING'
   },
 
-  // metadados para matching/reconciliação
-  ownerName: { type: String, default: null },
-  bankAccount: { type: mongoose.Schema.Types.Mixed, default: null },
 
-  // auditoria / suporte
-  failReason: { type: String, default: null },
-  rawTransfer: { type: mongoose.Schema.Types.Mixed, default: null },
-  createdBy: { type: String, default: null } // ex: 'webhook_ui_auto' | 'webhook_validation' | 'api_withdraw'
-}, {
-  timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
 
 
