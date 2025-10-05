@@ -1377,8 +1377,6 @@ if (url.startsWith("/api/withdraw")) {
         amount: s.valor,
         pixKey: s.chave_pix,
         keyType: s.tipo_chave,
-        status: s.status,
-        date: s.data?.toISOString() || null
       }));
       console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
       return res.status(200).json(saquesFormatados);
@@ -1424,20 +1422,11 @@ if (url.startsWith("/api/withdraw")) {
       return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
     }
 
-    // Cria referência externa única
-    const externalReference = `saque_${user._id}_${Date.now()}`;
-    console.log("[DEBUG] externalReference gerada:", externalReference);
-
     // Adiciona saque pendente
     const novoSaque = {
       valor: amount,
       chave_pix: pixKey,
       tipo_chave: keyType,
-      status: "PENDING",
-      data: new Date(),
-      asaasId: null,
-      externalReference,
-      ownerName: user.nome || null
     };
     console.log("[DEBUG] Novo saque criado:", novoSaque);
 
@@ -1452,8 +1441,6 @@ if (url.startsWith("/api/withdraw")) {
       operationType: "PIX",
       pixAddressKey: pixKey,
       pixAddressKeyType: keyType,
-      scheduleDate: "2025-10-05",
-      externalReference
     };
     console.log("[DEBUG] Payload enviado ao Asaas:", payloadAsaas);
 
