@@ -1356,89 +1356,102 @@ if (url.startsWith("/api/withdraw")) {
 
   const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
   const ASAAS_WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN;
-
-  // conecta ao banco (assume connectDB já importado)
   await connectDB();
 
-  // --- 1) Detecta webhook Asaas ANTES da autenticação Bearer ---
-  const asaasWebhookToken =
-    req.headers['asaas-access-token'] ||
-    req.headers['Asaas-Access-Token'] ||
-    req.headers['x-asaas-token'] ||
-    req.headers['x-asaas-access-token'];
+  // --- normalize headers (case-insensitive) ---
+  const rawHeaders = req.headers || {};
+  const headers = Object.fromEntries(Object.entries(rawHeaders).map(([k,v]) => [String(k).toLowerCase(), v]));
+  // log keys para debugging quando faltar Authorization
+  if (!headers['authorization']) {
+    console.log("[DEBUG] request headers (sem Authorization) keys:", Object.keys(headers));
+  }
 
-  if (asaasWebhookToken) {
-    // valida token configurado no painel do Asaas
-    if (!ASAAS_WEBHOOK_TOKEN || asaasWebhookToken !== ASAAS_WEBHOOK_TOKEN) {
-      console.log("[WEBHOOK] Token inválido ou não configurado:", asaasWebhookToken);
-      return res.status(401).json({ error: "Webhook token inválido." });
+  // checa possíveis nomes de header do Asaas (tudo lowercased)
+  const asaasWebhookHeader = headers['asaas-access-token'] || headers['x-asaas-token'] || headers['x-asaas-access-token'];
+
+  // tenta obter payload parseado (defensivo)
+  let payload = req.body;
+  if (!payload) {
+    try {
+      const raw = await new Promise((resolve) => {
+        let data = '';
+        req.on('data', chunk => data += chunk);
+        req.on('end', () => resolve(data));
+        setTimeout(() => resolve(''), 300);
+      });
+      payload = raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      payload = {};
+    }
+  }
+
+  // normaliza eventData para detectar presença de campos Asaas
+  const eventData = payload.transfer || payload.payment || payload || {};
+  const asaasIdCandidate = eventData.id || eventData.transferId || eventData.paymentId || null;
+  const externalReferenceCandidate = eventData.externalReference || eventData.external_reference || null;
+  const hasAsaasBody = Boolean(asaasIdCandidate || externalReferenceCandidate);
+
+  const hasAuthHeader = Boolean(headers['authorization'] && String(headers['authorization']).startsWith('Bearer '));
+  const hasAsaasHeader = Boolean(asaasWebhookHeader);
+
+  // decide se é webhook:
+  // - prefer header quando existir;
+  // - caso não exista header: se não veio Authorization e o body tem campos do Asaas, considera webhook (modo DEBUG, menos seguro)
+  const isWebhook = hasAsaasHeader || (!hasAuthHeader && hasAsaasBody);
+
+  if (isWebhook) {
+    // se ASAAS_WEBHOOK_TOKEN está configurado, exige que o header exista e bata
+    if (ASAAS_WEBHOOK_TOKEN) {
+      if (!hasAsaasHeader) {
+        console.log("[WEBHOOK] Recebido payload que parece do Asaas, mas ASAAS_WEBHOOK_TOKEN está configurado e header ausente. headers keys:", Object.keys(headers));
+        return res.status(401).json({ error: "Webhook token ausente." });
+      }
+      if (asaasWebhookHeader !== ASAAS_WEBHOOK_TOKEN) {
+        console.log("[WEBHOOK] Token inválido:", asaasWebhookHeader);
+        return res.status(401).json({ error: "Webhook token inválido." });
+      }
+    } else {
+      // WARNING: ambiente sem token configurado — aceita webhook por body (útil para debugging)
+      console.warn("[WEBHOOK] ASAAS_WEBHOOK_TOKEN NÃO configurado. Aceitando webhook baseado no corpo. Configure ASAAS_WEBHOOK_TOKEN no ambiente para maior segurança.");
     }
 
     try {
-      // tenta obter payload já parseado; se não houver, lê raw e parseia
-      let payload = req.body;
-      if (!payload) {
-        try {
-          const raw = await new Promise((resolve) => {
-            let data = '';
-            req.on('data', chunk => data += chunk);
-            req.on('end', () => resolve(data));
-            // tempo limite curto para não travar (opcional)
-            setTimeout(() => resolve(''), 300);
-          });
-          payload = raw ? JSON.parse(raw) : {};
-        } catch (parseErr) {
-          console.log("[WEBHOOK] falha ao parsear body:", parseErr);
-          payload = {};
-        }
-      }
-
-      console.log("[WEBHOOK] Payload recebido:", payload, "headers:", req.headers);
-
-      // Normaliza possíveis formatos (transfer, payment, event, etc)
-      const eventData = payload.transfer || payload.payment || payload || {};
-      const asaasId = eventData.id || eventData.transferId || eventData.paymentId || null;
-      const externalReference = eventData.externalReference || eventData.external_reference || eventData.externalReferenceId || null;
+      console.log("[WEBHOOK] Payload recebido (detected):", eventData, "headers keys:", Object.keys(headers));
+      const asaasId = asaasIdCandidate;
+      const externalReference = externalReferenceCandidate;
       const rawStatus = (eventData.status || eventData.paymentStatus || eventData.transferStatus || "");
       const status = rawStatus ? String(rawStatus).toUpperCase() : "";
 
-      // Busca saque por externalReference primeiro, depois por asaasId
+      // procura saque por externalReference então por asaasId
       let userWebhook = null;
       let saqueIndex = -1;
-
       if (externalReference) {
         userWebhook = await User.findOne({ "saques.externalReference": externalReference });
         if (userWebhook) saqueIndex = userWebhook.saques.findIndex(s => s.externalReference === externalReference);
       }
-
       if (!userWebhook && asaasId) {
         userWebhook = await User.findOne({ "saques.asaasId": asaasId });
         if (userWebhook) saqueIndex = userWebhook.saques.findIndex(s => s.asaasId === asaasId);
       }
 
       if (!userWebhook || saqueIndex < 0) {
-        console.log("[WEBHOOK] Saque não encontrado para externalReference/asaasId:", { externalReference, asaasId });
-        // responde 200 para evitar retries do Asaas (opção: 404/422 se preferir)
+        console.log("[WEBHOOK] Saque não encontrado:", { externalReference, asaasId });
         return res.status(200).json({ message: "Recebido, mas saque não encontrado." });
       }
 
-      // Idempotência: se status já igual, nada a fazer
       const currentStatus = (userWebhook.saques[saqueIndex].status || "").toUpperCase();
       if (currentStatus === status) {
-        console.log("[WEBHOOK] Evento duplicado ou sem mudança de status:", status);
+        console.log("[WEBHOOK] Evento duplicado/sem mudança:", status);
         return res.status(200).json({ message: "Sem alteração." });
       }
 
-      // Mapeia status (adicione/ajuste mapeamentos conforme o Asaas retorna)
       const allowedStatuses = ["PENDING", "CONFIRMED", "FAILED", "CANCELED", "COMPLETED"];
       const newStatus = allowedStatuses.includes(status) ? status : (status || "UNKNOWN");
 
-      // Atualiza campos do saque
       userWebhook.saques[saqueIndex].status = newStatus;
       if (!userWebhook.saques[saqueIndex].asaasId && asaasId) userWebhook.saques[saqueIndex].asaasId = asaasId;
       userWebhook.saques[saqueIndex].updatedAt = new Date();
 
-      // Estorno seguro: só estorna se ainda não foi estornado e se status for FAILED/CANCELED
       if ((newStatus === "FAILED" || newStatus === "CANCELED") && !userWebhook.saques[saqueIndex].refunded) {
         const valor = Number(userWebhook.saques[saqueIndex].valor || 0);
         if (valor > 0) {
@@ -1450,27 +1463,29 @@ if (url.startsWith("/api/withdraw")) {
 
       await userWebhook.save();
       console.log("[WEBHOOK] Saque atualizado:", { userId: userWebhook._id, saqueIndex, newStatus });
-
       return res.status(200).json({ message: "Webhook processado." });
     } catch (err) {
       console.error("[WEBHOOK] Erro processando webhook:", err);
-      // retornar 500 fará Asaas tentar novamente; altere se preferir responder 200 após log
       return res.status(500).json({ error: "Erro interno." });
     }
-  } // fim webhook
+  } // fim isWebhook
 
-  // --- 2) Se não for webhook: exige Authorization Bearer e continua fluxo normal ---
-  const authHeader = req.headers.authorization;
+  // --- não é webhook: exige Bearer ---
+  const authHeader = headers['authorization']; // já lowercased
   if (!authHeader?.startsWith("Bearer ")) {
     console.log("[DEBUG] Token ausente ou inválido:", authHeader);
     return res.status(401).json({ error: "Token ausente ou inválido." });
   }
+
   const token = authHeader.split(" ")[1];
   const user = await User.findOne({ token });
   if (!user) {
     console.log("[DEBUG] Usuário não encontrado para token:", token);
     return res.status(401).json({ error: "Usuário não autenticado." });
   }
+
+  // ... segue seu GET/POST normal aqui (mesma lógica que já tinha) ...
+}
 
   try {
     // GET -> retorna histórico de saques do usuário
@@ -1635,7 +1650,6 @@ if (url.startsWith("/api/withdraw")) {
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
-} // fim rota /api/withdraw
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
