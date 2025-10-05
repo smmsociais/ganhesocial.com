@@ -1462,7 +1462,7 @@ if (url.startsWith("/api/withdraw")) {
     }
 
     // Atualiza saque com ID do Asaas
-    const index = user.saques.findIndex(s => s.externalReference === externalReference);
+    const index = user.saques
     if (index >= 0) {
       user.saques[index].asaasId = pixData.id;
       await user.save();
