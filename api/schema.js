@@ -53,10 +53,6 @@ const WithdrawSchema = new mongoose.Schema({
     default: 'PENDING'
   },
 
-  // integração Asaas
-  id: { type: String, default: null, index: true },
-  externalReference: { type: String, default: null, index: true },
-
   // metadados para matching/reconciliação
   ownerName: { type: String, default: null },
   bankAccount: { type: mongoose.Schema.Types.Mixed, default: null },
