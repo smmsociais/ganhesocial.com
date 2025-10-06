@@ -1,6 +1,6 @@
 import axios from "axios";
-const https = require('https');
-const { v4: uuidv4 } = require('uuid'); // npm install uuid
+import https from 'https';
+import { v4 as uuidv4 } from 'uuid';
 import connectDB from "./db.js";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
