@@ -1439,11 +1439,6 @@ if (url.startsWith("/api/withdraw")) {
       valor: amount,
       chave_pix: pixKey,
       tipo_chave: keyType,
-      status: "PENDING",
-      data: new Date(),
-      wooviId: null,
-      externalReference,
-      ownerName: "Renisson Santos da Silva",
     };
     console.log("[DEBUG] Novo saque criado:", novoSaque);
 
@@ -1452,62 +1447,205 @@ if (url.startsWith("/api/withdraw")) {
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // 🔹 Chamada PIX Out Woovi
-    // Woovi usa valores em centavos (integer). Ajuste endpoint conforme seu plano (transfer/withdraw/subaccount).
+    // 🔹 Chamada PIX Out Woovi (novo fluxo: criar pagamento -> aprovar pagamento)
+    // Woovi costuma usar valores em centavos (integer). Ajuste se seu ambiente usar reais.
     const valueInCents = Math.round(amount * 100);
 
-    // Exemplo usando endpoint de transfer (ajuste se preferir usar subaccount/{id}/withdraw etc)
-    const payloadWoovi = {
-      value: valueInCents,           // em centavos
-      // Alguns ambientes/contas Woovi pedem fromPixKey (se transferindo entre contas Woovi).
-      // Para enviar para chave externa, muitas integrações aceitam toPixKey / destinationAlias ou um endpoint de withdraw.
+    // Garante formato do header Authorization: se a env var não vem com 'Bearer ', adiciona.
+    const authHeaderValue = WOOVI_API_KEY && WOOVI_API_KEY.startsWith("Bearer ")
+      ? WOOVI_API_KEY
+      : `Bearer ${WOOVI_API_KEY}`;
+
+    // Atualiza o saque que foi criado para incluir externalReference e status
+    const novoSaqueComReferencia = {
+      valor: amount,
+      chave_pix: pixKey,
+      tipo_chave: keyType,
+      externalReference,
+      status: "PENDING",
+      data: new Date()
+    };
+
+    // Substitui o saque salvo antes (removemos o push anterior e salvamos o novo objeto)
+    // Se já salvou anteriormente com push, trocar para atualizar; aqui assumimos que ainda não havia sido
+    // inserido com externalReference — então removemos o último push e adicionamos o objeto completo.
+    // (Se você já tivesse feito push, adapte para atualizar o item em user.saques)
+    // Para manter compatibilidade com seu fluxo atual (no seu código anterior você já fez push sem externalReference);
+    // aqui vamos substituir o último elemento do array por nosso objeto completo.
+    if (user.saques && user.saques.length > 0) {
+      // substituir último saque (presumindo que foi o que adicionamos)
+      const lastIndex = user.saques.length - 1;
+      user.saques[lastIndex] = { ...user.saques[lastIndex], ...novoSaqueComReferencia };
+    } else {
+      user.saques.push(novoSaqueComReferencia);
+    }
+    await user.save();
+    console.log("[DEBUG] Novo saque criado e salvo no usuário:", novoSaqueComReferencia);
+    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
+
+    // ==== 1) Criar pagamento (request)
+    const createPayload = {
+      value: valueInCents,           // em centavos (integer)
       toPixKey: pixKey,
       correlationID: externalReference,
       comment: `Saque para ${user._id}`
     };
 
-    console.log("[DEBUG] Payload enviado ao Woovi:", payloadWoovi);
+    console.log("[DEBUG] Payload createPayment enviado ao Woovi:", createPayload);
 
-    const wooviResponse = await fetch(`${WOOVI_API_URL}/api/v1/transfer`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": WOOVI_API_KEY // a doc mostra Authorization com a chave. Teste com o formato que sua conta exige.
-      },
-      body: JSON.stringify(payloadWoovi)
-    });
-
-    const wooviText = await wooviResponse.text();
-
-    let wooviData;
+    let createRes;
     try {
-      wooviData = JSON.parse(wooviText);
+      createRes = await fetch(`${WOOVI_API_URL}/api/v1/payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authHeaderValue
+        },
+        body: JSON.stringify(createPayload)
+      });
     } catch (err) {
-      console.error("[ERROR] Resposta não-JSON do Woovi:", wooviText);
-      // Tenta mapear status HTTP para retornar algo útil
-      return res.status(wooviResponse.status || 500).json({ error: wooviText });
+      console.error("[ERROR] Falha na requisição createPayment:", err);
+      // Reverte saldo/saque em caso de erro crítico na chamada externa
+      // (Opcional: dependendo do seu fluxo, talvez queira deixar PENDING e re-tentar)
+      return res.status(500).json({ error: "Erro ao comunicar com o provedor de pagamentos." });
     }
 
-    console.log("[DEBUG] Resposta Woovi:", wooviData, "Status HTTP:", wooviResponse.status);
+    const createText = await createRes.text();
+    let createData;
+    try {
+      createData = JSON.parse(createText);
+    } catch (err) {
+      console.error("[ERROR] Resposta createPayment não-JSON do Woovi:", createText);
+      return res.status(createRes.status || 500).json({ error: createText });
+    }
 
-    if (!wooviResponse.ok) {
-      console.error("[DEBUG] Erro PIX Woovi:", wooviData);
-      // Woovi retorna objetos diferentes dependendo do erro; adapte a extração de mensagem conforme necessário
-      const errMsg = wooviData.message || wooviData.error || (wooviData.transaction && wooviData.transaction.status) || "Erro ao processar PIX via Woovi";
+    console.log("[DEBUG] Resposta createPayment Woovi:", createData, "Status HTTP:", createRes.status);
+
+    if (!createRes.ok) {
+      console.error("[DEBUG] Erro createPayment Woovi:", createData);
+      // Se for 403 e mensagem de funcionalidade desabilitada, devolve essa informação
+      if (createRes.status === 403 && createData && (createData.error || createData.message)) {
+        // marca saque como erro/blocked no DB (opcional)
+        const idxErr = user.saques.findIndex(s => s.externalReference === externalReference);
+        if (idxErr >= 0) {
+          user.saques[idxErr].status = "FAILED";
+          user.saques[idxErr].error = createData;
+          await user.save();
+        }
+        return res.status(403).json({ error: createData.error || createData.message || "Recurso não habilitado." });
+      }
+
+      const errMsg = createData.message || createData.error || "Erro ao criar pagamento no provedor.";
+      // marca saque como FAILED/PENDING para análise
+      const idx = user.saques.findIndex(s => s.externalReference === externalReference);
+      if (idx >= 0) {
+        user.saques[idx].status = "FAILED";
+        user.saques[idx].error = createData;
+        await user.save();
+      }
       return res.status(400).json({ error: errMsg });
     }
 
-    // Atualiza saque com ID do Woovi (mapeie o campo correto conforme resposta: transaction.endToEndId / transaction.id / id)
-    const index = user.saques.findIndex(s => s.externalReference === externalReference);
-    if (index >= 0) {
-      // tenta múltiplas opções de campo para compatibilidade
-      const txId = wooviData.transaction?.endToEndId || wooviData.transaction?.correlationID || wooviData.id || wooviData.transaction?.id || null;
-      user.saques[index].wooviId = txId;
+    // Extrai paymentId da resposta (tenta campos comuns)
+    const paymentId = createData.id || createData.paymentId || createData.payment_id || createData.transaction?.id || createData.transaction?.paymentId || null;
+    console.log("[DEBUG] paymentId extraído do createPayment:", paymentId);
+
+    // Atualiza o saque com o ID retornado (se existir)
+    const createdIndex = user.saques.findIndex(s => s.externalReference === externalReference);
+    if (createdIndex >= 0) {
+      if (paymentId) {
+        user.saques[createdIndex].wooviId = paymentId;
+      }
+      user.saques[createdIndex].status = "PENDING"; // já está pending; reforça
       await user.save();
-      console.log("[DEBUG] Saque atualizado com ID Woovi:", txId);
+      console.log("[DEBUG] Saque salvo com paymentId (se disponível).");
     }
 
-    return res.status(200).json({ message: "Saque solicitado com sucesso. PIX enviado via Woovi!", data: wooviData });
+    // ==== 2) Aprovar pagamento (approve)
+    if (!paymentId) {
+      console.warn("[WARN] createPayment não retornou paymentId — não é possível aprovar automaticamente. Saque permanece PENDING.");
+      return res.status(200).json({
+        message: "Saque criado, aguardando aprovação manual (paymentId não retornado).",
+        data: createData
+      });
+    }
+
+    const approvePayload = { paymentId };
+
+    console.log("[DEBUG] Enviando approvePayment ao Woovi:", approvePayload);
+    let approveRes;
+    try {
+      approveRes = await fetch(`${WOOVI_API_URL}/api/v1/payment/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authHeaderValue
+        },
+        body: JSON.stringify(approvePayload)
+      });
+    } catch (err) {
+      console.error("[ERROR] Falha na requisição approvePayment:", err);
+      // marcar para revisão manual
+      if (createdIndex >= 0) {
+        user.saques[createdIndex].status = "PENDING_APPROVAL";
+        user.saques[createdIndex].error = { msg: "Falha na requisição de aprovação", detail: err.message };
+        await user.save();
+      }
+      return res.status(500).json({ error: "Erro ao aprovar pagamento (comunicação com provedor)." });
+    }
+
+    const approveText = await approveRes.text();
+    let approveData;
+    try {
+      approveData = JSON.parse(approveText);
+    } catch (err) {
+      console.error("[ERROR] Resposta approvePayment não-JSON do Woovi:", approveText);
+      // marca saque como PENDING_APPROVAL para investigação
+      if (createdIndex >= 0) {
+        user.saques[createdIndex].status = "PENDING_APPROVAL";
+        user.saques[createdIndex].error = { msg: "Resposta de aprovação inválida", raw: approveText };
+        await user.save();
+      }
+      return res.status(approveRes.status || 500).json({ error: approveText });
+    }
+
+    console.log("[DEBUG] Resposta approvePayment Woovi:", approveData, "Status HTTP:", approveRes.status);
+
+    if (!approveRes.ok) {
+      console.error("[DEBUG] Erro approvePayment Woovi:", approveData);
+      // se 403, retorna informação específica
+      if (approveRes.status === 403) {
+        if (createdIndex >= 0) {
+          user.saques[createdIndex].status = "PENDING_APPROVAL";
+          user.saques[createdIndex].error = approveData;
+          await user.save();
+        }
+        return res.status(403).json({ error: approveData.error || approveData.message || "Aprovação negada." });
+      }
+
+      // outros erros: marca PENDING_APPROVAL
+      if (createdIndex >= 0) {
+        user.saques[createdIndex].status = "PENDING_APPROVAL";
+        user.saques[createdIndex].error = approveData;
+        await user.save();
+      }
+      return res.status(400).json({ error: approveData.message || approveData.error || "Erro ao aprovar pagamento." });
+    }
+
+    // Se approveOK -> atualiza status para COMPLETED (ou conforme retorno)
+    // Tente extrair status/transaction id do approveData
+    const approveStatus = approveData.status || approveData.transaction?.status || "COMPLETED";
+    if (createdIndex >= 0) {
+      user.saques[createdIndex].status = approveStatus === "COMPLETED" || approveStatus === "EXECUTED" ? "COMPLETED" : approveStatus;
+      user.saques[createdIndex].wooviId = user.saques[createdIndex].wooviId || paymentId;
+      await user.save();
+    }
+
+    return res.status(200).json({
+      message: "Saque processado (criado e aprovado) via Woovi.",
+      create: createData,
+      approve: approveData
+    });
 
   } catch (error) {
     console.error("💥 Erro em /withdraw:", error);
