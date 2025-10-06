@@ -1439,6 +1439,11 @@ if (url.startsWith("/api/withdraw")) {
       valor: amount,
       chave_pix: pixKey,
       tipo_chave: keyType,
+      status: "PENDING",
+      data: new Date(),
+      wooviId: null,
+      externalReference,
+      ownerName: "Renisson Santos da Silva",
     };
     console.log("[DEBUG] Novo saque criado:", novoSaque);
 
@@ -1447,7 +1452,7 @@ if (url.startsWith("/api/withdraw")) {
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // 🔹 Chamada PIX Out Woovi (novo fluxo: criar pagamento -> aprovar pagamento)
+     // 🔹 Chamada PIX Out Woovi (novo fluxo: criar pagamento -> aprovar pagamento)
     // Woovi costuma usar valores em centavos (integer). Ajuste se seu ambiente usar reais.
     const valueInCents = Math.round(amount * 100);
 
