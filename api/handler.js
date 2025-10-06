@@ -1,4 +1,6 @@
 import axios from "axios";
+const https = require('https');
+const { v4: uuidv4 } = require('uuid'); // npm install uuid
 import connectDB from "./db.js";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
@@ -1354,10 +1356,10 @@ if (url.startsWith("/api/withdraw")) {
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-  const WOOVI_API_KEY = process.env.WOOVI_API_KEY;
-  const WOOVI_APP_ID = process.env.WOOVI_APP_ID;
-  const WOOVI_API_URL = process.env.WOOVI_API_URL || "https://api.woovi.com"; // ou sandbox
+  const OPENPIX_API_KEY = process.env.OPENPIX_API_KEY;
+  const OPENPIX_API_URL = process.env.OPENPIX_API_URL || "https://api.openpix.com.br";
 
+  // conecta DB (assume função global connectDB e modelo User)
   await connectDB();
 
   // 🔹 Autenticação
@@ -1375,21 +1377,21 @@ if (url.startsWith("/api/withdraw")) {
 
   try {
     if (method === "GET") {
-      const saquesFormatados = user.saques.map(s => ({
-        amount: s.valor,
-        pixKey: s.chave_pix,
-        keyType: s.tipo_chave,
-        status: s.status,
-        date: s.data?.toISOString() || null,
+      const saquesFormatados = (user.saques || []).map(s => ({
+        amount: s.valor ?? s.amount ?? null,
+        pixKey: s.chave_pix ?? s.pixKey ?? null,
+        keyType: s.tipo_chave ?? s.keyType ?? null,
+        status: s.status ?? null,
+        date: s.data ? (s.data instanceof Date ? s.data.toISOString() : new Date(s.data).toISOString()) : null,
         externalReference: s.externalReference || null,
-        wooviId: s.wooviId || null,
+        providerId: s.providerId || s.wooviId || s.openpixId || null,
       }));
       console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
       return res.status(200).json(saquesFormatados);
     }
 
     // ===== POST =====
-    // Normalize body (compatível com body já parseado ou string)
+    // Normaliza body (compatível com body já parseado ou string)
     let body = req.body;
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch (e) { /* keep as-is */ }
@@ -1399,16 +1401,25 @@ if (url.startsWith("/api/withdraw")) {
     console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
 
     // Validações básicas
-    if (!amount || typeof amount !== "number" || amount <= 0) {
+    if (!amount || (typeof amount !== "number" && typeof amount !== "string")) {
       console.log("[DEBUG] Valor de saque inválido:", amount);
       return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
     }
+    // aceita amount em reais (float) ou em centavos (inteiro)? assumimos reais (ex.: 10.50) -> convert below
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      console.log("[DEBUG] Valor de saque inválido após parse:", amountNum);
+      return res.status(400).json({ error: "Valor de saque inválido." });
+    }
+
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
       console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
       return res.status(400).json({ error: "Dados de pagamento incompletos." });
     }
-    if (user.saldo < amount) {
-      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount });
+
+    // Verifica saldo (assumindo user.saldo em reais)
+    if ((user.saldo ?? 0) < amountNum) {
+      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount: amountNum });
       return res.status(400).json({ error: "Saldo insuficiente." });
     }
 
@@ -1421,7 +1432,7 @@ if (url.startsWith("/api/withdraw")) {
     }
 
     // Formata chave
-    let pixKey = payment_data.pix_key;
+    let pixKey = String(payment_data.pix_key || "");
     if (keyType === "CPF" || keyType === "CNPJ") pixKey = pixKey.replace(/\D/g, "");
     console.log("[DEBUG] Chave PIX formatada:", pixKey);
 
@@ -1441,47 +1452,60 @@ if (url.startsWith("/api/withdraw")) {
 
     // Monta objeto de saque e atualiza saldo & array (marca PENDING inicialmente)
     const novoSaque = {
-      valor: amount,
+      valor: amountNum,
       chave_pix: pixKey,
       tipo_chave: keyType,
       status: "PENDING",
       data: new Date(),
-      wooviId: null,
+      providerId: null,
       externalReference,
       ownerName: user.name || "Usuário",
     };
 
     // Deduz saldo e armazena saque
-    user.saldo -= amount;
+    user.saldo = (user.saldo ?? 0) - amountNum;
+    user.saques = user.saques || [];
     user.saques.push(novoSaque);
     await user.save();
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // ===== Comunica com o provedor (create -> approve) =====
-    const valueInCents = Math.round(amount * 100);
+    // ===== Comunica com o provedor OpenPix (create -> approve) =====
+    // Converte para centavos
+    const valueInCents = Math.round(amountNum * 100);
 
-    // Cabeçalhos: Woovi geralmente espera Authorization: {API_KEY} (sem 'Bearer ')
+    if (!OPENPIX_API_KEY) {
+      console.error("[ERROR] OPENPIX_API_KEY não configurada");
+      // restaura saldo e marca erro
+      const idxErr0 = user.saques.findIndex(s => s.externalReference === externalReference);
+      if (idxErr0 >= 0) {
+        user.saques[idxErr0].status = "FAILED";
+        user.saques[idxErr0].error = { msg: "OPENPIX_API_KEY não configurada" };
+        user.saldo += amountNum;
+        await user.save();
+      }
+      return res.status(500).json({ error: "Configuração do provedor ausente." });
+    }
+
     const createHeaders = {
       "Content-Type": "application/json",
-      "Authorization": WOOVI_API_KEY,   // sem 'Bearer ' se a API exigir assim
+      "Authorization": OPENPIX_API_KEY,
+      "Idempotency-Key": externalReference
     };
-    if (WOOVI_APP_ID) createHeaders["appID"] = WOOVI_APP_ID;
-    // Idempotency para evitar duplicados
-    createHeaders["Idempotency-Key"] = externalReference;
 
     const createPayload = {
       value: valueInCents,
-      toPixKey: pixKey,
+      destinationAlias: pixKey,
+      destinationAliasType: keyType,
       correlationID: externalReference,
       comment: `Saque para ${user._id}`
     };
 
-    console.log("[DEBUG] Payload createPayment enviado ao provedor:", createPayload);
+    console.log("[DEBUG] Payload createPayment enviado ao OpenPix:", createPayload);
 
     // Faz create payment
     let createRes;
     try {
-      createRes = await fetch(`${WOOVI_API_URL}/api/v1/payment`, {
+      createRes = await fetch(`${OPENPIX_API_URL}/api/v1/payment`, {
         method: "POST",
         headers: createHeaders,
         body: JSON.stringify(createPayload)
@@ -1493,7 +1517,7 @@ if (url.startsWith("/api/withdraw")) {
       if (idxErr >= 0) {
         user.saques[idxErr].status = "FAILED";
         user.saques[idxErr].error = { msg: "Falha na requisição createPayment", detail: err.message };
-        user.saldo += amount; // restaura saldo
+        user.saldo += amountNum; // restaura saldo
         await user.save();
       }
       return res.status(500).json({ error: "Erro ao comunicar com o provedor de pagamentos." });
@@ -1508,7 +1532,7 @@ if (url.startsWith("/api/withdraw")) {
       if (idx >= 0) {
         user.saques[idx].status = "FAILED";
         user.saques[idx].error = { msg: "Resposta createPayment inválida", raw: createText };
-        user.saldo += amount;
+        user.saldo += amountNum;
         await user.save();
       }
       return res.status(createRes.status || 500).json({ error: createText });
@@ -1523,11 +1547,10 @@ if (url.startsWith("/api/withdraw")) {
       if (idxErr >= 0) {
         user.saques[idxErr].status = "FAILED";
         user.saques[idxErr].error = createData;
-        user.saldo += amount;
+        user.saldo += amountNum;
         await user.save();
       }
 
-      // se for 403, retorna mensagem específica
       if (createRes.status === 403) {
         return res.status(403).json({ error: createData.error || createData.message || "Recurso não habilitado." });
       }
@@ -1541,17 +1564,16 @@ if (url.startsWith("/api/withdraw")) {
 
     console.log("[DEBUG] paymentId extraído:", paymentId, "correlation retornada:", returnedCorrelation);
 
-    // Atualiza o saque com paymentId/correlation, mantendo status PENDING
+    // Atualiza o saque com providerId/correlation, mantendo status PENDING
     const createdIndex = user.saques.findIndex(s => s.externalReference === externalReference);
     if (createdIndex >= 0) {
-      if (paymentId) user.saques[createdIndex].wooviId = paymentId;
+      if (paymentId) user.saques[createdIndex].providerId = paymentId;
       if (!user.saques[createdIndex].externalReference) user.saques[createdIndex].externalReference = externalReference;
       user.saques[createdIndex].status = "PENDING";
       await user.save();
     }
 
-    // Se não retornou paymentId, tentaremos aprovar usando correlationID (se suportado)
-    // Caso contrário, devolvemos a resposta create e deixamos como PENDING para aprovação manual
+    // Decide identificador para aprovação
     const toApproveIdentifier = paymentId || returnedCorrelation || externalReference;
 
     if (!toApproveIdentifier) {
@@ -1565,18 +1587,17 @@ if (url.startsWith("/api/withdraw")) {
     // ===== Approve =====
     const approveHeaders = {
       "Content-Type": "application/json",
-      "Authorization": WOOVI_API_KEY,
+      "Authorization": OPENPIX_API_KEY,
+      "Idempotency-Key": `approve_${toApproveIdentifier}`
     };
-    if (WOOVI_APP_ID) approveHeaders["appID"] = WOOVI_APP_ID;
-    approveHeaders["Idempotency-Key"] = `approve_${toApproveIdentifier}`;
 
-    // A API pode aceitar { paymentId } ou { correlationID } — enviamos o que temos
+    // A API do OpenPix geralmente aceita { correlationID } conforme seu exemplo
     const approvePayload = paymentId ? { paymentId } : { correlationID: toApproveIdentifier };
     console.log("[DEBUG] Enviando approvePayment:", approvePayload);
 
     let approveRes;
     try {
-      approveRes = await fetch(`${WOOVI_API_URL}/api/v1/payment/approve`, {
+      approveRes = await fetch(`${OPENPIX_API_URL}/api/v1/payment/approve`, {
         method: "POST",
         headers: approveHeaders,
         body: JSON.stringify(approvePayload)
@@ -1628,7 +1649,7 @@ if (url.startsWith("/api/withdraw")) {
     const approveStatus = approveData.status || approveData.transaction?.status || "COMPLETED";
     if (createdIndex >= 0) {
       user.saques[createdIndex].status = (approveStatus === "COMPLETED" || approveStatus === "EXECUTED") ? "COMPLETED" : approveStatus;
-      user.saques[createdIndex].wooviId = user.saques[createdIndex].wooviId || paymentId || approveData.id || null;
+      user.saques[createdIndex].providerId = user.saques[createdIndex].providerId || paymentId || approveData.id || null;
       await user.save();
     }
 
