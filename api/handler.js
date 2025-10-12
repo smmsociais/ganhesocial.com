@@ -491,27 +491,27 @@ if (url.startsWith("/api/login")) {
 if (url.startsWith("/api/signup") && method === "POST") {
   await connectDB();
 
-  const {email, senha } = req.body;
+  const { email, senha } = req.body;
   if (!email || !senha) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
-  // (mantém sua verificação reCAPTCHA aqui)
-  // ...
-
   try {
-    // verifica email
+    // Verifica se o e-mail já existe
     const emailExiste = await User.findOne({ email });
     if (emailExiste) {
       return res.status(400).json({ error: "E-mail já cadastrado." });
     }
 
+    // Gera token obrigatório
     const token = crypto.randomBytes(32).toString("hex");
 
-    // Função para gerar codigo_afiliado (curto)
-    const gerarCodigo = () => uuidv4().split("-")[0]; // ex: 'a1b2c3d4'
+    // 🔹 Função para gerar código numérico (8 dígitos)
+    const gerarCodigo = () =>
+      Math.floor(10000000 + Math.random() * 90000000).toString(); 
+      // exemplo: "48392017"
 
-    // tenta salvar com retries em caso de colisão de índice unico
+    // tenta salvar com retries em caso de colisão de índice único
     const maxRetries = 5;
     let attempt = 0;
     let savedUser = null;
@@ -524,20 +524,17 @@ if (url.startsWith("/api/signup") && method === "POST") {
         senha,
         token,
         codigo_afiliado,
-        // não precisa setar indicado_por aqui — virá do query ?ref no frontend no registro
       });
 
       try {
         savedUser = await novoUsuario.save();
-        // sucesso — sai do loop
       } catch (err) {
         // Se for erro de duplicata no codigo_afiliado, gera outro e tenta de novo
         if (err && err.code === 11000 && err.keyPattern && err.keyPattern.codigo_afiliado) {
-          console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt+1}). Gerando novo código.`);
+          console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt + 1}). Gerando novo código.`);
           attempt++;
           continue;
         }
-        // outro erro — propaga
         throw err;
       }
     }
@@ -546,17 +543,16 @@ if (url.startsWith("/api/signup") && method === "POST") {
       return res.status(500).json({ error: "Não foi possível gerar um código de afiliado único. Tente novamente." });
     }
 
-    // sucesso: retorne token e codigo
+    // sucesso
     return res.status(201).json({
       message: "Usuário registrado com sucesso!",
       token: savedUser.token,
       codigo_afiliado: savedUser.codigo_afiliado,
-      id: savedUser._id
+      id: savedUser._id,
     });
 
   } catch (error) {
     console.error("Erro ao cadastrar usuário:", error);
-    // tratamento específico para duplicate key em email
     if (error && error.code === 11000 && error.keyPattern && error.keyPattern.email) {
       return res.status(400).json({ error: "E-mail já cadastrado." });
     }
