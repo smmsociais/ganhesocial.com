@@ -506,6 +506,8 @@ if (url.startsWith("/api/signup") && method === "POST") {
       return res.status(400).json({ error: "E-mail já cadastrado." });
     }
 
+    const token = crypto.randomBytes(32).toString("hex");
+
     // Função para gerar codigo_afiliado (curto)
     const gerarCodigo = () => uuidv4().split("-")[0]; // ex: 'a1b2c3d4'
 
