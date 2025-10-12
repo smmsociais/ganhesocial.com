@@ -749,6 +749,11 @@
     </div>
 
     <script>
+        // Variáveis globais para controle da paginação
+        let currentPage = 1;
+        const itemsPerPage = 100; // Máximo de 100 saques por página
+        let allWithdrawals = [];
+
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
@@ -787,6 +792,10 @@
             menuCloseBtn.addEventListener('click', closeMenu);
             menuOverlay.addEventListener('click', closeMenu);
 
+            // Configura eventos da paginação
+            document.getElementById('prev-page').addEventListener('click', () => changePage(currentPage - 1));
+            document.getElementById('next-page').addEventListener('click', () => changePage(currentPage + 1));
+
             // Carrega histórico de saques
             await loadWithdrawals();
 
@@ -824,7 +833,8 @@
                     throw new Error(data.error || "Erro ao carregar histórico de saques");
                 }
 
-                displayWithdrawals(data);
+                allWithdrawals = data;
+                displayWithdrawalsPage(1);
             } catch (error) {
                 showAlert(error.message);
                 document.getElementById('loading-row').style.display = 'none';
@@ -832,23 +842,11 @@
             }
         }
 
-        function displayWithdrawals(withdrawals) {
-            const withdrawalsList = document.getElementById("withdrawals-list");
-            const noWithdrawalsMsg = document.getElementById("no-withdrawals");
-            const loadingRow = document.getElementById("loading-row");
-
-            withdrawalsList.innerHTML = "";
-            loadingRow.style.display = 'none';
-
-            if (withdrawals.length === 0) {
-                noWithdrawalsMsg.style.display = 'flex';
-                return;
-            }
-
-            noWithdrawalsMsg.style.display = 'none';
-
+        function displayWithdrawalsPage(page) {
+            currentPage = page;
+            
             // Ordena por data (mais recente primeiro)
-            withdrawals.sort((a, b) => {
+            allWithdrawals.sort((a, b) => {
                 const aTime = typeof a.date === 'object' && a.date.$date
                     ? Number(a.date.$date.$numberLong || a.date.$date)
                     : Date.parse(a.date);
@@ -860,7 +858,28 @@
                 return bTime - aTime;
             });
 
-            withdrawals.forEach(withdrawal => {
+            // Calcula índices para a página atual
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageWithdrawals = allWithdrawals.slice(startIndex, endIndex);
+
+            const withdrawalsList = document.getElementById("withdrawals-list");
+            const noWithdrawalsMsg = document.getElementById("no-withdrawals");
+            const loadingRow = document.getElementById("loading-row");
+
+            withdrawalsList.innerHTML = "";
+            loadingRow.style.display = 'none';
+
+            if (allWithdrawals.length === 0) {
+                noWithdrawalsMsg.style.display = 'flex';
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+
+            noWithdrawalsMsg.style.display = 'none';
+
+            // Exibe os saques da página atual
+            pageWithdrawals.forEach(withdrawal => {
                 const row = document.createElement("tr");
                 row.className = 'fade-in';
 
@@ -891,22 +910,18 @@
 
                 // Formata a chave PIX/CPF
                 let formattedKey = withdrawal.pixKey || withdrawal.method || '-';
+                
+                // Formatação específica para CPF
                 if (withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey)) {
                     formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-                } else if (withdrawal.keyType === 'phone' && /^\d{11}$/.test(withdrawal.pixKey)) {
+                } 
+                // Formatação para telefone
+                else if (withdrawal.keyType === 'phone' && /^\d{11}$/.test(withdrawal.pixKey)) {
                     formattedKey = withdrawal.pixKey.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
                 }
-
-                // Adiciona ícone baseado no método
-                let methodIcon = '';
-                let methodText = '';
-
-                if (withdrawal.method === 'pix') {
-                    methodIcon = '<i class="fas fa-qrcode"></i>';
-                    methodText = 'PIX';
-                } else if (withdrawal.method === 'bank_transfer') {
-                    methodIcon = '<i class="fas fa-university"></i>';
-                    methodText = 'Transferência';
+                // Formatação genérica para CPF (caso não tenha keyType mas seja um CPF)
+                else if (/^\d{11}$/.test(withdrawal.pixKey)) {
+                    formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
                 }
 
                 row.innerHTML = `
@@ -919,19 +934,48 @@
                     <td>${formattedKey}</td>
                     <td><strong>${formattedValue}</strong></td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>
-                    </td>
                 `;
 
                 withdrawalsList.appendChild(row);
             });
 
-            // Mostra paginação se houver muitos itens
-            if (withdrawals.length > 10) {
-                document.getElementById('pagination').style.display = 'flex';
-            }
+            // Atualiza a paginação
+            updatePagination();
         }
 
+        function changePage(page) {
+            const totalPages = Math.ceil(allWithdrawals.length / itemsPerPage);
+            
+            if (page < 1 || page > totalPages) return;
+            
+            displayWithdrawalsPage(page);
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(allWithdrawals.length / itemsPerPage);
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+            const pagination = document.getElementById('pagination');
+
+            // Mostra/oculta paginação baseado no número de páginas
+            if (totalPages > 1) {
+                pagination.style.display = 'flex';
+            } else {
+                pagination.style.display = 'none';
+            }
+
+            // Atualiza estado dos botões
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage === totalPages;
+
+            // Atualiza informação da página
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+        }
+
+        function showAlert(message) {
+            alert(message);
+        }
     </script>
 </body>
 
