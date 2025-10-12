@@ -488,8 +488,7 @@ if (url.startsWith("/api/login")) {
 if (url.startsWith("/api/signup") && method === "POST") {
   await connectDB();
 
-  const { email, senha, recaptchaToken } = req.body;
-  const refCodigo = req.query.ref || null; // captura o ?ref=XXXX
+  const { email, senha, recaptchaToken, ref } = req.body;
 
   if (!email || !senha || !recaptchaToken) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
@@ -536,7 +535,7 @@ if (url.startsWith("/api/signup") && method === "POST") {
         codigo_afiliado,
         status: "ativo",
         ativo_ate,
-        indicado_por: refCodigo || null, // vincula ao código do afiliado, se houver
+        indicado_por: ref || null, // vincula ao código do afiliado, se houver
       });
 
       try {
