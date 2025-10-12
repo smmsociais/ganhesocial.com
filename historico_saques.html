@@ -667,6 +667,7 @@
         <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
         <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
         <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
         <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
@@ -843,7 +844,7 @@
             const loadingRow = document.getElementById('loading-row');
             const noWithdrawalsMsg = document.getElementById('no-withdrawals');
             const pagination = document.getElementById('pagination');
-            
+
             if (loadingRow) loadingRow.style.display = '';
             if (noWithdrawalsMsg) noWithdrawalsMsg.style.display = 'none';
             if (pagination) pagination.style.display = 'none';
@@ -853,7 +854,7 @@
             const loadingRow = document.getElementById('loading-row');
             const noWithdrawalsMsg = document.getElementById('no-withdrawals');
             const pagination = document.getElementById('pagination');
-            
+
             if (loadingRow) loadingRow.style.display = 'none';
             if (noWithdrawalsMsg) noWithdrawalsMsg.style.display = 'flex';
             if (pagination) pagination.style.display = 'none';
@@ -861,7 +862,7 @@
 
         function displayWithdrawalsPage(page) {
             currentPage = page;
-            
+
             // Ordena por data (mais recente primeiro)
             allWithdrawals.sort((a, b) => {
                 const aTime = typeof a.date === 'object' && a.date.$date
@@ -887,7 +888,7 @@
             if (withdrawalsList) {
                 withdrawalsList.innerHTML = "";
             }
-            
+
             if (loadingRow) {
                 loadingRow.style.display = 'none';
             }
@@ -929,11 +930,11 @@
 
                 // Formata a chave PIX/CPF
                 let formattedKey = withdrawal.pixKey || withdrawal.method || '-';
-                
+
                 // Formatação específica para CPF
                 if (withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey)) {
                     formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-                } 
+                }
 
                 // Formatação genérica para CPF (caso não tenha keyType mas seja um CPF)
                 else if (/^\d{11}$/.test(withdrawal.pixKey)) {
@@ -963,9 +964,9 @@
 
         function changePage(page) {
             const totalPages = Math.ceil(allWithdrawals.length / itemsPerPage);
-            
+
             if (page < 1 || page > totalPages) return;
-            
+
             displayWithdrawalsPage(page);
         }
 
