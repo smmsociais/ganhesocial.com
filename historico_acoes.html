@@ -541,6 +541,7 @@
         <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
         <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
         <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
         <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
@@ -669,11 +670,11 @@
                                 'Authorization': `Bearer ${token}`
                             }
                         });
-const historyData = await response.json();
-// Filtra para remover ações do tipo "comissao"
-allActions = historyData
-    .filter(action => action.tipo !== "comissao")
-    .sort((a, b) => new Date(b.data) - new Date(a.data));
+                        const historyData = await response.json();
+                        // Filtra para remover ações do tipo "comissao"
+                        allActions = historyData
+                            .filter(action => action.tipo !== "comissao")
+                            .sort((a, b) => new Date(b.data) - new Date(a.data));
                     }
 
                     // Calcular total de páginas
