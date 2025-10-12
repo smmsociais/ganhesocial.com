@@ -1089,7 +1089,7 @@
 
                         if (data.status === "ENCONTRADA") {
                             document.getElementById("warningMessage").style.display = "none";
-                            if (parseFloat(data.quantidade_pontos) === 4) {
+                            if (parseFloat(data.quantidade_pontos) === 3) {
                                 return "ignorarLocalERepetirSMM";
                             }
                             await processarAcao(data, "local");
