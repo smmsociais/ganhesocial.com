@@ -765,8 +765,8 @@
             const pixKey = document.getElementById('pixKey').value.trim();
             const token = localStorage.getItem("token");
 
-            if (!amount || amount < 0) {
-                showAlert("O valor mínimo para saque é de R$ 0,01.");
+            if (!amount || amount < 5) {
+                showAlert("O valor mínimo para saque é de R$ 5.");
                 return;
             }
 
