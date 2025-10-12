@@ -486,48 +486,47 @@ if (url.startsWith("/api/login")) {
     };
 
 // Rota: /api/signup
-if (url.startsWith("/api/signup")) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Método não permitido." });
-    }
+if (url.startsWith("/api/signup") && method === "POST") {
+    const { nome, email, senha } = req.body;
 
-    await connectDB();
-
-    const { email, senha, recaptchaToken } = req.body;
-
-    if (!email || !senha || !recaptchaToken) {
+    if (!nome || !email || !senha) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios." });
     }
 
     try {
-        // ✅ Verificar reCAPTCHA
-        const recaptchaSecret = process.env.RECAPTCHA_SECRET; // certifique-se de definir isso no ambiente
-        const { data } = await axios.post(`https://www.google.com/recaptcha/api/siteverify`, null, {
-            params: {
-                secret: recaptchaSecret,
-                response: recaptchaToken,
-            },
+        await connectDB();
+
+        // 🔹 Verifica se o email já está cadastrado
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: "E-mail já cadastrado." });
+        }
+
+        // 🔹 Cria o usuário
+        const novoUsuario = new User({
+            nome,
+            email,
+            senha,
         });
 
-        if (!data.success || data.score < 0.5) {
-            return res.status(400).json({ error: "Falha na verificação do reCAPTCHA." });
-        }
+        // 🔹 Salva primeiro o usuário
+        const userSalvo = await novoUsuario.save();
 
-        const emailExiste = await User.findOne({ email });
-        if (emailExiste) {
-            return res.status(400).json({ error: "E-mail já está cadastrado." });
-        }
+        // 🔹 Após salvar, gera e define o código de afiliado
+        const codigo_afiliado = uuidv4().split("-")[0]; // ex: 'a12f4b9c'
 
-        // Gerar token único
-        const token = crypto.randomBytes(32).toString("hex");
+        // 🔹 Atualiza o registro com o código gerado
+        userSalvo.codigo_afiliado = codigo_afiliado;
+        await userSalvo.save();
 
-        const novoUsuario = new User({ email, senha, token });
-        await novoUsuario.save();
-
-        return res.status(201).json({ message: "Usuário registrado com sucesso!", token });
+        return res.status(201).json({
+            message: "Usuário criado com sucesso.",
+            id: userSalvo._id,
+            codigo_afiliado,
+        });
     } catch (error) {
-        console.error("Erro ao cadastrar usuário:", error);
-        return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
+        console.error("Erro ao criar usuário:", error);
+        return res.status(500).json({ error: "Erro ao criar usuário." });
     }
 }
 
