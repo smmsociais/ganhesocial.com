@@ -8,7 +8,7 @@ const ContaSchema = new mongoose.Schema({
   status: { type: String, default: "ativa" },
 });
 
-// 🔹 Schema para Histórico de Ações
+// 🔹 Schema para Histórico de Ações (com suporte a comissões de afiliados)
 const ActionHistorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String },
@@ -23,9 +23,11 @@ const ActionHistorySchema = new mongoose.Schema({
   valor_confirmacao: { type: Number, default: 0 },
   quantidade_pontos: { type: Number, required: true },
   tipo_acao: { type: String, required: true },
-  data: { type: Date, default: Date.now },
   rede_social: { type: String, default: "TikTok" },
-  tipo: { type: String, required: true },
+  tipo: { type: String, required: true }, // exemplo: "seguimento", "curtida", "comissao"
+  afiliado: { type: String },             // 🔹 código do afiliado responsável pela comissão
+  valor: { type: Number, default: 0 },    // 🔹 valor da comissão, quando tipo = "comissao"
+  data: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 * 30 },
 });
 
@@ -38,7 +40,7 @@ const WithdrawSchema = new mongoose.Schema({
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
 
-// 🔹 Schema do Usuário
+// 🔹 Schema do Usuário (adicionando campos de afiliado)
 const UserSchema = new mongoose.Schema({
   nome: { type: String, required: false },
   email: { type: String, required: true, unique: true },
@@ -47,8 +49,14 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   saldo: { type: Number, default: 0 },
-  pix_key:      { type: String, default: null },
+  pix_key: { type: String, default: null },
   pix_key_type: { type: String, default: null },
+
+  // 🔹 Campos de afiliados
+  codigo_afiliado: { type: String, unique: true }, // código usado no link de convite
+  indicado_por: { type: String, default: null },   // quem indicou este usuário
+  status: { type: String, default: "ativo" },      // usado para contar indicados ativos
+
   contas: [ContaSchema],
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
@@ -104,6 +112,7 @@ const DailyEarningSchema = new mongoose.Schema({
 DailyEarningSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
+// 🔹 Modelos
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
 const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
