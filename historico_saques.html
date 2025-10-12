@@ -751,7 +751,7 @@
     <script>
         // Variáveis globais para controle da paginação
         let currentPage = 1;
-        const itemsPerPage = 100; // Máximo de 100 saques por página
+        const itemsPerPage = 10; // Máximo de 100 saques por página
         let allWithdrawals = [];
 
         document.addEventListener("DOMContentLoaded", async function () {
@@ -915,10 +915,6 @@
                 if (withdrawal.keyType === 'cpf' && /^\d{11}$/.test(withdrawal.pixKey)) {
                     formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
                 } 
-                // Formatação para telefone
-                else if (withdrawal.keyType === 'phone' && /^\d{11}$/.test(withdrawal.pixKey)) {
-                    formattedKey = withdrawal.pixKey.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-                }
                 // Formatação genérica para CPF (caso não tenha keyType mas seja um CPF)
                 else if (/^\d{11}$/.test(withdrawal.pixKey)) {
                     formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
