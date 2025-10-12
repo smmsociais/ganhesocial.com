@@ -669,8 +669,11 @@
                                 'Authorization': `Bearer ${token}`
                             }
                         });
-                        const historyData = await response.json();
-                        allActions = historyData.sort((a, b) => new Date(b.data) - new Date(a.data));
+const historyData = await response.json();
+// Filtra para remover ações do tipo "comissao"
+allActions = historyData
+    .filter(action => action.tipo !== "comissao")
+    .sort((a, b) => new Date(b.data) - new Date(a.data));
                     }
 
                     // Calcular total de páginas
