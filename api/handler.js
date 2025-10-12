@@ -489,7 +489,7 @@ if (url.startsWith("/api/login")) {
 if (url.startsWith("/api/signup") && method === "POST") {
     const { nome, email, senha } = req.body;
 
-    if (!nome || !email || !senha) {
+    if (!email || !senha) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios." });
     }
 
@@ -504,7 +504,6 @@ if (url.startsWith("/api/signup") && method === "POST") {
 
         // 🔹 Cria o usuário
         const novoUsuario = new User({
-            nome,
             email,
             senha,
         });
