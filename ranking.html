@@ -569,51 +569,6 @@
                                 <td class="ranking-user"></td>
                                 <td class="ranking-value">R$ 0,00</td>
                             </tr>
-                            <tr>
-                                <td class="ranking-position">2º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">3º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">4º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">5º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">6º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">7º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">8º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">9º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td class="ranking-position">10º</td>
-                                <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -625,7 +580,7 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-            // Controle do menu hamburguer
+            // Controle do menu hamburguer (mantive sua lógica original)
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
@@ -634,7 +589,6 @@
             function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
-
                 const spans = menuToggle.querySelectorAll('span');
                 if (menuContent.classList.contains('active')) {
                     spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
@@ -660,7 +614,21 @@
             menuCloseBtn.addEventListener('click', closeMenu);
             menuOverlay.addEventListener('click', closeMenu);
 
-            // Carrega ranking
+            // Gera 100 linhas placeholder no tbody (substitui linhas estáticas)
+            const rankingTable = document.getElementById('rankingTable');
+            rankingTable.innerHTML = ''; // limpa qualquer conteúdo existente
+
+            for (let i = 1; i <= 1000; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+            <td class="ranking-position">${i}º</td>
+            <td class="ranking-user">-</td>
+            <td class="ranking-value">R$ 0,00</td>
+        `;
+                rankingTable.appendChild(tr);
+            }
+
+            // Carrega ranking (popula as linhas geradas)
             await loadRanking();
 
             document.body.classList.add('loaded');
@@ -678,9 +646,9 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        // mantive seu header Authorization (se for dinâmico, troque aqui)
                         "Authorization": "Bearer 4769"
                     },
-
                     body: JSON.stringify({ user_token: token })
                 });
 
@@ -694,21 +662,44 @@
                     throw new Error("Resposta da API não contém o array 'ranking'");
                 }
 
-                const rankingTable = document.getElementById('rankingTable');
-                const rankingRows = rankingTable.querySelectorAll('tr');
+                const rankingRows = Array.from(document.querySelectorAll('#rankingTable tr'));
 
-                data.ranking.slice(0, 1000).forEach((user, index) => {
-                    if (index < rankingRows.length) {
-                        const row = rankingRows[index];
+                // Preenche as linhas geradas (até 100)
+                data.ranking.slice(0, 100).forEach((user, index) => {
+                    const row = rankingRows[index];
+                    if (!row) return;
 
-                        if (user.is_current_user) {
-                            row.classList.add('highlight-row');
-                        }
+                    // limpa qualquer destaque anterior
+                    row.classList.remove('highlight-row');
 
-                        row.querySelector(".ranking-user").textContent = user.username;
-                        row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+                    // adiciona destaque se for o usuário atual
+                    if (user.is_current_user) {
+                        row.classList.add('highlight-row');
+                    }
+
+                    const usernameCell = row.querySelector('.ranking-user');
+                    const valueCell = row.querySelector('.ranking-value');
+
+                    usernameCell.textContent = user.username || '-';
+
+                    // Formata valor para moeda BRL (garante número e casas decimais)
+                    const valueNumber = Number(user.total_balance);
+                    if (!isNaN(valueNumber)) {
+                        valueCell.textContent = valueNumber.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                        });
+                    } else {
+                        // Se não for número, exibe em texto cru (ou mantém 0,00)
+                        valueCell.textContent = user.total_balance ? String(user.total_balance) : 'R$ 0,00';
                     }
                 });
+
+                // Se quiser exibir mensagem quando não houver nenhum ranking:
+                if (data.ranking.length === 0) {
+                    const rankingTable = document.getElementById('rankingTable');
+                    rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Nenhum dado de ranking disponível</td></tr>';
+                }
 
             } catch (error) {
                 console.error("Erro ao carregar ranking:", error);
@@ -722,6 +713,7 @@
             window.location.href = "https://ganhesocial.com";
         }
     </script>
+
 </body>
 
 </html>
