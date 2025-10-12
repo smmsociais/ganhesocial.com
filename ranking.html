@@ -46,13 +46,6 @@
             line-height: 1.6;
         }
 
-        .menu-item[href="dashboard"] {
-            color: white;
-            font-weight: bold;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid white;
-        }
-
         /* Header Styles */
         .header {
             display: flex;
@@ -704,7 +697,7 @@
                 const rankingTable = document.getElementById('rankingTable');
                 const rankingRows = rankingTable.querySelectorAll('tr');
 
-                data.ranking.slice(0, 10).forEach((user, index) => {
+                data.ranking.slice(0, 1000).forEach((user, index) => {
                     if (index < rankingRows.length) {
                         const row = rankingRows[index];
 
