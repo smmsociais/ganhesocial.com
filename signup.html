@@ -338,6 +338,17 @@
         body.loaded {
             visibility: visible;
         }
+        
+        .referral-info {
+            background-color: rgba(0, 123, 255, 0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            border-radius: var(--card-radius);
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            display: none;
+        }
     </style>
 </head>
 
@@ -345,6 +356,10 @@
     <div class="signup-container fade-in">
         <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo-signup">
         <h1 class="signup-title">Crie sua conta</h1>
+        
+        <div id="referralInfo" class="referral-info">
+            <i class="fas fa-user-plus"></i> Você está se cadastrando através de um link de indicação
+        </div>
 
         <form id="cadastroForm">
             <div class="input-group">
@@ -361,6 +376,9 @@
                 <label for="confirmarSenha">Confirmar Senha</label>
                 <input type="password" id="confirmarSenha" placeholder="Confirme sua senha" required>
             </div>
+
+            <!-- Campo oculto para capturar o código de indicação -->
+            <input type="hidden" id="referralCode" name="referralCode">
 
             <p class="terms-text">Ao se cadastrar, você concorda com os nossos <a href="#">Termos de Uso</a> e <a
                     href="#">Políticas de Privacidade</a>.</p>
@@ -385,9 +403,25 @@
         document.addEventListener("DOMContentLoaded", function () {
             document.body.classList.add('loaded');
 
+            // Verificar se há um token de acesso no localStorage
             const token = localStorage.getItem("token");
             if (token) {
                 window.location.href = "/dashboard";
+            }
+
+            // Função para extrair parâmetros da URL
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                const results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            }
+
+            // Capturar o código de indicação da URL
+            const referralCode = getUrlParameter('ref');
+            if (referralCode) {
+                document.getElementById('referralCode').value = referralCode;
+                document.getElementById('referralInfo').style.display = 'block';
             }
 
             document.getElementById("cadastroForm").addEventListener("submit", async function (event) {
@@ -396,6 +430,7 @@
                 const email = document.getElementById("email").value.trim();
                 const senha = document.getElementById("senha").value.trim();
                 const confirmarSenha = document.getElementById("confirmarSenha").value.trim();
+                const referralCode = document.getElementById("referralCode").value;
                 const statusMessage = document.getElementById("statusMessage");
                 const signupButton = document.getElementById("signupButton");
 
@@ -441,10 +476,16 @@
                     signupButton.classList.add("loading");
                     signupButton.disabled = true;
 
+                    // Inclui o referralCode no corpo da requisição
+                    const requestBody = { email, senha, recaptchaToken };
+                    if (referralCode) {
+                        requestBody.referralCode = referralCode;
+                    }
+
                     const response = await fetch("https://ganhesocial.com/api/signup", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email, senha, recaptchaToken })
+                        body: JSON.stringify(requestBody)
                     });
 
                     const data = await response.json();
