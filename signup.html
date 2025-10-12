@@ -450,8 +450,6 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        statusMessage.textContent = "Cadastro realizado com sucesso! Redirecionando...";
-                        statusMessage.classList.add("success-message");
                         localStorage.setItem("token", data.token);
                         setTimeout(() => {
                             window.location.href = "/dashboard";
