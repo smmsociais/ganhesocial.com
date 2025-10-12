@@ -49,14 +49,19 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   saldo: { type: Number, default: 0 },
-  pix_key:      { type: String, default: null },
+  pix_key: { type: String, default: null },
   pix_key_type: { type: String, default: null },
   contas: [ContaSchema],
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
 
+  // 🔹 Campos de afiliados
   codigo_afiliado: { type: String, default: null },
   indicado_por: { type: String, default: null },
+
+  // 🔹 Campos de status para afiliados
+  status: { type: String, default: "ativo" }, // usado para validar indicados ativos
+  ativo_ate: { type: Date, default: null },   // indica até quando o usuário é considerado ativo
 });
 
 // índice parcial — enforce uniqueness only when codigo_afiliado is a string
