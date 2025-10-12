@@ -207,6 +207,7 @@
             padding: 12px 15px;
             margin: 15px 0;
             border-radius: 8px;
+            display: none;
             font-size: 0.95rem;
         }
 
@@ -544,23 +545,6 @@
         body.loaded {
             visibility: visible;
         }
-
-        /* Botão para fechar mensagem de sucesso */
-        .alert-close-btn {
-            background: none;
-            border: none;
-            color: inherit;
-            font-size: 1.2rem;
-            cursor: pointer;
-            float: right;
-            margin-left: 10px;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .alert-close-btn:hover {
-            opacity: 0.7;
-        }
     </style>
 </head>
 
@@ -615,7 +599,7 @@
                 <h2><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</h2>
             </div>
             <div class="container-body">
-                <div id="alertBox" class="alert-message" style="display: none;"></div>
+                <div id="alertBox" class="alert-message"></div>
 
                 <div class="info-box">
                     <div class="info-title"><i class="fas fa-info-circle"></i> Valor Mínimo</div>
@@ -659,8 +643,7 @@
             const successMessage = localStorage.getItem("withdrawSuccess");
             if (successMessage) {
                 showAlert(successMessage, "success");
-                // NÃO remove mais a mensagem do localStorage aqui
-                // A mensagem só será removida quando o usuário fechá-la manualmente
+                localStorage.removeItem("withdrawSuccess");
             }
 
             // Controle do menu hamburguer
@@ -706,43 +689,22 @@
 
         function logout() {
             localStorage.removeItem("token");
-            localStorage.removeItem("withdrawSuccess"); // Limpa a mensagem ao sair
             window.location.href = "https://ganhesocial.com";
         }
 
         function showAlert(message, type = "error") {
             const alertBox = document.getElementById("alertBox");
-            
-            // Adiciona botão de fechar apenas para mensagens de sucesso
-            if (type === "success") {
-                alertBox.innerHTML = message + '<button class="alert-close-btn" onclick="closeAlert()">&times;</button>';
-            } else {
-                alertBox.textContent = message;
-            }
-            
+            alertBox.textContent = message;
             alertBox.className = "alert-message";
 
             if (type === "success") {
                 alertBox.classList.add("alert-success");
-                // Remove o timeout automático para mensagens de sucesso
-                // A mensagem só será fechada quando o usuário clicar no X
             } else {
                 alertBox.classList.add("alert-error");
-                // Mantém o timeout para mensagens de erro
-                setTimeout(() => {
-                    alertBox.style.display = "none";
-                }, 5000);
             }
 
             alertBox.style.display = "block";
-        }
-
-        function closeAlert() {
-            const alertBox = document.getElementById("alertBox");
-            alertBox.style.display = "none";
-            // Remove a mensagem do localStorage quando o usuário fecha manualmente
-            localStorage.removeItem("withdrawSuccess");
-        }
+            }
 
         async function loadWithdrawData() {
             const token = localStorage.getItem("token");
@@ -864,12 +826,8 @@
                     throw new Error(data.error || "Erro ao solicitar saque");
                 }
 
-                // Salva a mensagem no localStorage para persistir entre recarregamentos
-                const successMessage = "Saque solicitado com sucesso! O pagamento está em processamento.";
-                localStorage.setItem("withdrawSuccess", successMessage);
-
                 // Exibe mensagem de sucesso
-                showAlert(successMessage, "success");
+                showAlert("Saque solicitado com sucesso! O pagamento está em processamento.", "success");
 
                 // Limpa os campos do formulário
                 document.getElementById('amount').value = '';
