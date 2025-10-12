@@ -485,48 +485,81 @@ if (url.startsWith("/api/login")) {
         }
     };
 
-// Rota: /api/signup
+
+
+// ... dentro do handler
 if (url.startsWith("/api/signup") && method === "POST") {
-    const { nome, email, senha } = req.body;
+  await connectDB();
 
-    if (!email || !senha) {
-        return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  const {email, senha } = req.body;
+  if (!email || !senha) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
+
+  // (mantém sua verificação reCAPTCHA aqui)
+  // ...
+
+  try {
+    // verifica email
+    const emailExiste = await User.findOne({ email });
+    if (emailExiste) {
+      return res.status(400).json({ error: "E-mail já cadastrado." });
     }
 
-    try {
-        await connectDB();
+    // Função para gerar codigo_afiliado (curto)
+    const gerarCodigo = () => uuidv4().split("-")[0]; // ex: 'a1b2c3d4'
 
-        // 🔹 Verifica se o email já está cadastrado
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ error: "E-mail já cadastrado." });
+    // tenta salvar com retries em caso de colisão de índice unico
+    const maxRetries = 5;
+    let attempt = 0;
+    let savedUser = null;
+
+    while (attempt < maxRetries && !savedUser) {
+      const codigo_afiliado = gerarCodigo();
+
+      const novoUsuario = new User({
+        email,
+        senha,
+        token,
+        codigo_afiliado,
+        // não precisa setar indicado_por aqui — virá do query ?ref no frontend no registro
+      });
+
+      try {
+        savedUser = await novoUsuario.save();
+        // sucesso — sai do loop
+      } catch (err) {
+        // Se for erro de duplicata no codigo_afiliado, gera outro e tenta de novo
+        if (err && err.code === 11000 && err.keyPattern && err.keyPattern.codigo_afiliado) {
+          console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt+1}). Gerando novo código.`);
+          attempt++;
+          continue;
         }
-
-        // 🔹 Cria o usuário
-        const novoUsuario = new User({
-            email,
-            senha,
-        });
-
-        // 🔹 Salva primeiro o usuário
-        const userSalvo = await novoUsuario.save();
-
-        // 🔹 Após salvar, gera e define o código de afiliado
-        const codigo_afiliado = uuidv4().split("-")[0]; // ex: 'a12f4b9c'
-
-        // 🔹 Atualiza o registro com o código gerado
-        userSalvo.codigo_afiliado = codigo_afiliado;
-        await userSalvo.save();
-
-        return res.status(201).json({
-            message: "Usuário criado com sucesso.",
-            id: userSalvo._id,
-            codigo_afiliado,
-        });
-    } catch (error) {
-        console.error("Erro ao criar usuário:", error);
-        return res.status(500).json({ error: "Erro ao criar usuário." });
+        // outro erro — propaga
+        throw err;
+      }
     }
+
+    if (!savedUser) {
+      return res.status(500).json({ error: "Não foi possível gerar um código de afiliado único. Tente novamente." });
+    }
+
+    // sucesso: retorne token e codigo
+    return res.status(201).json({
+      message: "Usuário registrado com sucesso!",
+      token: savedUser.token,
+      codigo_afiliado: savedUser.codigo_afiliado,
+      id: savedUser._id
+    });
+
+  } catch (error) {
+    console.error("Erro ao cadastrar usuário:", error);
+    // tratamento específico para duplicate key em email
+    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+      return res.status(400).json({ error: "E-mail já cadastrado." });
+    }
+    return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
+  }
 }
 
 // Rota: /api/change-password
