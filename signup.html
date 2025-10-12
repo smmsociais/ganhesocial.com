@@ -382,6 +382,14 @@
     </div>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
+
+// Captura código de afiliado do query param ?ref=
+const urlParams = new URLSearchParams(window.location.search);
+const ref = urlParams.get("ref");
+if (ref) {
+    localStorage.setItem("codigo_afiliado_ref", ref);
+}
+
         document.addEventListener("DOMContentLoaded", function () {
             document.body.classList.add('loaded');
 
@@ -441,11 +449,13 @@
                     signupButton.classList.add("loading");
                     signupButton.disabled = true;
 
-                    const response = await fetch("https://ganhesocial.com/api/signup", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email, senha, recaptchaToken })
-                    });
+const indicado_por = localStorage.getItem("codigo_afiliado_ref") || null;
+
+const response = await fetch("https://ganhesocial.com/api/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, senha, recaptchaToken, indicado_por })
+});
 
                     const data = await response.json();
 
