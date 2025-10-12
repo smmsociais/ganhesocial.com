@@ -49,17 +49,15 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   saldo: { type: Number, default: 0 },
-  pix_key: { type: String, default: null },
+  pix_key:      { type: String, default: null },
   pix_key_type: { type: String, default: null },
-
-  // 🔹 Campos de afiliados
-  codigo_afiliado: { type: String, unique: true }, // código usado no link de convite
-  indicado_por: { type: String, default: null },   // quem indicou este usuário
-  status: { type: String, default: "ativo" },      // usado para contar indicados ativos
-
   contas: [ContaSchema],
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
+
+  // 🔹 Campos de afiliados
+  codigo_afiliado: { type: String, default: null },
+  indicado_por: { type: String, default: null },
 });
 
 const PedidoSchema = new mongoose.Schema({
