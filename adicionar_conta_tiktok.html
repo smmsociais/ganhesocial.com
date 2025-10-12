@@ -185,9 +185,39 @@
             gap: 8px;
             width: 100%;
             margin-top: 10px;
+            position: relative;
         }
 
+        /* Loading State */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
 
+        .loading .btn-text {
+            visibility: hidden;
+        }
+
+        .loading::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Message Box */
         .message-box {
@@ -557,8 +587,8 @@
                 <div id="messageBox" class="message-box" style="display: none;"></div>
 
                 <input type="text" id="accountName" class="input-box" placeholder="Nome de usuário do TikTok">
-                <button class="btn-primary" onclick="addAccount()">
-                    </i> Adicionar Conta
+                <button class="btn-primary" id="addAccountButton" onclick="addAccount()">
+                    <span class="btn-text">Adicionar Conta</span>
                 </button>
             </div>
         </div>
@@ -581,6 +611,7 @@
 
         async function addAccount() {
             const inputField = document.getElementById('accountName');
+            const addAccountButton = document.getElementById('addAccountButton');
             let accountName = inputField.value.trim();
             const messageBox = document.getElementById('messageBox');
 
@@ -601,6 +632,10 @@
             }
 
             try {
+                // Show loading state - o texto desaparece imediatamente
+                addAccountButton.classList.add("loading");
+                addAccountButton.disabled = true;
+
                 const response = await fetch("https://ganhesocial.com/api/contas", {
                     method: "POST",
                     headers: {
@@ -624,6 +659,7 @@
                     const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
                     const bindText = await bindResponse.text();
                 } catch (bindError) {
+                    // Ignora erros na chamada externa
                 }
 
                 // Redirecionar para página de sucesso com o nome de usuário
@@ -633,6 +669,10 @@
                 // Mensagem de erro sem redirecionamento
                 showMessage(error.message, true);
                 inputField.value = "";
+            } finally {
+                // Remove o loading state em caso de erro
+                addAccountButton.classList.remove("loading");
+                addAccountButton.disabled = false;
             }
         }
 
