@@ -485,49 +485,41 @@ if (url.startsWith("/api/login")) {
         }
     };
 
-
-
 if (url.startsWith("/api/signup") && method === "POST") {
   await connectDB();
 
-  const { email, senha, recaptchaToken, indicado_por } = req.body;
+  const { email, senha, recaptchaToken } = req.body;
+  const refCodigo = req.query.ref || null; // captura o ?ref=XXXX
 
   if (!email || !senha || !recaptchaToken) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
   try {
-    // ✅ Verificar reCAPTCHA
+    // ✅ Verifica reCAPTCHA
     const recaptchaSecret = process.env.RECAPTCHA_SECRET;
     const { data } = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
       null,
-      {
-        params: {
-          secret: recaptchaSecret,
-          response: recaptchaToken,
-        },
-      }
+      { params: { secret: recaptchaSecret, response: recaptchaToken } }
     );
 
     if (!data.success || data.score < 0.5) {
       return res.status(400).json({ error: "Falha na verificação do reCAPTCHA." });
     }
 
-    // verifica se o e-mail já existe
+    // ✅ Verifica se e-mail já existe
     const emailExiste = await User.findOne({ email });
-    if (emailExiste) {
-      return res.status(400).json({ error: "E-mail já cadastrado." });
-    }
+    if (emailExiste) return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    // Gera token obrigatório
+    // ✅ Gera token obrigatório
     const token = crypto.randomBytes(32).toString("hex");
 
-    // 🔹 Função para gerar código numérico (8 dígitos)
+    // ✅ Função para gerar código de afiliado numérico (8 dígitos)
     const gerarCodigo = () =>
       Math.floor(10000000 + Math.random() * 90000000).toString();
 
-    // tenta salvar com retries em caso de colisão de índice único
+    // Retentativa para evitar colisão de código
     const maxRetries = 5;
     let attempt = 0;
     let savedUser = null;
@@ -535,19 +527,22 @@ if (url.startsWith("/api/signup") && method === "POST") {
     while (attempt < maxRetries && !savedUser) {
       const codigo_afiliado = gerarCodigo();
 
+      // Novo usuário
+      const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias de ativo
       const novoUsuario = new User({
         email,
         senha,
         token,
         codigo_afiliado,
-        indicado_por: indicado_por || null, // recebe o ?ref do frontend
+        status: "ativo",
+        ativo_ate,
+        indicado_por: refCodigo || null, // vincula ao código do afiliado, se houver
       });
 
       try {
         savedUser = await novoUsuario.save();
       } catch (err) {
-        // Se for erro de duplicata no codigo_afiliado, gera outro e tenta de novo
-        if (err && err.code === 11000 && err.keyPattern && err.keyPattern.codigo_afiliado) {
+        if (err?.code === 11000 && err.keyPattern?.codigo_afiliado) {
           console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt + 1}). Gerando novo código.`);
           attempt++;
           continue;
@@ -560,7 +555,6 @@ if (url.startsWith("/api/signup") && method === "POST") {
       return res.status(500).json({ error: "Não foi possível gerar um código de afiliado único. Tente novamente." });
     }
 
-    // sucesso
     return res.status(201).json({
       message: "Usuário registrado com sucesso!",
       token: savedUser.token,
@@ -570,7 +564,7 @@ if (url.startsWith("/api/signup") && method === "POST") {
 
   } catch (error) {
     console.error("Erro ao cadastrar usuário:", error);
-    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+    if (error?.code === 11000 && error.keyPattern?.email) {
       return res.status(400).json({ error: "E-mail já cadastrado." });
     }
     return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
