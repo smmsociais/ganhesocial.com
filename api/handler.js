@@ -1665,5 +1665,90 @@ if (url.startsWith("/api/withdraw")) {
   }
 }
 
+// 🔹 Rota: /api/afiliados
+if (url.startsWith("/api/afiliados")) { 
+  if (method !== "GET" && method !== "POST") {
+    console.log("[DEBUG] Método não permitido:", method);
+    return res.status(405).json({ error: "Método não permitido." });
+  }
+
+  try {
+    // Importa dependências quando a rota é chamada
+    const { MongoClient } = await import("mongodb");
+    const client = new MongoClient(process.env.MONGODB_URI);
+    const dbName = "ganhesocial";
+
+    // Lê o corpo da requisição
+    const buffers = [];
+    for await (const chunk of req) buffers.push(chunk);
+    const bodyData = Buffer.concat(buffers).toString();
+    const body = bodyData ? JSON.parse(bodyData) : {};
+    const { user_token } = body;
+
+    // Validação do header de autorização
+    const authHeader = req.headers.authorization;
+    if (!authHeader || authHeader !== "Bearer 4769") {
+      console.log("[DEBUG] Falha na autorização:", authHeader);
+      return res.status(401).json({ error: "Não autorizado." });
+    }
+
+    if (!user_token) {
+      console.log("[DEBUG] Token do usuário ausente");
+      return res.status(400).json({ error: "Token do usuário ausente." });
+    }
+
+    console.log("[DEBUG] Buscando afiliado para token:", user_token);
+
+    await client.connect();
+    const db = client.db(dbName);
+    const users = db.collection("users");
+    const transacoes = db.collection("transacoes");
+
+    // Busca o usuário principal
+    const user = await users.findOne({ token: user_token });
+    if (!user) {
+      console.log("[DEBUG] Usuário não encontrado");
+      await client.close();
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    const codigo_afiliado = user.codigo_afiliado || user._id.toString();
+
+    // Busca todos os indicados
+    const indicados = await users.find({ indicado_por: codigo_afiliado }).toArray();
+
+    const total_indicados = indicados.length;
+    const indicados_ativos = indicados.filter(u => u.status === "ativo").length;
+
+    // Soma das comissões
+    const total_comissoes = await transacoes.aggregate([
+      { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
+      { $group: { _id: null, total: { $sum: "$valor" } } }
+    ]).toArray();
+
+    const valorTotal = total_comissoes.length > 0 ? total_comissoes[0].total : 0;
+
+    console.log("[DEBUG] Afiliado encontrado:", {
+      codigo_afiliado,
+      total_indicados,
+      indicados_ativos,
+      valorTotal
+    });
+
+    await client.close();
+
+    return res.status(200).json({
+      total_comissoes: valorTotal,
+      total_indicados,
+      indicados_ativos,
+      codigo_afiliado
+    });
+
+  } catch (error) {
+    console.error("[ERRO] Rota /api/afiliados:", error);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+  }
+}
+
     return res.status(404).json({ error: "Rota não encontrada." });
 }
