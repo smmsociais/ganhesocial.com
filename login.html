@@ -135,6 +135,7 @@
             justify-content: center;
             align-items: center;
             gap: 10px;
+            position: relative;
         }
 
         .btn-login:hover {
@@ -274,6 +275,10 @@
             opacity: 0.7;
         }
 
+        .loading .btn-text {
+            visibility: hidden;
+        }
+
         .loading::after {
             content: "";
             position: absolute;
@@ -325,7 +330,7 @@
             </div>
 
             <button type="submit" class="btn-login" id="loginButton">
-                </i> Entrar
+                <span class="btn-text">Entrar</span>
             </button>
         </form>
 
@@ -365,7 +370,7 @@
             }
 
             try {
-                // Show loading state
+                // Show loading state - o texto desaparece imediatamente
                 loginButton.classList.add("loading");
                 loginButton.disabled = true;
 
