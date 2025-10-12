@@ -1780,28 +1780,28 @@ if (url.startsWith("/api/withdraw")) {
                 const comissaoValor = Number((saqueValor * COMMISSION_RATE).toFixed(2)); // em reais, 2 decimais
                 console.log("[DEBUG] Criando comissão para afiliado:", afiliado._id.toString(), "valor:", comissaoValor);
 
-                // cria registro de comissão no ActionHistory
-                const acaoComissao = new ActionHistory({
-                  user: afiliado._id,
-                  token: afiliado.token || null,
-                  nome_usuario: afiliado.nome || afiliado.email || null,
-                  id_action: externalReference,            // marca com externalReference para evitar duplicidade
-                  id_pedido: `comissao_${externalReference}`,
-                  id_conta: user._id.toString(),
-                  unique_id: null,
-                  url_dir: "",
-                  acao_validada: "valida",
-                  valor_confirmacao: comissaoValor,
-                  quantidade_pontos: 0,
-                  tipo_acao: "comissao",
-                  rede_social: "Sistema",
-                  tipo: "comissao",
-                  afiliado: afiliado.codigo_afiliado,
-                  valor: comissaoValor,
-                  data: new Date(),
-                });
-
-                await acaoComissao.save();
+// cria registro de comissão no ActionHistory (com url_dir preenchido)
+const acaoComissao = new ActionHistory({
+  user: afiliado._id,
+  token: afiliado.token || null,
+  nome_usuario: afiliado.nome || afiliado.email || null,
+  id_action: externalReference,                     // usado para evitar duplicidade
+  id_pedido: `comissao_${externalReference}`,        // identificador próprio
+  id_conta: user._id.toString(),                    // conta/usuário que gerou o saque
+  unique_id: null,
+  // Preenchendo url_dir com referência ao saque - evita erro de validação
+  url_dir: `/saques/${externalReference}`,          
+  acao_validada: "valida",
+  valor_confirmacao: comissaoValor,
+  quantidade_pontos: 0,
+  tipo_acao: "comissao",
+  rede_social: "Sistema",
+  tipo: "comissao",
+  afiliado: afiliado.codigo_afiliado,
+  valor: comissaoValor,
+  data: new Date(),
+});
+await acaoComissao.save();
 
                 // Atualiza saldo do afiliado e histórico
                 afiliado.saldo = (afiliado.saldo ?? 0) + comissaoValor;
