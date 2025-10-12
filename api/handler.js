@@ -487,17 +487,34 @@ if (url.startsWith("/api/login")) {
 
 
 
-// ... dentro do handler
 if (url.startsWith("/api/signup") && method === "POST") {
   await connectDB();
 
-  const { email, senha } = req.body;
-  if (!email || !senha) {
+  const { email, senha, recaptchaToken, indicado_por } = req.body;
+
+  if (!email || !senha || !recaptchaToken) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
   try {
-    // Verifica se o e-mail já existe
+    // ✅ Verificar reCAPTCHA
+    const recaptchaSecret = process.env.RECAPTCHA_SECRET;
+    const { data } = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: recaptchaSecret,
+          response: recaptchaToken,
+        },
+      }
+    );
+
+    if (!data.success || data.score < 0.5) {
+      return res.status(400).json({ error: "Falha na verificação do reCAPTCHA." });
+    }
+
+    // verifica se o e-mail já existe
     const emailExiste = await User.findOne({ email });
     if (emailExiste) {
       return res.status(400).json({ error: "E-mail já cadastrado." });
@@ -508,8 +525,7 @@ if (url.startsWith("/api/signup") && method === "POST") {
 
     // 🔹 Função para gerar código numérico (8 dígitos)
     const gerarCodigo = () =>
-      Math.floor(10000000 + Math.random() * 90000000).toString(); 
-      // exemplo: "48392017"
+      Math.floor(10000000 + Math.random() * 90000000).toString();
 
     // tenta salvar com retries em caso de colisão de índice único
     const maxRetries = 5;
@@ -524,6 +540,7 @@ if (url.startsWith("/api/signup") && method === "POST") {
         senha,
         token,
         codigo_afiliado,
+        indicado_por: indicado_por || null, // recebe o ?ref do frontend
       });
 
       try {
