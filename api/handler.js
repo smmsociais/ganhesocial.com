@@ -1388,6 +1388,70 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
   }
 };
 
+// 🔹 Rota: /api/afiliados
+if (url.startsWith("/api/afiliados") && method === "POST") {
+  const { user_token } = req.body;
+
+  if (!user_token) {
+    return res.status(400).json({ error: "Token do usuário é obrigatório." });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== "Bearer 4769") {
+    console.log("[DEBUG] Falha na autorização:", authHeader);
+    return res.status(401).json({ error: "Não autorizado." });
+  }
+
+  try {
+    await connectDB();
+
+    // 🔍 Busca o usuário principal
+    const user = await User.findOne({ token: user_token });
+    if (!user) {
+      console.log("[DEBUG] Usuário não encontrado para token:", user_token);
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    // Código do afiliado
+    const codigo_afiliado = user.codigo_afiliado || user._id.toString();
+
+    // 🔗 Busca todos os indicados por este afiliado
+    const indicados = await User.find({ indicado_por: codigo_afiliado });
+
+    const total_indicados = indicados.length;
+
+    // 🔹 Filtra apenas os ativos dentro de 30 dias
+    const agora = new Date();
+    const indicados_ativos = indicados.filter(u => u.status === "ativo" && u.ativo_ate && u.ativo_ate > agora).length;
+
+    // 💰 Soma das comissões (supondo que estão salvas em alguma coleção relacionada)
+    const comissoes = await ActionHistory.aggregate([
+      { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
+      { $group: { _id: null, total: { $sum: "$valor" } } }
+    ]);
+
+    const total_comissoes = comissoes.length > 0 ? comissoes[0].total : 0;
+
+    console.log("[DEBUG] Dados de afiliado:", {
+      codigo_afiliado,
+      total_indicados,
+      indicados_ativos,
+      total_comissoes
+    });
+
+    return res.status(200).json({
+      total_comissoes,
+      total_indicados,
+      indicados_ativos,
+      codigo_afiliado
+    });
+
+  } catch (error) {
+    console.error("Erro ao carregar dados de afiliados:", error);
+    return res.status(500).json({ error: "Erro interno ao buscar dados de afiliados." });
+  }
+}
+
 // 🔹 Rota: /api/withdraw
 if (url.startsWith("/api/withdraw")) {
   if (method !== "GET" && method !== "POST") {
@@ -1444,7 +1508,6 @@ if (url.startsWith("/api/withdraw")) {
       console.log("[DEBUG] Valor de saque inválido:", amount);
       return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
     }
-    // aceita amount em reais (float) ou em centavos (inteiro)? assumimos reais (ex.: 10.50) -> convert below
     const amountNum = Number(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
       console.log("[DEBUG] Valor de saque inválido após parse:", amountNum);
@@ -1498,7 +1561,7 @@ if (url.startsWith("/api/withdraw")) {
       data: new Date(),
       providerId: null,
       externalReference,
-      ownerName: user.name || "Usuário",
+      ownerName: user.name || user.nome || "Usuário",
     };
 
     // Deduz saldo e armazena saque
@@ -1509,7 +1572,6 @@ if (url.startsWith("/api/withdraw")) {
     console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
     // ===== Comunica com o provedor OpenPix (create -> approve) =====
-    // Converte para centavos
     const valueInCents = Math.round(amountNum * 100);
 
     if (!OPENPIX_API_KEY) {
@@ -1630,7 +1692,6 @@ if (url.startsWith("/api/withdraw")) {
       "Idempotency-Key": `approve_${toApproveIdentifier}`
     };
 
-    // A API do OpenPix geralmente aceita { correlationID } conforme seu exemplo
     const approvePayload = paymentId ? { paymentId } : { correlationID: toApproveIdentifier };
     console.log("[DEBUG] Enviando approvePayment:", approvePayload);
 
@@ -1692,6 +1753,81 @@ if (url.startsWith("/api/withdraw")) {
       await user.save();
     }
 
+    // ===== Processar comissão de afiliado (5%) se saque COMPLETED =====
+    try {
+      const COMMISSION_RATE = 0.05;
+      const isCompleted = approveStatus === "COMPLETED" || approveStatus === "EXECUTED";
+      if (isCompleted) {
+        // Recarrega user para garantir dados atualizados (opcional)
+        const saqueRecord = (user.saques || []).find(s => s.externalReference === externalReference || s.providerId === (paymentId || null));
+        const saqueValor = saqueRecord ? (saqueRecord.valor ?? amountNum) : amountNum;
+
+        console.log("[DEBUG] Saque finalizado para comissão. Valor:", saqueValor, "externalReference:", externalReference);
+
+        // Verifica se usuário foi indicado
+        if (user.indicado_por) {
+          // Evita pagar duas vezes: verificar se já existe ActionHistory para esse externalReference + tipo comissao
+          const existente = await ActionHistory.findOne({ id_action: externalReference, tipo: "comissao" });
+          if (existente) {
+            console.log("[DEBUG] Comissão já registrada para esse saque (ignorar).", externalReference);
+          } else {
+            // verifica se o usuário que sacou está ativo (dentro do período ativo_ate)
+            const agora = new Date();
+            if (user.ativo_ate && new Date(user.ativo_ate) > agora) {
+              // encontra afiliado (quem indicou)
+              const afiliado = await User.findOne({ codigo_afiliado: user.indicado_por });
+              if (afiliado) {
+                const comissaoValor = Number((saqueValor * COMMISSION_RATE).toFixed(2)); // em reais, 2 decimais
+                console.log("[DEBUG] Criando comissão para afiliado:", afiliado._id.toString(), "valor:", comissaoValor);
+
+                // cria registro de comissão no ActionHistory
+                const acaoComissao = new ActionHistory({
+                  user: afiliado._id,
+                  token: afiliado.token || null,
+                  nome_usuario: afiliado.nome || afiliado.email || null,
+                  id_action: externalReference,            // marca com externalReference para evitar duplicidade
+                  id_pedido: `comissao_${externalReference}`,
+                  id_conta: user._id.toString(),
+                  unique_id: null,
+                  url_dir: "",
+                  acao_validada: "valida",
+                  valor_confirmacao: comissaoValor,
+                  quantidade_pontos: 0,
+                  tipo_acao: "comissao",
+                  rede_social: "Sistema",
+                  tipo: "comissao",
+                  afiliado: afiliado.codigo_afiliado,
+                  valor: comissaoValor,
+                  data: new Date(),
+                });
+
+                await acaoComissao.save();
+
+                // Atualiza saldo do afiliado e histórico
+                afiliado.saldo = (afiliado.saldo ?? 0) + comissaoValor;
+                afiliado.historico_acoes = afiliado.historico_acoes || [];
+                afiliado.historico_acoes.push(acaoComissao._id);
+                await afiliado.save();
+
+                console.log("[DEBUG] Comissão registrada e saldo do afiliado atualizado:", { afiliadoId: afiliado._id, novoSaldo: afiliado.saldo });
+              } else {
+                console.log("[DEBUG] Afiliado não encontrado para codigo:", user.indicado_por);
+              }
+            } else {
+              console.log("[DEBUG] Usuário que sacou não está ativo ou ativo_ate expirou, sem comissão.", { indicado_por: user.indicado_por, ativo_ate: user.ativo_ate });
+            }
+          }
+        } else {
+          console.log("[DEBUG] Usuário não foi indicado (sem comissão).");
+        }
+      } else {
+        console.log("[DEBUG] Saque não finalizado (status:", approveStatus, ") — sem comissão.");
+      }
+    } catch (errCom) {
+      console.error("[ERROR] Falha ao processar comissão de afiliado:", errCom);
+      // Não reverte o saque — apenas loga o erro
+    }
+
     return res.status(200).json({
       message: "Saque processado (create → approve).",
       create: createData,
@@ -1701,70 +1837,6 @@ if (url.startsWith("/api/withdraw")) {
   } catch (error) {
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
-  }
-}
-
-// 🔹 Rota: /api/afiliados
-if (url.startsWith("/api/afiliados") && method === "POST") {
-  const { user_token } = req.body;
-
-  if (!user_token) {
-    return res.status(400).json({ error: "Token do usuário é obrigatório." });
-  }
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== "Bearer 4769") {
-    console.log("[DEBUG] Falha na autorização:", authHeader);
-    return res.status(401).json({ error: "Não autorizado." });
-  }
-
-  try {
-    await connectDB();
-
-    // 🔍 Busca o usuário principal
-    const user = await User.findOne({ token: user_token });
-    if (!user) {
-      console.log("[DEBUG] Usuário não encontrado para token:", user_token);
-      return res.status(404).json({ error: "Usuário não encontrado." });
-    }
-
-    // Código do afiliado
-    const codigo_afiliado = user.codigo_afiliado || user._id.toString();
-
-    // 🔗 Busca todos os indicados por este afiliado
-    const indicados = await User.find({ indicado_por: codigo_afiliado });
-
-    const total_indicados = indicados.length;
-
-    // 🔹 Filtra apenas os ativos dentro de 30 dias
-    const agora = new Date();
-    const indicados_ativos = indicados.filter(u => u.status === "ativo" && u.ativo_ate && u.ativo_ate > agora).length;
-
-    // 💰 Soma das comissões (supondo que estão salvas em alguma coleção relacionada)
-    const comissoes = await ActionHistory.aggregate([
-      { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
-      { $group: { _id: null, total: { $sum: "$valor" } } }
-    ]);
-
-    const total_comissoes = comissoes.length > 0 ? comissoes[0].total : 0;
-
-    console.log("[DEBUG] Dados de afiliado:", {
-      codigo_afiliado,
-      total_indicados,
-      indicados_ativos,
-      total_comissoes
-    });
-
-    return res.status(200).json({
-      total_comissoes,
-      total_indicados,
-      indicados_ativos,
-      codigo_afiliado
-    });
-
-  } catch (error) {
-    console.error("Erro ao carregar dados de afiliados:", error);
-    return res.status(500).json({ error: "Erro interno ao buscar dados de afiliados." });
   }
 }
 
