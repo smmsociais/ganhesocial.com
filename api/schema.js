@@ -55,10 +55,15 @@ const UserSchema = new mongoose.Schema({
   historico_acoes: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
   saques: [WithdrawSchema],
 
-  // 🔹 Campos de afiliados
   codigo_afiliado: { type: String, default: null },
   indicado_por: { type: String, default: null },
 });
+
+// índice parcial — enforce uniqueness only when codigo_afiliado is a string
+UserSchema.index(
+  { codigo_afiliado: 1 },
+  { unique: true, partialFilterExpression: { codigo_afiliado: { $type: "string" } }, name: "codigo_afiliado_1" }
+);
 
 const PedidoSchema = new mongoose.Schema({
   _id: { type: Number },
