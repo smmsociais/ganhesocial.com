@@ -1197,7 +1197,7 @@
             } else {
                 const pontos = parseFloat(data.quantidade_pontos || 0);
                 const valorBruto = pontos / 1000;
-                let valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
+                let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
                 valorFinal = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
             }
             document.getElementById("points").textContent = `R$ ${valorFinal}`;
