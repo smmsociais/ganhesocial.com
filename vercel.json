@@ -10,6 +10,7 @@
     { "source": "/conta_adicionada", "destination": "/conta_adicionada.html" },
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
     { "source": "/historico_acoes", "destination": "/historico_acoes.html" },
+    { "source": "/refer", "destination": "/refer.html" },
     { "source": "/detail_account", "destination": "/detail_account.html" },  
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" },
