@@ -641,6 +641,7 @@
             // Verifica se há uma mensagem de sucesso para exibir
             const successMessage = localStorage.getItem("withdrawSuccess");
             if (successMessage) {
+                showAlert(successMessage, "success");
                 localStorage.removeItem("withdrawSuccess");
             }
 
@@ -690,12 +691,33 @@
             window.location.href = "https://ganhesocial.com";
         }
 
+        function showAlert(message, type = "error") {
+            const alertBox = document.getElementById("alertBox");
+            alertBox.textContent = message;
+            alertBox.className = "alert-message";
+            
+            if (type === "success") {
+                alertBox.classList.add("alert-success");
+            } else {
+                alertBox.classList.add("alert-error");
+            }
+            
+            alertBox.style.display = "block";
+            
+            // Auto-esconder após 5 segundos para mensagens de sucesso
+            if (type === "success") {
+                setTimeout(() => {
+                    alertBox.style.display = "none";
+                }, 5000);
+            }
+        }
+
         async function loadWithdrawData() {
             const token = localStorage.getItem("token");
 
             if (!token) {
                 setTimeout(() => {
-
+                    showAlert("Sessão expirada. Por favor, faça login novamente.");
                 }, 2000);
                 return;
             }
@@ -764,9 +786,18 @@
             const amount = parseFloat(rawAmount) / 100; // valor em reais
             const pixKey = document.getElementById('pixKey').value.trim();
             const token = localStorage.getItem("token");
+            const saldoDisponivel = parseFloat(localStorage.getItem("saldoDisponivel") || 0);
+
+            // Limpa alertas anteriores
+            document.getElementById("alertBox").style.display = "none";
 
             if (!amount || amount < 5) {
                 showAlert("O valor mínimo para saque é de R$ 5,00.");
+                return;
+            }
+
+            if (amount > saldoDisponivel) {
+                showAlert("Saldo insuficiente para realizar o saque.");
                 return;
             }
 
@@ -801,10 +832,19 @@
                     throw new Error(data.error || "Erro ao solicitar saque");
                 }
 
-                // Armazena a mensagem de sucesso e recarrega a página
-                localStorage.setItem("withdrawSuccess", "Saque solicitado com sucesso! O pagamento está em processamento.");
+                // Exibe mensagem de sucesso
+                showAlert("Saque solicitado com sucesso! O pagamento está em processamento.", "success");
+                
+                // Limpa os campos do formulário
+                document.getElementById('amount').value = '';
+                document.getElementById('pixKey').value = '';
+                
+                // Atualiza o saldo disponível
+                await loadWithdrawData();
 
             } catch (error) {
+                console.error("Erro ao solicitar saque:", error);
+                showAlert(error.message || "Erro ao solicitar saque. Tente novamente.");
             }
         }
     </script>
