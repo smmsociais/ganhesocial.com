@@ -1713,62 +1713,66 @@ if (url.startsWith("/api/withdraw")) {
 
 // 🔹 Rota: /api/afiliados
 if (url.startsWith("/api/afiliados") && method === "POST") {
-    const { user_token } = req.body;
+  const { user_token } = req.body;
 
-    if (!user_token) {
-        return res.status(400).json({ error: "Token do usuário é obrigatório." });
+  if (!user_token) {
+    return res.status(400).json({ error: "Token do usuário é obrigatório." });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== "Bearer 4769") {
+    console.log("[DEBUG] Falha na autorização:", authHeader);
+    return res.status(401).json({ error: "Não autorizado." });
+  }
+
+  try {
+    await connectDB();
+
+    // 🔍 Busca o usuário principal
+    const user = await User.findOne({ token: user_token });
+    if (!user) {
+      console.log("[DEBUG] Usuário não encontrado para token:", user_token);
+      return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader || authHeader !== "Bearer 4769") {
-        console.log("[DEBUG] Falha na autorização:", authHeader);
-        return res.status(401).json({ error: "Não autorizado." });
-    }
+    // Código do afiliado
+    const codigo_afiliado = user.codigo_afiliado || user._id.toString();
 
-    try {
-        await connectDB();
+    // 🔗 Busca todos os indicados por este afiliado
+    const indicados = await User.find({ indicado_por: codigo_afiliado });
 
-        // 🔍 Busca o usuário principal
-        const user = await User.findOne({ token: user_token });
-        if (!user) {
-            console.log("[DEBUG] Usuário não encontrado para token:", user_token);
-            return res.status(404).json({ error: "Usuário não encontrado." });
-        }
+    const total_indicados = indicados.length;
 
-        // Código do afiliado
-        const codigo_afiliado = user.codigo_afiliado || user._id.toString();
+    // 🔹 Filtra apenas os ativos dentro de 30 dias
+    const agora = new Date();
+    const indicados_ativos = indicados.filter(u => u.status === "ativo" && u.ativo_ate && u.ativo_ate > agora).length;
 
-        // 🔗 Busca todos os indicados
-        const indicados = await User.find({ indicado_por: codigo_afiliado });
-        const total_indicados = indicados.length;
-        const indicados_ativos = indicados.filter(u => u.status === "ativo").length;
+    // 💰 Soma das comissões (supondo que estão salvas em alguma coleção relacionada)
+    const comissoes = await ActionHistory.aggregate([
+      { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
+      { $group: { _id: null, total: { $sum: "$valor" } } }
+    ]);
 
-        // 💰 Soma das comissões (supondo que estão salvas em alguma coleção relacionada)
-        const comissoes = await ActionHistory.aggregate([
-            { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
-            { $group: { _id: null, total: { $sum: "$valor" } } }
-        ]);
+    const total_comissoes = comissoes.length > 0 ? comissoes[0].total : 0;
 
-        const total_comissoes = comissoes.length > 0 ? comissoes[0].total : 0;
+    console.log("[DEBUG] Dados de afiliado:", {
+      codigo_afiliado,
+      total_indicados,
+      indicados_ativos,
+      total_comissoes
+    });
 
-        console.log("[DEBUG] Dados de afiliado:", {
-            codigo_afiliado,
-            total_indicados,
-            indicados_ativos,
-            total_comissoes
-        });
+    return res.status(200).json({
+      total_comissoes,
+      total_indicados,
+      indicados_ativos,
+      codigo_afiliado
+    });
 
-        return res.status(200).json({
-            total_comissoes,
-            total_indicados,
-            indicados_ativos,
-            codigo_afiliado
-        });
-
-    } catch (error) {
-        console.error("Erro ao carregar dados de afiliados:", error);
-        return res.status(500).json({ error: "Erro interno ao buscar dados de afiliados." });
-    }
+  } catch (error) {
+    console.error("Erro ao carregar dados de afiliados:", error);
+    return res.status(500).json({ error: "Erro interno ao buscar dados de afiliados." });
+  }
 }
 
     return res.status(404).json({ error: "Rota não encontrada." });
