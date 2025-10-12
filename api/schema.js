@@ -30,32 +30,13 @@ const ActionHistorySchema = new mongoose.Schema({
 });
 
 // 🔹 Schema para Histórico de Saques
-// 🔹 Schema para Histórico de Saques (compatível com Asaas)
 const WithdrawSchema = new mongoose.Schema({
   valor: { type: Number, required: true },
-
-  // sempre grave chave em formato "apenas dígitos" para CPF/CNPJ ou texto para EMAIL/PHONE
-  chave_pix: {
-    type: String,
-    required: true,
-    set: v => v ? String(v).replace(/[^0-9]/g, '') : v // remove formatação automaticamente
-  },
-
-  tipo_chave: {
-    type: String,
-    enum: ['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'UNKNOWN'],
-    default: 'CPF'
-  },
-
-  status: {
-    type: String,
-    enum: ['PENDING', 'DONE', 'FAILED', 'CANCELLED'], // usa exatamente os do Asaas
-    default: 'PENDING'
-  },
-
-
+  chave_pix: { type: String, required: true },
+  tipo_chave: { type: String, default: "cpf" }
+}, {
+  timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
-
 
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema({
