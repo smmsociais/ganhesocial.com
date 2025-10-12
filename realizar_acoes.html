@@ -455,32 +455,35 @@
             text-align: center;
         }
 
-.loading-circle-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        .loading-circle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-.loading-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 4px solid transparent; /* deixa a base transparente */
-    border-top-color: #ffffff; /* azul estilo Google */
-    border-left-color: #ffffff; /* um lado extra visível para criar um arco maior */
-    animation: spin 1s linear infinite;
-    box-sizing: border-box;
-    /* Deixa as pontas do arco arredondadas */
-    border-top-left-radius: 50%;
-    border-top-right-radius: 50%;
-}
+        .loading-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            /* deixa a base transparente */
+            border-top-color: #ffffff;
+            /* azul estilo Google */
+            border-left-color: #ffffff;
+            /* um lado extra visível para criar um arco maior */
+            animation: spin 1s linear infinite;
+            box-sizing: border-box;
+            /* Deixa as pontas do arco arredondadas */
+            border-top-left-radius: 50%;
+            border-top-right-radius: 50%;
+        }
 
-/* Animação */
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+        /* Animação */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
@@ -1194,8 +1197,8 @@
             } else {
                 const pontos = parseFloat(data.quantidade_pontos || 0);
                 const valorBruto = pontos / 1000;
-                let valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-                valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+                let valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
+                valorFinal = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
             }
             document.getElementById("points").textContent = `R$ ${valorFinal}`;
             document.getElementById("confirmButton").style.display = "none";
