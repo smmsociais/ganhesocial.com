@@ -610,6 +610,13 @@
         document.addEventListener("DOMContentLoaded", function () {
             const token = localStorage.getItem("token");
 
+            if (!token) {
+                setTimeout(() => {
+                    window.location.href = "https://ganhesocial.com/login";
+                },);
+                return;
+            }
+
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
