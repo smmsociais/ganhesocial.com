@@ -630,7 +630,7 @@
         <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
         <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
         <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
-        <a class="menu-item" href="afiliados"><i class="fas fa-user-friends"></i> Programa de Afiliados</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
         <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
 
         <div class="menu-footer">
@@ -676,9 +676,10 @@
                             <i class="fas fa-info-circle"></i> Total ganho com indicações
                         </div>
                     </div>
-                    
+
                     <div class="referral-link-box">
-                        <input type="text" class="referral-link" id="referralLink" value="https://ganhesocial.com/cadastro?ref=123456" readonly>
+                        <input type="text" class="referral-link" id="referralLink"
+                            value="https://ganhesocial.com/cadastro?ref=123456" readonly>
                         <button class="copy-btn" id="copyBtn">
                             <i class="fas fa-copy"></i> Copiar
                         </button>
@@ -713,7 +714,10 @@
             <div class="container-body">
                 <div class="how-it-works">
                     <p>
-                        Compartilhe seu link único de afiliado com amigos e em suas redes sociais. Seus amigos se cadastram usando seu link e começam a usar a plataforma. Eles Realizam Saques. Quando seus indicados realizarem saques, você ganha 5% de comissão. Você recebe comissão por todos os saques realizados nos primeiros 30 dias de cadastro.
+                        Compartilhe seu link único de afiliado com amigos e em suas redes sociais. Seus amigos se
+                        cadastram usando seu link e começam a usar a plataforma. Eles Realizam Saques. Quando seus
+                        indicados realizarem saques, você ganha 5% de comissão. Você recebe comissão por todos os saques
+                        realizados nos primeiros 30 dias de cadastro.
                     </p>
                 </div>
             </div>
@@ -795,7 +799,7 @@
                 document.getElementById("saldoAfiliados").textContent = `R$ ${parseFloat(data.total_comissoes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 document.getElementById("totalIndicados").textContent = data.total_indicados || 0;
                 document.getElementById("indicadosAtivos").textContent = data.indicados_ativos || 0;
-                
+
                 // Atualiza o link de indicação com o código do usuário
                 if (data.codigo_afiliado) {
                     document.getElementById("referralLink").value = `https://ganhesocial.com/?ref=${data.codigo_afiliado}`;
@@ -814,11 +818,11 @@
             try {
                 const successful = document.execCommand('copy');
                 const copyBtn = document.getElementById('copyBtn');
-                
+
                 if (successful) {
                     copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
                     copyBtn.style.background = '#28a745';
-                    
+
                     setTimeout(() => {
                         copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copiar';
                         copyBtn.style.background = '';
