@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "ref"
+        }
+      ],
+      "destination": "/signup",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
@@ -11,13 +24,13 @@
     { "source": "/gerenciar_contas", "destination": "/gerenciar_contas.html" },
     { "source": "/historico_acoes", "destination": "/historico_acoes.html" },
     { "source": "/refer", "destination": "/refer.html" },
-    { "source": "/detail_account", "destination": "/detail_account.html" },  
+    { "source": "/detail_account", "destination": "/detail_account.html" },
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/solicitar_saque", "destination": "/solicitar_saque.html" },
     { "source": "/historico_saques", "destination": "/historico_saques.html" },
     { "source": "/recover-password", "destination": "/recover-password.html" },
-    { "source": "/reset-password", "destination": "/reset-password.html" },   
-    
+    { "source": "/reset-password", "destination": "/reset-password.html" },
+
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
     { "source": "/api/confirmar_acao", "destination": "/api/handler.js" },
