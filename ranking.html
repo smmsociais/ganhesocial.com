@@ -576,75 +576,74 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("token");
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+    // Controle do menu (mantive sua lógica original)
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuContent = document.getElementById('menuContent');
+    const menuCloseBtn = document.getElementById('menuCloseBtn');
 
+    function toggleMenu() {
+        menuContent.classList.toggle('active');
+        menuOverlay.classList.toggle('active');
+        const spans = menuToggle.querySelectorAll('span');
+        if (menuContent.classList.contains('active')) {
+            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+            spans[1].style.opacity = '0';
+            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+        } else {
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
+        }
+    }
 
-            // Controle do menu hamburguer (mantive sua lógica original)
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
-            const menuCloseBtn = document.getElementById('menuCloseBtn');
+    function closeMenu() {
+        menuContent.classList.remove('active');
+        menuOverlay.classList.remove('active');
+        const spans = menuToggle.querySelectorAll('span');
+        spans[0].style.transform = 'none';
+        spans[1].style.opacity = '1';
+        spans[2].style.transform = 'none';
+    }
 
-            function toggleMenu() {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            }
+    menuToggle.addEventListener('click', toggleMenu);
+    menuCloseBtn.addEventListener('click', closeMenu);
+    menuOverlay.addEventListener('click', closeMenu);
 
-            function closeMenu() {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            }
+    // Carrega ranking (não pré-gerar placeholders)
+    await loadRanking();
 
-            menuToggle.addEventListener('click', toggleMenu);
-            menuCloseBtn.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', closeMenu);
+    document.body.classList.add('loaded');
+});
 
-            // Gera 100 linhas placeholder no tbody (substitui linhas estáticas)
-            const rankingTable = document.getElementById('rankingTable');
-            rankingTable.innerHTML = ''; // limpa qualquer conteúdo existente
+function parseBRNumber(value) {
+    // Normaliza string como "1.234,56" ou "1234.56" para número JS
+    if (value === null || value === undefined) return NaN;
+    if (typeof value === 'number') return value;
+    let s = String(value).trim();
+    // Se já for algo como "1234.56" com ponto decimal, tenta direto
+    if (/^\d+(\.\d+)?$/.test(s)) return Number(s);
+    // Troca pontos de milhares por vazio e vírgula decimal por ponto
+    s = s.replace(/\./g, '').replace(',', '.');
+    // Remove quaisquer caracteres que não sejam dígitos, ponto ou sinal
+    s = s.replace(/[^0-9\.\-]/g, '');
+    return Number(s);
+}
 
-            for (let i = 1; i <= 1000; i++) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-            <td class="ranking-position">${i}º</td>
-            <td class="ranking-user">-</td>
-            <td class="ranking-value">R$ 0,00</td>
-        `;
-                rankingTable.appendChild(tr);
-            }
+async function loadRanking() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Token não encontrado.");
+        const rankingTable = document.getElementById('rankingTable');
+        rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Usuário não autenticado</td></tr>';
+        return;
+    }
 
-            // Carrega ranking (popula as linhas geradas)
-            await loadRanking();
+    const rankingTable = document.getElementById('rankingTable');
+    rankingTable.innerHTML = ''; // limpa antes de preencher
 
-            document.body.classList.add('loaded');
-        });
-
-        async function loadRanking() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
-            }
-
-            const rankingTable = document.getElementById('rankingTable');
-            rankingTable.innerHTML = ''; // garante que está vazio antes de preencher
-            
             try {
                 const response = await fetch("https://ganhesocial.com/api/ranking", {
                     method: "POST",
@@ -654,69 +653,69 @@
                     },
                 });
 
-                const data = await response.json();
+        console.log('status:', response.status);
+        const data = await response.json();
+        console.log('data retornada:', data);
 
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao buscar ranking.");
-                }
+        if (!response.ok) {
+            throw new Error(data.error || `Erro ao buscar ranking (status ${response.status})`);
+        }
 
-                if (!Array.isArray(data.ranking)) {
-                    throw new Error("Resposta da API não contém o array 'ranking'");
-                }
+        if (!Array.isArray(data.ranking)) {
+            throw new Error("Resposta da API não contém o array 'ranking'");
+        }
 
-                // Opcional: filtra só usuários com valor > 0
-                const usuariosComValor = data.ranking.filter(u => {
-                    const v = Number(u.total_balance);
-                    return !isNaN(v) && v > 0;
-                });
+        // Caso queira filtrar apenas > 0, descomente a linha abaixo:
+        // const usuarios = data.ranking.filter(u => parseBRNumber(u.total_balance) > 0);
 
-                // Se quiser NÃO filtrar zeros, comente a linha acima e use:
-                // const usuariosComValor = data.ranking;
+        // Para começar, NÃO filtramos (exibe todos). Se quiser filtrar, use a linha acima.
+        const usuarios = data.ranking.slice(); // copia
 
-                // Opcional: ordenar por total_balance decrescente
-                usuariosComValor.sort((a, b) => {
-                    const va = Number(a.total_balance) || 0;
-                    const vb = Number(b.total_balance) || 0;
-                    return vb - va;
-                });
+        // Opcional: ordenar por total_balance decrescente (mantive)
+        usuarios.sort((a, b) => {
+            const va = parseBRNumber(a.total_balance) || 0;
+            const vb = parseBRNumber(b.total_balance) || 0;
+            return vb - va;
+        });
 
-                // Gera uma linha por usuário presente no array filtrado
-                if (usuariosComValor.length === 0) {
-                    rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Nenhum usuário com valor disponível</td></tr>';
-                    return;
-                }
+        if (usuarios.length === 0) {
+            rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Nenhum usuário no ranking</td></tr>';
+            return;
+        }
 
-                usuariosComValor.forEach((user, idx) => {
-                    const tr = document.createElement('tr');
+        usuarios.forEach((user, idx) => {
+            const tr = document.createElement('tr');
+            const posText = `${idx + 1}º`;
 
-                    // posição em formato "1º", "2º", "3º"...
-                    const posText = `${idx + 1}º`;
+            const valueNumber = parseBRNumber(user.total_balance);
+            const valueText = !isNaN(valueNumber)
+                ? valueNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : (user.total_balance ? String(user.total_balance) : 'R$ 0,00');
 
-                    // formata valor em BRL se for número
-                    const valueNumber = Number(user.total_balance);
-                    const valueText = !isNaN(valueNumber)
-                        ? valueNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                        : (user.total_balance ? String(user.total_balance) : 'R$ 0,00');
-
-                    tr.innerHTML = `
+            tr.innerHTML = `
                 <td class="ranking-position">${posText}</td>
                 <td class="ranking-user">${user.username || '-'}</td>
                 <td class="ranking-value">${valueText}</td>
             `;
 
-                    if (user.is_current_user) {
-                        tr.classList.add('highlight-row');
-                    }
-
-                    rankingTable.appendChild(tr);
-                });
-
-            } catch (error) {
-                console.error("Erro ao carregar ranking:", error);
-                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Erro ao carregar ranking</td></tr>';
+            if (user.is_current_user) {
+                tr.classList.add('highlight-row');
             }
-        }
-    </script>
+
+            rankingTable.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar ranking:", error);
+        rankingTable.innerHTML = `<tr><td colspan="3" style="text-align:center">Erro ao carregar ranking: ${error.message}</td></tr>`;
+    }
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "https://ganhesocial.com";
+}
+</script>
 
 </body>
 
