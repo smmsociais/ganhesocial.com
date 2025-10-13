@@ -849,7 +849,7 @@
             }
         }
 
- async function loadRanking() {
+async function loadRanking() {
     const token = localStorage.getItem("token");
     if (!token) {
         console.error("Token não encontrado.");
@@ -882,17 +882,25 @@
             if (index < rankingRows.length) {
                 const row = rankingRows[index];
 
+                // Destaca o usuário atual
                 if (user.is_current_user) {
                     row.classList.add('highlight-row');
                 }
 
-                // Exibe "-" se não houver nome
-if (user.is_current_user) {
-    row.querySelector(".ranking-user").textContent = "[VOCÊ]";
-} else {
-    row.querySelector(".ranking-user").textContent =
-        user.username && user.username.trim() !== "" ? user.username : "-";
-}
+                // Define o nome a ser exibido
+                let nomeExibido = user.username && user.username.trim() !== "" ? user.username : "-";
+
+                // Se for o próprio usuário, adiciona [VOCÊ]
+                if (user.is_current_user) {
+                    if (user.username && user.username.trim() !== "") {
+                        nomeExibido += " [VOCÊ]";
+                    } else {
+                        nomeExibido = "[VOCÊ]";
+                    }
+                }
+
+                // Atualiza na tabela
+                row.querySelector(".ranking-user").textContent = nomeExibido;
                 row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
             }
         });
