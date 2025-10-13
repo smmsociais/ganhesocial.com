@@ -1281,7 +1281,7 @@ const ranking = ganhosPorUsuario
     return {
       username: item.username,
       total_balance: valorFormatado,
-      is_current_user: item.token === user_token
+      is_current_user: item.token === tokenFromHeader
     };
   });
 
