@@ -849,59 +849,63 @@
             }
         }
 
-        async function loadRanking() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
-            }
+ async function loadRanking() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Token não encontrado.");
+        return;
+    }
 
-            try {
-                const response = await fetch("https://ganhesocial.com/api/ranking", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                });
+    try {
+        const response = await fetch("https://ganhesocial.com/api/ranking", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao buscar ranking.");
-                }
-
-                if (!Array.isArray(data.ranking)) {
-                    throw new Error("Resposta da API não contém o array 'ranking'");
-                }
-
-                const rankingRows = rankingTable.querySelectorAll('tr');
-
-                data.ranking.slice(0, 10).forEach((user, index) => {
-                    if (index < rankingRows.length) {
-                        const row = rankingRows[index];
-
-                        if (user.is_current_user) {
-                            row.classList.add('highlight-row');
-                        }
-
-                        row.querySelector(".ranking-user").textContent = user.username;
-                        row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
-                    }
-                });
-
-            } catch (error) {
-                console.error("Erro ao carregar ranking:", error);
-                const rankingTable = document.getElementById('rankingTable');
-                const rankingRows = rankingTable.querySelectorAll('tr');
-                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
-            }
+        if (!response.ok) {
+            throw new Error(data.error || "Erro ao buscar ranking.");
         }
 
-        function logout() {
-            localStorage.removeItem("token");
-            window.location.href = "https://ganhesocial.com";
+        if (!Array.isArray(data.ranking)) {
+            throw new Error("Resposta da API não contém o array 'ranking'");
         }
+
+        const rankingTable = document.getElementById("rankingTable");
+        const rankingRows = rankingTable.querySelectorAll('tr');
+
+        data.ranking.slice(0, 10).forEach((user, index) => {
+            if (index < rankingRows.length) {
+                const row = rankingRows[index];
+
+                if (user.is_current_user) {
+                    row.classList.add('highlight-row');
+                }
+
+                // Exibe "-" se não houver nome
+                row.querySelector(".ranking-user").textContent =
+                    user.username && user.username.trim() !== "" ? user.username : "-";
+
+                row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+            }
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar ranking:", error);
+        const rankingTable = document.getElementById('rankingTable');
+        rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
+    }
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "https://ganhesocial.com";
+}
+
     </script>
 </body>
 
