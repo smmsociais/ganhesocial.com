@@ -1390,27 +1390,29 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
 
 // 🔹 Rota: /api/afiliados
 if (url.startsWith("/api/afiliados") && method === "POST") {
-  const { user_token } = req.body;
-
-  if (!user_token) {
-    return res.status(400).json({ error: "Token do usuário é obrigatório." });
-  }
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== "Bearer 4769") {
-    console.log("[DEBUG] Falha na autorização:", authHeader);
-    return res.status(401).json({ error: "Não autorizado." });
-  }
+  // não destrua `token` do body com o mesmo nome do header
+  const { token: bodyToken } = req.body || {};
 
   try {
     await connectDB();
 
-    // 🔍 Busca o usuário principal
-    const user = await User.findOne({ token: user_token });
-    if (!user) {
-      console.log("[DEBUG] Usuário não encontrado para token:", user_token);
-      return res.status(404).json({ error: "Usuário não encontrado." });
+    const authHeader = req.headers.authorization;
+    if (!authHeader && !bodyToken) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
+
+    // prefira o token do header, fallback para bodyToken
+    const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader; // caso mandem só o token sem "Bearer "
+
+    const effectiveToken = tokenFromHeader || bodyToken;
+    console.log("🔹 Token usado para autenticação:", !!effectiveToken); // booleano para não vazar token
+
+    if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
+
+    const user = await User.findOne({ token: effectiveToken });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
     // Código do afiliado
     const codigo_afiliado = user.codigo_afiliado || user._id.toString();
@@ -1422,29 +1424,18 @@ if (url.startsWith("/api/afiliados") && method === "POST") {
 
     // 🔹 Filtra apenas os ativos dentro de 30 dias
     const agora = new Date();
-    const indicados_ativos = indicados.filter(u => u.status === "ativo" && u.ativo_ate && u.ativo_ate > agora).length;
+    const indicados_ativos = indicados.filter(u => u.status === "ativo" && u.ativo_ate && new Date(u.ativo_ate) > agora).length;
 
-    // 💰 Soma das comissões (supondo que estão salvas em alguma coleção relacionada)
+    // 💰 Soma das comissões
     const comissoes = await ActionHistory.aggregate([
       { $match: { tipo: "comissao", afiliado: codigo_afiliado } },
       { $group: { _id: null, total: { $sum: "$valor" } } }
     ]);
-
     const total_comissoes = comissoes.length > 0 ? comissoes[0].total : 0;
 
-    console.log("[DEBUG] Dados de afiliado:", {
-      codigo_afiliado,
-      total_indicados,
-      indicados_ativos,
-      total_comissoes
-    });
+    console.log("[DEBUG] Dados de afiliado:", { codigo_afiliado, total_indicados, indicados_ativos, total_comissoes });
 
-    return res.status(200).json({
-      total_comissoes,
-      total_indicados,
-      indicados_ativos,
-      codigo_afiliado
-    });
+    return res.status(200).json({ total_comissoes, total_indicados, indicados_ativos, codigo_afiliado });
 
   } catch (error) {
     console.error("Erro ao carregar dados de afiliados:", error);
