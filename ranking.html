@@ -687,10 +687,23 @@ async function loadRanking() {
             const tr = document.createElement('tr');
             const posText = `${idx + 1}º`;
 
-            const valueNumber = parseBRNumber(user.total_balance);
-            const valueText = !isNaN(valueNumber)
-                ? valueNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                : (user.total_balance ? String(user.total_balance) : 'R$ 0,00');
+// antes: const valueNumber = parseBRNumber(user.total_balance);
+// ...etc
+
+let valueText;
+
+// Se a API já enviou um valor no formato "50+" (string contendo '+'), mantemos o '+'
+if (typeof user.total_balance === 'string' && user.total_balance.includes('+')) {
+    // Se quiser prefixar com "R$ ":
+    // - se o backend já enviar "50+" -> exibiremos "R$ 50+"
+    // - se backend enviar "R$ 50+" -> exibimos exatamente como veio
+    valueText = user.total_balance.startsWith('R$') ? user.total_balance : `R$ ${user.total_balance}`;
+} else {
+    const valueNumber = parseBRNumber(user.total_balance);
+    valueText = !isNaN(valueNumber)
+        ? valueNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : (user.total_balance ? String(user.total_balance) : 'R$ 0,00');
+}
 
             tr.innerHTML = `
                 <td class="ranking-position">${posText}</td>
