@@ -1223,26 +1223,28 @@ if (url.startsWith("/api/ranking") && method === "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
+  const { token: bodyToken } = req.body || {};
+
   try {
-    const { authorization } = req.headers;
-    const token = authorization?.split(" ")[1];
-
-    if (!token || token !== process.env.API_SECRET) {
-      return res.status(401).json({ error: "Não autorizado" });
-    }
-
     await connectDB();
 
-    const { user_token } = req.body;
-
-    if (!user_token) {
-      return res.status(400).json({ error: "Token do usuário não fornecido" });
+    const authHeader = req.headers.authorization;
+    if (!authHeader && !bodyToken) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
-    const usuarioAtual = await User.findOne({ token: user_token });
-    if (!usuarioAtual) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
+    // prefira o token do header, fallback para bodyToken
+    const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader; // caso mandem só o token sem "Bearer "
+
+    const effectiveToken = tokenFromHeader || bodyToken;
+    console.log("🔹 Token usado para autenticação:", !!effectiveToken); // booleano para não vazar token
+
+    if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
+
+    const user = await User.findOne({ token: effectiveToken });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
