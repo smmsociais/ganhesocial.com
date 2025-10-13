@@ -580,12 +580,6 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-            if (!token) {
-                setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com/login";
-                },);
-                return;
-            }
 
             // Controle do menu hamburguer (mantive sua lógica original)
             const menuToggle = document.getElementById('menuToggle');
@@ -648,13 +642,17 @@
                 return;
             }
 
+            const rankingTable = document.getElementById('rankingTable');
+            rankingTable.innerHTML = ''; // garante que está vazio antes de preencher
+
             try {
                 const response = await fetch("https://ganhesocial.com/api/ranking", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
+                        "Authorization": "Bearer 4769"
                     },
+                    body: JSON.stringify({ user_token: token })
                 });
 
                 const data = await response.json();
@@ -667,55 +665,57 @@
                     throw new Error("Resposta da API não contém o array 'ranking'");
                 }
 
-                const rankingRows = Array.from(document.querySelectorAll('#rankingTable tr'));
-
-                // Preenche as linhas geradas (até 100)
-                data.ranking.slice(0, 100).forEach((user, index) => {
-                    const row = rankingRows[index];
-                    if (!row) return;
-
-                    // limpa qualquer destaque anterior
-                    row.classList.remove('highlight-row');
-
-                    // adiciona destaque se for o usuário atual
-                    if (user.is_current_user) {
-                        row.classList.add('highlight-row');
-                    }
-
-                    const usernameCell = row.querySelector('.ranking-user');
-                    const valueCell = row.querySelector('.ranking-value');
-
-                    usernameCell.textContent = user.username || '-';
-
-                    // Formata valor para moeda BRL (garante número e casas decimais)
-                    const valueNumber = Number(user.total_balance);
-                    if (!isNaN(valueNumber)) {
-                        valueCell.textContent = valueNumber.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                        });
-                    } else {
-                        // Se não for número, exibe em texto cru (ou mantém 0,00)
-                        valueCell.textContent = user.total_balance ? String(user.total_balance) : 'R$ 0,00';
-                    }
+                // Opcional: filtra só usuários com valor > 0
+                const usuariosComValor = data.ranking.filter(u => {
+                    const v = Number(u.total_balance);
+                    return !isNaN(v) && v > 0;
                 });
 
-                // Se quiser exibir mensagem quando não houver nenhum ranking:
-                if (data.ranking.length === 0) {
-                    const rankingTable = document.getElementById('rankingTable');
-                    rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Nenhum dado de ranking disponível</td></tr>';
+                // Se quiser NÃO filtrar zeros, comente a linha acima e use:
+                // const usuariosComValor = data.ranking;
+
+                // Opcional: ordenar por total_balance decrescente
+                usuariosComValor.sort((a, b) => {
+                    const va = Number(a.total_balance) || 0;
+                    const vb = Number(b.total_balance) || 0;
+                    return vb - va;
+                });
+
+                // Gera uma linha por usuário presente no array filtrado
+                if (usuariosComValor.length === 0) {
+                    rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Nenhum usuário com valor disponível</td></tr>';
+                    return;
                 }
+
+                usuariosComValor.forEach((user, idx) => {
+                    const tr = document.createElement('tr');
+
+                    // posição em formato "1º", "2º", "3º"...
+                    const posText = `${idx + 1}º`;
+
+                    // formata valor em BRL se for número
+                    const valueNumber = Number(user.total_balance);
+                    const valueText = !isNaN(valueNumber)
+                        ? valueNumber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                        : (user.total_balance ? String(user.total_balance) : 'R$ 0,00');
+
+                    tr.innerHTML = `
+                <td class="ranking-position">${posText}</td>
+                <td class="ranking-user">${user.username || '-'}</td>
+                <td class="ranking-value">${valueText}</td>
+            `;
+
+                    if (user.is_current_user) {
+                        tr.classList.add('highlight-row');
+                    }
+
+                    rankingTable.appendChild(tr);
+                });
 
             } catch (error) {
                 console.error("Erro ao carregar ranking:", error);
-                const rankingTable = document.getElementById('rankingTable');
-                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
+                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align:center">Erro ao carregar ranking</td></tr>';
             }
-        }
-
-        function logout() {
-            localStorage.removeItem("token");
-            window.location.href = "https://ganhesocial.com";
         }
     </script>
 
