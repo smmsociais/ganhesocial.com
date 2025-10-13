@@ -887,9 +887,12 @@
                 }
 
                 // Exibe "-" se não houver nome
-                row.querySelector(".ranking-user").textContent =
-                    user.username && user.username.trim() !== "" ? user.username : "-";
-
+if (user.is_current_user) {
+    row.querySelector(".ranking-user").textContent = "[VOCÊ]";
+} else {
+    row.querySelector(".ranking-user").textContent =
+        user.username && user.username.trim() !== "" ? user.username : "-";
+}
                 row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
             }
         });
