@@ -653,10 +653,8 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        // mantive seu header Authorization (se for dinâmico, troque aqui)
-                        "Authorization": "Bearer 4769"
+                        "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify({ user_token: token })
                 });
 
                 const data = await response.json();
