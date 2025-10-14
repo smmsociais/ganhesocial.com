@@ -865,15 +865,15 @@
         return `${base}+`;
     };
 
-    // Função para gerar ranking fixo com valores em ordem crescente
+    // Função para gerar ranking fixo com valores em ordem decrescente
     function generateFixedRanking() {
         const nomesFixos = [
             "Allef 🔥", "Maria ⭐", "João 🚀", "Ana 💎", "Pedro 👑", 
             "Carla ⚡", "Lucas 💪", "Julia 🎯", "Rafael 🏆", "Fernanda ✨"
         ];
         
-        // Valores iniciais em ordem crescente
-        const valoresBase = [50, 75, 120, 180, 250, 350, 480, 600, 750, 900];
+        // Valores em ordem decrescente (do maior para o menor)
+        const valoresBase = [950, 820, 680, 550, 420, 320, 240, 170, 110, 60];
         
         const ranking = [];
         
@@ -885,13 +885,9 @@
                 position: i + 1,
                 username: nomesFixos[i],
                 total_balance: valorFormatado,
-                is_current_user: false
+                is_current_user: false // Sempre false para remover o destaque
             });
         }
-        
-        // Marcar o 5º usuário (Pedro 👑) como o usuário atual (exemplo)
-        ranking[4].is_current_user = true;
-        ranking[4].username += " [VOCÊ]";
         
         return ranking;
     }
@@ -904,10 +900,8 @@
             if (index < rankingRows.length) {
                 const row = rankingRows[index];
 
-                // Destaca o usuário atual
-                if (user.is_current_user) {
-                    row.classList.add('highlight-row');
-                }
+                // Remove qualquer destaque anterior
+                row.classList.remove('highlight-row');
 
                 // Atualiza na tabela
                 row.querySelector(".ranking-user").textContent = user.username;
