@@ -708,78 +708,6 @@ if (url.startsWith("/api/recover-password")) {
             return res.status(500).json({ error: "Erro ao validar token" });
         }
     };
-    
-// Rota: /api/registrar_acao_pendente
-if (url.startsWith("/api/registrar_acao_pendente")) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido." });
-  }
-
-  await connectDB();
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: "Token não fornecido." });
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const usuario = await User.findOne({ token });
-  if (!usuario) {
-    return res.status(401).json({ error: "Token inválido." });
-  }
-
-  const {
-    id_conta,
-    id_pedido,
-    nome_usuario,
-    url_dir,
-    tipo_acao,
-    quantidade_pontos,
-    unique_id
-  } = req.body;
-
-  if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
-    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
-  }
-
- try {
-  const idPedidoStr = id_pedido.toString();
-  const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
-
-  const pontos = parseFloat(quantidade_pontos);
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
-  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
-  const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
-
-  const novaAcao = new ActionHistory({
-    user: usuario._id,
-    token: usuario.token,
-    nome_usuario,
-    id_pedido: idPedidoStr,
-    id_action: idPedidoStr,
-    id_conta,
-    url_dir,
-    unique_id,
-    tipo_acao,
-    quantidade_pontos,
-    tipo: tipoAcaoFinal,
-    rede_social: "TikTok",
-    valor_confirmacao: valorConfirmacaoFinal,
-    acao_validada: "pendente",
-    data: new Date()
-  });
-
-  // 🔁 Salva com controle de limite por usuário
-  await salvarAcaoComLimitePorUsuario(novaAcao);
-
-  return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
-
-} catch (error) {
-  console.error("Erro ao registrar ação pendente:", error);
-  return res.status(500).json({ error: "Erro ao registrar ação." });
-}
-}
 
 // Rota: /api/tiktok/get_user (GET)
 if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
@@ -1833,6 +1761,78 @@ await acaoComissao.save();
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
+}
+
+// Rota: /api/registrar_acao_pendente
+if (url.startsWith("/api/registrar_acao_pendente")) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido." });
+  }
+
+  await connectDB();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não fornecido." });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const usuario = await User.findOne({ token });
+  if (!usuario) {
+    return res.status(401).json({ error: "Token inválido." });
+  }
+
+  const {
+    id_conta,
+    id_pedido,
+    nome_usuario,
+    url_dir,
+    tipo_acao,
+    quantidade_pontos,
+    unique_id
+  } = req.body;
+
+  if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+  }
+
+ try {
+  const idPedidoStr = id_pedido.toString();
+  const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
+
+  const pontos = parseFloat(quantidade_pontos);
+  const valorBruto = pontos / 1000;
+  const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
+  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+
+  const novaAcao = new ActionHistory({
+    user: usuario._id,
+    token: usuario.token,
+    nome_usuario,
+    id_pedido: idPedidoStr,
+    id_action: idPedidoStr,
+    id_conta,
+    url_dir,
+    unique_id,
+    tipo_acao,
+    quantidade_pontos,
+    tipo: tipoAcaoFinal,
+    rede_social: "TikTok",
+    valor_confirmacao: valorConfirmacaoFinal,
+    acao_validada: "pendente",
+    data: new Date()
+  });
+
+  // 🔁 Salva com controle de limite por usuário
+  await salvarAcaoComLimitePorUsuario(novaAcao);
+
+  return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+
+} catch (error) {
+  console.error("Erro ao registrar ação pendente:", error);
+  return res.status(500).json({ error: "Erro ao registrar ação." });
+}
 }
 
     return res.status(404).json({ error: "Rota não encontrada." });
