@@ -1802,8 +1802,8 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 
   const pontos = parseFloat(quantidade_pontos);
   const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004) ? valorBruto - 0.001 : valorBruto;
-  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+  const valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
+  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
   const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
 
   const novaAcao = new ActionHistory({
