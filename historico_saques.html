@@ -961,17 +961,17 @@
                 formattedKey = withdrawal.pixKey.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
             }
 
-            row.innerHTML = `
-                <td>
-                    <div class="tooltip">
-                        ${formattedDate}
-                        <span class="tooltip-text">${date.toLocaleString('pt-BR')}</span>
-                    </div>
-                </td>
-                <td>${formattedKey}</td>
-                <td><strong>${formattedValue}</strong></td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            `;
+row.innerHTML = `
+    <td>${formattedKey}</td>
+    <td>
+        <div class="tooltip">
+            ${formattedDate}
+            <span class="tooltip-text">${date.toLocaleString('pt-BR')}</span>
+        </div>
+    </td>
+    <td><strong>${formattedValue}</strong></td>
+    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+`;
 
             if (withdrawalsList) {
                 withdrawalsList.appendChild(row);
