@@ -765,152 +765,162 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("token");
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const token = localStorage.getItem("token");
 
-            if (!token) {
-                setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com/login";
-                },);
-                return;
-            }
+        if (!token) {
+            setTimeout(() => {
+                window.location.href = "https://ganhesocial.com/login";
+            },);
+            return;
+        }
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
-            const menuCloseBtn = document.getElementById('menuCloseBtn');
+        // Controle do menu hamburguer
+        const menuToggle = document.getElementById('menuToggle');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuContent = document.getElementById('menuContent');
+        const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            function toggleMenu() {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+        function toggleMenu() {
+            menuContent.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
 
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            }
-
-            function closeMenu() {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
+            const spans = menuToggle.querySelectorAll('span');
+            if (menuContent.classList.contains('active')) {
+                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                spans[1].style.opacity = '0';
+                spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+            } else {
                 spans[0].style.transform = 'none';
                 spans[1].style.opacity = '1';
                 spans[2].style.transform = 'none';
             }
-
-            menuToggle.addEventListener('click', toggleMenu);
-            menuCloseBtn.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', closeMenu);
-
-            // Carrega saldo do usuário
-            await carregarSaldos();
-
-            document.body.classList.add('loaded');
-        });
-
-        async function carregarSaldos() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
-            }
-            try {
-                const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao buscar saldo.");
-                }
-
-                const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
-                const saldoPendente = parseFloat(data.saldo_pendente || 0);
-
-                localStorage.setItem("saldoDisponivel", saldoDisponivel);
-                localStorage.setItem("saldoPendente", saldoPendente);
-
-                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-                // Mostra os saldos e a página depois de carregar
-                document.getElementById("saldoDisponivel").style.display = "block";
-                document.getElementById("saldoPendente").style.display = "block";
-
-            } catch (error) {
-                console.error("Erro ao carregar saldo:", error);
-            }
         }
 
-        // Função para gerar dados de ranking aleatórios
-        function generateRandomRanking() {
-            const nomes = [
-                "Allef", "Maria", "João", "Ana", "Pedro", "Carla", "Lucas", "Julia", "Rafael", "Fernanda",
-                "Bruno", "Patricia", "Diego", "Larissa", "Marcos", "Camila", "Gustavo", "Amanda", "Rodrigo", "Tatiane"
-            ];
-            
-            const emojis = ["🔥", "⭐", "🚀", "💎", "👑", "⚡", "💪", "🎯", "🏆", "✨"];
-            
-            const ranking = [];
-            
-            for (let i = 0; i < 10; i++) {
-                const nomeAleatorio = nomes[Math.floor(Math.random() * nomes.length)];
-                const emojiAleatorio = emojis[Math.floor(Math.random() * emojis.length)];
-                const valorAleatorio = (Math.random() * 1000 + 50).toFixed(2);
-                
-                ranking.push({
-                    position: i + 1,
-                    username: `${nomeAleatorio} ${emojiAleatorio}`,
-                    total_balance: valorAleatorio,
-                    is_current_user: false
-                });
-            }
-            
-            // Marcar um usuário aleatório como o usuário atual
-            const currentUserIndex = Math.floor(Math.random() * 10);
-            ranking[currentUserIndex].is_current_user = true;
-            ranking[currentUserIndex].username += " [VOCÊ]";
-            
-            return ranking;
+        function closeMenu() {
+            menuContent.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            const spans = menuToggle.querySelectorAll('span');
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
         }
 
-                // Se houver erro na API, usar dados aleatórios
-                const randomRanking = generateRandomRanking();
-                populateRankingTable(randomRanking);
+        menuToggle.addEventListener('click', toggleMenu);
+        menuCloseBtn.addEventListener('click', closeMenu);
+        menuOverlay.addEventListener('click', closeMenu);
+
+        // Carrega saldo do usuário
+        await carregarSaldos();
+
+        // Carrega o ranking fixo
+        const fixedRanking = generateFixedRanking();
+        populateRankingTable(fixedRanking);
+
+        document.body.classList.add('loaded');
+    });
+
+    async function carregarSaldos() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.error("Token não encontrado.");
+            return;
+        }
+        try {
+            const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Erro ao buscar saldo.");
+            }
+
+            const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
+            const saldoPendente = parseFloat(data.saldo_pendente || 0);
+
+            localStorage.setItem("saldoDisponivel", saldoDisponivel);
+            localStorage.setItem("saldoPendente", saldoPendente);
+
+            document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // Mostra os saldos e a página depois de carregar
+            document.getElementById("saldoDisponivel").style.display = "block";
+            document.getElementById("saldoPendente").style.display = "block";
+
+        } catch (error) {
+            console.error("Erro ao carregar saldo:", error);
+        }
+    }
+
+    // Função para formatar valores do ranking conforme o exemplo
+    const formatarValorRanking = (valor) => {
+        if (valor <= 1) return "1+";
+        if (valor > 1 && valor < 5) return "1+";
+        if (valor < 10) return "5+";
+        if (valor < 50) return "10+";
+        if (valor < 100) return "50+";
+        if (valor < 500) return "100+";
+        if (valor < 1000) return "500+";
+        const base = Math.floor(valor / 1000) * 1000;
+        return `${base}+`;
+    };
+
+    // Função para gerar ranking fixo com valores em ordem crescente
+    function generateFixedRanking() {
+        const nomesFixos = [
+            "Allef 🔥", "Maria ⭐", "João 🚀", "Ana 💎", "Pedro 👑", 
+            "Carla ⚡", "Lucas 💪", "Julia 🎯", "Rafael 🏆", "Fernanda ✨"
+        ];
         
-
-        function populateRankingTable(rankingData) {
-            const rankingTable = document.getElementById("rankingTable");
-            const rankingRows = rankingTable.querySelectorAll('tr');
-
-            rankingData.forEach((user, index) => {
-                if (index < rankingRows.length) {
-                    const row = rankingRows[index];
-
-                    // Destaca o usuário atual
-                    if (user.is_current_user) {
-                        row.classList.add('highlight-row');
-                    }
-
-                    // Atualiza na tabela
-                    row.querySelector(".ranking-user").textContent = user.username;
-                    row.querySelector(".ranking-value").textContent = `R$ ${parseFloat(user.total_balance).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                }
+        // Valores iniciais em ordem crescente
+        const valoresBase = [50, 75, 120, 180, 250, 350, 480, 600, 750, 900];
+        
+        const ranking = [];
+        
+        for (let i = 0; i < 10; i++) {
+            // Aplicar a formatação aos valores
+            const valorFormatado = formatarValorRanking(valoresBase[i]);
+            
+            ranking.push({
+                position: i + 1,
+                username: nomesFixos[i],
+                total_balance: valorFormatado,
+                is_current_user: false
             });
         }
+        
+        // Marcar o 5º usuário (Pedro 👑) como o usuário atual (exemplo)
+        ranking[4].is_current_user = true;
+        ranking[4].username += " [VOCÊ]";
+        
+        return ranking;
+    }
 
-        function logout() {
-            localStorage.removeItem("token");
-            window.location.href = "https://ganhesocial.com";
-        }
+    function populateRankingTable(rankingData) {
+        const rankingTable = document.getElementById("rankingTable");
+        const rankingRows = rankingTable.querySelectorAll('tr');
 
-    </script>
+        rankingData.forEach((user, index) => {
+            if (index < rankingRows.length) {
+                const row = rankingRows[index];
+
+                // Destaca o usuário atual
+                if (user.is_current_user) {
+                    row.classList.add('highlight-row');
+                }
+
+                // Atualiza na tabela
+                row.querySelector(".ranking-user").textContent = user.username;
+                row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+            }
+        });
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "https://ganhesocial.com";
+    }
+</script>
 </body>
 
 </html>
