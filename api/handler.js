@@ -26,6 +26,18 @@ async function salvarAcaoComLimitePorUsuario(novaAcao) {
   await novaAcao.save();
 }
 
+const formatarValorRanking = (valor) => {
+  if (valor <= 1) return "1+";
+  if (valor > 1 && valor < 5) return "1+";
+  if (valor < 10) return "5+";
+  if (valor < 50) return "10+";
+  if (valor < 100) return "50+";
+  if (valor < 500) return "100+";
+  if (valor < 1000) return "500+";
+  const base = Math.floor(valor / 1000) * 1000;
+  return `${base}+`;
+};
+
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
         const { nomeUsuario } = req.body;
@@ -1489,35 +1501,31 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
 // Rota: /api/ranking
 if (url.startsWith("/api/ranking") && method === "POST") {
-  if (req.method !== "POST") {
+ if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { token: bodyToken } = req.body || {};
-
   try {
-    await connectDB();
+    const { authorization } = req.headers;
+    const token = authorization?.split(" ")[1];
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader && !bodyToken) {
-      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    if (!token || token !== process.env.API_SECRET) {
+      return res.status(401).json({ error: "Não autorizado" });
     }
 
-    const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : authHeader;
+    await connectDB();
 
-    const effectiveToken = tokenFromHeader || bodyToken;
-    console.log("🔹 Token usado para autenticação:", !!effectiveToken);
+    const { user_token } = req.body;
 
-    if (!effectiveToken)
-      return res.status(401).json({ error: "Token inválido." });
+    if (!user_token) {
+      return res.status(400).json({ error: "Token do usuário não fornecido" });
+    }
 
-    const user = await User.findOne({ token: effectiveToken });
-    if (!user)
-      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    const usuarioAtual = await User.findOne({ token: user_token });
+    if (!usuarioAtual) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
 
-    // 🔹 Consulta agregada dos ganhos por usuário
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
         $group: {
@@ -1544,32 +1552,20 @@ if (url.startsWith("/api/ranking") && method === "POST") {
       }
     ]);
 
-    // ✅ Define a função AQUI (no mesmo escopo da rota)
-    const formatarValorRanking = (valor) => {
-      if (valor <= 1) return "1+";
-      if (valor > 1 && valor < 5) return "1+";
-      if (valor < 10) return "5+";
-      if (valor < 50) return "10+";
-      if (valor < 100) return "50+";
-      if (valor < 500) return "100+";
-      if (valor < 1000) return "500+";
-      const base = Math.floor(valor / 1000) * 1000;
-      return `${base}+`;
+    // Aplica a formatação
+const ranking = ganhosPorUsuario
+  .filter(item => item.total_balance > 1) // 🔥 Remove usuários com valor ≤ 1
+  .map(item => {
+    const valorFormatado = formatarValorRanking(item.total_balance);
+
+    return {
+      username: item.username,
+      total_balance: valorFormatado,
+      is_current_user: item.token === user_token
     };
+  });
 
-    // 🔹 Aplica a formatação e filtra
-    const ranking = ganhosPorUsuario
-      .filter(item => item.total_balance > 1)
-      .map(item => {
-        const valorFormatado = formatarValorRanking(item.total_balance);
-        return {
-          username: item.username,
-          total_balance: valorFormatado,
-          is_current_user: item.token === effectiveToken
-        };
-      });
-
-    // 🔹 Ordena corretamente (convertendo a parte numérica antes do '+')
+    // Ordena do maior para o menor (reverter ordenação usando o valor numérico real)
     ranking.sort((a, b) => {
       const numA = parseInt(a.total_balance);
       const numB = parseInt(b.total_balance);
@@ -1582,7 +1578,7 @@ if (url.startsWith("/api/ranking") && method === "POST") {
     console.error("❌ Erro ao buscar ranking:", error);
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
   }
-}
+};
 
 // Rota: /api/pular_acao
 if (url.startsWith("/api/pular_acao") && method === "POST") {
