@@ -31,6 +31,7 @@
     { "source": "/recover-password", "destination": "/recover-password.html" },
     { "source": "/reset-password", "destination": "/reset-password.html" },
     { "source": "/ranking", "destination": "/ranking.html" },
+    { "source": "/docs/api", "destination": "/docs/api.html" },
 
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
