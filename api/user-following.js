@@ -4,7 +4,7 @@ import axios from "axios";
 const RAPID_HOST = "cybrix-bytedance1.p.rapidapi.com";
 const BASE = `https://${RAPID_HOST}`;
 
-// paths candidatos (ordem tentativa)
+// caminhos prováveis
 const CANDIDATE_PATHS = [
   "/scraping/user/followings",
   "/scraping/user/following",
@@ -17,10 +17,9 @@ const CANDIDATE_PATHS = [
 ];
 
 function normalizeEntry(e) {
-  // tenta extrair campos comuns, adapte conforme o formato real da resposta
   return {
     id: e?.id || e?.user_id || e?.uid || e?.userId || null,
-    uniqueId: e?.uniqueId || e?.uniqueId || e?.unique_id || e?.unique || null,
+    uniqueId: e?.uniqueId || e?.unique_id || e?.unique || null,
     nickname: e?.nickname || e?.nick || e?.name || "",
     avatar: e?.avatar || e?.avatar_medium || e?.avatar_thumb || null
   };
@@ -37,8 +36,18 @@ async function doPostJson(url, key, body) {
       },
       timeout: 10000
     });
+
+    // 🔹 Log detalhado no console (visível na Vercel)
+    console.log(`[OK] ${url}`);
+    console.log(`Status: ${r.status}`);
+    console.log("Response snippet:", JSON.stringify(r.data)?.substring(0, 500));
+
     return { ok: true, status: r.status, data: r.data };
   } catch (err) {
+    console.log(`[ERRO] ${url}`);
+    console.log("Status:", err.response?.status);
+    console.log("Mensagem:", err.response?.data || err.message);
+
     return {
       ok: false,
       status: err.response?.status,
@@ -48,30 +57,39 @@ async function doPostJson(url, key, body) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") return res.status(405).json({ error: "Método não permitido. Use GET ?userId=..." });
+  if (req.method !== "GET") {
+    console.log("[user-following] Método inválido:", req.method);
+    return res.status(405).json({ error: "Método não permitido. Use GET ?userId=..." });
+  }
 
   const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: "Parâmetro 'userId' é obrigatório." });
+  if (!userId) {
+    console.log("[user-following] Parâmetro ausente: userId");
+    return res.status(400).json({ error: "Parâmetro 'userId' é obrigatório." });
+  }
 
   const key = process.env.RAPIDAPI_KEY || process.env.rapidapi_key;
   if (!key) {
-    console.error("RAPIDAPI_KEY não está definida no ambiente.");
+    console.error("[user-following] ❌ RAPIDAPI_KEY não configurada no ambiente Vercel.");
     return res.status(500).json({ error: "RAPIDAPI_KEY não configurada." });
   }
 
+  console.log(`[user-following] Iniciando consultas para userId=${userId}`);
+
   const attempts = [];
 
-  // tenta POST JSON nos paths candidatos
-  for (const p of CANDIDATE_PATHS) {
-    const url = BASE + p;
+  for (const path of CANDIDATE_PATHS) {
+    const url = BASE + path;
+    console.log(`[Tentando] ${url}`);
+
     const attempt = await doPostJson(url, key, { username: String(userId) });
-    attempts.push({ path: p, result: attempt });
+    attempts.push({ path, result: attempt });
 
     if (attempt.ok && attempt.status === 200 && attempt.data) {
-      // encontrou resposta válida — tenta normalizar
       const payload = attempt.data;
+      console.log(`[Sucesso] Path encontrado: ${path}`);
 
-      // O formato do provider pode estar em payload.data.list / payload.data.followings / payload.data.following
+      // tenta extrair a lista
       let list =
         payload?.data?.list ||
         payload?.data?.followings ||
@@ -79,44 +97,42 @@ export default async function handler(req, res) {
         payload?.data?.followers ||
         payload?.data ||
         payload?.followings ||
-        payload?.following ||
-        null;
+        payload?.following;
 
-      // Se list for um objeto contendo subcampo, tente extrair arrays
       if (!Array.isArray(list) && typeof list === "object") {
-        // procura o primeiro array dentro de payload.data
         const v = Object.values(payload.data || {}).find((val) => Array.isArray(val));
         if (Array.isArray(v)) list = v;
       }
+      if (!Array.isArray(list) && Array.isArray(payload?.data?.users)) list = payload.data.users;
 
       if (!Array.isArray(list)) {
-        // às vezes o provider retorna um objeto com "users" ou similar
-        if (Array.isArray(payload?.data?.users)) list = payload.data.users;
-      }
+        console.log("[Aviso] Resposta recebida, mas sem lista detectada:");
+        console.log(JSON.stringify(payload)?.substring(0, 500));
 
-      if (!Array.isArray(list)) {
-        // se não conseguimos extrair um array, devolve todo o provider_raw para inspeção
         return res.status(200).json({
           success: true,
           provider_status: attempt.status,
           provider_raw: payload,
-          note: "Resposta recebida, mas não foi possível extrair lista de followings automaticamente. Veja provider_raw."
+          note: "Resposta recebida, mas não foi possível extrair lista automaticamente. Veja provider_raw."
         });
       }
 
-      // normaliza e retorna
       const normalized = list.map(normalizeEntry);
+      console.log(`[Finalizado] ${normalized.length} followings encontrados em ${path}`);
+
       return res.status(200).json({
         success: true,
         provider_status: attempt.status,
-        path: p,
+        path,
         total: normalized.length,
         followings: normalized
       });
     }
   }
 
-  // se chegou aqui, nada funcionou — retorna todas as tentativas para debug
+  console.error("[user-following] ❌ Nenhum endpoint retornou sucesso.");
+  console.log("Tentativas:", JSON.stringify(attempts, null, 2)?.substring(0, 1500));
+
   return res.status(502).json({
     error: "Não foi possível consultar followings em nenhum endpoint candidato.",
     attempts
