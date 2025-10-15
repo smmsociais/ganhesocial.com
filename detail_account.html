@@ -788,23 +788,7 @@
             const maxPages = 100;
             let currentPage = 1;
             let totalPages = 1;
-            let allActions = [];
-
-            function adjustValue(valor) {
-                if (valor === 0.003 || valor.toFixed(3) === '0.003') {
-                    return 0.004;
-                }
-                return valor;
-            }
-
-            // Função para formatar o valor monetário
-            function formatCurrency(value) {
-                const adjustedValue = adjustValue(value);
-                return adjustedValue.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 3,
-                    maximumFractionDigits: 3
-                });
-            }            
+            let allActions = [];            
 
             // Ajusta título
             if (nomeUsuario) {
@@ -818,6 +802,22 @@
                 document.body.classList.add('loaded');
                 return;
             }
+
+             function adjustValue(valor) {
+                if (valor === 0.003 || valor.toFixed(3) === '0.003') {
+                    return 0.004;
+                }
+                return valor;
+            }
+
+            // Função para formatar o valor monetário
+            function formatCurrency(value) {
+                const adjustedValue = adjustValue(value);
+                return adjustedValue.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3
+                });
+            }           
 
             // Carregar dados da API
             async function loadData(page = 1) {
