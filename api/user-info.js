@@ -11,16 +11,19 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Parâmetro 'unique_id' é obrigatório." });
     }
 
-    const url = `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${unique_id}`;
+    const url = `https://cybrix-bytedance1.p.rapidapi.com/scraping/user/info`;
 
     try {
         const response = await axios.get(url, {
-            headers: {
-                "x-rapidapi-key": process.env.rapidapi_key,
-                "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
+  headers: {
+    'x-rapidapi-key': process.env.rapidapi_key,
+    'x-rapidapi-host': 'cybrix-bytedance1.p.rapidapi.com',
+    'Content-Type': 'application/json'
+  },
+  data: {
+    username: unique_id
             },
         });
-
         const data = response.data;
 
         if (!data || Object.keys(data).length === 0) {
