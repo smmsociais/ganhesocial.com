@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação da API - GanheSocial</title>
+    <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #131313;
+            --text-light: #d6d6d6;
+            --container-light: #313131;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #1e1e1e;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --code-bg: #1a1a1a;
+            --code-border: #333;
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            height: 32px;
+            margin-left: 100px;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
+        }
+
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container-body {
+            padding: 25px;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: var(--border-light);
+            color: rgb(238, 238, 238);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        .btn-blue {
+            background: var(--button-light);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            padding: 80px 0;
+            background: var(--bg-light);
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 0 0 100px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+            text-align: left;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-light);
+            line-height: 1.3;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            color: var(--text-light);
+            margin: 20px 0 0 0;
+            line-height: 1.4;
+        }
+
+        /* API Documentation Styles */
+        .endpoint-card {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            margin-bottom: 25px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            background: var(--code-bg);
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--code-border);
+            margin: 15px 0;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+
+        .parameter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .parameter-table th {
+            background: var(--border-light);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .parameter-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .parameter-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .code-comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-function {
+            color: #dcdcaa;
+        }
+
+        .response-example {
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--text-light);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 10px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 20px;
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            border-left: 4px solid var(--button-light);
+        }
+
+        .step-number {
+            background: var(--button-light);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 50px 0 20px;
+            color: var(--text-light);
+            border-top: 1px solid var(--border-light);
+            margin-top: 50px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-logo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .footer-logo img {
+            max-width: 150px;
+            height: auto;
+        }
+
+        .footer-description {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .footer-links h3,
+        .footer-contact h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+            opacity: 0.8;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            color: var(--button-light);
+        }
+
+        .footer-contact p {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 1px solid var(--border-light);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .logo {
+                margin-left: 10px;
+            }
+
+            .hero-content {
+                margin: 0;
+                padding-left: 5vw;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .parameter-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-section {
+                padding: 60px 0;
+            }
+
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="left-header">
+            <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+        </div>
+        <div class="right-header">
+            <button class="btn-primary btn-blue" onclick="goToHome()">
+                <i class="fas fa-home"></i> Voltar ao Site
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content fade-in">
+            <h1 class="hero-title">Documentação da API</h1>
+            <p class="hero-subtitle">Integre sua aplicação com a plataforma GanheSocial e automatize suas operações</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Introduction Section -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-info-circle"></i> Introdução</h2>
+            </div>
+            <div class="container-body">
+                <p>A API do GanheSocial permite que desenvolvedores integrem suas aplicações com nossa plataforma para automatizar o processo de execução de ações em redes sociais.</p>
+                
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h3>Autenticação</h3>
+                            <p>Todas as requisições requerem um token de autenticação válido.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h3>Fluxo de Trabalho</h3>
+                            <p>O fluxo padrão consiste em três etapas: obter ID da conta, obter ação e confirmar ação.</p>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h3>Respostas</h3>
+                            <p>Todas as respostas são retornadas no formato JSON com códigos de status HTTP padrão.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Section -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-key"></i> Autenticação</h2>
+            </div>
+            <div class="container-body">
+                <p>Todas as requisições à API do GanheSocial requerem autenticação através de um token. O token deve ser incluído como parâmetro em todas as requisições.</p>
+                
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>Parâmetro de Autenticação</strong>
+                    </div>
+                    <div class="container-body">
+                        <p>Adicione o token como parâmetro de consulta em todas as requisições:</p>
+                        <div class="endpoint-url">?token=SEU_TOKEN_AQUI</div>
+                        
+                        <table class="parameter-table">
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Tipo</th>
+                                    <th>Obrigatório</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>token</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>Token de autenticação do usuário</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Endpoints Section -->
+        <h2 class="section-title">Endpoints da API</h2>
+
+        <!-- Get User Endpoint -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-user"></i> Obter ID da Conta</h2>
+            </div>
+            <div class="container-body">
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/api/tiktok/get_user</strong>
+                    </div>
+                    <div class="container-body">
+                        <p>Obtém o ID único da conta TikTok baseado no nome de usuário.</p>
+                        
+                        <div class="endpoint-url">https://ganhesocial.com/api/tiktok/get_user?token={token}&nome_usuario={nome_usuario}</div>
+                        
+                        <h4>Parâmetros</h4>
+                        <table class="parameter-table">
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Tipo</th>
+                                    <th>Obrigatório</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>token</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>Token de autenticação</td>
+                                </tr>
+                                <tr>
+                                    <td>nome_usuario</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>Nome de usuário do TikTok</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemplo de Requisição</h4>
+                        <div class="code-block">
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
+                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> response.<span class="code-function">json</span>();
+                        </div>
+
+                        <h4>Resposta de Sucesso</h4>
+                        <div class="response-example">
+                            <pre>{
+  "id_tiktok": "123456789",
+  "status": "success"
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Get Action Endpoint -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-play-circle"></i> Obter Ação</h2>
+            </div>
+            <div class="container-body">
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <strong>/api/tiktok/get_action</strong>
+                    </div>
+                    <div class="container-body">
+                        <p>Obtém uma ação disponível para execução (seguir ou curtir).</p>
+                        
+                        <div class="endpoint-url">https://ganhesocial.com/api/tiktok/get_action?token={token}&id_tiktok={id_tiktok}&tipo={tipo}</div>
+                        
+                        <h4>Parâmetros</h4>
+                        <table class="parameter-table">
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Tipo</th>
+                                    <th>Obrigatório</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>token</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>Token de autenticação</td>
+                                </tr>
+                                <tr>
+                                    <td>id_tiktok</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>ID da conta TikTok</td>
+                                </tr>
+                                <tr>
+                                    <td>tipo</td>
+                                    <td>Number</td>
+                                    <td>Sim</td>
+                                    <td>Tipo de ação (1 = seguir, 2 = curtir)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemplo de Requisição</h4>
+                        <div class="code-block">
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
+                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> response.<span class="code-function">json</span>();
+                        </div>
+
+                        <h4>Resposta de Sucesso</h4>
+                        <div class="response-example">
+                            <pre>{
+  "id_action": "abc123def456",
+  "perfil_alvo": "@usuario_alvo",
+  "status": "success"
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Confirm Action Endpoint -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-check-circle"></i> Confirmar Ação</h2>
+            </div>
+            <div class="container-body">
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-post">POST</span>
+                        <strong>/api/tiktok/confirm_action</strong>
+                    </div>
+                    <div class="container-body">
+                        <p>Confirma a execução de uma ação previamente obtida.</p>
+                        
+                        <div class="endpoint-url">https://ganhesocial.com/api/tiktok/confirm_action</div>
+                        
+                        <h4>Parâmetros (Body JSON)</h4>
+                        <table class="parameter-table">
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Tipo</th>
+                                    <th>Obrigatório</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>token</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>Token de autenticação</td>
+                                </tr>
+                                <tr>
+                                    <td>id_action</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>ID da ação a ser confirmada</td>
+                                </tr>
+                                <tr>
+                                    <td>id_tiktok</td>
+                                    <td>String</td>
+                                    <td>Sim</td>
+                                    <td>ID da conta TikTok</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemplo de Requisição</h4>
+                        <div class="code-block">
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
+                            &nbsp;&nbsp;method: <span class="code-string">"POST"</span>,<br>
+                            &nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>: <span class="code-string">"application/json"</span> },<br>
+                            &nbsp;&nbsp;body: <span class="code-function">JSON.stringify</span>({<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;token: token,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;id_action: idaction,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;id_tiktok: idtiktok<br>
+                            &nbsp;&nbsp;})<br>
+                            });
+                        </div>
+
+                        <h4>Resposta de Sucesso</h4>
+                        <div class="response-example">
+                            <pre>{
+  "status": "success",
+  "message": "Ação confirmada com sucesso",
+  "valor_ganho": 0.004
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Complete Example Section -->
+        <section class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-code"></i> Exemplo Completo</h2>
+            </div>
+            <div class="container-body">
+                <p>Aqui está um exemplo completo do fluxo de integração com a API:</p>
+                
+                <div class="code-block">
+                    <span class="code-comment">// 🔹 Configurações iniciais</span><br>
+                    <span class="code-keyword">const</span> token = <span class="code-string">"5bf7f5333878a08de72258178af3810c30252b7c7b11107391ceb19d610c03e8"</span>;<br>
+                    <span class="code-keyword">const</span> nomeUsuario = <span class="code-string">"sarah.maciel06"</span>;<br><br>
+
+                    <span class="code-comment">// 🔹 Função principal do fluxo</span><br>
+                    <span class="code-keyword">async function</span> <span class="code-function">executarFluxo</span>() {<br>
+                    &nbsp;&nbsp;<span class="code-keyword">try</span> {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 1. Obter ID da conta</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getUserResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> userData = <span class="code-keyword">await</span> getUserResponse.<span class="code-function">json</span>();<br><br>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!userData.id_tiktok) <span class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span class="code-string">"❌ id_tiktok não encontrado."</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idtiktok = userData.id_tiktok;<br><br>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 2. Obter ação</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getActionResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> actionData = <span class="code-keyword">await</span> getActionResponse.<span class="code-function">json</span>();<br><br>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!actionData.id_action) <span class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span class="code-string">"❌ id_action não encontrado."</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idaction = actionData.id_action;<br><br>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 3. Confirmar ação</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;method: <span class="code-string">"POST"</span>,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>: <span class="code-string">"application/json"</span> },<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body: <span class="code-function">JSON.stringify</span>({<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token: token,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id_action: idaction,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id_tiktok: idtiktok<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;});<br><br>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmData = <span class="code-keyword">await</span> confirmResponse.<span class="code-function">json</span>();<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">log</span>(<span class="code-string">"✅ Ação concluída com sucesso!"</span>, confirmData);<br>
+                    &nbsp;&nbsp;} <span class="code-keyword">catch</span> (error) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">error</span>(<span class="code-string">"💥 Erro no fluxo:"</span>, error.message);<br>
+                    &nbsp;&nbsp;}<br>
+                    }<br><br>
+
+                    <span class="code-comment">// Executa o fluxo</span><br>
+                    <span class="code-function">executarFluxo</span>();
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial">
+                <p class="footer-description">
+                    Plataforma para ganhar dinheiro com suas redes sociais de forma simples e segura.
+                </p>
+            </div>
+
+            <div class="footer-links">
+                <h3>Navegação</h3>
+                <ul>
+                    <li><a href="#" onclick="goToHome()">Página Inicial</a></li>
+                    <li><a href="#introducao">Introdução</a></li>
+                    <li><a href="#autenticacao">Autenticação</a></li>
+                    <li><a href="#endpoints">Endpoints</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-contact">
+                <h3>Suporte</h3>
+                <p>
+                    <i class="fas fa-envelope"></i> contato@ganhesocial.com
+                </p>
+                <p>
+                    <i class="fas fa-headset"></i> Suporte 24/7
+                </p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025, GanheSocial. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        function goToHome() {
+            window.location.href = "index.html";
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animation on scroll
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.fade-in');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            fadeElements.forEach(el => {
+                el.style.opacity = 0;
+                observer.observe(el);
+            });
+        });
+    </script>
+</body>
+
+</html>
