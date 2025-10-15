@@ -16,7 +16,7 @@
             --success-color: #28a745;
             --valid-color: #28a745;
             --pending-color: #ffc107;
-            --failed-color: #dc3545;
+            --invalid-color: #dc3545;
             --border-light: #dee2e6;
             --hover-light: #f1f1f1;
             --shadow-light: rgba(0, 0, 0, 0.1);
@@ -789,6 +789,22 @@
             let currentPage = 1;
             let totalPages = 1;
             let allActions = [];
+
+            function adjustValue(valor) {
+                if (valor === 0.003 || valor.toFixed(3) === '0.003') {
+                    return 0.004;
+                }
+                return valor;
+            }
+
+            // Função para formatar o valor monetário
+            function formatCurrency(value) {
+                const adjustedValue = adjustValue(value);
+                return adjustedValue.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3
+                });
+            }            
 
             // Ajusta título
             if (nomeUsuario) {
