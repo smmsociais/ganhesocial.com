@@ -1445,8 +1445,8 @@ if (tipo_acao === 'curtir') {
       }
 
       const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
-      const valorDescontado = valorOriginal > 0.004 ? valorOriginal - 0.001 : valorOriginal;
-      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3));
+      const valorDescontado = valorOriginal > 0.003 ? valorOriginal - 0.001 : valorOriginal;
+      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3));
       tipo_acao = normalizarTipo(confirmData.tipo_acao || tempAction?.tipo_acao);
       url_dir = tempAction?.url_dir || '';
     }
