@@ -1,14 +1,13 @@
+// /api/user-info.js
 import axios from "axios";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido." });
+    return res.status(405).json({ error: "Método não permitido. Use GET com ?unique_id=..." });
   }
 
   const { unique_id } = req.query;
-  if (!unique_id) {
-    return res.status(400).json({ error: "Parâmetro 'unique_id' é obrigatório." });
-  }
+  if (!unique_id) return res.status(400).json({ error: "Parâmetro 'unique_id' é obrigatório." });
 
   const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.rapidapi_key;
   if (!RAPIDAPI_KEY) {
@@ -16,10 +15,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Chave de API não configurada no servidor (RAPIDAPI_KEY)." });
   }
 
-  const baseUrl = "https://cybrix-bytedance1.p.rapidapi.com";
-  // mantenha apenas o caminho base aqui — o provider pode ter paths diferentes
-  const path = "/scraping/user/info"; // original — vamos tentar GET e, se 404, um POST fallback
-
+  const url = "https://cybrix-bytedance1.p.rapidapi.com/scraping/user/info";
   const headers = {
     "x-rapidapi-key": RAPIDAPI_KEY,
     "x-rapidapi-host": "cybrix-bytedance1.p.rapidapi.com",
@@ -28,69 +24,40 @@ export default async function handler(req, res) {
   };
 
   try {
-    // 1) Tentar GET corretamente com params (sem body)
-    const url = `${baseUrl}${path}`;
-    const getResp = await axios.get(url, {
-      headers,
-      params: { username: unique_id },
-      timeout: 10000
-    });
+    // provider expects POST + JSON { username }
+    const providerResp = await axios.post(url, { username: unique_id }, { headers, timeout: 10000 });
 
-    if (!getResp.data || Object.keys(getResp.data).length === 0) {
-      return res.status(404).json({ error: "Nenhuma informação encontrada para esse usuário." });
-    }
+    const providerData = providerResp.data;
 
-    return res.status(200).json(getResp.data);
+    // Normaliza para um objeto mais simples se possível (ajuste conforme sua necessidade)
+    const normalized = {
+      success: providerData?.code === 0 || providerData?.message === "success" || providerResp.status === 200,
+      provider_status: providerResp.status,
+      provider_raw: providerData,
+      // tentamos mapear campos comuns que seu frontend provavelmente usa:
+      user: {
+        uniqueId: providerData?.data?.user?.uniqueId || providerData?.data?.user?.uniqueId || providerData?.data?.user?.uniqueId,
+        user_id: providerData?.data?.user?.user_id || providerData?.data?.user?.user_id || providerData?.data?.user?.user_id,
+        nickname: providerData?.data?.user?.nickname || providerData?.data?.user?.nickname || "",
+        avatar: providerData?.data?.user?.avatar_medium || providerData?.data?.user?.avatar_thumb || providerData?.data?.user?.avatar_larger || null,
+        is_private: Boolean(providerData?.data?.user?.is_private_account)
+      },
+      stats: providerData?.data?.stats || providerData?.data?.stats || null
+    };
+
+    return res.status(200).json(normalized);
   } catch (err) {
-    // Se a resposta veio do provedor — inspecione o status
+    console.error("Erro ao buscar dados do TikTok (user-info):", err.message);
+
     if (err.response) {
-      const pStatus = err.response.status;
-      const pData = err.response.data;
-
-      console.error("Resposta da API terceirizada:", { status: pStatus, data: pData });
-
-      // Se for 404 do provedor indicando "Endpoint ... does not exist", TENTAR fallback com POST
-      const providerMsg = typeof pData === "object" ? JSON.stringify(pData) : String(pData);
-
-      if (pStatus === 404) {
-        // tentativa de POST (algumas APIs esperam body JSON)
-        try {
-          const postUrl = `${baseUrl}${path}`;
-          const postResp = await axios.post(
-            postUrl,
-            { username: unique_id },
-            { headers, timeout: 10000 }
-          );
-
-          if (!postResp.data || Object.keys(postResp.data).length === 0) {
-            return res.status(404).json({ error: "Nenhuma informação encontrada para esse usuário (POST fallback)." });
-          }
-
-          return res.status(200).json(postResp.data);
-        } catch (err2) {
-          if (err2.response) {
-            console.error("Fallback POST também falhou:", { status: err2.response.status, data: err2.response.data });
-            return res.status(502).json({
-              error: "Erro da API externa (fallback POST).",
-              provider_status: err2.response.status,
-              provider_data: err2.response.data
-            });
-          }
-          console.error("Erro de rede no fallback POST:", err2.message);
-          return res.status(500).json({ error: "Erro no fallback POST ao buscar dados do TikTok.", details: err2.message });
-        }
-      }
-
-      // para outros códigos (401, 403, 400, etc.) devolve mensagem do provedor para debug
+      // devolve o que o provedor retornou para facilitar debug
       return res.status(502).json({
         error: "Erro da API externa ao buscar dados do TikTok.",
-        provider_status: pStatus,
-        provider_data: pData
+        provider_status: err.response.status,
+        provider_data: err.response.data
       });
     }
 
-    // erro de rede / timeout / etc
-    console.error("Erro de rede/timeout ao consultar API externa:", err.message);
     return res.status(500).json({ error: "Erro ao buscar dados do TikTok.", details: err.message });
   }
 }
