@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - GanheSocial</title>
+    <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        .menu-item[href="dashboard"] {
+            color: white;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            position: relative;
+            z-index: 10;
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-light);
+        }
+
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #dbdbdb;
+        }
+
+        .container-body {
+            padding: 20px;
+        }
+
+        /* Balance Cards */
+        .balance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .balance-card {
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            box-shadow: 0 2px 10px var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .balance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow-light);
+        }
+
+        .balance-title {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .balance-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .balance-available {
+            color: var(--success-color);
+        }
+
+        .balance-pending {
+            color: var(--pending-color);
+        }
+
+        .balance-footer {
+            font-size: 0.85rem;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ranking-title {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            color: #dbdbdb;
+        }
+
+        .ranking-title i {
+            font-size: 1rem;
+            margin-right: 8px;
+            color: #dbdbdb;
+        }
+
+        /* Ranking Table */
+        .ranking-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: var(--card-radius);
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .ranking-table thead th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(5px);
+        }
+
+        .ranking-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .ranking-table tbody tr:hover {
+            background-color: var(--hover-light);
+        }
+
+        .ranking-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        .ranking-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ranking-position {
+            font-weight: bold;
+            width: 50px;
+            text-align: left;
+        }
+
+        .ranking-user {
+            width: 60%;
+        }
+
+        .ranking-value {
+            text-align: left;
+            font-weight: bold;
+            color: var(--success-color);
+            padding-left: 0;
+            white-space: nowrap;
+        }
+
+        .highlight-row {
+            background-color: rgba(40, 167, 69, 0.1) !important;
+            font-weight: bold;
+        }
+
+        /* Telegram Section */
+        .telegram-container {
+            text-align: center;
+            padding: 30px;
+            background: var(--container-light);
+            border-radius: var(--card-radius);
+            box-shadow: 0 2px 10px var(--shadow-light);
+            margin-top: 30px;
+        }
+
+        .telegram-image {
+            max-width: 60px;
+            margin-bottom: -15px;
+        }
+
+        .telegram-link {
+            color: var(--button-light);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .telegram-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        /* Menu Styles */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 15px var(--shadow-light);
+            transition: var(--transition);
+            padding: 20px 0;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background-color: var(--hover-light);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 25px 0;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Dark Mode Styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .header {
+                background: var(--primary-gradient-dark);
+            }
+
+            .container,
+            .balance-card,
+            .telegram-container {
+                background: var(--container-dark);
+                box-shadow: 0 4px 20px var(--shadow-dark);
+                border-color: var(--border-dark);
+            }
+
+            .container-header {
+                background: var(--primary-gradient-dark);
+                border-color: var(--border-dark);
+            }
+
+            .ranking-table thead th {
+                background-color: rgba(255, 255, 255, 0.05);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .ranking-table td {
+                border-color: var(--border-dark);
+            }
+
+            .ranking-table tbody tr:hover {
+                background-color: var(--hover-dark);
+            }
+
+            .balance-available {
+                color: var(--success-dark);
+            }
+
+            .balance-pending {
+                color: var(--pending-dark);
+            }
+
+            .ranking-value {
+                color: var(--success-dark);
+            }
+
+            .highlight-row {
+                background-color: rgba(52, 168, 83, 0.1) !important;
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+                box-shadow: 2px 0 15px var(--shadow-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: var(--hover-dark);
+            }
+
+            .menu-footer {
+                border-color: var(--border-dark);
+            }
+
+            .telegram-link {
+                color: var(--button-dark);
+            }
+
+            .telegram-link:hover {
+                color: #8ab4f8;
+            }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-container {
+                padding: 20px;
+            }
+
+            .container-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .balance-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header h2 {
+                font-size: 1rem;
+                color: #dbdbdb;
+            }
+
+            .container-header h2 i {
+                font-size: 1rem;
+                margin-right: 8px;
+                color: #dbdbdb;
+            }
+
+
+            .container-body {
+                padding: 15px;
+            }
+
+            .balance-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .balance-chip {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            body.menu-open .header {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
+            }
+        }
+
+        /* Initial Load */
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-container">
+        <!-- Cartões de Saldo -->
+        <div class="balance-cards">
+            <div class="balance-card fade-in">
+                <div class="balance-title">
+                    <i class="fas fa-wallet"></i> Saldo Disponível
+                </div>
+                <div class="balance-value balance-available" id="saldoDisponivel">R$ 0,00</div>
+                <div class="balance-footer">
+                    <i class="fas fa-info-circle"></i> Valor disponível para saque
+                </div>
+            </div>
+
+            <div class="balance-card fade-in">
+                <div class="balance-title">
+                    <i class="fas fa-clock"></i> Saldo Pendente
+                </div>
+                <div class="balance-value balance-pending" id="saldoPendente">R$ 0,00</div>
+                <div class="balance-footer">
+                    <i class="fas fa-info-circle"></i> Valor em processamento
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking de Usuários -->
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2 class="ranking-title"><i class="fas fa-trophy"></i> Ranking Diário</h2>
+            </div>
+            <div class="container-body">
+                <div class="ranking-container">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Usuário</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                            <tr>
+                                <td class="ranking-position">1º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">2º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">3º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">4º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">5º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">6º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">7º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">8º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">9º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td class="ranking-position">10º</td>
+                                <td class="ranking-user"></td>
+                                <td class="ranking-value">R$ 0,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telegram Section -->
+        <div class="telegram-container fade-in">
+            <img src="https://i.imgur.com/BLph8L4.png" alt="Telegram" class="telegram-image">
+            <p>
+                <a href="https://t.me/ganhesocialofc" class="telegram-link" target="_blank">
+                    </i> Grupo Oficial no Telegram: t.me/ganhesocialofc
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        (function (_0x58043f, _0x33f015) { const _0x4ed726 = _0x3f38, _0x1d7947 = _0x58043f(); while (!![]) { try { const _0x3162ce = -parseInt(_0x4ed726(0x136)) / 0x1 * (-parseInt(_0x4ed726(0x125)) / 0x2) + -parseInt(_0x4ed726(0x150)) / 0x3 * (-parseInt(_0x4ed726(0x154)) / 0x4) + parseInt(_0x4ed726(0x143)) / 0x5 * (parseInt(_0x4ed726(0x155)) / 0x6) + parseInt(_0x4ed726(0x137)) / 0x7 + parseInt(_0x4ed726(0x12a)) / 0x8 + -parseInt(_0x4ed726(0x15c)) / 0x9 + parseInt(_0x4ed726(0x161)) / 0xa * (-parseInt(_0x4ed726(0x12b)) / 0xb); if (_0x3162ce === _0x33f015) break; else _0x1d7947['push'](_0x1d7947['shift']()); } catch (_0x20d16a) { _0x1d7947['push'](_0x1d7947['shift']()); } } }(_0x5a89, 0xed9e5), document['addEventListener']('DOMContentLoaded', async function () { const _0x2080b8 = _0x3f38, _0x494139 = localStorage['getItem'](_0x2080b8(0x165)); if (!_0x494139) { setTimeout(() => { const _0x1127a1 = _0x2080b8; window['location']['href'] = _0x1127a1(0x138); }); return; } const _0x2f8c23 = document[_0x2080b8(0x158)](_0x2080b8(0x145)), _0x70d27b = document[_0x2080b8(0x158)](_0x2080b8(0x148)), _0xe6041a = document[_0x2080b8(0x158)]('menuContent'), _0x4007e2 = document[_0x2080b8(0x158)](_0x2080b8(0x13c)); function _0x3fa912() { const _0x4d46ce = _0x2080b8; _0xe6041a[_0x4d46ce(0x15b)][_0x4d46ce(0x144)](_0x4d46ce(0x13a)), _0x70d27b[_0x4d46ce(0x15b)][_0x4d46ce(0x144)](_0x4d46ce(0x13a)); const _0x690e07 = _0x2f8c23['querySelectorAll'](_0x4d46ce(0x14f)); _0xe6041a[_0x4d46ce(0x15b)][_0x4d46ce(0x132)](_0x4d46ce(0x13a)) ? (_0x690e07[0x0]['style']['transform'] = _0x4d46ce(0x124), _0x690e07[0x1][_0x4d46ce(0x130)][_0x4d46ce(0x140)] = '0', _0x690e07[0x2][_0x4d46ce(0x130)][_0x4d46ce(0x141)] = 'rotate(-45deg)\x20translate(7px,\x20-6px)') : (_0x690e07[0x0][_0x4d46ce(0x130)][_0x4d46ce(0x141)] = _0x4d46ce(0x13d), _0x690e07[0x1][_0x4d46ce(0x130)][_0x4d46ce(0x140)] = '1', _0x690e07[0x2][_0x4d46ce(0x130)]['transform'] = _0x4d46ce(0x13d)); } function _0x4d462b() { const _0x1fa2bb = _0x2080b8; _0xe6041a[_0x1fa2bb(0x15b)][_0x1fa2bb(0x146)](_0x1fa2bb(0x13a)), _0x70d27b[_0x1fa2bb(0x15b)]['remove'](_0x1fa2bb(0x13a)); const _0x3bce81 = _0x2f8c23[_0x1fa2bb(0x156)](_0x1fa2bb(0x14f)); _0x3bce81[0x0]['style'][_0x1fa2bb(0x141)] = _0x1fa2bb(0x13d), _0x3bce81[0x1][_0x1fa2bb(0x130)][_0x1fa2bb(0x140)] = '1', _0x3bce81[0x2][_0x1fa2bb(0x130)][_0x1fa2bb(0x141)] = _0x1fa2bb(0x13d); } _0x2f8c23[_0x2080b8(0x13f)](_0x2080b8(0x14b), _0x3fa912), _0x4007e2['addEventListener'](_0x2080b8(0x14b), _0x4d462b), _0x70d27b[_0x2080b8(0x13f)](_0x2080b8(0x14b), _0x4d462b), await carregarSaldos(); const _0x51ef25 = generateFixedRanking(); populateRankingTable(_0x51ef25), document[_0x2080b8(0x135)][_0x2080b8(0x15b)][_0x2080b8(0x127)]('loaded'); })); async function carregarSaldos() { const _0x40f8dc = _0x3f38, _0x20cd16 = localStorage['getItem']('token'); if (!_0x20cd16) { console['error'](_0x40f8dc(0x15f)); return; } try { const _0x3ee993 = await fetch('https://ganhesocial.com/api/get_saldo?token=' + _0x20cd16), _0x2ee011 = await _0x3ee993[_0x40f8dc(0x12f)](); if (!_0x3ee993['ok']) throw new Error(_0x2ee011[_0x40f8dc(0x152)] || _0x40f8dc(0x164)); const _0x27ea9b = parseFloat(_0x2ee011[_0x40f8dc(0x13b)] || 0x0), _0x5b498a = parseFloat(_0x2ee011[_0x40f8dc(0x15a)] || 0x0); localStorage['setItem'](_0x40f8dc(0x134), _0x27ea9b), localStorage['setItem'](_0x40f8dc(0x13e), _0x5b498a), document['getElementById'](_0x40f8dc(0x134))['textContent'] = _0x40f8dc(0x14c) + _0x27ea9b[_0x40f8dc(0x142)]('pt-BR', { 'minimumFractionDigits': 0x2, 'maximumFractionDigits': 0x2 }), document[_0x40f8dc(0x158)](_0x40f8dc(0x13e))[_0x40f8dc(0x166)] = _0x40f8dc(0x14c) + _0x5b498a[_0x40f8dc(0x142)]('pt-BR', { 'minimumFractionDigits': 0x2, 'maximumFractionDigits': 0x2 }), document[_0x40f8dc(0x158)](_0x40f8dc(0x134))['style']['display'] = _0x40f8dc(0x14a), document[_0x40f8dc(0x158)](_0x40f8dc(0x13e))[_0x40f8dc(0x130)]['display'] = _0x40f8dc(0x14a); } catch (_0x260b4d) { console[_0x40f8dc(0x152)](_0x40f8dc(0x147), _0x260b4d); } } const formatarValorRanking = _0xeabb39 => { const _0x42cf02 = _0x3f38; if (_0xeabb39 <= 0x1) return '1+'; if (_0xeabb39 > 0x1 && _0xeabb39 < 0x5) return '1+'; if (_0xeabb39 < 0xa) return '5+'; if (_0xeabb39 < 0x32) return _0x42cf02(0x12e); if (_0xeabb39 < 0x64) return _0x42cf02(0x149); if (_0xeabb39 < 0x1f4) return _0x42cf02(0x131); if (_0xeabb39 < 0x3e8) return _0x42cf02(0x14d); const _0x5e0091 = Math[_0x42cf02(0x163)](_0xeabb39 / 0x3e8) * 0x3e8; return _0x5e0091 + '+'; }; function _0x3f38(_0x38722a, _0x325a70) { const _0x5a896b = _0x5a89(); return _0x3f38 = function (_0x3f38df, _0x4cf53f) { _0x3f38df = _0x3f38df - 0x124; let _0x2107b6 = _0x5a896b[_0x3f38df]; return _0x2107b6; }, _0x3f38(_0x38722a, _0x325a70); } function _0x5a89() { const _0x274365 = ['location', '10429648ooJHiA', '21633689XJDeST', 'highlight-row', 'querySelector', '10+', 'json', 'style', '100+', 'contains', 'lucasvz___xzz\x20💪', 'saldoDisponivel', 'body', '1854154qtTYku', '3871581AEseVn', 'https://ganhesocial.com/login', '.ranking-user', 'active', 'saldo_disponivel', 'menuCloseBtn', 'none', 'saldoPendente', 'addEventListener', 'opacity', 'transform', 'toLocaleString', '75290XwjTzP', 'toggle', 'menuToggle', 'remove', 'Erro\x20ao\x20carregar\x20saldo:', 'menuOverlay', '50+', 'block', 'click', 'R$\x20', '500+', 'removeItem', 'span', '12JlVytJ', 'total_balance', 'error', 'Allef\x20🔥', '124376usqyDA', '318JZSUqL', 'querySelectorAll', 'https://ganhesocial.com', 'getElementById', 'username', 'saldo_pendente', 'classList', '15240681elmlFJ', '.ranking-value', 'melzinho_443', 'Token\x20não\x20encontrado.', 'forEach', '10mAtlIl', 'Caioo\x20⚡', 'floor', 'Erro\x20ao\x20buscar\x20saldo.', 'token', 'textContent', 'rotate(45deg)\x20translate(5px,\x205px)', '2JxVKAx', 'noname', 'add', 'rankingTable']; _0x5a89 = function () { return _0x274365; }; return _0x5a89(); } function generateFixedRanking() { const _0x6d4cef = _0x3f38, _0x52ea01 = [_0x6d4cef(0x153), '🤪', '-', _0x6d4cef(0x15e), _0x6d4cef(0x126), _0x6d4cef(0x162), _0x6d4cef(0x133), '-', '-', '-'], _0x59a58f = [0x3b6, 0x334, 0x2a8, 0x226, 0x1a4, 0x140, 0xf0, 0xaa, 0x6e, 0x3c], _0x252313 = []; for (let _0x9a3b6 = 0x0; _0x9a3b6 < 0xa; _0x9a3b6++) { const _0xfa21a3 = formatarValorRanking(_0x59a58f[_0x9a3b6]); _0x252313['push']({ 'position': _0x9a3b6 + 0x1, 'username': _0x52ea01[_0x9a3b6], 'total_balance': _0xfa21a3, 'is_current_user': ![] }); } return _0x252313; } function populateRankingTable(_0x23f8b0) { const _0x2488b4 = _0x3f38, _0x2a4f03 = document[_0x2488b4(0x158)](_0x2488b4(0x128)), _0x3bf394 = _0x2a4f03['querySelectorAll']('tr'); _0x23f8b0[_0x2488b4(0x160)]((_0x58ddb0, _0x2020fd) => { const _0x2b4750 = _0x2488b4; if (_0x2020fd < _0x3bf394['length']) { const _0x15733a = _0x3bf394[_0x2020fd]; _0x15733a['classList']['remove'](_0x2b4750(0x12c)), _0x15733a[_0x2b4750(0x12d)](_0x2b4750(0x139))[_0x2b4750(0x166)] = _0x58ddb0[_0x2b4750(0x159)], _0x15733a[_0x2b4750(0x12d)](_0x2b4750(0x15d))[_0x2b4750(0x166)] = _0x2b4750(0x14c) + _0x58ddb0[_0x2b4750(0x151)]; } }); } function logout() { const _0x4c1b13 = _0x3f38; localStorage[_0x4c1b13(0x14e)](_0x4c1b13(0x165)), window[_0x4c1b13(0x129)]['href'] = _0x4c1b13(0x157); }
+    </script>
+</body>
+
+</html>

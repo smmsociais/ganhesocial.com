@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Ações do Usuário - GanheSocial</title>
+    <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #007bff;
+            --success-color: #28a745;
+            --valid-color: #28a745;
+            --pending-color: #ffc107;
+            --invalid-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        .menu-item[href="historico_acoes"] {
+            color: white;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--container-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            height: 32px;
+            margin-right: 29px;
+        }
+
+        .container {
+            background: var(--container-light);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1700px;
+            margin: 30px auto;
+            transition: background 0.3s;
+        }
+
+        h2 {
+            text-align: left;
+            margin-bottom: 10px;
+            color: rgb(233, 233, 233);
+            font-size: 1.0em;
+        }
+
+        /* Container da tabela ajustado para scroll com cabeçalho fixo */
+        .table-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+            font-size: 0.9em;
+        }
+
+        .history-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .history-table th {
+            background-color: #f8f9fa;
+            color: #212529;
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .history-table tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .status-valid {
+            color: var(--valid-color);
+            font-weight: bold;
+        }
+
+        .status-invalid {
+            color: var(--invalid-color);
+            font-weight: bold;
+        }
+
+        .status-pendente {
+            color: var(--pending-color);
+            font-weight: bold;
+        }
+
+        .action-link {
+            color: var(--button-light);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-actions {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        /* Garante que a tabela não ultrapasse o container */
+        .table-container table {
+            width: 100%;
+            min-width: 600px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: var(--text-light);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover {
+            background-color: var(--pagination-hover);
+        }
+
+        .pagination button.active {
+            background-color: var(--pagination-active);
+            color: white;
+            border-color: var(--pagination-active);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Estilos do menu hamburguer */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: var(--text-light);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--container-light);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease;
+            padding: 20px 0;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 25px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-dark);
+            }
+
+            .header,
+            .container {
+                background: var(--container-dark);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--border-dark);
+            }
+
+            .status-pendente {
+                color: var(--pending-color);
+            }
+
+            .history-table th {
+                background-color: #1e1e1e;
+                color: var(--text-dark);
+                border-bottom: 2px solid var(--border-dark);
+            }
+
+            .history-table tr:nth-child(even) {
+                background-color: var(--container-dark);
+            }
+
+            .history-table tr:hover {
+                background-color: #343a40;
+            }
+
+            .history-table td {
+                border-bottom: 1px solid var(--border-dark);
+            }
+
+            .action-link {
+                color: var(--button-dark);
+            }
+
+            .no-actions {
+                color: #aaa;
+            }
+
+            .table-container {
+                border: 1px solid var(--border-dark);
+            }
+
+            .pagination button {
+                background-color: var(--container-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .pagination button:hover {
+                background-color: #343a40;
+            }
+
+            .pagination button.active {
+                background-color: var(--button-dark);
+                color: white;
+            }
+
+            .pagination-info {
+                color: #aaa;
+            }
+
+            .menu-toggle span {
+                background-color: var(--text-dark);
+            }
+
+            .menu-content {
+                background: var(--container-dark);
+            }
+
+            .menu-item {
+                color: var(--text-dark);
+            }
+
+            .menu-item:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: none !important;
+            }
+        }
+
+        /* Estilos para desktop */
+        @media (min-width: 992px) {
+            .desktop-header {
+                display: none;
+            }
+
+            body {
+                padding-left: 250px;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Ajusta o z-index do cabeçalho da tabela quando o menu está aberto */
+            body.menu-open .history-table th {
+                z-index: 5;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #afaeae;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: #dc3545;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+                margin: 15px auto;
+            }
+
+            .history-table {
+                font-size: 0.8em;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 8px 10px;
+            }
+
+            .pagination {
+                gap: 3px;
+            }
+
+            .pagination button {
+                padding: 6px 8px;
+                font-size: 0.8em;
+            }
+
+            /* Ajustes específicos para mobile */
+            .table-container {
+                max-height: 55vh;
+                overflow-x: auto;
+            }
+
+            .main-container {
+                padding-bottom: 20px;
+            }
+        }
+
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+
+        /* Estilos para o estado vazio */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            display: none;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-title {
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+
+        .empty-state-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            background-color: var(--button-light);
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            color: white;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .skeleton-text {
+            height: 12px;
+        }
+
+        .skeleton::after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2 id="pageTitle"><i class="fas fa-history"></i> Histórico de Ações</h2>
+            </div>
+            <div class="container-body">
+                <!-- Container da tabela com scroll -->
+                <div class="table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Rede Social</th>
+                                <th>Usuário</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyList">
+                            <!-- Loading State -->
+                            <tr id="loading-row">
+                                <td colspan="6">
+                                    <div class="skeleton skeleton-text" style="width: 80%"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%"></div>
+                                    <div class="skeleton skeleton-text" style="width: 70%"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="no-actions" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="empty-state-title">Nenhuma ação realizada ainda</h3>
+                    <p class="empty-state-description">Quando você realizar ações, elas aparecerão aqui.</p>
+                    <a href="realizar_acoes" class="btn-primary">
+                        <i class="fas fa-tasks"></i> Realizar Ações
+                    </a>
+                </div>
+            </div>
+
+            <div class="pagination-info" id="paginationInfo">
+                <i class="fas fa-spinner fa-spin"></i> Carregando...
+            </div>
+            <div class="pagination" id="pagination">
+                <!-- Os botões de paginação serão adicionados dinamicamente aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const _0x360e4b = _0x2f6a; (function (_0x55f8ca, _0x2801eb) { const _0x1a8738 = _0x2f6a, _0x5ac9b3 = _0x55f8ca(); while (!![]) { try { const _0x4ad2ca = parseInt(_0x1a8738(0x1bf)) / 0x1 * (-parseInt(_0x1a8738(0x1be)) / 0x2) + parseInt(_0x1a8738(0x1c6)) / 0x3 * (-parseInt(_0x1a8738(0x1f7)) / 0x4) + -parseInt(_0x1a8738(0x1e9)) / 0x5 + -parseInt(_0x1a8738(0x1ce)) / 0x6 * (-parseInt(_0x1a8738(0x20d)) / 0x7) + -parseInt(_0x1a8738(0x1f4)) / 0x8 + parseInt(_0x1a8738(0x204)) / 0x9 * (-parseInt(_0x1a8738(0x200)) / 0xa) + parseInt(_0x1a8738(0x1f3)) / 0xb; if (_0x4ad2ca === _0x2801eb) break; else _0x5ac9b3['push'](_0x5ac9b3['shift']()); } catch (_0x84806) { _0x5ac9b3['push'](_0x5ac9b3['shift']()); } } }(_0x3736, 0x52cb5)); function logout() { const _0x4c696e = _0x2f6a; localStorage[_0x4c696e(0x208)](_0x4c696e(0x1ed)), window[_0x4c696e(0x1f2)]['href'] = 'https://ganhesocial.com'; } function _0x2f6a(_0x4e2c36, _0x56f4e1) { const _0x373662 = _0x3736(); return _0x2f6a = function (_0x2f6a67, _0x37e1d7) { _0x2f6a67 = _0x2f6a67 - 0x1bc; let _0x3ad4bb = _0x373662[_0x2f6a67]; return _0x3ad4bb; }, _0x2f6a(_0x4e2c36, _0x56f4e1); } function _0x3736() { const _0x3bc4be = ['1367ZxpOHx', 'remove', 'toLocaleString', 'rotate(45deg)\x20translate(5px,\x205px)', 'loaded', 'error', 'slice', '270vQfiiT', 'toLocaleDateString', 'appendChild', 'Válida', '\x22\x20class=\x22action-link\x22\x20target=\x22_blank\x22>Ver</a>', 'menuContent', 'addEventListener', 'toggle', '306negIBv', 'get', 'body', 'rotate(-45deg)\x20translate(7px,\x20-6px)', 'forEach', 'innerHTML', 'getElementById', 'toLocaleTimeString', 'createElement', 'Próximo\x20&raquo;', 'menuOverlay', 'status-pendente', 'none', 'json', 'opacity', 'querySelectorAll', '<tr><td\x20colspan=\x226\x22\x20class=\x22no-actions\x22>Erro\x20ao\x20carregar\x20histórico\x20de\x20ações.</td></tr>', '</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22display:\x20flex;\x20flex-direction:\x20column;\x20gap:\x204px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20class=\x22', 'contains', '\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>', 'url_dir', 'tipo', 'Erro\x20ao\x20carregar\x20dados', 'button', 'status', 'disabled', '/api/historico_acoes?usuario=', '1185855lVXTec', 'textContent', 'add', 'menuToggle', 'token', 'Desconhecido', 'nome_usuario', 'max', '...', 'location', '13845821vJMDsl', '3024064vtmzLL', 'data', '</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20', '17924PfPzex', 'pt-BR', 'status-valid', '\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20', '0.003', 'valor_confirmacao', 'search', 'classList', '<tr><td\x20colspan=\x226\x22\x20class=\x22no-actions\x22>Nenhuma\x20ação\x20encontrada\x20para\x20este\x20usuário.</td></tr>', '77410HCtmWm', '\x20de\x20', 'rede_social', 'transform', '18idFELj', 'isArray', 'href', 'min', 'removeItem', 'ceil', 'usuario', 'Bearer\x20', 'Erro\x20ao\x20carregar\x20histórico:', '41965HcZvIk', 'click', 'length', 'span', '<tr><td\x20colspan=\x226\x22\x20class=\x22no-actions\x22>Carregando...</td></tr>', '</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>', 'Inválida', 'active', '&laquo;\x20Anterior', '</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>R$\x20', '<a\x20href=\x22', 'style', '280uaKmqy']; _0x3736 = function () { return _0x3bc4be; }; return _0x3736(); } function formatarData(_0x76a2c9) { const _0x197a66 = _0x2f6a, _0x2b0fa4 = new Date(_0x76a2c9); return _0x2b0fa4[_0x197a66(0x1c7)]('pt-BR') + '\x20' + _0x2b0fa4[_0x197a66(0x1d5)]('pt-BR'); } function adjustValue(_0x3588c2) { const _0x584308 = _0x2f6a; if (_0x3588c2 === 0.003 || _0x3588c2['toFixed'](0x3) === _0x584308(0x1fb)) return 0.004; return _0x3588c2; } function formatCurrency(_0x3c10af) { const _0x306236 = _0x2f6a, _0x2589e3 = adjustValue(_0x3c10af); return _0x2589e3[_0x306236(0x1c1)](_0x306236(0x1f8), { 'minimumFractionDigits': 0x3, 'maximumFractionDigits': 0x3 }); } document[_0x360e4b(0x1cc)]('DOMContentLoaded', function () { const _0xc0fdb1 = _0x360e4b, _0x4cc829 = localStorage['getItem']('token'); if (!_0x4cc829) { setTimeout(() => { const _0x3faa26 = _0x2f6a; window[_0x3faa26(0x1f2)][_0x3faa26(0x206)] = 'https://ganhesocial.com/login'; }); return; } const _0xfe30ba = new URLSearchParams(window['location'][_0xc0fdb1(0x1fd)]), _0x23ea03 = _0xfe30ba[_0xc0fdb1(0x1cf)](_0xc0fdb1(0x20a)), _0x15ea80 = document[_0xc0fdb1(0x1d4)](_0xc0fdb1(0x1ec)), _0x1f205c = document[_0xc0fdb1(0x1d4)](_0xc0fdb1(0x1d8)), _0x459f6f = document[_0xc0fdb1(0x1d4)](_0xc0fdb1(0x1cb)), _0x298d57 = document[_0xc0fdb1(0x1d4)]('menuCloseBtn'); _0x15ea80['addEventListener'](_0xc0fdb1(0x20e), function () { const _0x4e3093 = _0xc0fdb1; _0x459f6f['classList'][_0x4e3093(0x1cd)](_0x4e3093(0x214)), _0x1f205c[_0x4e3093(0x1fe)]['toggle']('active'); const _0x15149f = _0x15ea80[_0x4e3093(0x1dd)](_0x4e3093(0x210)); _0x459f6f[_0x4e3093(0x1fe)][_0x4e3093(0x1e0)](_0x4e3093(0x214)) ? (_0x15149f[0x0]['style'][_0x4e3093(0x203)] = _0x4e3093(0x1c2), _0x15149f[0x1][_0x4e3093(0x1bd)][_0x4e3093(0x1dc)] = '0', _0x15149f[0x2][_0x4e3093(0x1bd)][_0x4e3093(0x203)] = _0x4e3093(0x1d1)) : (_0x15149f[0x0]['style'][_0x4e3093(0x203)] = _0x4e3093(0x1da), _0x15149f[0x1][_0x4e3093(0x1bd)]['opacity'] = '1', _0x15149f[0x2][_0x4e3093(0x1bd)][_0x4e3093(0x203)] = 'none'); }), _0x1f205c['addEventListener'](_0xc0fdb1(0x20e), function () { const _0x3924d8 = _0xc0fdb1; _0x459f6f['classList']['remove'](_0x3924d8(0x214)), _0x1f205c[_0x3924d8(0x1fe)][_0x3924d8(0x1c0)](_0x3924d8(0x214)); const _0x412c1d = _0x15ea80[_0x3924d8(0x1dd)](_0x3924d8(0x210)); _0x412c1d[0x0][_0x3924d8(0x1bd)][_0x3924d8(0x203)] = _0x3924d8(0x1da), _0x412c1d[0x1][_0x3924d8(0x1bd)]['opacity'] = '1', _0x412c1d[0x2][_0x3924d8(0x1bd)]['transform'] = 'none'; }); function _0x11be4d() { const _0x28b695 = _0xc0fdb1; _0x459f6f[_0x28b695(0x1fe)][_0x28b695(0x1c0)](_0x28b695(0x214)), _0x1f205c['classList'][_0x28b695(0x1c0)](_0x28b695(0x214)); const _0x56748f = _0x15ea80['querySelectorAll']('span'); _0x56748f[0x0]['style'][_0x28b695(0x203)] = _0x28b695(0x1da), _0x56748f[0x1][_0x28b695(0x1bd)]['opacity'] = '1', _0x56748f[0x2][_0x28b695(0x1bd)]['transform'] = _0x28b695(0x1da); } _0x298d57[_0xc0fdb1(0x1cc)]('click', _0x11be4d), _0x1f205c[_0xc0fdb1(0x1cc)](_0xc0fdb1(0x20e), _0x11be4d); const _0x5f2b09 = 0x64, _0x4ddcfc = 0x64; let _0x309054 = 0x1, _0x1a0ad6 = 0x1, _0x5caeab = []; _0x23ea03 && (pageTitle[_0xc0fdb1(0x1ea)] = 'Histórico\x20de\x20Ações\x20de\x20@' + _0x23ea03); if (!_0x23ea03) { historyList['innerHTML'] = '<tr><td\x20colspan=\x226\x22\x20class=\x22no-actions\x22>Usuário\x20não\x20especificado.</td></tr>', paginationInfo[_0xc0fdb1(0x1ea)] = 'Usuário\x20não\x20especificado', document[_0xc0fdb1(0x1d0)][_0xc0fdb1(0x1fe)][_0xc0fdb1(0x1eb)](_0xc0fdb1(0x1c3)); return; } async function _0x710a42(_0x491b4f = 0x1) { const _0x34df45 = _0xc0fdb1; try { _0x309054 = _0x491b4f, historyList['innerHTML'] = _0x34df45(0x211); if (_0x5caeab[_0x34df45(0x20f)] === 0x0) { const _0xc32de0 = await fetch(_0x34df45(0x1e8) + encodeURIComponent(_0x23ea03), { 'headers': { 'Authorization': _0x34df45(0x20b) + _0x4cc829 } }); if (!_0xc32de0['ok']) throw new Error('Erro\x20ao\x20carregar\x20histórico'); const _0x30cb1e = await _0xc32de0[_0x34df45(0x1db)](); _0x5caeab = Array[_0x34df45(0x205)](_0x30cb1e) ? _0x30cb1e : []; } _0x1a0ad6 = Math['min'](Math[_0x34df45(0x209)](_0x5caeab[_0x34df45(0x20f)] / _0x5f2b09), _0x4ddcfc), _0x18b876(), _0x3971f4(), _0x3214f9(), document['body'][_0x34df45(0x1fe)]['add']('loaded'); } catch (_0x20a01a) { console[_0x34df45(0x1c4)](_0x34df45(0x20c), _0x20a01a), historyList[_0x34df45(0x1d3)] = _0x34df45(0x1de), paginationInfo['textContent'] = _0x34df45(0x1e4), document[_0x34df45(0x1d0)][_0x34df45(0x1fe)][_0x34df45(0x1eb)](_0x34df45(0x1c3)); } } function _0x3214f9() { const _0x4345f8 = _0xc0fdb1, _0x5186e3 = (_0x309054 - 0x1) * _0x5f2b09, _0xa335c0 = Math[_0x4345f8(0x207)](_0x5186e3 + _0x5f2b09, _0x5caeab[_0x4345f8(0x20f)]), _0x9db781 = _0x5caeab[_0x4345f8(0x1c5)](_0x5186e3, _0xa335c0); if (_0x9db781[_0x4345f8(0x20f)] === 0x0) { historyList[_0x4345f8(0x1d3)] = _0x4345f8(0x1ff); return; } historyList[_0x4345f8(0x1d3)] = '', _0x9db781[_0x4345f8(0x1d2)](_0x2a9b50 => { const _0x2c9ffa = _0x4345f8, _0x322d6a = document[_0x2c9ffa(0x1d6)]('tr'); let _0x2852b9; if (_0x2a9b50[_0x2c9ffa(0x1e6)] === _0x2c9ffa(0x1c9)) _0x2852b9 = _0x2c9ffa(0x1f9); else _0x2a9b50[_0x2c9ffa(0x1e6)] === _0x2c9ffa(0x213) ? _0x2852b9 = 'status-invalid' : _0x2852b9 = _0x2c9ffa(0x1d9); const _0x3fed93 = _0x2a9b50[_0x2c9ffa(0x1e6)], _0x256c34 = _0x2a9b50[_0x2c9ffa(0x1e6)] === _0x2c9ffa(0x213) && _0x2a9b50[_0x2c9ffa(0x1e2)] ? _0x2c9ffa(0x1bc) + _0x2a9b50['url_dir'] + _0x2c9ffa(0x1ca) : ''; _0x322d6a[_0x2c9ffa(0x1d3)] = _0x2c9ffa(0x1e1) + formatarData(_0x2a9b50[_0x2c9ffa(0x1f5)]) + _0x2c9ffa(0x212) + _0x2a9b50[_0x2c9ffa(0x202)] + '</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>' + _0x2a9b50[_0x2c9ffa(0x1ef)] + '</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>' + (_0x2a9b50['tipo'] ? _0x2a9b50[_0x2c9ffa(0x1e3)]['charAt'](0x0)['toUpperCase']() + _0x2a9b50['tipo']['slice'](0x1) : _0x2c9ffa(0x1ee)) + _0x2c9ffa(0x216) + formatCurrency(parseFloat(_0x2a9b50[_0x2c9ffa(0x1fc)])) + _0x2c9ffa(0x1df) + _0x2852b9 + '\x22>' + _0x3fed93 + _0x2c9ffa(0x1f6) + _0x256c34 + _0x2c9ffa(0x1fa), historyList[_0x2c9ffa(0x1c8)](_0x322d6a); }); } function _0x18b876() { const _0x3b74a7 = _0xc0fdb1, _0xd06446 = (_0x309054 - 0x1) * _0x5f2b09 + 0x1, _0x5160a6 = Math[_0x3b74a7(0x207)](_0x309054 * _0x5f2b09, _0x5caeab['length']); paginationInfo[_0x3b74a7(0x1ea)] = 'Mostrando\x20' + _0xd06446 + '-' + _0x5160a6 + _0x3b74a7(0x201) + _0x5caeab[_0x3b74a7(0x20f)] + '\x20ações'; } function _0x3971f4() { const _0x3d23ad = _0xc0fdb1; pagination[_0x3d23ad(0x1d3)] = ''; const _0x4be4e2 = document[_0x3d23ad(0x1d6)](_0x3d23ad(0x1e5)); _0x4be4e2[_0x3d23ad(0x1d3)] = _0x3d23ad(0x215), _0x4be4e2['disabled'] = _0x309054 === 0x1, _0x4be4e2['addEventListener']('click', () => _0x710a42(_0x309054 - 0x1)), pagination[_0x3d23ad(0x1c8)](_0x4be4e2); const _0x2eda49 = document[_0x3d23ad(0x1d6)]('button'); _0x2eda49[_0x3d23ad(0x1ea)] = '1'; _0x309054 === 0x1 && _0x2eda49[_0x3d23ad(0x1fe)]['add'](_0x3d23ad(0x214)); _0x2eda49['addEventListener']('click', () => _0x710a42(0x1)), pagination[_0x3d23ad(0x1c8)](_0x2eda49); if (_0x309054 > 0x6) { const _0x53d6af = document['createElement'](_0x3d23ad(0x210)); _0x53d6af[_0x3d23ad(0x1ea)] = _0x3d23ad(0x1f1), pagination[_0x3d23ad(0x1c8)](_0x53d6af); } const _0x49ff05 = 0x5; let _0x30e142 = Math[_0x3d23ad(0x1f0)](0x2, _0x309054), _0x48ab52 = Math['min'](_0x1a0ad6, _0x30e142 + _0x49ff05 - 0x1); for (let _0x2e8f92 = _0x30e142; _0x2e8f92 <= _0x48ab52; _0x2e8f92++) { const _0x1d8601 = document['createElement'](_0x3d23ad(0x1e5)); _0x1d8601[_0x3d23ad(0x1ea)] = _0x2e8f92, _0x2e8f92 === _0x309054 && _0x1d8601['classList']['add']('active'), _0x1d8601[_0x3d23ad(0x1cc)](_0x3d23ad(0x20e), () => _0x710a42(_0x2e8f92)), pagination[_0x3d23ad(0x1c8)](_0x1d8601); } const _0x4f308d = document[_0x3d23ad(0x1d6)](_0x3d23ad(0x1e5)); _0x4f308d[_0x3d23ad(0x1d3)] = _0x3d23ad(0x1d7), _0x4f308d[_0x3d23ad(0x1e7)] = _0x309054 === _0x1a0ad6, _0x4f308d[_0x3d23ad(0x1cc)](_0x3d23ad(0x20e), () => _0x710a42(_0x309054 + 0x1)), pagination['appendChild'](_0x4f308d); } _0x710a42(0x1); });
+    </script>
+</body>
+
+</html>
