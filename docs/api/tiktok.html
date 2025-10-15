@@ -384,60 +384,12 @@
             font-size: 0.9rem;
         }
 
-       /* Dark Mode Styles */
         @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 4px 20px var(--shadow-dark);
-                border-color: var(--border-dark);
-            }
-
-            .container-header {
-                background: var(--primary-gradient-dark);
-                border-color: var(--border-dark);
-            }
-
-            .feature-card {
-                background: var(--container-dark);
-                border-color: var(--border-dark);
-                box-shadow: 0 5px 15px var(--shadow-dark);
-            }
-
-            .feature-title,
-            .feature-description,
-            .faq-question,
-            .faq-answer,
-            .footer-links h3,
-            .footer-contact h3,
-            .footer-links a {
-                color: var(--text-dark);
-            }
-
             .footer {
                 background: #0c0c0c;
                 /* Vermelho escuro para o modo dark */
             }
-
-
-            .footer-bottom {
-                border-color: var(--border-dark);
-            }
         }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 25px;
-            color: white;
-            position: relative;
-            z-index: 10;
-        }        
 
         /* Responsive Styles */
         @media (max-width: 768px) {
@@ -913,7 +865,7 @@
                     <li><a href="#como-funciona">Como funciona</a></li>
                     <li><a href="#vantagens">Vantagens</a></li>
                     <li><a href="#duvidas">Dúvidas</a></li>
-                    <li><a href="/docs/api/tiktok">Docs</a></li>                    
+                    <li><a href="/docs/api/tiktok">Docs</a></li>
                     <li><a href="signup">Cadastrar</a></li>
                     <li><a href="login">Login</a></li>
                 </ul>
@@ -937,7 +889,7 @@
     <script>
         // Funções básicas
 
-         function goToHome() {
+        function goToHome() {
             window.location.href = "ganhesocial.com";
         }
 
