@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação da API - GanheSocial</title>
+    <title>Documentação API - GanheSocial</title>
     <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -185,9 +185,16 @@
             margin-right: 10px;
         }
 
-        .method-get { background: #28a745; color: white; }
-        .method-post { background: #007bff; color: white; }
-        
+        .method-get {
+            background: #28a745;
+            color: white;
+        }
+
+        .method-post {
+            background: #007bff;
+            color: white;
+        }
+
         .endpoint-url {
             font-family: 'Courier New', monospace;
             background: var(--code-bg);
@@ -426,6 +433,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -467,8 +475,9 @@
                 <h2><i class="fas fa-info-circle"></i> Introdução</h2>
             </div>
             <div class="container-body">
-                <p>A API do GanheSocial permite que desenvolvedores integrem suas aplicações com nossa plataforma para automatizar o processo de execução de ações em redes sociais.</p>
-                
+                <p>A API do GanheSocial permite que desenvolvedores integrem suas aplicações com nossa plataforma para
+                    automatizar o processo de execução de ações em redes sociais.</p>
+
                 <div class="flow-steps">
                     <div class="flow-step">
                         <div class="step-number">1</div>
@@ -481,7 +490,8 @@
                         <div class="step-number">2</div>
                         <div>
                             <h3>Fluxo de Trabalho</h3>
-                            <p>O fluxo padrão consiste em três etapas: obter ID da conta, obter ação e confirmar ação.</p>
+                            <p>O fluxo padrão consiste em três etapas: obter ID da conta, obter ação e confirmar ação.
+                            </p>
                         </div>
                     </div>
                     <div class="flow-step">
@@ -501,8 +511,9 @@
                 <h2><i class="fas fa-key"></i> Autenticação</h2>
             </div>
             <div class="container-body">
-                <p>Todas as requisições à API do GanheSocial requerem autenticação através de um token. O token deve ser incluído como parâmetro em todas as requisições.</p>
-                
+                <p>Todas as requisições à API do GanheSocial requerem autenticação através de um token. O token deve ser
+                    incluído como parâmetro em todas as requisições.</p>
+
                 <div class="endpoint-card">
                     <div class="endpoint-header">
                         <span class="endpoint-method method-get">GET</span>
@@ -511,7 +522,7 @@
                     <div class="container-body">
                         <p>Adicione o token como parâmetro de consulta em todas as requisições:</p>
                         <div class="endpoint-url">?token=SEU_TOKEN_AQUI</div>
-                        
+
                         <table class="parameter-table">
                             <thead>
                                 <tr>
@@ -551,9 +562,10 @@
                     </div>
                     <div class="container-body">
                         <p>Obtém o ID único da conta TikTok baseado no nome de usuário.</p>
-                        
-                        <div class="endpoint-url">https://ganhesocial.com/api/tiktok/get_user?token={token}&nome_usuario={nome_usuario}</div>
-                        
+
+                        <div class="endpoint-url">
+                            https://ganhesocial.com/api/tiktok/get_user?token={token}&nome_usuario={nome_usuario}</div>
+
                         <h4>Parâmetros</h4>
                         <table class="parameter-table">
                             <thead>
@@ -582,8 +594,11 @@
 
                         <h4>Exemplo de Requisição</h4>
                         <div class="code-block">
-                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
-                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> response.<span class="code-function">json</span>();
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span>
+                            <span class="code-function">fetch</span>(<span
+                                class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
+                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span>
+                            response.<span class="code-function">json</span>();
                         </div>
 
                         <h4>Resposta de Sucesso</h4>
@@ -611,9 +626,11 @@
                     </div>
                     <div class="container-body">
                         <p>Obtém uma ação disponível para execução (seguir ou curtir).</p>
-                        
-                        <div class="endpoint-url">https://ganhesocial.com/api/tiktok/get_action?token={token}&id_tiktok={id_tiktok}&tipo={tipo}</div>
-                        
+
+                        <div class="endpoint-url">
+                            https://ganhesocial.com/api/tiktok/get_action?token={token}&id_tiktok={id_tiktok}&tipo={tipo}
+                        </div>
+
                         <h4>Parâmetros</h4>
                         <table class="parameter-table">
                             <thead>
@@ -648,8 +665,11 @@
 
                         <h4>Exemplo de Requisição</h4>
                         <div class="code-block">
-                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
-                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> response.<span class="code-function">json</span>();
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span>
+                            <span class="code-function">fetch</span>(<span
+                                class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
+                            <span class="code-keyword">const</span> data = <span class="code-keyword">await</span>
+                            response.<span class="code-function">json</span>();
                         </div>
 
                         <h4>Resposta de Sucesso</h4>
@@ -678,9 +698,9 @@
                     </div>
                     <div class="container-body">
                         <p>Confirma a execução de uma ação previamente obtida.</p>
-                        
+
                         <div class="endpoint-url">https://ganhesocial.com/api/tiktok/confirm_action</div>
-                        
+
                         <h4>Parâmetros (Body JSON)</h4>
                         <table class="parameter-table">
                             <thead>
@@ -715,9 +735,12 @@
 
                         <h4>Exemplo de Requisição</h4>
                         <div class="code-block">
-                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
+                            <span class="code-keyword">const</span> response = <span class="code-keyword">await</span>
+                            <span class="code-function">fetch</span>(<span
+                                class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
                             &nbsp;&nbsp;method: <span class="code-string">"POST"</span>,<br>
-                            &nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>: <span class="code-string">"application/json"</span> },<br>
+                            &nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>: <span
+                                class="code-string">"application/json"</span> },<br>
                             &nbsp;&nbsp;body: <span class="code-function">JSON.stringify</span>({<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;token: token,<br>
                             &nbsp;&nbsp;&nbsp;&nbsp;id_action: idaction,<br>
@@ -731,7 +754,7 @@
                             <pre>{
   "status": "success",
   "message": "Ação confirmada com sucesso",
-  "valor_ganho": 0.004
+  "valor": 0.004
 }</pre>
                         </div>
                     </div>
@@ -746,33 +769,53 @@
             </div>
             <div class="container-body">
                 <p>Aqui está um exemplo completo do fluxo de integração com a API:</p>
-                
+
                 <div class="code-block">
                     <span class="code-comment">// 🔹 Configurações iniciais</span><br>
-                    <span class="code-keyword">const</span> token = <span class="code-string">"5bf7f5333878a08de72258178af3810c30252b7c7b11107391ceb19d610c03e8"</span>;<br>
-                    <span class="code-keyword">const</span> nomeUsuario = <span class="code-string">"sarah.maciel06"</span>;<br><br>
+                    <span class="code-keyword">const</span> token = <span
+                        class="code-string">"SEU_TOKEN_AQUI"</span>;<br>
+                    <span class="code-keyword">const</span> nomeUsuario = <span
+                        class="code-string">"SEU_NOME_DE_USUARIO_TIKTOK_AQUI"</span>;<br><br>
 
                     <span class="code-comment">// 🔹 Função principal do fluxo</span><br>
-                    <span class="code-keyword">async function</span> <span class="code-function">executarFluxo</span>() {<br>
+                    <span class="code-keyword">async function</span> <span class="code-function">executarFluxo</span>()
+                    {<br>
                     &nbsp;&nbsp;<span class="code-keyword">try</span> {<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 1. Obter ID da conta</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getUserResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> userData = <span class="code-keyword">await</span> getUserResponse.<span class="code-function">json</span>();<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getUserResponse = <span
+                        class="code-keyword">await</span> <span class="code-function">fetch</span>(<span
+                        class="code-string">`https://ganhesocial.com/api/tiktok/get_user?token=${token}&nome_usuario=${nomeUsuario}`</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> userData = <span
+                        class="code-keyword">await</span> getUserResponse.<span
+                        class="code-function">json</span>();<br><br>
 
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!userData.id_tiktok) <span class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span class="code-string">"❌ id_tiktok não encontrado."</span>);<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idtiktok = userData.id_tiktok;<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!userData.id_tiktok) <span
+                        class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span
+                        class="code-string">"id_tiktok não encontrado."</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idtiktok =
+                    userData.id_tiktok;<br><br>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 2. Obter ação</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getActionResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> actionData = <span class="code-keyword">await</span> getActionResponse.<span class="code-function">json</span>();<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> getActionResponse = <span
+                        class="code-keyword">await</span> <span class="code-function">fetch</span>(<span
+                        class="code-string">`https://ganhesocial.com/api/tiktok/get_action?token=${token}&id_tiktok=${idtiktok}&tipo=1`</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> actionData = <span
+                        class="code-keyword">await</span> getActionResponse.<span
+                        class="code-function">json</span>();<br><br>
 
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!actionData.id_action) <span class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span class="code-string">"❌ id_action não encontrado."</span>);<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idaction = actionData.id_action;<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (!actionData.id_action) <span
+                        class="code-keyword">throw new</span> <span class="code-function">Error</span>(<span
+                        class="code-string">"id_action não encontrado."</span>);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> idaction =
+                    actionData.id_action;<br><br>
 
                     &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// 3. Confirmar ação</span><br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmResponse = <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmResponse = <span
+                        class="code-keyword">await</span> <span class="code-function">fetch</span>(<span
+                        class="code-string">"https://ganhesocial.com/api/tiktok/confirm_action"</span>, {<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;method: <span class="code-string">"POST"</span>,<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>: <span class="code-string">"application/json"</span> },<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="code-string">"Content-Type"</span>:
+                    <span class="code-string">"application/json"</span> },<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body: <span class="code-function">JSON.stringify</span>({<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token: token,<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id_action: idaction,<br>
@@ -780,10 +823,13 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;});<br><br>
 
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmData = <span class="code-keyword">await</span> confirmResponse.<span class="code-function">json</span>();<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">log</span>(<span class="code-string">"✅ Ação concluída com sucesso!"</span>, confirmData);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> confirmData = <span
+                        class="code-keyword">await</span> confirmResponse.<span class="code-function">json</span>();<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">log</span>(<span class="code-string">"
+                        Ação concluída com sucesso!"</span>, confirmData);<br>
                     &nbsp;&nbsp;} <span class="code-keyword">catch</span> (error) {<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">error</span>(<span class="code-string">"💥 Erro no fluxo:"</span>, error.message);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">error</span>(<span
+                        class="code-string">"Erro no fluxo:"</span>, error.message);<br>
                     &nbsp;&nbsp;}<br>
                     }<br><br>
 
@@ -794,7 +840,7 @@
         </section>
     </div>
 
-    <!-- Footer -->
+   <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
@@ -807,45 +853,64 @@
             <div class="footer-links">
                 <h3>Navegação</h3>
                 <ul>
-                    <li><a href="#" onclick="goToHome()">Página Inicial</a></li>
-                    <li><a href="#introducao">Introdução</a></li>
-                    <li><a href="#autenticacao">Autenticação</a></li>
-                    <li><a href="#endpoints">Endpoints</a></li>
+                    <li><a href="#como-funciona">Como funciona</a></li>
+                    <li><a href="#vantagens">Vantagens</a></li>
+                    <li><a href="#duvidas">Dúvidas</a></li>
+                    <li><a href="signup">Cadastrar</a></li>
+                    <li><a href="login">Login</a></li>
                 </ul>
             </div>
 
             <div class="footer-contact">
-                <h3>Suporte</h3>
+                <h3>Contato</h3>
                 <p>
                     <i class="fas fa-envelope"></i> contato@ganhesocial.com
                 </p>
                 <p>
-                    <i class="fas fa-headset"></i> Suporte 24/7
                 </p>
             </div>
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2025, GanheSocial. Todos os direitos reservados.</p>
+            <p>&copy; 2025, GanheSocial.</p>
         </div>
     </footer>
 
     <script>
-        function goToHome() {
-            window.location.href = "index.html";
+        // Funções básicas
+        function startEarning() {
+            window.location.href = "signup";
         }
+
+        function goToLogin() {
+            window.location.href = "login";
+        }
+
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentNode;
+                item.classList.toggle('active');
+
+                const icon = question.querySelector('i');
+                if (item.classList.contains('active')) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
+        });
 
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             });
         });
 
