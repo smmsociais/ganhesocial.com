@@ -1380,38 +1380,37 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
-function normalizarTipo(tipo) {
-  const mapa = {
-    seguir: 'seguir',
-    seguiram: 'seguir',
-    'Seguir': 'seguir',
-    curtidas: 'curtir',
-    curtir: 'curtir',
-    'Curtir': 'curtir',
-  };
-  return mapa[tipo?.toLowerCase?.()] || 'seguir';
-}
+    function normalizarTipo(tipo) {
+      const mapa = {
+        seguir: "seguir",
+        seguiram: "seguir",
+        Seguir: "seguir",
+        curtidas: "curtir",
+        curtir: "curtir",
+        Curtir: "curtir",
+      };
+      return mapa[tipo?.toLowerCase?.()] || "seguir";
+    }
 
     // 🔍 Verificar se a ação é local (existe no Pedido)
     const pedidoLocal = await Pedido.findById(id_action);
 
     let valorFinal = 0;
-    let tipo_acao = 'Seguir';
-    let url_dir = '';
+    let tipo_acao = "Seguir";
+    let url_dir = "";
 
-if (pedidoLocal) {
-  console.log("📦 Confirmando ação local:", id_action);
+    if (pedidoLocal) {
+      console.log("📦 Confirmando ação local:", id_action);
 
-tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
+      tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
 
-if (tipo_acao === 'curtir') {
-  valorFinal = 0.001;
-} else if (tipo_acao === 'seguir') {
-  valorFinal = 0.006;
-}
+      if (tipo_acao === "curtir") {
+        valorFinal = 0.001;
+      } else if (tipo_acao === "seguir") {
+        valorFinal = 0.006;
+      }
 
-  url_dir = pedidoLocal.link;
-
+      url_dir = pedidoLocal.link;
     } else {
       // 🔍 AÇÃO EXTERNA – Buscar no TemporaryAction
       const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
@@ -1427,7 +1426,7 @@ if (tipo_acao === 'curtir') {
         sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
         id_conta: id_tiktok,
         id_pedido: id_action,
-        is_tiktok: "1"
+        is_tiktok: "1",
       };
 
       let confirmData = {};
@@ -1448,35 +1447,40 @@ if (tipo_acao === 'curtir') {
       const valorDescontado = valorOriginal > 0.003 ? valorOriginal - 0.001 : valorOriginal;
       valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3));
       tipo_acao = normalizarTipo(confirmData.tipo_acao || tempAction?.tipo_acao);
-      url_dir = tempAction?.url_dir || '';
+      url_dir = tempAction?.url_dir || "";
     }
 
-const newAction = new ActionHistory({
-  token,
-  nome_usuario: usuario.contas.find(c => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok)?.nomeConta,
-  tipo_acao,
-  tipo: tipo_acao,
-  quantidade_pontos: valorFinal,
-  url_dir,
-  id_conta: id_tiktok,
-  id_action,
-  id_pedido: id_action,
-  user: usuario._id,
-  acao_validada: "pendente",
-  valor_confirmacao: valorFinal,
-  data: new Date()
-});
+    // 💾 Salva o valor real (sem arredondar para exibição)
+    const newAction = new ActionHistory({
+      token,
+      nome_usuario: usuario.contas.find(
+        (c) => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok
+      )?.nomeConta,
+      tipo_acao,
+      tipo: tipo_acao,
+      quantidade_pontos: valorFinal,
+      url_dir,
+      id_conta: id_tiktok,
+      id_action,
+      id_pedido: id_action,
+      user: usuario._id,
+      acao_validada: "pendente",
+      valor_confirmacao: valorFinal,
+      data: new Date(),
+    });
 
     const saved = await newAction.save();
     usuario.historico_acoes.push(saved._id);
     await usuario.save();
 
-    return res.status(200).json({
-      status: 'sucess',
-      message: 'ação confirmada com sucesso',
-      valor: valorFinal
-    });
+    // ✅ Exibição: apenas 0.003 vira 0.004 no retorno
+    const valorExibicao = valorFinal === 0.003 ? 0.004 : valorFinal;
 
+    return res.status(200).json({
+      status: "sucess",
+      message: "ação confirmada com sucesso",
+      valor: valorExibicao,
+    });
   } catch (error) {
     console.error("💥 Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
