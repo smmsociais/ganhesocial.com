@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação API - GanheSocial</title>
+    <title>Documentação API TikTok - GanheSocial</title>
     <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
             --bg-light: #131313;
             --text-light: #d6d6d6;
             --container-light: #313131;
-            --button-light: #007bff;
+            --button-light: #1e1e1e;
             --success-color: #28a745;
             --pending-color: #ffc107;
             --failed-color: #dc3545;
@@ -462,7 +462,7 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content fade-in">
-            <h1 class="hero-title">Documentação da API</h1>
+            <h1 class="hero-title">Documentação API TikTok</h1>
             <p class="hero-subtitle">Integre sua aplicação com a plataforma GanheSocial e automatize suas operações</p>
         </div>
     </section>
@@ -604,8 +604,8 @@
                         <h4>Resposta de Sucesso</h4>
                         <div class="response-example">
                             <pre>{
-  "id_tiktok": "123456789",
-  "status": "success"
+ status: 'success',                             
+ id_tiktok: '123456789'
 }</pre>
                         </div>
                     </div>
@@ -658,7 +658,7 @@
                                     <td>tipo</td>
                                     <td>Number</td>
                                     <td>Sim</td>
-                                    <td>Tipo de ação (1 = seguir, 2 = curtir)</td>
+                                    <td>Tipo de ação (1 = seguir, 2 = curtir, 3 = seguir e curtir)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -675,9 +675,13 @@
                         <h4>Resposta de Sucesso</h4>
                         <div class="response-example">
                             <pre>{
-  "id_action": "abc123def456",
-  "perfil_alvo": "@usuario_alvo",
-  "status": "success"
+  status: 'sucess',
+  id_tiktok: '123456789',
+  id_action: '123456789',
+  url: 'https://www.tiktok.com/@usuariodotiktok',
+  nome_usuario: 'usuariodotiktok',
+  tipo_acao: 'seguir',
+  valor: '0.006'
 }</pre>
                         </div>
                     </div>
@@ -752,9 +756,9 @@
                         <h4>Resposta de Sucesso</h4>
                         <div class="response-example">
                             <pre>{
-  "status": "success",
-  "message": "Ação confirmada com sucesso",
-  "valor": 0.004
+  status: 'sucess',
+  message: 'ação confirmada com sucesso',
+  valor: 0.006
 }</pre>
                         </div>
                     </div>
