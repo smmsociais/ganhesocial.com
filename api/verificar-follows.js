@@ -67,7 +67,7 @@ export default async function handler(req, res) {
       tipo: "seguir",
     })
       .sort({ data: 1 })
-      .limit(120)
+      .limit(5)
       .toArray();
 
     console.log(`📦 Encontradas ${acoes.length} ações pendentes.`);
