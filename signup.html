@@ -436,14 +436,6 @@
                     return;
                 }
 
-                // ✅ Captura o token do reCAPTCHA
-                const recaptchaToken = grecaptcha.getResponse();
-                if (!recaptchaToken) {
-                    statusMessage.textContent = "Por favor, verifique o reCAPTCHA!";
-                    statusMessage.classList.add("error-message");
-                    return;
-                }
-
                 try {
                     // Show loading state - o texto desaparece imediatamente
                     signupButton.classList.add("loading");
@@ -454,7 +446,7 @@
                     const response = await fetch("https://ganhesocial.com/api/signup", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email, senha, recaptchaToken, indicado_por, ref })
+                        body: JSON.stringify({ email, senha, indicado_por, ref })
                     });
 
                     const data = await response.json();
