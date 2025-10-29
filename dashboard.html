@@ -693,7 +693,6 @@
                             <tr>
                                 <th>#</th>
                                 <th>Usuário</th>
-                                <th>Valor</th>
                             </tr>
                         </thead>
                         <tbody id="rankingTable">
@@ -701,52 +700,42 @@
                             <tr>
                                 <td class="ranking-position">1º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">2º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">3º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">4º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">5º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">6º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">7º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">8º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">9º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                             <tr>
                                 <td class="ranking-position">10º</td>
                                 <td class="ranking-user"></td>
-                                <td class="ranking-value">R$ 0,00</td>
                             </tr>
                         </tbody>
                     </table>
@@ -849,73 +838,72 @@
             }
         }
 
-async function loadRanking() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        console.error("Token não encontrado.");
-        return;
-    }
-
-    try {
-        const response = await fetch("https://ganhesocial.com/api/ranking", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Erro ao buscar ranking.");
-        }
-
-        if (!Array.isArray(data.ranking)) {
-            throw new Error("Resposta da API não contém o array 'ranking'");
-        }
-
-        const rankingTable = document.getElementById("rankingTable");
-        const rankingRows = rankingTable.querySelectorAll('tr');
-
-        data.ranking.slice(0, 10).forEach((user, index) => {
-            if (index < rankingRows.length) {
-                const row = rankingRows[index];
-
-                // Destaca o usuário atual
-                if (user.is_current_user) {
-                    row.classList.add('highlight-row');
-                }
-
-                // Define o nome a ser exibido
-                let nomeExibido = user.username && user.username.trim() !== "" ? user.username : "-";
-
-                // Se for o próprio usuário, adiciona [VOCÊ]
-                if (user.is_current_user) {
-                    if (user.username && user.username.trim() !== "") {
-                        nomeExibido += " [VOCÊ]";
-                    } else {
-                        nomeExibido = "[VOCÊ]";
-                    }
-                }
-
-                // Atualiza na tabela
-                row.querySelector(".ranking-user").textContent = nomeExibido;
-                row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+        async function loadRanking() {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
             }
-        });
 
-    } catch (error) {
-        console.error("Erro ao carregar ranking:", error);
-        const rankingTable = document.getElementById('rankingTable');
-        rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
-    }
-}
+            try {
+                const response = await fetch("https://ganhesocial.com/api/ranking", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                });
 
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "https://ganhesocial.com";
-}
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar ranking.");
+                }
+
+                if (!Array.isArray(data.ranking)) {
+                    throw new Error("Resposta da API não contém o array 'ranking'");
+                }
+
+                const rankingTable = document.getElementById("rankingTable");
+                const rankingRows = rankingTable.querySelectorAll('tr');
+
+                data.ranking.slice(0, 10).forEach((user, index) => {
+                    if (index < rankingRows.length) {
+                        const row = rankingRows[index];
+
+                        // Destaca o usuário atual
+                        if (user.is_current_user) {
+                            row.classList.add('highlight-row');
+                        }
+
+                        // Define o nome a ser exibido
+                        let nomeExibido = user.username && user.username.trim() !== "" ? user.username : "-";
+
+                        // Se for o próprio usuário, adiciona [VOCÊ]
+                        if (user.is_current_user) {
+                            if (user.username && user.username.trim() !== "") {
+                                nomeExibido += " [VOCÊ]";
+                            } else {
+                                nomeExibido = "[VOCÊ]";
+                            }
+                        }
+
+                        // Atualiza na tabela
+                        row.querySelector(".ranking-user").textContent = nomeExibido;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar ranking:", error);
+                const rankingTable = document.getElementById('rankingTable');
+                rankingTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">Erro ao carregar ranking</td></tr>';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "https://ganhesocial.com";
+        }
 
     </script>
 </body>
