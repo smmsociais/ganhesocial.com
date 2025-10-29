@@ -488,24 +488,13 @@ if (url.startsWith("/api/login")) {
 if (url.startsWith("/api/signup") && method === "POST") {
   await connectDB();
 
-  const { email, senha, recaptchaToken, ref } = req.body;
+  const { email, senha, ref } = req.body;
 
-  if (!email || !senha || !recaptchaToken) {
+  if (!email || !senha) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
   try {
-    // ✅ Verifica reCAPTCHA
-    const recaptchaSecret = process.env.RECAPTCHA_SECRET;
-    const { data } = await axios.post(
-      "https://www.google.com/recaptcha/api/siteverify",
-      null,
-      { params: { secret: recaptchaSecret, response: recaptchaToken } }
-    );
-
-    if (!data.success || data.score < 0.5) {
-      return res.status(400).json({ error: "Falha na verificação do reCAPTCHA." });
-    }
 
     // ✅ Verifica se e-mail já existe
     const emailExiste = await User.findOne({ email });
