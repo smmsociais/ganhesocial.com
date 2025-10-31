@@ -1558,8 +1558,7 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
- const { nome_usuario } = req.query;
-
+  const { nome_usuario } = req.query;
   if (!nome_usuario) {
     return res.status(400).json({ error: 'Parâmetro nome_usuario é obrigatório' });
   }
@@ -1568,10 +1567,21 @@ if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
     const url = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nome_usuario)}`;
 
     const response = await fetch(url);
-    const data = await response.text(); // A API externa parece retornar texto plano
+    const data = await response.text(); // texto cru vindo da API externa
+    const txt = String(data || "").trim();
 
-    return res.status(200).json({ status: 'SUCESSO', resposta: data });
+    // Normaliza: se o texto contém NOT_FOUND devolvemos status fail/message
+    if (txt.toUpperCase().includes("NOT_FOUND")) {
+      return res.status(200).json({ status: 'fail', message: 'NOT_FOUND', resposta: txt });
+    }
 
+    // outros casos de erro detectáveis pela string (opcional)
+    if (/ERROR|FAIL|INVALID/i.test(txt)) {
+      return res.status(200).json({ status: 'fail', message: txt, resposta: txt });
+    }
+
+    // sucesso (ou resposta que não indica erro)
+    return res.status(200).json({ status: 'SUCESSO', resposta: txt });
   } catch (error) {
     console.error('Erro ao consultar API externa:', error);
     return res.status(500).json({ error: 'Erro ao consultar API externa' });
