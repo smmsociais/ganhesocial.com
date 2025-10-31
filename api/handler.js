@@ -169,42 +169,71 @@ if (method === "POST") {
         return res.status(400).json({ error: "Nome da conta é obrigatório." });
     }
 
+    // Normaliza o nome para comparação/unicidade
+    const nomeNormalized = String(nomeConta).trim();
+
     // 🔍 Verifica se a conta já existe neste próprio usuário
-    const contaExistente = user.contas.find(c => c.nomeConta === nomeConta);
+    const contaExistente = user.contas.find(c => c.nomeConta === nomeNormalized);
 
     if (contaExistente) {
         if (contaExistente.status === "ativa") {
             return res.status(400).json({ error: "Esta conta já está ativa." });
         }
 
-        // ✅ Reativar a conta
+        // ✅ Reativar a conta (mantemos lógica atual)
         contaExistente.status = "ativa";
         contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
         contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
         contaExistente.dataDesativacao = undefined;
 
         await user.save();
-
         return res.status(200).json({ message: "Conta reativada com sucesso!" });
     }
 
     // 🔒 Verifica se nome já está em uso por outro usuário
     const contaDeOutroUsuario = await User.findOne({
         _id: { $ne: user._id },
-        "contas.nomeConta": nomeConta
+        "contas.nomeConta": nomeNormalized
     });
 
     if (contaDeOutroUsuario) {
         return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
     }
 
-    // ➕ Adiciona nova conta
-    user.contas.push({ nomeConta, id_conta, id_tiktok, status: "ativa" });
+    // === Validação prévia: consulta a API externa / bind para conferir se o perfil existe ===
+    try {
+        // opção A: chamar diretamente a mesma API externa usada no proxy
+        const bindUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nomeNormalized)}`;
+
+        const bindResp = await fetch(bindUrl, { method: 'GET', timeout: 8000 }); // timeout se suportado
+        const bindText = String(await bindResp.text()).trim();
+
+        // Normaliza resposta para comparação
+        const bindUpper = bindText.toUpperCase();
+
+        // Se a resposta contém NOT_FOUND, não criamos a conta
+        if (bindUpper.includes("NOT_FOUND")) {
+            return res.status(400).json({ error: "Perfil não encontrado (NOT_FOUND). Verifique o usuário e tente novamente." });
+        }
+
+        // Se a API externa devolveu algum erro textual óbvio, bloqueie também
+        if (/ERROR|FAIL|INVALID/i.test(bindText) && !/SUCCESS|SUCESSO/i.test(bindText)) {
+            // retorna a mensagem da API (cuidado com exposição de detalhes)
+            return res.status(400).json({ error: `Erro ao validar perfil: ${bindText}` });
+        }
+
+        // Caso contrário, consideramos válido e continuamos para adicionar a conta
+    } catch (bindError) {
+        console.error("Erro ao validar bind antes de criar conta:", bindError);
+        return res.status(500).json({ error: "Não foi possível verificar o perfil no momento. Tente novamente mais tarde." });
+    }
+
+    // ➕ Adiciona nova conta (somente chega aqui se bind foi OK)
+    user.contas.push({ nomeConta: nomeNormalized, id_conta, id_tiktok, status: "ativa" });
     await user.save();
 
-    return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta });
+    return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta: nomeNormalized });
 }
-
         if (method === "GET") {
             if (!user.contas || user.contas.length === 0) {
                 return res.status(200).json([]);
