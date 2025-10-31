@@ -219,7 +219,7 @@ if (method === "POST") {
         // Se a API externa devolveu algum erro textual óbvio, bloqueie também
         if (/ERROR|FAIL|INVALID/i.test(bindText) && !/SUCCESS|SUCESSO/i.test(bindText)) {
             // retorna a mensagem da API (cuidado com exposição de detalhes)
-            return res.status(400).json({ error: `Erro ao validar perfil.` });
+            return res.status(400).json({ error: `Erro ao validar perfil. Verifique se sua conta segue os requisitos da plataforma.` });
         }
 
         // Caso contrário, consideramos válido e continuamos para adicionar a conta
