@@ -674,7 +674,7 @@ try {
 
     // Se a proxy retornou um texto que indica NOT_FOUND (ajuste conforme formato real)
     if (respostaTexto.includes("NOT_FOUND") || respostaTexto === "NOT_FOUND") {
-        showMessage("Não conseguimos encontrar o seu perfil, verifique-o e tente novamente.", true);
+        showMessage("Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente.", true);
         inputField.value = "";
         return;
     }
