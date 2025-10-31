@@ -213,7 +213,7 @@ if (method === "POST") {
 
         // Se a resposta contém NOT_FOUND, não criamos a conta
         if (bindUpper.includes("NOT_FOUND")) {
-            return res.status(400).json({ error: "Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente." });
+            return res.status(200).json({ error: "Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente." });
         }
 
         // Se a API externa devolveu algum erro textual óbvio, bloqueie também
