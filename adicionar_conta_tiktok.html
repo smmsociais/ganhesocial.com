@@ -656,44 +656,39 @@
               throw new Error(data?.error || "Erro ao adicionar conta");
           }
 
-          // 2) tenta o bind/proxy (verifica se o perfil existe)
-          try {
-              const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
-              
-              // tenta parsear como JSON (a API que você mostrou retorna um objeto {status:..., message:...})
-              let bindData;
-              try {
-                  bindData = await bindResponse.json();
-              } catch (e) {
-                  // se não for JSON, pega o texto cru
-                  const txt = await bindResponse.text();
-                  bindData = { status: bindResponse.ok ? 'ok' : 'fail', message: txt };
-              }
+// 2) tenta o bind/proxy (verifica se o perfil existe)
+try {
+    const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
 
-              // Se a API sinalizar NOT_FOUND, mostramos a mensagem personalizada e não redirecionamos
-              if (bindData && bindData.status === 'fail' && String(bindData.message).toUpperCase() === 'NOT_FOUND') {
-                  showMessage("Não conseguimos encontrar o seu perfil, verifique se o nome de usuário esta correto e tente novamente.", true);
-                  inputField.value = "";
-                  return; // interrompe o fluxo — sem redirecionamento
-              }
+    if (!bindResponse.ok) {
+        // status HTTP != 200
+        showMessage("Não foi possível verificar o perfil agora. Tente novamente em alguns instantes.", true);
+        inputField.value = "";
+        return;
+    }
 
-              // Se a API retornou algum outro erro, mostramos mensagem genérica (opcionalmente com detalhe)
-              if (bindData && bindData.status === 'fail') {
-                  const errMsg = bindData.message ? `Erro ao vincular: ${bindData.message}` : "Erro ao vincular a conta.";
-                  showMessage(errMsg, true);
-                  inputField.value = "";
-                  return;
-              }
+    const bindData = await bindResponse.json(); // { status: 'SUCESSO', resposta: '...texto...' }
 
-              // Se tudo OK (ou se a resposta não indicar fail), segue para redirecionar
-          } catch (bindError) {
-              // Falha de rede ao chamar proxy_bind_tk — mostrar mensagem (mas conta já foi criada)
-              console.error('bind error', bindError);
-              showMessage("Não foi possível verificar o perfil agora. Tente novamente em alguns instantes.", true);
-              inputField.value = "";
-              return;
-          }
+    // normalize string for comparison
+    const respostaTexto = String(bindData?.resposta ?? "").trim().toUpperCase();
 
+    // Se a proxy retornou um texto que indica NOT_FOUND (ajuste conforme formato real)
+    if (respostaTexto.includes("NOT_FOUND") || respostaTexto === "NOT_FOUND") {
+        showMessage("Não conseguimos encontrar o seu perfil, verifique-o e tente novamente.", true);
+        inputField.value = "";
+        return;
+    }
+
+    // Se a API externa devolveu alguma outra mensagem de erro no texto, trate aqui (opcional)
+    // Ex.: if (respostaTexto.includes("ERROR") || respostaTexto.includes("FAIL")) { ... }
+
+    // Caso contrário, consideramos OK e prosseguimos
+} catch (bindError) {
+    console.error('bind error', bindError);
+    showMessage("Não foi possível verificar o perfil agora. Tente novamente em alguns instantes.", true);
+    inputField.value = "";
+    return;
+}
           // 3) Redirecionar para página de sucesso com o nome de usuário
           window.location.href = `conta_adicionada?username=${encodeURIComponent(accountName)}`;
 
