@@ -610,82 +610,103 @@
             return username.startsWith('@') ? username.substring(1) : username;
         }
 
-        async function addAccount() {
-            const inputField = document.getElementById('accountName');
-            const addAccountButton = document.getElementById('addAccountButton');
-            let accountName = inputField.value.trim();
-            const messageBox = document.getElementById('messageBox');
+  async function addAccount() {
+      const inputField = document.getElementById('accountName');
+      const addAccountButton = document.getElementById('addAccountButton');
+      let accountName = inputField.value.trim();
+      const messageBox = document.getElementById('messageBox');
 
-            messageBox.style.display = 'none';
+      messageBox.style.display = 'none';
 
-            if (!accountName) {
-                showMessage("Por favor, insira o nome de usuário do TikTok.", true);
-                inputField.value = "";
-                return;
-            }
+      if (!accountName) {
+          showMessage("Por favor, insira o nome de usuário do TikTok.", true);
+          inputField.value = "";
+          return;
+      }
 
-            accountName = formatUsername(accountName);
+      accountName = formatUsername(accountName);
 
-            const token = localStorage.getItem("token");
-            if (!token) {
-                window.location.href = "/login";
-                return;
-            }
+      const token = localStorage.getItem("token");
+      if (!token) {
+          window.location.href = "/login";
+          return;
+      }
 
-            try {
-                // Show loading state - o texto desaparece imediatamente
-                addAccountButton.classList.add("loading");
-                addAccountButton.disabled = true;
+      try {
+          // Show loading state
+          addAccountButton.classList.add("loading");
+          addAccountButton.disabled = true;
 
-                const response = await fetch("https://ganhesocial.com/api/contas", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        nomeConta: accountName,
-                        plataforma: "tiktok"
-                    })
-                });
+          // 1) cria a conta no backend
+          const response = await fetch("https://ganhesocial.com/api/contas", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  nomeConta: accountName,
+                  plataforma: "tiktok"
+              })
+          });
 
-                const data = await response.json(); // Adicionado para parsear a resposta
+          const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data?.error || "Erro ao adicionar conta");
-                }
+          if (!response.ok) {
+              throw new Error(data?.error || "Erro ao adicionar conta");
+          }
 
-                // Chamada API externa
-                try {
-                    const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
-                    const bindText = await bindResponse.text();
-                } catch (bindError) {
-                    // Ignora erros na chamada externa
-                }
+          // 2) tenta o bind/proxy (verifica se o perfil existe)
+          try {
+              const bindResponse = await fetch(`https://ganhesocial.com/api/proxy_bind_tk?nome_usuario=${encodeURIComponent(accountName)}`);
+              
+              // tenta parsear como JSON (a API que você mostrou retorna um objeto {status:..., message:...})
+              let bindData;
+              try {
+                  bindData = await bindResponse.json();
+              } catch (e) {
+                  // se não for JSON, pega o texto cru
+                  const txt = await bindResponse.text();
+                  bindData = { status: bindResponse.ok ? 'ok' : 'fail', message: txt };
+              }
 
-                // Redirecionar para página de sucesso com o nome de usuário
-                window.location.href = `conta_adicionada?username=${encodeURIComponent(accountName)}`;
+              // Se a API sinalizar NOT_FOUND, mostramos a mensagem personalizada e não redirecionamos
+              if (bindData && bindData.status === 'fail' && String(bindData.message).toUpperCase() === 'NOT_FOUND') {
+                  showMessage("Não conseguimos encontrar o seu perfil, verifique se o nome de usuário esta correto e tente novamente.", true);
+                  inputField.value = "";
+                  return; // interrompe o fluxo — sem redirecionamento
+              }
 
-            } catch (error) {
-                // Mensagem de erro sem redirecionamento
-                showMessage(error.message, true);
-                inputField.value = "";
-            } finally {
-                // Remove o loading state em caso de erro
-                addAccountButton.classList.remove("loading");
-                addAccountButton.disabled = false;
-            }
-        }
+              // Se a API retornou algum outro erro, mostramos mensagem genérica (opcionalmente com detalhe)
+              if (bindData && bindData.status === 'fail') {
+                  const errMsg = bindData.message ? `Erro ao vincular: ${bindData.message}` : "Erro ao vincular a conta.";
+                  showMessage(errMsg, true);
+                  inputField.value = "";
+                  return;
+              }
 
-        // Exibir mensagem de erro se houver (agora sem uso do sessionStorage)
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const error = urlParams.get('error');
+              // Se tudo OK (ou se a resposta não indicar fail), segue para redirecionar
+          } catch (bindError) {
+              // Falha de rede ao chamar proxy_bind_tk — mostrar mensagem (mas conta já foi criada)
+              console.error('bind error', bindError);
+              showMessage("Não foi possível verificar o perfil agora. Tente novamente em alguns instantes.", true);
+              inputField.value = "";
+              return;
+          }
 
-            if (error) {
-                showMessage(decodeURIComponent(error), true);
-            }
-        });
+          // 3) Redirecionar para página de sucesso com o nome de usuário
+          window.location.href = `conta_adicionada?username=${encodeURIComponent(accountName)}`;
+
+      } catch (error) {
+          // Mensagem de erro sem redirecionamento
+          showMessage(error.message || "Erro ao adicionar conta", true);
+          inputField.value = "";
+      } finally {
+          // Remove o loading state em caso de erro ou sucesso (se retornar antes, botão também é resetado)
+          addAccountButton.classList.remove("loading");
+          addAccountButton.disabled = false;
+      }
+  }
 
         function logout() {
             localStorage.removeItem("token");
