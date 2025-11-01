@@ -294,6 +294,28 @@
             text-decoration: underline;
         }
 
+        /* Botão Entrar */
+        .telegram-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .telegram-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
         /* Menu Styles */
         .menu-toggle {
             width: 30px;
@@ -751,6 +773,10 @@
                     </i> Grupo Oficial no Telegram: t.me/ganhesocialofc
                 </a>
             </p>
+            <!-- Botão Entrar adicionado abaixo da imagem do Telegram -->
+            <a href="https://t.me/ganhesocialofc" class="telegram-button" target="_blank">
+                Entrar
+            </a>
         </div>
     </div>
 
