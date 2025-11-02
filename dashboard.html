@@ -278,7 +278,7 @@
         }
 
         .telegram-image {
-            max-width: 60px;
+            max-width: 70px;
             margin-bottom: -15px;
         }
 
@@ -302,12 +302,12 @@
             padding: 12px 24px;
             border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
             margin-top: 15px;
             transition: var(--transition);
             border: none;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 12px;
         }
 
         .telegram-button:hover {
@@ -672,7 +672,7 @@
             </div>
             <!-- Logo para mobile (no header) -->
             <a href="dashboard" class="logo-mobile">
-
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
             </a>
         </div>
     </div>
@@ -793,12 +793,6 @@
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-            if (!token) {
-                setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com/login";
-                },);
-                return;
-            }
 
             // Controle do menu hamburguer
             const menuToggle = document.getElementById('menuToggle');
