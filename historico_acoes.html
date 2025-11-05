@@ -9,36 +9,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #f8f9fa;
-            --text-light: #212529;
-            --container-light: #ffffff;
-            --button-light: #007bff;
-            --success-color: #28a745;
-            --valid-color: #28a745;
-            --pending-color: #ffc107;
-            --invalid-color: #dc3545;
-            --border-light: #dee2e6;
-            --hover-light: #f1f1f1;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-
             --bg-dark: #121212;
             --text-dark: #e0e0e0;
             --container-dark: #1e1e1e;
             --button-dark: #1a73e8;
             --success-dark: #34a853;
-            --pending-dark: #f9ab00;
-            --failed-dark: #ea4335;
+            --valid-color: #34a853;
+            --pending-color: #f9ab00;
+            --invalid-color: #ea4335;
             --border-dark: #333333;
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
-
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
 
         body {
-            background-color: var(--bg-light);
-            color: var(--text-light);
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -59,8 +47,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
-            background-color: var(--container-light);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: var(--container-dark);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .left-header {
@@ -81,14 +69,15 @@
         }
 
         .container {
-            background: var(--container-light);
+            background: var(--container-dark);
             padding: 25px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             width: 90%;
             max-width: 1700px;
             margin: 30px auto;
             transition: background 0.3s;
+            border: 1px solid var(--border-dark);
         }
 
         h2 {
@@ -103,7 +92,7 @@
             max-height: 70vh;
             overflow-y: auto;
             border-radius: 8px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-dark);
             margin-bottom: 20px;
             position: relative;
         }
@@ -122,27 +111,27 @@
         }
 
         .history-table th {
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: #1e1e1e;
+            color: var(--text-dark);
             text-align: left;
             padding: 12px 15px;
             font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 2px solid var(--border-dark);
             position: sticky;
             top: 0;
         }
 
         .history-table td {
             padding: 12px 15px;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid var(--border-dark);
         }
 
         .history-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: var(--container-dark);
         }
 
         .history-table tr:hover {
-            background-color: #e9ecef;
+            background-color: #343a40;
         }
 
         .status-valid {
@@ -161,7 +150,7 @@
         }
 
         .action-link {
-            color: var(--button-light);
+            color: var(--button-dark);
             text-decoration: none;
             font-weight: bold;
         }
@@ -173,7 +162,7 @@
         .no-actions {
             text-align: center;
             padding: 20px;
-            color: #666;
+            color: #aaa;
         }
 
         .pagination {
@@ -187,22 +176,22 @@
 
         .pagination button {
             padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            background-color: white;
-            color: var(--text-light);
+            border: 1px solid var(--border-dark);
+            background-color: var(--container-dark);
+            color: var(--text-dark);
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .pagination button:hover {
-            background-color: var(--pagination-hover);
+            background-color: #343a40;
         }
 
         .pagination button.active {
-            background-color: var(--pagination-active);
+            background-color: var(--button-dark);
             color: white;
-            border-color: var(--pagination-active);
+            border-color: var(--button-dark);
         }
 
         .pagination button:disabled {
@@ -213,7 +202,7 @@
         .pagination-info {
             text-align: center;
             margin-top: 10px;
-            color: #666;
+            color: #aaa;
             font-size: 0.9em;
         }
 
@@ -231,7 +220,7 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: var(--text-light);
+            background-color: var(--text-dark);
             border-radius: 3px;
             transition: all 0.3s ease;
         }
@@ -253,8 +242,8 @@
             left: -300px;
             width: 250px;
             height: 100%;
-            background: var(--container-light);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            background: var(--container-dark);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
             transition: left 0.3s ease;
             padding: 20px 0;
             z-index: 1001;
@@ -274,7 +263,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-light);
+            color: var(--text-dark);
             font-size: 16px;
             text-decoration: none;
             transition: background-color 0.2s;
@@ -289,111 +278,24 @@
         }
 
         .menu-item:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #dc3545;
+            color: #ea4335;
             font-size: 16px;
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .header,
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-                border: 1px solid var(--border-dark);
-            }
-
-            .status-pendente {
-                color: var(--pending-color);
-            }
-
-            .history-table th {
-                background-color: #1e1e1e;
-                color: var(--text-dark);
-                border-bottom: 2px solid var(--border-dark);
-            }
-
-            .history-table tr:nth-child(even) {
-                background-color: var(--container-dark);
-            }
-
-            .history-table tr:hover {
-                background-color: #343a40;
-            }
-
-            .history-table td {
-                border-bottom: 1px solid var(--border-dark);
-            }
-
-            .action-link {
-                color: var(--button-dark);
-            }
-
-            .no-actions {
-                color: #aaa;
-            }
-
-            .table-container {
-                border: 1px solid var(--border-dark);
-            }
-
-            .pagination button {
-                background-color: var(--container-dark);
-                color: var(--text-dark);
-                border-color: var(--border-dark);
-            }
-
-            .pagination button:hover {
-                background-color: #343a40;
-            }
-
-            .pagination button.active {
-                background-color: var(--button-dark);
-                color: white;
-            }
-
-            .pagination-info {
-                color: #aaa;
-            }
-
-            .menu-toggle span {
-                background-color: var(--text-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: rgba(255, 255, 255, 0.05);
-            }
-
-            .menu-footer {
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
         }
 
         /* Desktop Menu */
@@ -486,7 +388,7 @@
             }
 
             .menu-close-btn:hover {
-                color: #dc3545;
+                color: #ea4335;
             }
         }
 
