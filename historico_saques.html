@@ -9,35 +9,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #f8f9fa;
-            --text-light: #b3b3b3;
-            --container-light: #808080;
-            --button-light: #007bff;
-            --success-color: #28a745;
-            --pending-color: #ffc107;
-            --failed-color: #dc3545;
-            --border-light: #dee2e6;
-            --hover-light: #f1f1f1;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-
-            --bg-dark: #121212;
-            --text-dark: #e0e0e0;
-            --container-dark: #1e1e1e;
-            --button-dark: #1a73e8;
-            --success-dark: #34a853;
-            --pending-dark: #f9ab00;
-            --failed-dark: #ea4335;
-            --border-dark: #333333;
-            --hover-dark: #2d2d2d;
-            --shadow-dark: rgba(0, 0, 0, 0.3);
-
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-color: #1e1e1e;
+            --button-color: #1a73e8;
+            --success-color: #34a853;
+            --pending-color: #f9ab00;
+            --failed-color: #ea4335;
+            --border-color: #333333;
+            --hover-color: #2d2d2d;
+            --shadow-color: rgba(0, 0, 0, 0.3);
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
 
         body {
-            background-color: var(--bg-light);
-            color: var(--text-light);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -61,7 +49,7 @@
             padding: 15px 25px;
             background: var(--primary-gradient);
             color: white;
-            box-shadow: 0 2px 10px var(--shadow-light);
+            box-shadow: 0 2px 10px var(--shadow-color);
             position: relative;
             z-index: 10;
         }
@@ -91,18 +79,18 @@
         }
 
         .container {
-            background: var(--container-light);
+            background: var(--container-color);
             border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-light);
+            box-shadow: 0 4px 20px var(--shadow-color);
             overflow: hidden;
             transition: var(--transition);
             margin-bottom: 30px;
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--border-color);
         }
 
         .container-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-color);
             background: var(--primary-gradient);
             color: white;
         }
@@ -133,12 +121,12 @@
         }
 
         .withdrawal-table thead th {
-            background-color: rgba(0, 0, 0, 0.02);
-            color: var(--text-light);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
             font-weight: 600;
             padding: 15px;
             text-align: left;
-            border-bottom: 2px solid var(--border-light);
+            border-bottom: 2px solid var(--border-color);
             position: sticky;
             top: 0;
         }
@@ -148,12 +136,12 @@
         }
 
         .withdrawal-table tbody tr:hover {
-            background-color: var(--hover-light);
+            background-color: var(--hover-color);
         }
 
         .withdrawal-table td {
             padding: 15px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-color);
             vertical-align: middle;
         }
 
@@ -172,26 +160,26 @@
         }
 
         .status-completed {
-            background-color: rgba(40, 167, 69, 0.1);
+            background-color: rgba(52, 168, 83, 0.1);
             color: var(--success-color);
         }
 
         .status-pending {
-            background-color: rgba(255, 193, 7, 0.1);
+            background-color: rgba(249, 171, 0, 0.1);
             color: var(--pending-color);
         }
 
         .status-failed {
-            background-color: rgba(220, 53, 69, 0.1);
+            background-color: rgba(234, 67, 53, 0.1);
             color: var(--failed-color);
         }
 
         .empty-state {
             text-align: center;
-            background: var(--container-light);
+            background: var(--container-color);
             border-radius: var(--card-radius);
             margin: 20px 0;
-            box-shadow: 0 4px 20px var(--shadow-light);
+            box-shadow: 0 4px 20px var(--shadow-color);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -216,8 +204,8 @@
 
         .pagination button {
             background: none;
-            border: 1px solid var(--border-light);
-            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
             padding: 8px 15px;
             border-radius: 6px;
             cursor: pointer;
@@ -229,7 +217,7 @@
         }
 
         .pagination button:hover {
-            background-color: var(--hover-light);
+            background-color: var(--hover-color);
         }
 
         .pagination button.active {
@@ -284,8 +272,8 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background: var(--container-light);
-            box-shadow: 2px 0 15px var(--shadow-light);
+            background: var(--container-color);
+            box-shadow: 2px 0 15px var(--shadow-color);
             transition: var(--transition);
             padding: 20px 0;
             z-index: 1001;
@@ -305,7 +293,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-light);
+            color: var(--text-color);
             font-size: 16px;
             text-decoration: none;
             transition: var(--transition);
@@ -320,19 +308,19 @@
         }
 
         .menu-item:hover {
-            background-color: var(--hover-light);
+            background-color: var(--hover-color);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-light);
+            border-top: 1px solid var(--border-color);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #dc3545;
+            color: #ea4335;
             font-size: 16px;
             text-decoration: none;
             display: flex;
@@ -342,93 +330,7 @@
         }
 
         .menu-logout:hover {
-            background-color: rgba(220, 53, 69, 0.1);
-        }
-
-        /* Dark Mode Styles */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .header {
-                background: var(--primary-gradient-dark);
-            }
-
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 4px 20px var(--shadow-dark);
-                border-color: var(--border-dark);
-            }
-
-            .container-header {
-                background: var(--primary-gradient-dark);
-                border-color: var(--border-dark);
-            }
-
-            .withdrawal-table thead th {
-                background-color: rgba(255, 255, 255, 0.05);
-                color: var(--text-dark);
-                border-color: var(--border-dark);
-            }
-
-            .withdrawal-table td {
-                border-color: var(--border-dark);
-            }
-
-            .withdrawal-table tbody tr:hover {
-                background-color: var(--hover-dark);
-            }
-
-            .status-completed {
-                background-color: rgba(52, 168, 83, 0.1);
-                color: var(--success-dark);
-            }
-
-            .status-pending {
-                background-color: rgba(249, 171, 0, 0.1);
-                color: var(--pending-dark);
-            }
-
-            .status-failed {
-                background-color: rgba(234, 67, 53, 0.1);
-                color: var(--failed-dark);
-            }
-
-            .empty-state-title {
-                color: var(--text-dark);
-            }
-
-            .empty-state {
-                background: var(--container-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-                box-shadow: 2px 0 15px var(--shadow-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: var(--hover-dark);
-            }
-
-            .menu-footer {
-                border-color: var(--border-dark);
-            }
-
-            .pagination button {
-                border-color: var(--border-dark);
-                color: var(--text-dark);
-            }
-
-            .pagination button:hover {
-                background-color: var(--hover-dark);
-            }
+            background-color: rgba(234, 67, 53, 0.1);
         }
 
         /* Responsive Styles */
@@ -523,7 +425,7 @@
 
         /* Loading State */
         .skeleton {
-            background-color: #e9ecef;
+            background-color: #2d2d2d;
             border-radius: 4px;
             animation: pulse 1.5s infinite ease-in-out;
         }
@@ -634,7 +536,7 @@
             }
 
             .menu-close-btn:hover {
-                color: #dc3545;
+                color: #ea4335;
             }
         }
 
