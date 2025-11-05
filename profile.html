@@ -9,45 +9,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #f8f9fa;
-            --text-light: #212529;
-            --container-light: #ffffff;
-            --button-light: #007bff;
-            --success-color: #28a745;
-            --pending-color: #ffc107;
-            --failed-color: #dc3545;
-            --border-light: #dee2e6;
-            --hover-light: #f1f1f1;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-            --label-light: #586069;
-            --positive-color: #2ecc71;
-            --negative-color: #e74c3c;
-            --neutral-color: #3498db;
-
-            --bg-dark: #121212;
-            --text-dark: #e0e0e0;
-            --container-dark: #1e1e1e;
-            --button-dark: #1a73e8;
-            --success-dark: #34a853;
-            --pending-dark: #f9ab00;
-            --failed-dark: #ea4335;
-            --border-dark: #333333;
-            --hover-dark: #2d2d2d;
-            --shadow-dark: rgba(0, 0, 0, 0.3);
-            --label-dark: #8b949e;
-            --positive-color-dark: #27ae60;
-            --negative-color-dark: #c0392b;
-            --neutral-color-dark: #2980b9;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-color: #1e1e1e;
+            --button-color: #1a73e8;
+            --success-color: #34a853;
+            --pending-color: #f9ab00;
+            --failed-color: #ea4335;
+            --border-color: #333333;
+            --hover-color: #2d2d2d;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --label-color: #8b949e;
+            --positive-color: #27ae60;
+            --negative-color: #c0392b;
+            --neutral-color: #2980b9;
             --error-color: #f85149;
-            --success-color-dark: #238636;
-
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
 
         body {
-            background-color: var(--bg-light);
-            color: var(--text-light);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -71,7 +54,7 @@
             padding: 15px 25px;
             background: var(--primary-gradient);
             color: white;
-            box-shadow: 0 2px 10px var(--shadow-light);
+            box-shadow: 0 2px 10px var(--shadow-color);
             position: relative;
             z-index: 10;
         }
@@ -94,13 +77,13 @@
         }
 
         .container {
-            background: var(--container-light);
+            background: var(--container-color);
             border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-light);
+            box-shadow: 0 4px 20px var(--shadow-color);
             overflow: hidden;
             transition: var(--transition);
             margin-bottom: 30px;
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--border-color);
             width: 100%;
             max-width: 1100px;
             margin: 30px auto;
@@ -109,7 +92,7 @@
 
         .container-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-color);
             background: var(--primary-gradient);
             color: white;
         }
@@ -134,30 +117,30 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--text-light);
+            color: var(--text-color);
         }
 
         .input-box {
             width: 100%;
             padding: 12px 15px;
             border-radius: 6px;
-            border: 1px solid var(--border-light);
-            background: var(--container-light);
-            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            background: var(--container-color);
+            color: var(--text-color);
             transition: var(--transition);
             box-sizing: border-box;
             font-size: 1rem;
         }
 
         .input-box:focus {
-            border-color: var(--button-light);
+            border-color: var(--button-color);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
         }
 
         .input-box[readonly] {
-            background-color: rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-light);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
             cursor: not-allowed;
         }
 
@@ -170,21 +153,21 @@
         .copy-icon {
             margin-left: 10px;
             cursor: pointer;
-            color: var(--label-light);
+            color: var(--label-color);
             font-size: 18px;
             transition: var(--transition);
         }
 
         .copy-icon:hover {
-            color: var(--button-light);
+            color: var(--button-color);
         }
 
         .copy-notification {
             position: absolute;
             right: 0;
             top: -30px;
-            background: var(--text-light);
-            color: white;
+            background: var(--text-color);
+            color: var(--container-color);
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 12px;
@@ -208,7 +191,8 @@
 
         .save-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            background: #2a8a42;
         }
 
         .message {
@@ -221,21 +205,21 @@
         }
 
         .error-message {
-            background-color: rgba(220, 53, 69, 0.1);
+            background-color: rgba(234, 67, 53, 0.1);
             color: var(--failed-color);
-            border: 1px solid rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(234, 67, 53, 0.2);
         }
 
         .success-message {
-            background-color: rgba(40, 167, 69, 0.1);
+            background-color: rgba(52, 168, 83, 0.1);
             color: var(--success-color);
-            border: 1px solid rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(52, 168, 83, 0.2);
         }
 
         .page-title {
             text-align: left;
             margin-bottom: 25px;
-            color: var(--text-light);
+            color: var(--text-color);
             font-size: 1.0rem;
             font-weight: 600;
         }
@@ -277,8 +261,8 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background: var(--container-light);
-            box-shadow: 2px 0 15px var(--shadow-light);
+            background: var(--container-color);
+            box-shadow: 2px 0 15px var(--shadow-color);
             transition: var(--transition);
             padding: 20px 0;
             z-index: 1001;
@@ -298,7 +282,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-light);
+            color: var(--text-color);
             font-size: 16px;
             text-decoration: none;
             transition: var(--transition);
@@ -313,19 +297,19 @@
         }
 
         .menu-item:hover {
-            background-color: var(--hover-light);
+            background-color: var(--hover-color);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-light);
+            border-top: 1px solid var(--border-color);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #dc3545;
+            color: #ea4335;
             font-size: 16px;
             text-decoration: none;
             display: flex;
@@ -335,7 +319,7 @@
         }
 
         .menu-logout:hover {
-            background-color: rgba(220, 53, 69, 0.1);
+            background-color: rgba(234, 67, 53, 0.1);
         }
 
         /* Desktop Menu */
@@ -395,96 +379,7 @@
             }
 
             .menu-close-btn:hover {
-                color: #dc3545;
-            }
-        }
-
-        /* Dark Mode Styles */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .header {
-                background: var(--primary-gradient-dark);
-            }
-
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 4px 20px var(--shadow-dark);
-                border-color: var(--border-dark);
-            }
-
-            .container-header {
-                background: var(--primary-gradient-dark);
-                border-color: var(--border-dark);
-            }
-
-            .form-label {
-                color: var(--text-dark);
-            }
-
-            .input-box {
-                background: var(--container-dark);
-                border-color: var(--border-dark);
-                color: var(--text-dark);
-            }
-
-            .input-box[readonly] {
-                background-color: rgba(255, 255, 255, 0.05);
-                border-color: var(--border-dark);
-            }
-
-            .input-box:focus {
-                border-color: var(--button-dark);
-                box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-            }
-
-            .copy-icon {
-                color: var(--label-dark);
-            }
-
-            .copy-icon:hover {
-                color: var(--button-dark);
-            }
-
-            .copy-notification {
-                background: var(--text-dark);
-                color: var(--container-dark);
-            }
-
-            .error-message {
-                background-color: rgba(234, 67, 53, 0.1);
-                color: var(--failed-dark);
-                border-color: rgba(234, 67, 53, 0.2);
-            }
-
-            .success-message {
-                background-color: rgba(52, 168, 83, 0.1);
-                color: var(--success-dark);
-                border-color: rgba(52, 168, 83, 0.2);
-            }
-
-            .page-title {
-                color: var(--text-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-                box-shadow: 2px 0 15px var(--shadow-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: var(--hover-dark);
-            }
-
-            .menu-footer {
-                border-color: var(--border-dark);
+                color: #ea4335;
             }
         }
 
