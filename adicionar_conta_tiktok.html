@@ -9,16 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-light: #f8f9fa;
-            --text-light: #212529;
-            --container-light: #ffffff;
-            --success-color: #28a745;
-            --pending-color: #1e1e1e;
-            --failed-color: #dc3545;
-            --border-light: #dee2e6;
-            --hover-light: #f1f1f1;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-
             --bg-dark: #121212;
             --text-dark: #e0e0e0;
             --container-dark: #1e1e1e;
@@ -29,14 +19,13 @@
             --border-dark: #333333;
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
-
             --card-radius: 12px;
             --transition: all 0.3s ease;
         }
 
         body {
-            background-color: var(--bg-light);
-            color: var(--text-light);
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -58,9 +47,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 25px;
-            background: var(--primary-gradient);
+            background: var(--primary-gradient-dark);
             color: white;
-            box-shadow: 0 2px 10px var(--shadow-light);
+            box-shadow: 0 2px 10px var(--shadow-dark);
             position: relative;
             z-index: 10;
         }
@@ -90,19 +79,19 @@
         }
 
         .container {
-            background: var(--container-light);
+            background: var(--container-dark);
             border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-light);
+            box-shadow: 0 4px 20px var(--shadow-dark);
             overflow: hidden;
             transition: var(--transition);
             margin-bottom: 30px;
-            border: 1px solid var(--border-light);
+            border: 1px solid var(--border-dark);
         }
 
         .container-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border-light);
-            background: var(--primary-gradient);
+            border-bottom: 1px solid var(--border-dark);
+            background: var(--primary-gradient-dark);
             color: white;
         }
 
@@ -121,8 +110,8 @@
 
         /* Requirements Box */
         .requirements-box {
-            background-color: #fff8e1;
-            border-left: 4px solid var(--pending-color);
+            background-color: #1e1e1e;
+            border-left: 4px solid var(--pending-dark);
             padding: 15px;
             margin-bottom: 20px;
             text-align: left;
@@ -132,7 +121,7 @@
 
         .requirements-box h3 {
             margin-top: 0;
-            color: var(--pending-color);
+            color: var(--pending-dark);
             font-size: 15px;
             margin-bottom: 10px;
             display: flex;
@@ -156,9 +145,9 @@
             padding: 12px 15px;
             margin: 15px 0;
             border-radius: 6px;
-            border: 1px solid var(--border-light);
-            background: var(--container-light);
-            color: var(--text-light);
+            border: 1px solid var(--border-dark);
+            background: var(--container-dark);
+            color: var(--text-dark);
             transition: var(--transition);
             box-sizing: border-box;
             font-size: 14px;
@@ -166,12 +155,12 @@
 
         .input-box:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(20, 20, 20, 0.25);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.25);
         }
 
         /* Button Styles */
         .btn-primary {
-            background: var(--button-light);
+            background: var(--button-dark);
             color: white;
             border: none;
             padding: 12px 20px;
@@ -186,6 +175,12 @@
             width: 100%;
             margin-top: 10px;
             position: relative;
+        }
+
+        .btn-primary:hover {
+            background: #1669d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
         }
 
         /* Loading State */
@@ -230,15 +225,15 @@
         }
 
         .error-message {
-            background-color: rgba(220, 53, 69, 0.1);
-            border-left: 4px solid var(--failed-color);
-            color: var(--failed-color);
+            background-color: rgba(234, 67, 53, 0.1);
+            border-left: 4px solid var(--failed-dark);
+            color: var(--failed-dark);
         }
 
         .success-message {
-            background-color: rgba(40, 167, 69, 0.1);
-            border-left: 4px solid var(--success-color);
-            color: var(--success-color);
+            background-color: rgba(52, 168, 83, 0.1);
+            border-left: 4px solid var(--success-dark);
+            color: var(--success-dark);
         }
 
         /* Menu Styles */
@@ -278,8 +273,8 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background: var(--container-light);
-            box-shadow: 2px 0 15px var(--shadow-light);
+            background: var(--container-dark);
+            box-shadow: 2px 0 15px var(--shadow-dark);
             transition: var(--transition);
             padding: 20px 0;
             z-index: 1001;
@@ -299,7 +294,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-light);
+            color: var(--text-dark);
             font-size: 16px;
             text-decoration: none;
             transition: var(--transition);
@@ -314,19 +309,19 @@
         }
 
         .menu-item:hover {
-            background-color: var(--hover-light);
+            background-color: var(--hover-dark);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-light);
+            border-top: 1px solid var(--border-dark);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #dc3545;
+            color: #ea4335;
             font-size: 16px;
             text-decoration: none;
             display: flex;
@@ -336,79 +331,7 @@
         }
 
         .menu-logout:hover {
-            background-color: rgba(220, 53, 69, 0.1);
-        }
-
-        /* Dark Mode Styles */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: var(--bg-dark);
-                color: var(--text-dark);
-            }
-
-            .header {
-                background: var(--primary-gradient-dark);
-            }
-
-            .container {
-                background: var(--container-dark);
-                box-shadow: 0 4px 20px var(--shadow-dark);
-                border-color: var(--border-dark);
-            }
-
-            .container-header {
-                background: var(--primary-gradient-dark);
-                border-color: var(--border-dark);
-            }
-
-            .requirements-box {
-                background-color: #1e1e1e;
-                border-left-color: var(--pending-dark);
-            }
-
-            .requirements-box h3 {
-                color: var(--pending-dark);
-            }
-
-            .input-box {
-                background: var(--container-dark);
-                border-color: var(--border-dark);
-                color: var(--text-dark);
-            }
-
-            .btn-primary {
-                background: var(--button-dark);
-            }
-
-
-            .error-message {
-                background-color: rgba(234, 67, 53, 0.1);
-                border-left-color: var(--failed-dark);
-                color: var(--failed-dark);
-            }
-
-            .success-message {
-                background-color: rgba(52, 168, 83, 0.1);
-                border-left-color: var(--success-dark);
-                color: var(--success-dark);
-            }
-
-            .menu-content {
-                background: var(--container-dark);
-                box-shadow: 2px 0 15px var(--shadow-dark);
-            }
-
-            .menu-item {
-                color: var(--text-dark);
-            }
-
-            .menu-item:hover {
-                background-color: var(--hover-dark);
-            }
-
-            .menu-footer {
-                border-color: var(--border-dark);
-            }
+            background-color: rgba(234, 67, 53, 0.1);
         }
 
         /* Responsive Styles */
@@ -510,7 +433,7 @@
             }
 
             .menu-close-btn:hover {
-                color: #dc3545;
+                color: #ea4335;
             }
         }
 
