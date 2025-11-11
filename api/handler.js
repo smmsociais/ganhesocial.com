@@ -1807,7 +1807,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // Parâmetros de tempo
     const agora = Date.now();
-    const dezMinutos = 10 * 60 * 1000;
+    const dezMinutos = 1 * 60 * 1000;
     const hoje = new Date().toLocaleDateString("pt-BR");
 
     // Reset por ENV ou query ?reset=true (manual)
