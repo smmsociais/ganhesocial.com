@@ -1837,35 +1837,41 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       });
     }
 
-    // 🔝 Define top 3 fixos diários (somente 1x por dia)
-    if (!top3FixosHoje || diaTop3 !== hoje) {
-      ranking.sort((a, b) => b.total_balance - a.total_balance);
-      top3FixosHoje = ranking.slice(0, 3);
-      diaTop3 = hoje;
-      console.log("🏆 Novo top3 diário definido:", top3FixosHoje.map(u => u.username));
-    }
+// 🔝 Define top 3 fixos diários (somente 1x por dia)
+if (!top3FixosHoje || diaTop3 !== hoje) {
+  ranking.sort((a, b) => b.total_balance - a.total_balance);
+  top3FixosHoje = ranking.slice(0, 3);
+  diaTop3 = hoje;
+  console.log("🏆 Novo top3 diário definido:", top3FixosHoje.map(u => `${u.username} (${u.total_balance})`));
+}
 
-    // Mantém os 3 primeiros fixos, embaralha os outros
-    const restantes = ranking.filter(u => !top3FixosHoje.some(t => t.username === u.username));
-    for (let i = restantes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
-    }
+// Mantém os 3 primeiros fixos (em ordem correta)
+ranking.sort((a, b) => b.total_balance - a.total_balance);
 
-    ranking = [...top3FixosHoje, ...restantes];
+// Filtra os restantes e embaralha apenas eles
+const idsTop3 = top3FixosHoje.map(t => t.username);
+const restantes = ranking.filter(u => !idsTop3.includes(u.username));
+for (let i = restantes.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
+}
 
-    // Aplica formatação final
-    ranking = ranking.map((item, i) => ({
-      position: i + 1,
-      username: item.username,
-      total_balance: formatarValorRanking(item.total_balance),
-      is_current_user: item.is_current_user
-    }));
+// Reúne novamente: top3 fixos (ordenados) + restantes embaralhados
+ranking = [...top3FixosHoje, ...restantes];
 
-    ultimoRanking = ranking;
-    ultimaAtualizacao = agora;
+// 🔢 Ordena apenas visualmente pela posição (1 a 10)
+ranking = ranking.slice(0, 10).map((item, i) => ({
+  position: i + 1,
+  username: item.username,
+  total_balance: formatarValorRanking(item.total_balance),
+  is_current_user: item.is_current_user
+}));
 
-    return res.status(200).json({ ranking });
+ultimoRanking = ranking;
+ultimaAtualizacao = agora;
+
+return res.status(200).json({ ranking });
+
   } catch (error) {
     console.error("❌ Erro ao buscar ranking:", error);
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
