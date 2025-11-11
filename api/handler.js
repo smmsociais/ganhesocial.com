@@ -2003,7 +2003,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // inicializa horaInicioRanking se necessário
     if (!horaInicioRanking) horaInicioRanking = agora;
 
-    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (1 * 60 * 1000));
 
     finalRankingRaw = finalRankingRaw.map((item, idx) => ({
       ...item,
