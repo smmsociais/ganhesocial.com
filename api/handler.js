@@ -1826,7 +1826,7 @@ let ranking = ganhosPorUsuario
 // Completa com nomes fixos se necessário (com real_total numérico)
 const nomesFixos = [
   "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","KingdosMTD🥱🥱","kaduzinho",
+  "-","joaozinxx_","brunno777","-","KingdosMTD🥱🥱","kaduzinho",
   "Rei do ttk 👑","Deus🔥","Mago ✟","ldzz tiktok'uva🍇","unknown",
   "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
   "Lipe Rodagem Interna 😄","dequelbest 🧙","luiza","xxxxxxxxxx",
