@@ -15,16 +15,24 @@ let diaTop3 = null;
 let horaInicioRanking = null;
 
 export default async function handler(req, res) {
-    const { method, url } = req;
+    const { method, url, query } = req;
 
-    // 🔥 RESET MANUAL DO RANKING (via variável de ambiente)
-    if (process.env.RESET_RANKING === 'true') {
+    // 🚨 RESET MANUAL DO RANKING (via variável de ambiente OU parâmetro na URL)
+    const resetPorEnv = process.env.RESET_RANKING === 'true';
+    const resetPorURL = query?.reset === 'true';
+
+    if (resetPorEnv || resetPorURL) {
         ultimoRanking = null;
         ultimaAtualizacao = 0;
         top3FixosHoje = null;
         diaTop3 = null;
         horaInicioRanking = Date.now();
-        console.log("🔥 Ranking reiniciado manualmente via variável de ambiente");
+        console.log("🔥 Ranking reiniciado manualmente", resetPorEnv ? "(via ENV)" : "(via URL)");
+
+        // Se foi via URL, envia resposta imediata
+        if (resetPorURL) {
+            return res.status(200).json({ success: true, message: "Ranking reiniciado manualmente via URL." });
+        }
     }
 
     async function salvarAcaoComLimitePorUsuario(novaAcao) {
