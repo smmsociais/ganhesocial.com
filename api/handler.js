@@ -1786,15 +1786,18 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
   }
 
   const { token: bodyToken } = req.body || {};
+  const query = req.query || {};
 
   try {
     await connectDB();
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader && !bodyToken) {
-      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-    }
+    // tempo / dia
+    const agora = Date.now();
+    const dezMinutos = 10 * 60 * 1000;
+    const hoje = new Date().toLocaleDateString("pt-BR");
 
+    // autenticação (prefere header Authorization Bearer)
+    const authHeader = req.headers.authorization;
     const tokenFromHeader =
       authHeader && authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
@@ -1805,20 +1808,32 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const user = await User.findOne({ token: effectiveToken });
     if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-    // Parâmetros de tempo
-    const agora = Date.now();
-    const dezMinutos = 1 * 60 * 1000;
-    const hoje = new Date().toLocaleDateString("pt-BR");
+    // === 1) Tenta carregar dailyFixedRanking do DB (se houver para hoje) ===
+    if (!dailyFixedRanking || diaTop3 !== hoje) {
+      try {
+        const saved = await DailyRanking.findOne({ data: hoje }).lean();
+        if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
+          dailyFixedRanking = saved.ranking.map(r => ({ ...r }));
+          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+          diaTop3 = hoje;
+          horaInicioRanking = horaInicioRanking || agora;
+          zeroedAtMidnight = false;
+          console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
+        }
+      } catch (e) {
+        console.error("Erro ao carregar DailyRanking do DB:", e);
+      }
+    }
 
-    // Reset por ENV ou query ?reset=true (manual)
+    // === 2) Reset manual via ENV ou URL ?reset=true ===
     const resetPorEnv = process.env.RESET_RANKING === "true";
-    const resetPorURL = (req.query && req.query.reset === "true") || false;
+    const resetPorURL = query.reset === "true";
     if (resetPorEnv || resetPorURL) {
-      // limpa DB e saldos
+      // limpa DB de ganhos e zera saldos dos usuários
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // cria dailyFixedRanking novo ao reset (escolhe 10 usuários aleatórios do DB)
+      // cria dailyFixedRanking novo (sample de 10 usuários do DB)
       let sampled = [];
       try {
         sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
@@ -1851,7 +1866,19 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         }
       }
 
-      // define top3FixosHoje a partir da dailyFixedRanking
+      // salva/persiste dailyFixedRanking no DB para hoje
+      try {
+        await DailyRanking.findOneAndUpdate(
+          { data: hoje },
+          { ranking: dailyFixedRanking, criadoEm: new Date() },
+          { upsert: true, new: true }
+        );
+        console.log("💾 dailyFixedRanking salvo no DB (reset).");
+      } catch (e) {
+        console.error("Erro ao salvar DailyRanking no DB (reset):", e);
+      }
+
+      // define controles
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
       horaInicioRanking = agora;
@@ -1862,19 +1889,22 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       console.log("🔥 Reset manual/env — dailyFixedRanking criado:", dailyFixedRanking.map(d => d.username));
 
       if (resetPorURL) {
-        // Retorna placeholder + mensagem para testes
         const placeholder = dailyFixedRanking.map((d, i) => ({
           position: i + 1,
           username: d.username,
           total_balance: formatarValorRanking(d.real_total),
           is_current_user: !!d.is_current_user
         }));
-        return res.status(200).json({ success: true, message: "Ranking e saldos zerados (reset manual).", ranking: placeholder });
+        return res.status(200).json({
+          success: true,
+          message: "Ranking e saldos zerados (reset manual).",
+          ranking: placeholder
+        });
       }
-      // se reset por env: continue para fluxo normal (cache check)
+      // se reset por env, continua o fluxo (cache check abaixo)
     }
 
-    // Reset automático à meia-noite: se diaTop3 não é hoje (ou undefined) e já existia dia anterior
+    // === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
     if (diaTop3 && diaTop3 !== hoje) {
       console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
 
@@ -1915,6 +1945,18 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         }
       }
 
+      // persiste no DB
+      try {
+        await DailyRanking.findOneAndUpdate(
+          { data: hoje },
+          { ranking: dailyFixedRanking, criadoEm: new Date() },
+          { upsert: true, new: true }
+        );
+        console.log("💾 dailyFixedRanking salvo no DB (midnight reset).");
+      } catch (e) {
+        console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
+      }
+
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
       horaInicioRanking = agora;
@@ -1922,53 +1964,33 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       ultimaAtualizacao = agora;
       zeroedAtMidnight = true;
 
-      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
-
-      // responde imediatamente com placeholders vazios (ou com dailyFixedRanking)
       const placeholder = dailyFixedRanking.map((d, i) => ({
         position: i + 1,
         username: d.username,
         total_balance: formatarValorRanking(d.real_total),
         is_current_user: !!d.is_current_user
       }));
+
+      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
       return res.status(200).json({ ranking: placeholder });
     }
 
-    // Se cache válido (mesmo dia e menos de 10 min), retorna
+    // === 4) Cache check (mesmo dia e menos de 10 min) ===
     if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
       return res.status(200).json({ ranking: ultimoRanking });
     }
 
-    // --- Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ---
+    // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ===
     let baseRankingRaw = null;
     if (dailyFixedRanking && diaTop3 === hoje) {
       baseRankingRaw = dailyFixedRanking.map(u => ({ ...u })); // clone
     } else {
-      // gera a partir do DB (fallback)
+      // fallback: gera a partir do DB
       const ganhosPorUsuario = await DailyEarning.aggregate([
-        {
-          $group: {
-            _id: "$userId",
-            totalGanhos: { $sum: "$valor" },
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "usuario",
-          },
-        },
+        { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
         { $unwind: "$usuario" },
-        {
-          $project: {
-            _id: 0,
-            username: { $ifNull: ["$usuario.nome", "Usuário"] },
-            total_balance: "$totalGanhos",
-            token: "$usuario.token",
-          },
-        },
+        { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
       ]);
 
       baseRankingRaw = (ganhosPorUsuario || [])
@@ -1980,7 +2002,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           is_current_user: item.token === effectiveToken,
         }));
 
-      // completa até 10 com fallback (não aleatório a cada request)
+      // completa até 10 com fallback estático (determinístico)
       const NAMES_POOL2 = [
         "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
         "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
@@ -1990,32 +2012,29 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
       }
 
-      // ordena caso venha do DB
       baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
     }
 
-    // Limita a 10 posições
+    // === 6) Limita a 10 posições ===
     let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
-    // === Ganhos progressivos por posição (a cada 10 minutos)
+    // === 7) Ganhos progressivos por posição (a cada 10 minutos) ===
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
 
-    // inicializa horaInicioRanking se necessário
     if (!horaInicioRanking) horaInicioRanking = agora;
-
-    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (1 * 60 * 1000));
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
 
     finalRankingRaw = finalRankingRaw.map((item, idx) => ({
       ...item,
       real_total: (Number(item.real_total) || 0) + (ganhosPorPosicao[idx] || 0) * intervalosDecorridos,
     }));
 
-    // --- Formata para resposta ---
+    // === 8) Formata e responde ===
     const finalRanking = finalRankingRaw.map((item, idx) => ({
       position: idx + 1,
       username: item.username,
       total_balance: formatarValorRanking(item.real_total),
-      is_current_user: !!item.is_current_user,
+      is_current_user: !!(item.token && item.token === effectiveToken),
     }));
 
     // Atualiza cache
