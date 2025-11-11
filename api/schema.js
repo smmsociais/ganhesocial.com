@@ -125,17 +125,21 @@ TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   Persistimos o ranking fixo do dia (10 nomes) para sobreviver a reinícios do container.
   Campo `data` é a string no formato "dd/mm/yyyy" (mesma formatação usada em diaTop3).
 */
+// 🔹 Schema para Ranking Diário
 const DailyRankingSchema = new mongoose.Schema({
-  data: { type: String, required: true }, // exemplo: "11/11/2025"
-  ranking: [
-    {
-      username: { type: String, required: true },
-      token: { type: String, default: null },
-      real_total: { type: Number, default: 0 },
-      is_current_user: { type: Boolean, default: false }
-    }
-  ],
-  criadoEm: { type: Date, default: Date.now }
+  data: {
+    type: String, // ex: "11/11/2025"
+    required: true,
+    unique: true
+  },
+  ranking: {
+    type: Array,
+    default: []
+  },
+  criadoEm: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 // índice único por data para garantir máximo 1 documento por dia
