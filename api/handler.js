@@ -7,43 +7,45 @@ import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-// 🧠 Cache global de ranking
-let ultimoRanking = null;
-let ultimaAtualizacao = 0;
-let top3FixosHoje = null;
-let diaTop3 = null;
-let horaInicioRanking = null;
-
 export default async function handler(req, res) {
     const { method, url } = req;
 
+    // 🔥 RESET MANUAL DO RANKING (via variável de ambiente)
+    if (process.env.RESET_RANKING === 'true') {
+        ultimoRanking = null;
+        ultimaAtualizacao = 0;
+        top3FixosHoje = null;
+        diaTop3 = null;
+        horaInicioRanking = Date.now();
+        console.log("🔥 Ranking reiniciado manualmente via variável de ambiente");
+    }
+
     async function salvarAcaoComLimitePorUsuario(novaAcao) {
-      const LIMITE = 2000;
+        const LIMITE = 2000;
+        const total = await ActionHistory.countDocuments({ user: novaAcao.user });
 
-      const total = await ActionHistory.countDocuments({ user: novaAcao.user });
+        if (total >= LIMITE) {
+            const excess = total - LIMITE + 1;
+            await ActionHistory.find({ user: novaAcao.user })
+                .sort({ createdAt: 1 })
+                .limit(excess)
+                .deleteMany();
+        }
 
-      if (total >= LIMITE) {
-        const excess = total - LIMITE + 1;
-        await ActionHistory.find({ user: novaAcao.user })
-          .sort({ createdAt: 1 })
-          .limit(excess)
-          .deleteMany();
-      }
-
-      await novaAcao.save();
+        await novaAcao.save();
     }
 
     const formatarValorRanking = (valor) => {
-      if (valor <= 1) return "1+";
-      if (valor > 1 && valor < 5) return "1+";
-      if (valor < 10) return "5+";
-      if (valor < 50) return "10+";
-      if (valor < 100) return "50+";
-      if (valor < 500) return "100+";
-      if (valor < 1000) return "500+";
-      const base = Math.floor(valor / 1000) * 1000;
-      return `${base}+`;
-    }
+        if (valor <= 1) return "1+";
+        if (valor > 1 && valor < 5) return "1+";
+        if (valor < 10) return "5+";
+        if (valor < 50) return "10+";
+        if (valor < 100) return "50+";
+        if (valor < 500) return "100+";
+        if (valor < 1000) return "500+";
+        const base = Math.floor(valor / 1000) * 1000;
+        return `${base}+`;
+    };
 
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
