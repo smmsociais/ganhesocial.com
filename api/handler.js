@@ -1814,63 +1814,73 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       }
     ]);
 
-    // Filtro: remove quem tem ganhos <= 1
-    let ranking = ganhosPorUsuario
-      .filter(item => item.total_balance > 1)
-      .map(item => ({
-        username: item.username,
-        total_balance: item.total_balance,
-        is_current_user: item.token === effectiveToken
-      }));
+// --- depois de obter ganhosPorUsuario (agora mapeamos para manter real_total) ---
+let ranking = ganhosPorUsuario
+  .filter(item => item.totalGanhos > 1)
+  .map(item => ({
+    username: item.username || "Usuário",
+    real_total: Number(item.totalGanhos),   // valor numérico real usado para ordenar
+    is_current_user: item.token === effectiveToken
+  }));
 
-    // Garante mínimo de 10 posições
-    const nomesFixos = [
-      "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
-      "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2", "ana_follow", "kaduzinho"
-    ];
-    while (ranking.length < 10) {
-      const nome = nomesFixos[ranking.length % nomesFixos.length];
-      ranking.push({
-        username: nome,
-        total_balance: Math.floor(Math.random() * 500) + 50,
-        is_current_user: false
-      });
-    }
-
-// 🔝 Define top 3 fixos diários (somente 1x por dia)
-if (!top3FixosHoje || diaTop3 !== hoje) {
-  ranking.sort((a, b) => b.total_balance - a.total_balance);
-  top3FixosHoje = ranking.slice(0, 3);
-  diaTop3 = hoje;
-  console.log("🏆 Novo top3 diário definido:", top3FixosHoje.map(u => `${u.username} (${u.total_balance})`));
+// Completa com nomes fixos se necessário (com real_total numérico)
+const nomesFixos = [
+  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+];
+while (ranking.length < 10) {
+  const nome = nomesFixos[ranking.length % nomesFixos.length];
+  ranking.push({
+    username: nome,
+    real_total: Math.floor(Math.random() * 500) + 50,
+    is_current_user: false
+  });
 }
 
-// Mantém os 3 primeiros fixos (em ordem correta)
-ranking.sort((a, b) => b.total_balance - a.total_balance);
+// Ordena pelo real_total (maior → menor)
+ranking.sort((a, b) => b.real_total - a.real_total);
 
-// Filtra os restantes e embaralha apenas eles
-const idsTop3 = top3FixosHoje.map(t => t.username);
-const restantes = ranking.filter(u => !idsTop3.includes(u.username));
+// Define top3 fixos por dia — GUARDE os objetos com real_total
+if (!top3FixosHoje || diaTop3 !== hoje) {
+  top3FixosHoje = ranking.slice(0, 3).map(u => ({ ...u })); // clone para segurança
+  diaTop3 = hoje;
+  console.log("🏆 Novo top3 diário:", top3FixosHoje.map(u => `${u.username} (${u.real_total})`));
+} else {
+  // Garantir que top3FixosHoje esteja sempre ordenado por real_total (por segurança)
+  top3FixosHoje.sort((a, b) => b.real_total - a.real_total);
+}
+
+// Agora constrói os restantes: exclui usernames dos top3 fixos (por username)
+const top3Usernames = top3FixosHoje.map(t => t.username);
+let restantes = ranking.filter(u => !top3Usernames.includes(u.username));
+
+// Embaralha apenas os restantes (4º em diante)
 for (let i = restantes.length - 1; i > 0; i--) {
   const j = Math.floor(Math.random() * (i + 1));
   [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
 }
 
-// Reúne novamente: top3 fixos (ordenados) + restantes embaralhados
-ranking = [...top3FixosHoje, ...restantes];
+// Junta top3 fixos (em ordem decrescente garantida) + restantes embaralhados
+let finalRankingRaw = [...top3FixosHoje, ...restantes];
 
-// 🔢 Ordena apenas visualmente pela posição (1 a 10)
-ranking = ranking.slice(0, 10).map((item, i) => ({
-  position: i + 1,
+// Pega apenas as top 10 posições
+finalRankingRaw = finalRankingRaw.slice(0, 10);
+
+// Finalmente, formata só para exibição (mantendo o real_total internamente não necessário a partir daqui)
+const finalRanking = finalRankingRaw.map((item, idx) => ({
+  position: idx + 1,
   username: item.username,
-  total_balance: formatarValorRanking(item.total_balance),
-  is_current_user: item.is_current_user
+  // usa o real_total para formatar corretamente (apenas para exibição)
+  total_balance: formatarValorRanking(item.real_total),
+  is_current_user: !!item.is_current_user
 }));
 
-ultimoRanking = ranking;
+// Atualiza cache e retorna
+ultimoRanking = finalRanking;
 ultimaAtualizacao = agora;
 
-return res.status(200).json({ ranking });
+console.log("🔢 final top3 (numeros reais):", top3FixosHoje.map(u => `${u.username}=${u.real_total}`));
+return res.status(200).json({ ranking: finalRanking });
 
   } catch (error) {
     console.error("❌ Erro ao buscar ranking:", error);
