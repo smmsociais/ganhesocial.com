@@ -1793,7 +1793,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // tempo / dia
     const agora = Date.now();
 
-    // <-- CACHE ajustado para 1 minuto para permitir updates por minuto -->
+    // CACHE curto para permitir updates por minuto
     const CACHE_MS = 1 * 60 * 1000; // 1 minuto
     const hoje = new Date().toLocaleDateString("pt-BR");
 
@@ -1809,15 +1809,32 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const user = await User.findOne({ token: effectiveToken });
     if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-    // === 1) Tenta carregar dailyFixedRanking do DB (se houver para hoje) ===
+    // --- 1) carregar dailyFixedRanking do DB (normalizando strings -> objetos) ---
     if (!dailyFixedRanking || diaTop3 !== hoje) {
       try {
         const saved = await DailyRanking.findOne({ data: hoje }).lean();
         if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
-          dailyFixedRanking = saved.ranking.map(r => ({ ...r }));
+          dailyFixedRanking = saved.ranking.map(entry => {
+            if (typeof entry === "string") {
+              return { username: entry, token: null, real_total: 0, is_current_user: false };
+            }
+            return {
+              username: entry.username ?? (entry.nome ?? "Usuário"),
+              token: entry.token ?? null,
+              real_total: Number(entry.real_total ?? 0),
+              is_current_user: !!entry.is_current_user
+            };
+          });
+
+          // restaura horaInicioRanking a partir do saved.startAt (se existir)
+          if (saved.startAt) {
+            horaInicioRanking = new Date(saved.startAt).getTime();
+          } else {
+            horaInicioRanking = horaInicioRanking || agora;
+          }
+
           top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
           diaTop3 = hoje;
-          horaInicioRanking = horaInicioRanking || agora;
           zeroedAtMidnight = false;
           console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
         }
@@ -1826,15 +1843,14 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       }
     }
 
-    // === 2) Reset manual via ENV ou URL ?reset=true ===
+    // === 2) reset manual via ENV ou URL ?reset=true ===
     const resetPorEnv = process.env.RESET_RANKING === "true";
     const resetPorURL = query.reset === "true";
     if (resetPorEnv || resetPorURL) {
-      // limpa DB de ganhos e zera saldos dos usuários
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // cria dailyFixedRanking novo (sample de 10 usuários do DB)
+      // sample 10 users do DB
       let sampled = [];
       try {
         sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
@@ -1867,19 +1883,19 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         }
       }
 
-      // salva/persiste dailyFixedRanking no DB para hoje
+      // persiste com startAt para garantir progressão por minutos
+      const startAtDate = new Date(agora);
       try {
         await DailyRanking.findOneAndUpdate(
           { data: hoje },
-          { ranking: dailyFixedRanking, criadoEm: new Date() },
+          { ranking: dailyFixedRanking, startAt: startAtDate, criadoEm: new Date() },
           { upsert: true, new: true }
         );
-        console.log("💾 dailyFixedRanking salvo no DB (reset).");
+        console.log("💾 dailyFixedRanking salvo no DB (reset) com startAt:", startAtDate.toISOString());
       } catch (e) {
         console.error("Erro ao salvar DailyRanking no DB (reset):", e);
       }
 
-      // define controles
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
       horaInicioRanking = agora;
@@ -1902,18 +1918,15 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           ranking: placeholder
         });
       }
-      // se reset por env, continua o fluxo (cache check abaixo)
     }
 
-    // === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
+    // === 3) reset automático à meia-noite (quando detecta mudança de dia) ===
     if (diaTop3 && diaTop3 !== hoje) {
       console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
 
-      // zera ganhos e saldos
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // recria dailyFixedRanking (10 nomes aleatórios do DB)
       let sampled = [];
       try {
         sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
@@ -1946,14 +1959,14 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         }
       }
 
-      // persiste no DB
+      const startAtDate = new Date(agora);
       try {
         await DailyRanking.findOneAndUpdate(
           { data: hoje },
-          { ranking: dailyFixedRanking, criadoEm: new Date() },
+          { ranking: dailyFixedRanking, startAt: startAtDate, criadoEm: new Date() },
           { upsert: true, new: true }
         );
-        console.log("💾 dailyFixedRanking salvo no DB (midnight reset).");
+        console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", startAtDate.toISOString());
       } catch (e) {
         console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
       }
@@ -2022,11 +2035,15 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // === 7) Ganhos progressivos por posição (agora por minuto) ===
     // valores originais eram por 10 minutos; aqui calculamos ganho por MINUTO
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
-    const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // divide por 10 -> ganho por 1 minuto
+    const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
 
-    // calcula quantos minutos se passaram desde horaInicioRanking
-    if (!horaInicioRanking) horaInicioRanking = agora;
-    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (1 * 60 * 1000));
+    // inicializa horaInicioRanking se necessário (não sobrescrever se já veio do DB)
+    if (!horaInicioRanking) {
+      horaInicioRanking = agora;
+      console.log("⏱ horaInicioRanking inicializada em:", new Date(horaInicioRanking).toISOString());
+    }
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (60 * 1000));
+    console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(horaInicioRanking).toISOString());
 
     finalRankingRaw = finalRankingRaw.map((item, idx) => {
       const incremento = (perMinuteGain[idx] || 0) * intervalosDecorridos;
@@ -2035,6 +2052,9 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         real_total: (Number(item.real_total) || 0) + incremento,
       };
     });
+
+    // logs debug do pré-format
+    console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r,i) => `${i+1}=${r.username}:${(r.real_total||0).toFixed(2)}`));
 
     // === 8) Formata e responde ===
     const finalRanking = finalRankingRaw.map((item, idx) => ({
@@ -2057,6 +2077,5 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
   }
 }
-
     return res.status(404).json({ error: "Rota não encontrada." });
 }
