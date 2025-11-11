@@ -1,44 +1,46 @@
 import axios from "axios";
-import https from "https";
-import { v4 as uuidv4 } from "uuid";
+import https from 'https';
+import { v4 as uuidv4 } from 'uuid';
 import connectDB from "./db.js";
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-/* === Funções auxiliares fora do handler === */
-async function salvarAcaoComLimitePorUsuario(novaAcao) {
-  const LIMITE = 2000;
+// Cache global do ranking (compartilhado entre requisições)
+let ultimoRanking = null;
+let ultimaAtualizacao = 0;
 
-  const total = await ActionHistory.countDocuments({ user: novaAcao.user });
-
-  if (total >= LIMITE) {
-    const excess = total - LIMITE + 1; // +1 para abrir espaço
-    await ActionHistory.find({ user: novaAcao.user })
-      .sort({ createdAt: 1 }) // mais antigos primeiro
-      .limit(excess)
-      .deleteMany();
-  }
-
-  await novaAcao.save();
-}
-
-function formatarValorRanking(valor) {
-  if (valor <= 1) return "1+";
-  if (valor > 1 && valor < 5) return "1+";
-  if (valor < 10) return "5+";
-  if (valor < 50) return "10+";
-  if (valor < 100) return "50+";
-  if (valor < 500) return "100+";
-  if (valor < 1000) return "500+";
-  const base = Math.floor(valor / 1000) * 1000;
-  return `${base}+`;
-}
-
-/* === Handler principal === */
 export default async function handler(req, res) {
-  const { method, url } = req;
+    const { method, url } = req;
+
+    async function salvarAcaoComLimitePorUsuario(novaAcao) {
+      const LIMITE = 2000;
+
+      const total = await ActionHistory.countDocuments({ user: novaAcao.user });
+
+      if (total >= LIMITE) {
+        const excess = total - LIMITE + 1;
+        await ActionHistory.find({ user: novaAcao.user })
+          .sort({ createdAt: 1 })
+          .limit(excess)
+          .deleteMany();
+      }
+
+      await novaAcao.save();
+    }
+
+    const formatarValorRanking = (valor) => {
+      if (valor <= 1) return "1+";
+      if (valor > 1 && valor < 5) return "1+";
+      if (valor < 10) return "5+";
+      if (valor < 50) return "10+";
+      if (valor < 100) return "50+";
+      if (valor < 500) return "100+";
+      if (valor < 1000) return "500+";
+      const base = Math.floor(valor / 1000) * 1000;
+      return `${base}+`;
+    }
 
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
