@@ -782,153 +782,64 @@
                 console.error("Erro ao carregar saldo:", error);
             }
         }
-        
-/* === CONFIGURAÇÕES === */
-const RANK_SIZE = 10;               // Quantas posições no ranking
-const UPDATE_INTERVAL_MS = 30_000;  // Atualizar a cada 30s (ajuste)
-const TOP_MAX_BASE = 5000;          // Valor máximo aproximado para o 1º lugar no fim do dia
-const DECAY_FACTOR = 0.62;          // Queda de valor entre posições (0.6 = cai 40% por posição)
 
-/* === LISTA DE NOMES ALEATÓRIOS (adicione mais para naturalidade) === */
-const NAMES_POOL = [
-  "Allef 🔥","Caioo ⚡","lucasvz___xzz 💪","melzinho_443","noname",
-  "Marina","Rafa","Luan","Bia","Kauã","Gabi","Teteu","Nando",
-  "vinny","Carol","Pietro","Sora","Lia","Júlio","Nina","Otto",
-  "Vivi","Dudu","Thais","Mica","Luiza","Renan","Felipe","Paula",
-  "André","Léo","Fael","Sara","Igor","Bianca"
-];
+        // Função para formatar valores do ranking conforme o exemplo
+        const formatarValorRanking = (valor) => {
+            if (valor <= 1) return "1+";
+            if (valor > 1 && valor < 5) return "1+";
+            if (valor < 10) return "5+";
+            if (valor < 50) return "10+";
+            if (valor < 100) return "50+";
+            if (valor < 500) return "100+";
+            if (valor < 1000) return "500+";
+            const base = Math.floor(valor / 1000) * 1000;
+            return `${base}+`;
+        };
 
-/* === FUNÇÕES UTILITÁRIAS === */
+        // Função para gerar ranking fixo com valores em ordem decrescente
+        function generateFixedRanking() {
+            const nomesFixos = [
+                "Allef 🔥", "🤪", "-", "melzinho_443", "noname",
+                "Caioo ⚡", "lucasvz___xzz 💪", "-", "-", "-"
+            ];
 
-// Formata os valores no estilo original (1+, 5+, 10+, etc.)
-function formatarValorRanking(valor) {
-  if (valor <= 1) return "1+";
-  if (valor <= 5) return "5+";
-  if (valor <= 10) return "10+";
-  if (valor <= 50) return "50+";
-  if (valor <= 100) return "100+";
-  if (valor <= 500) return "500+";
-  if (valor <= 1000) return "1K+";
-  if (valor <= 5000) return "5K+";
-  const base = Math.floor(valor / 1000) * 1000;
-  return `${base.toLocaleString('pt-BR')}+`;
-}
+        // Valores em ordem decrescente (do maior para o menor)
+        const valoresBase = [950, 820, 680, 550, 420, 320, 240, 170, 110, 60];
 
-// Gerador pseudoaleatório (determinístico para o dia)
-function mulberry32(seed) {
-  return function() {
-    let t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+            const ranking = [];
 
-// Embaralha lista com RNG fixo
-function shuffleWithRng(arr, rng) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+            for (let i = 0; i < 10; i++) {
+                // Aplicar a formatação aos valores
+                const valorFormatado = formatarValorRanking(valoresBase[i]);
 
-// Segundos desde meia-noite
-function secondsSinceMidnight() {
-  const now = new Date();
-  return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-}
+                ranking.push({
+                    position: i + 1,
+                    username: nomesFixos[i],
+                    total_balance: valorFormatado,
+                    is_current_user: false // Sempre false para remover o destaque
+                });
+            }
 
-/* === GERAÇÃO DO RANKING === */
-function computeValuesForPositions(rng) {
-  const secs = secondsSinceMidnight();
-  const progress = Math.min(1, Math.max(0, secs / 86400)); // 0 → 1 ao longo do dia
-  const values = [];
+            return ranking;
+        }
 
-  for (let i = 0; i < RANK_SIZE; i++) {
-    const maxForPos = Math.round(TOP_MAX_BASE * Math.pow(DECAY_FACTOR, i));
-    const minForPos = Math.round(maxForPos * 0.06); // início do dia
-    const jitter = Math.round(rng() * Math.max(1, maxForPos * 0.02)); // 0–2%
-    let value = Math.round(minForPos + progress * (maxForPos - minForPos) + jitter);
-    if (value < 1) value = 1;
-    values.push(value);
-  }
+        function populateRankingTable(rankingData) {
+            const rankingTable = document.getElementById("rankingTable");
+            const rankingRows = rankingTable.querySelectorAll('tr');
 
-  values.sort((a, b) => b - a);
-  return values;
-}
+            rankingData.forEach((user, index) => {
+                if (index < rankingRows.length) {
+                    const row = rankingRows[index];
 
-function generateDynamicRanking() {
-  const today = new Date();
-  const dateKey = today.toISOString().slice(0,10);
-  const token = localStorage.getItem("token") || "";
-  const seedNum = parseInt(dateKey.replace(/-/g, '')) ^ 
-                  ([...token].reduce((s,c)=>s*31 + c.charCodeAt(0), 0) >>> 0);
-  const rng = mulberry32(seedNum >>> 0);
+                    // Remove qualquer destaque anterior
+                    row.classList.remove('highlight-row');
 
-  const storageKey = `ranking_${dateKey}`;
-  const stored = localStorage.getItem(storageKey);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (parsed.date === dateKey) return parsed.ranking;
-    } catch {}
-  }
-
-  const shuffledNames = shuffleWithRng(NAMES_POOL, rng);
-  const namesSelected = shuffledNames.slice(0, RANK_SIZE);
-  const values = computeValuesForPositions(rng);
-
-  const ranking = namesSelected.map((name, idx) => ({
-    position: idx + 1,
-    username: name,
-    total_balance: formatarValorRanking(values[idx]),
-    is_current_user: false
-  }));
-
-  localStorage.setItem(storageKey, JSON.stringify({ date: dateKey, ranking }));
-  return ranking;
-}
-
-/* === POPULA A TABELA === */
-function populateRankingTable(rankingData) {
-  const rankingTable = document.getElementById("rankingTable");
-  const rankingRows = rankingTable.querySelectorAll('tr');
-
-  rankingData.forEach((user, index) => {
-    if (index < rankingRows.length) {
-      const row = rankingRows[index];
-      row.classList.remove('highlight-row');
-      row.querySelector(".ranking-user").textContent = user.username;
-      row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
-    }
-  });
-}
-
-/* === CONTROLE DE ATUALIZAÇÃO === */
-function updateRanking() {
-  const ranking = generateDynamicRanking();
-  populateRankingTable(ranking);
-}
-
-/* === INICIALIZAÇÃO === */
-document.addEventListener("DOMContentLoaded", function () {
-  updateRanking(); // Inicial
-  setInterval(() => {
-    const dateKey = new Date().toISOString().slice(0,10);
-    localStorage.removeItem(`ranking_${dateKey}`); // força recalcular
-    updateRanking();
-  }, UPDATE_INTERVAL_MS);
-
-  // Reset automático à meia-noite
-  const now = new Date();
-  const untilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1) - now;
-  setTimeout(() => {
-    localStorage.clear();
-    updateRanking();
-  }, untilMidnight + 1000);
-});
+                    // Atualiza na tabela
+                    row.querySelector(".ranking-user").textContent = user.username;
+                    row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+                }
+            });
+        }
 
         function logout() {
             localStorage.removeItem("token");
