@@ -1,15 +1,13 @@
 import axios from "axios";
-import https from 'https';
-import { v4 as uuidv4 } from 'uuid';
+import https from "https";
+import { v4 as uuidv4 } from "uuid";
 import connectDB from "./db.js";
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-export default async function handler(req, res) {
-    const { method, url } = req;
-
+/* === Funções auxiliares fora do handler === */
 async function salvarAcaoComLimitePorUsuario(novaAcao) {
   const LIMITE = 2000;
 
@@ -26,7 +24,7 @@ async function salvarAcaoComLimitePorUsuario(novaAcao) {
   await novaAcao.save();
 }
 
-const formatarValorRanking = (valor) => {
+function formatarValorRanking(valor) {
   if (valor <= 1) return "1+";
   if (valor > 1 && valor < 5) return "1+";
   if (valor < 10) return "5+";
@@ -36,7 +34,11 @@ const formatarValorRanking = (valor) => {
   if (valor < 1000) return "500+";
   const base = Math.floor(valor / 1000) * 1000;
   return `${base}+`;
-};
+}
+
+/* === Handler principal === */
+export default async function handler(req, res) {
+  const { method, url } = req;
 
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
