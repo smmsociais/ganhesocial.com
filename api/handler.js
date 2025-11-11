@@ -1827,5 +1827,130 @@ const ranking = ganhosPorUsuario
   }
 };
 
+  // Rota: /api/ranking_diario
+  if (url.startsWith("/api/ranking_diario") && method === "POST") {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Método não permitido" });
+    }
+
+    const { token: bodyToken } = req.body || {};
+
+    try {
+      await connectDB();
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader && !bodyToken) {
+        return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+      }
+
+      // prefira o token do header, fallback para bodyToken
+      const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader;
+
+      const effectiveToken = tokenFromHeader || bodyToken;
+      console.log("🔹 Token usado para autenticação:", !!effectiveToken);
+
+      if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
+
+      const user = await User.findOne({ token: effectiveToken });
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+      // Cache de 10 minutos (para todos os usuários verem o mesmo ranking)
+      const agora = Date.now();
+      const dezMinutos = 1 * 60 * 1000;
+
+      if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos) {
+        console.log("🔁 Retornando ranking em cache");
+        return res.status(200).json({ ranking: ultimoRanking });
+      }
+
+      // Gera novo ranking se o cache expirou
+      console.log("⚙️ Gerando novo ranking...");
+
+      // Busca ganhos por usuário
+      const ganhosPorUsuario = await DailyEarning.aggregate([
+        {
+          $group: {
+            _id: "$userId",
+            totalGanhos: { $sum: "$valor" }
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "usuario"
+          }
+        },
+        { $unwind: "$usuario" },
+        {
+          $project: {
+            _id: 0,
+            username: { $ifNull: ["$usuario.nome", ""] },
+            total_balance: "$totalGanhos",
+            token: "$usuario.token"
+          }
+        }
+      ]);
+
+      // Aplica formatação + filtro
+      let ranking = ganhosPorUsuario
+        .filter(item => item.total_balance > 1)
+        .map(item => ({
+          username: item.username || "Usuário",
+          total_balance: item.total_balance,
+          is_current_user: item.token === effectiveToken
+        }));
+
+      // Caso haja poucos usuários, preenche com nomes fixos para completar 10 posições
+      const nomesFixos = [
+        "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
+        "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2", "ana_follow", "kaduzinho"
+      ];
+
+      // Garante pelo menos 10 usuários no ranking
+      while (ranking.length < 10) {
+        const nome = nomesFixos[ranking.length % nomesFixos.length];
+        ranking.push({
+          username: nome,
+          total_balance: Math.floor(Math.random() * 1000) + 50,
+          is_current_user: false
+        });
+      }
+
+      // Ordena por valor real
+      ranking.sort((a, b) => b.total_balance - a.total_balance);
+
+      // Mantém os 3 primeiros fixos
+      const top3 = ranking.slice(0, 3);
+
+      // Embaralha os demais
+      const restantes = ranking.slice(3).sort(() => Math.random() - 0.5);
+
+      // Reúne novamente
+      ranking = [...top3, ...restantes];
+
+      // Aplica o formato (1+, 5+, 10+ etc.)
+      ranking = ranking.map((item, i) => ({
+        position: i + 1,
+        username: item.username,
+        total_balance: formatarValorRanking(item.total_balance),
+        is_current_user: item.is_current_user
+      }));
+
+      // Armazena em cache (para os próximos usuários)
+      ultimoRanking = ranking;
+      ultimaAtualizacao = agora;
+
+      return res.status(200).json({ ranking });
+
+    } catch (error) {
+      console.error("❌ Erro ao buscar ranking:", error);
+      return res.status(500).json({ error: "Erro interno ao buscar ranking" });
+    }
+  }
+
     return res.status(404).json({ error: "Rota não encontrada." });
 }
