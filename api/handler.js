@@ -7,13 +7,15 @@ import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-// variáveis globais (no topo do arquivo)
+// ===== Variáveis globais (colocar no topo do arquivo, fora do handler) =====
 let ultimoRanking = null;
 let ultimaAtualizacao = 0;
 let top3FixosHoje = null;
 let diaTop3 = null;
 let horaInicioRanking = null;
 let zeroedAtMidnight = false;
+let dailyFixedRanking = null;
+
 
 export default async function handler(req, res) {
     const { method, url, query } = req;
@@ -1793,63 +1795,86 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
-    // Prefere token do header
     const tokenFromHeader =
       authHeader && authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
         : authHeader;
-
     const effectiveToken = tokenFromHeader || bodyToken;
     if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
 
     const user = await User.findOne({ token: effectiveToken });
-    if (!user)
-      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-    // Parâmetros/time
+    // Parâmetros de tempo
     const agora = Date.now();
     const dezMinutos = 10 * 60 * 1000;
     const hoje = new Date().toLocaleDateString("pt-BR");
 
-    // Reset via ENV ou query ?reset=true (manual)
+    // Reset por ENV ou query ?reset=true (manual)
     const resetPorEnv = process.env.RESET_RANKING === "true";
     const resetPorURL = (req.query && req.query.reset === "true") || false;
     if (resetPorEnv || resetPorURL) {
-      // limpa DB e cache
+      // limpa DB e saldos
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // Placeholder vazio (10 posições sem nomes nem valores)
-      const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
-        position: i + 1,
-        username: "-",
-        total_balance: "0",
-        is_current_user: false,
-      }));
+      // cria dailyFixedRanking novo ao reset (escolhe 10 usuários aleatórios do DB)
+      let sampled = [];
+      try {
+        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
+      } catch (e) {
+        console.error("Erro ao samplear users:", e);
+        sampled = [];
+      }
 
-      ultimoRanking = placeholderRanking;
-      ultimaAtualizacao = agora;
-      top3FixosHoje = null;
+      const NAMES_POOL = [
+        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+      ];
+
+      dailyFixedRanking = [];
+      for (let i = 0; i < 10; i++) {
+        if (sampled[i]) {
+          dailyFixedRanking.push({
+            username: sampled[i].nome || NAMES_POOL[i % NAMES_POOL.length],
+            token: sampled[i].token || null,
+            real_total: 0,
+            is_current_user: sampled[i].token === effectiveToken
+          });
+        } else {
+          dailyFixedRanking.push({
+            username: NAMES_POOL[i % NAMES_POOL.length],
+            token: null,
+            real_total: 0,
+            is_current_user: false
+          });
+        }
+      }
+
+      // define top3FixosHoje a partir da dailyFixedRanking
+      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
       horaInicioRanking = agora;
+      ultimoRanking = null;
+      ultimaAtualizacao = 0;
       zeroedAtMidnight = true;
 
-      console.log(
-        "🔥 Ranking e saldos reiniciados manualmente",
-        resetPorEnv ? "(via ENV)" : "(via URL)"
-      );
+      console.log("🔥 Reset manual/env — dailyFixedRanking criado:", dailyFixedRanking.map(d => d.username));
 
       if (resetPorURL) {
-        return res.status(200).json({
-          success: true,
-          message: "Ranking e saldos zerados (reset manual via URL).",
-          ranking: placeholderRanking,
-        });
+        // Retorna placeholder + mensagem para testes
+        const placeholder = dailyFixedRanking.map((d, i) => ({
+          position: i + 1,
+          username: d.username,
+          total_balance: formatarValorRanking(d.real_total),
+          is_current_user: !!d.is_current_user
+        }));
+        return res.status(200).json({ success: true, message: "Ranking e saldos zerados (reset manual).", ranking: placeholder });
       }
-      // if via ENV, we will continue and return placeholder by cache check below
+      // se reset por env: continue para fluxo normal (cache check)
     }
 
-    // === Automatic midnight reset: se mudou o dia em relação a diaTop3
+    // Reset automático à meia-noite: se diaTop3 não é hoje (ou undefined) e já existia dia anterior
     if (diaTop3 && diaTop3 !== hoje) {
       console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
 
@@ -1857,144 +1882,133 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // placeholders vazios para retornar imediatamente
-      const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
-        position: i + 1,
-        username: "-",
-        total_balance: "0",
-        is_current_user: false,
-      }));
+      // recria dailyFixedRanking (10 nomes aleatórios do DB)
+      let sampled = [];
+      try {
+        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
+      } catch (e) {
+        console.error("Erro ao samplear users (midnight):", e);
+        sampled = [];
+      }
 
-      ultimoRanking = placeholderRanking;
-      ultimaAtualizacao = agora;
-      top3FixosHoje = null;
+      const NAMES_POOL = [
+        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+      ];
+
+      dailyFixedRanking = [];
+      for (let i = 0; i < 10; i++) {
+        if (sampled[i]) {
+          dailyFixedRanking.push({
+            username: sampled[i].nome || NAMES_POOL[i % NAMES_POOL.length],
+            token: sampled[i].token || null,
+            real_total: 0,
+            is_current_user: sampled[i].token === effectiveToken
+          });
+        } else {
+          dailyFixedRanking.push({
+            username: NAMES_POOL[i % NAMES_POOL.length],
+            token: null,
+            real_total: 0,
+            is_current_user: false
+          });
+        }
+      }
+
+      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
       horaInicioRanking = agora;
+      ultimoRanking = null;
+      ultimaAtualizacao = agora;
       zeroedAtMidnight = true;
 
-      console.log("✅ Ranking diário e saldos zerados automaticamente (meia-noite).");
-      return res.status(200).json({ ranking: placeholderRanking });
-    }
+      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
 
-    // Se já temos cache válido (mesmo dia e menos de 10 minutos), retorna
-    if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
-      // Se o cache é placeholder (zeroedAtMidnight), retorne também
-      return res.status(200).json({ ranking: ultimoRanking });
-    }
-
-    // 🔹 Gera novo ranking a partir do banco
-    const ganhosPorUsuario = await DailyEarning.aggregate([
-      {
-        $group: {
-          _id: "$userId",
-          totalGanhos: { $sum: "$valor" },
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "usuario",
-        },
-      },
-      { $unwind: "$usuario" },
-      {
-        $project: {
-          _id: 0,
-          username: { $ifNull: ["$usuario.nome", "Usuário"] },
-          total_balance: "$totalGanhos",
-          token: "$usuario.token",
-        },
-      },
-    ]);
-
-    // Se DB vazio e zeroedAtMidnight, mantenha placeholder
-    if ((!ganhosPorUsuario || ganhosPorUsuario.length === 0) && zeroedAtMidnight) {
-      // garante que placeholder esteja salvo e retorna
-      if (!ultimoRanking) {
-        const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
-          position: i + 1,
-          username: "-",
-          total_balance: "0",
-          is_current_user: false,
-        }));
-        ultimoRanking = placeholderRanking;
-        ultimaAtualizacao = agora;
-      }
-      return res.status(200).json({ ranking: ultimoRanking });
-    }
-
-    // --- Montagem inicial do ranking: mantenha real_total para ordenação ---
-    let ranking = (ganhosPorUsuario || [])
-      .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
-      .map((item) => ({
-        username: item.username || "Usuário",
-        real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
-        is_current_user: item.token === effectiveToken,
+      // responde imediatamente com placeholders vazios (ou com dailyFixedRanking)
+      const placeholder = dailyFixedRanking.map((d, i) => ({
+        position: i + 1,
+        username: d.username,
+        total_balance: formatarValorRanking(d.real_total),
+        is_current_user: !!d.is_current_user
       }));
-
-    // --- Adiciona nomes fixos se não houver usuários suficientes (opcional) ---
-    const nomesFixos = [
-      "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
-      "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2",
-      "ana_follow", "kaduzinho",
-    ];
-
-    while (ranking.length < 10) {
-      const nome = nomesFixos[ranking.length % nomesFixos.length];
-      ranking.push({
-        username: nome,
-        real_total: Math.floor(Math.random() * 500) + 50,
-        is_current_user: false,
-      });
+      return res.status(200).json({ ranking: placeholder });
     }
 
-    // --- Ordena ranking por valor real (maior primeiro) ---
-    ranking.sort((a, b) => b.real_total - a.real_total);
+    // Se cache válido (mesmo dia e menos de 10 min), retorna
+    if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
+      return res.status(200).json({ ranking: ultimoRanking });
+    }
 
-    // --- Define top3 fixos do dia (somente 1x por dia) ---
-    if (!top3FixosHoje || diaTop3 !== hoje) {
-      top3FixosHoje = ranking.slice(0, 3).map((u) => ({ ...u }));
-      diaTop3 = hoje;
-      zeroedAtMidnight = false; // já temos dados do dia
-      horaInicioRanking = agora;
-      console.log(
-        "🏆 Novo top3 diário:",
-        top3FixosHoje.map((u) => `${u.username} (${u.real_total})`)
-      );
+    // --- Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ---
+    let baseRankingRaw = null;
+    if (dailyFixedRanking && diaTop3 === hoje) {
+      baseRankingRaw = dailyFixedRanking.map(u => ({ ...u })); // clone
     } else {
-      // garante ordenação do top3 por real_total
-      top3FixosHoje.sort((a, b) => b.real_total - a.real_total);
+      // gera a partir do DB (fallback)
+      const ganhosPorUsuario = await DailyEarning.aggregate([
+        {
+          $group: {
+            _id: "$userId",
+            totalGanhos: { $sum: "$valor" },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "usuario",
+          },
+        },
+        { $unwind: "$usuario" },
+        {
+          $project: {
+            _id: 0,
+            username: { $ifNull: ["$usuario.nome", "Usuário"] },
+            total_balance: "$totalGanhos",
+            token: "$usuario.token",
+          },
+        },
+      ]);
+
+      baseRankingRaw = (ganhosPorUsuario || [])
+        .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
+        .map((item) => ({
+          username: item.username || "Usuário",
+          token: item.token || null,
+          real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
+          is_current_user: item.token === effectiveToken,
+        }));
+
+      // completa até 10 com fallback (não aleatório a cada request)
+      const NAMES_POOL2 = [
+        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+      ];
+      while (baseRankingRaw.length < 10) {
+        const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
+        baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
+      }
+
+      // ordena caso venha do DB
+      baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
     }
 
-    // --- Remove top3 dos restantes ---
-    const top3Usernames = top3FixosHoje.map((t) => t.username);
-    let restantes = ranking.filter((u) => !top3Usernames.includes(u.username));
+    // Limita a 10 posições
+    let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
-    // --- Ordena os demais por valor real (maior -> menor) ---
-    restantes.sort((a, b) => b.real_total - a.real_total);
-
-    // --- Junta top3 fixos + demais corretamente ordenados ---
-    let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
-
-    // === 💰 GANHOS PROGRESSIVOS POR TEMPO ===
+    // === Ganhos progressivos por posição (a cada 10 minutos)
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
 
-    // se não tivermos horaInicioRanking, inicialize-a
+    // inicializa horaInicioRanking se necessário
     if (!horaInicioRanking) horaInicioRanking = agora;
 
-    // calcula quantos intervalos de 10 min se passaram
     const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
 
-    // aplica incremento progressivo no real_total conforme posição e tempo
-    finalRankingRaw = finalRankingRaw.map((item, idx) => {
-      const incremento = (ganhosPorPosicao[idx] || 0) * intervalosDecorridos;
-      return {
-        ...item,
-        real_total: item.real_total + incremento,
-      };
-    });
+    finalRankingRaw = finalRankingRaw.map((item, idx) => ({
+      ...item,
+      real_total: (Number(item.real_total) || 0) + (ganhosPorPosicao[idx] || 0) * intervalosDecorridos,
+    }));
 
     // --- Formata para resposta ---
     const finalRanking = finalRankingRaw.map((item, idx) => ({
@@ -2007,11 +2021,9 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // Atualiza cache
     ultimoRanking = finalRanking;
     ultimaAtualizacao = agora;
+    zeroedAtMidnight = false;
 
-    console.log(
-      "🔢 final top3 (numeros reais):",
-      top3FixosHoje.map((u) => `${u.username}=${u.real_total}`)
-    );
+    console.log("🔢 final top3 (numeros reais):", top3FixosHoje ? top3FixosHoje.map((u) => `${u.username}=${u.real_total}`) : []);
 
     return res.status(200).json({ ranking: finalRanking });
   } catch (error) {
