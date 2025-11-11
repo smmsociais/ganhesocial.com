@@ -21,20 +21,28 @@ export default async function handler(req, res) {
     const resetPorEnv = process.env.RESET_RANKING === 'true';
     const resetPorURL = query?.reset === 'true';
 
-    if (resetPorEnv || resetPorURL) {
-        ultimoRanking = null;
-        ultimaAtualizacao = 0;
-        top3FixosHoje = null;
-        diaTop3 = null;
-        horaInicioRanking = Date.now();
-        console.log("🔥 Ranking reiniciado manualmente", resetPorEnv ? "(via ENV)" : "(via URL)");
+if (resetPorEnv || resetPorURL) {
+    await connectDB(); // garante conexão antes de limpar o banco
 
-        // Se foi via URL, envia resposta imediata
-        if (resetPorURL) {
-            return res.status(200).json({ success: true, message: "Ranking reiniciado manualmente via URL." });
-        }
+    // 🧹 Limpa todos os ganhos diários (zera saldos)
+    const resultado = await DailyEarning.deleteMany({});
+    console.log(`🧾 ${resultado.deletedCount} registros de ganhos diários removidos.`);
+
+    // 🧠 Limpa cache do ranking
+    ultimoRanking = null;
+    ultimaAtualizacao = 0;
+    top3FixosHoje = null;
+    diaTop3 = null;
+    horaInicioRanking = Date.now();
+    console.log("🔥 Ranking e saldos reiniciados manualmente", resetPorEnv ? "(via ENV)" : "(via URL)");
+
+    if (resetPorURL) {
+        return res.status(200).json({
+            success: true,
+            message: `Ranking e saldos zerados (${resultado.deletedCount} ganhos removidos).`
+        });
     }
-
+}
     async function salvarAcaoComLimitePorUsuario(novaAcao) {
         const LIMITE = 2000;
         const total = await ActionHistory.countDocuments({ user: novaAcao.user });
