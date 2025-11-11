@@ -1843,29 +1843,41 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
         });
       }
 
-      // Ordena por valor real
-      ranking.sort((a, b) => b.total_balance - a.total_balance);
+// Ordena por valor real (maior para menor)
+ranking.sort((a, b) => b.total_balance - a.total_balance);
 
-      // Mantém os 3 primeiros fixos
-      const top3 = ranking.slice(0, 3);
+// Garante que o top 3 permaneça sempre fixo entre atualizações
+const top3Fixos = ranking.slice(0, 3);
 
-      // Embaralha os demais
-      const restantes = ranking.slice(3).sort(() => Math.random() - 0.5);
+// Se já temos um ranking em cache, preserva os mesmos top 3 fixos
+if (ultimoRanking && ultimoRanking.length >= 3) {
+  for (let i = 0; i < 3; i++) {
+    top3Fixos[i].username = ultimoRanking[i].username;
+    top3Fixos[i].total_balance = ultimoRanking[i].total_balance;
+  }
+}
 
-      // Reúne novamente
-      ranking = [...top3, ...restantes];
+// Embaralha apenas os restantes
+const restantes = ranking.slice(3);
+for (let i = restantes.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
+}
 
-      // Aplica o formato (1+, 5+, 10+ etc.)
-      ranking = ranking.map((item, i) => ({
-        position: i + 1,
-        username: item.username,
-        total_balance: formatarValorRanking(item.total_balance),
-        is_current_user: item.is_current_user
-      }));
+// Junta top 3 fixos + restantes embaralhados
+ranking = [...top3Fixos, ...restantes];
 
-      // Armazena em cache (para os próximos usuários)
-      ultimoRanking = ranking;
-      ultimaAtualizacao = agora;
+// Aplica o formato de exibição (1+, 5+, etc.)
+ranking = ranking.map((item, i) => ({
+  position: i + 1,
+  username: item.username,
+  total_balance: formatarValorRanking(item.total_balance),
+  is_current_user: item.is_current_user
+}));
+
+// Atualiza cache
+ultimoRanking = ranking;
+ultimaAtualizacao = agora;
 
       return res.status(200).json({ ranking });
 
