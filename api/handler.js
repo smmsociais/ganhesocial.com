@@ -7,6 +7,13 @@ import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
+// 🧠 Cache global de ranking
+let ultimoRanking = null;
+let ultimaAtualizacao = 0;
+let top3FixosHoje = null;
+let diaTop3 = null;
+let horaInicioRanking = null;
+
 export default async function handler(req, res) {
     const { method, url } = req;
 
