@@ -55,6 +55,7 @@
     { "source": "/api/ranking", "destination": "/api/handler.js" },
     { "source": "/api/pular_acao", "destination": "/api/handler.js" },
     { "source": "/api/proxy_bind_tk", "destination": "/api/handler.js" },
-    { "source": "/api/afiliados", "destination": "/api/handler.js" }
+    { "source": "/api/afiliados", "destination": "/api/handler.js" },
+    { "source": "/api/ranking_diario", "destination": "/api/handler.js" }
   ]
 }
