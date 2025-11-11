@@ -745,9 +745,7 @@
             // Carrega saldo do usuário
             await carregarSaldos();
 
-            // Carrega o ranking fixo
-            const fixedRanking = generateFixedRanking();
-            populateRankingTable(fixedRanking);
+
 
             document.body.classList.add('loaded');
         });
@@ -782,7 +780,7 @@
                 console.error("Erro ao carregar saldo:", error);
             }
         }
-        
+
 /* === CONFIGURAÇÕES === */
 const RANK_SIZE = 10;               // Quantas posições no ranking
 const UPDATE_INTERVAL_MS = 30_000;  // Atualizar a cada 30s (ajuste)
