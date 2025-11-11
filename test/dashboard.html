@@ -697,16 +697,39 @@
     </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-        const token = localStorage.getItem("token");
+/* === INICIALIZAÇÃO UNIFICADA === */
+document.addEventListener("DOMContentLoaded", async function () {
+    const token = localStorage.getItem("token");
 
-        if (!token) {
-            setTimeout(() => {
-                window.location.href = "https://ganhesocial.com/login";
-            });
-            return;
-        }
+    if (!token) {
+        window.location.href = "https://ganhesocial.com/login";
+        return;
+    }
 
+    // Carrega saldo
+    await carregarSaldos();
+
+    // Atualiza o ranking ao carregar
+    updateRanking();
+
+    // Atualiza apenas as posições 4–10 a cada 10 minutos
+    setInterval(() => {
+        console.log("🔄 Atualizando ranking (rotação parcial)...");
+        updateRanking(true);
+    }, UPDATE_INTERVAL_MS);
+
+    // Reset total à meia-noite
+    const now = new Date();
+    const untilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+    setTimeout(() => {
+        console.log("🕛 Resetando ranking diário...");
+        localStorage.clear();
+        updateRanking();
+    }, untilMidnight + 1000);
+
+    // Marca página como carregada
+    document.body.classList.add('loaded');
+});
         // === Controle do menu hamburguer (mantém igual) ===
         const menuToggle = document.getElementById('menuToggle');
         const menuOverlay = document.getElementById('menuOverlay');
@@ -749,9 +772,6 @@
 
         // Atualiza ranking a cada 10 minutos (mesmo cache do servidor)
         setInterval(carregarRanking, 1 * 60 * 1000);
-
-        document.body.classList.add('loaded');
-    });
 
     async function carregarSaldos() {
         const token = localStorage.getItem("token");
