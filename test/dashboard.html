@@ -782,23 +782,24 @@
         }
 
 /* === CONFIGURAÇÕES === */
-const RANK_SIZE = 10;               // Quantas posições no ranking
-const UPDATE_INTERVAL_MS = 30_000;  // Atualizar a cada 30s (ajuste)
-const TOP_MAX_BASE = 5000;          // Valor máximo aproximado para o 1º lugar no fim do dia
-const DECAY_FACTOR = 0.62;          // Queda de valor entre posições (0.6 = cai 40% por posição)
+const RANK_SIZE = 10;                 // Quantas posições no ranking
+const TOP_FIXED = 3;                  // Quantos primeiros permanecem fixos
+const UPDATE_INTERVAL_MS = 6_000;   // Atualiza a cada 10 minutos
+const TOP_MAX_BASE = 5000;            // Valor máximo aproximado do 1º lugar no fim do dia
+const DECAY_FACTOR = 0.62;            // Queda de valor entre posições (0.6 = cai 40% por posição)
 
-/* === LISTA DE NOMES ALEATÓRIOS (adicione mais para naturalidade) === */
+/* === LISTA DE NOMES (pode ampliar para mais variedade) === */
 const NAMES_POOL = [
   "Allef 🔥","Caioo ⚡","lucasvz___xzz 💪","melzinho_443","noname",
   "Marina","Rafa","Luan","Bia","Kauã","Gabi","Teteu","Nando",
   "vinny","Carol","Pietro","Sora","Lia","Júlio","Nina","Otto",
   "Vivi","Dudu","Thais","Mica","Luiza","Renan","Felipe","Paula",
-  "André","Léo","Fael","Sara","Igor","Bianca"
+  "André","Léo","Fael","Sara","Igor","Bianca","Luiz","Maya","Rick"
 ];
 
 /* === FUNÇÕES UTILITÁRIAS === */
 
-// Formata os valores no estilo original (1+, 5+, 10+, etc.)
+// Formata os valores no estilo "1+", "5+", "10+", etc.
 function formatarValorRanking(valor) {
   if (valor <= 1) return "1+";
   if (valor <= 5) return "5+";
@@ -812,7 +813,7 @@ function formatarValorRanking(valor) {
   return `${base.toLocaleString('pt-BR')}+`;
 }
 
-// Gerador pseudoaleatório (determinístico para o dia)
+// Gerador pseudoaleatório determinístico (para consistência diária)
 function mulberry32(seed) {
   return function() {
     let t = seed += 0x6D2B79F5;
@@ -822,7 +823,7 @@ function mulberry32(seed) {
   };
 }
 
-// Embaralha lista com RNG fixo
+// Embaralha array com RNG
 function shuffleWithRng(arr, rng) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -838,7 +839,7 @@ function secondsSinceMidnight() {
   return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 }
 
-/* === GERAÇÃO DO RANKING === */
+/* === GERAÇÃO DE VALORES === */
 function computeValuesForPositions(rng) {
   const secs = secondsSinceMidnight();
   const progress = Math.min(1, Math.max(0, secs / 86400)); // 0 → 1 ao longo do dia
@@ -847,7 +848,7 @@ function computeValuesForPositions(rng) {
   for (let i = 0; i < RANK_SIZE; i++) {
     const maxForPos = Math.round(TOP_MAX_BASE * Math.pow(DECAY_FACTOR, i));
     const minForPos = Math.round(maxForPos * 0.06); // início do dia
-    const jitter = Math.round(rng() * Math.max(1, maxForPos * 0.02)); // 0–2%
+    const jitter = Math.round(rng() * Math.max(1, maxForPos * 0.02)); // variação até 2%
     let value = Math.round(minForPos + progress * (maxForPos - minForPos) + jitter);
     if (value < 1) value = 1;
     values.push(value);
@@ -857,7 +858,8 @@ function computeValuesForPositions(rng) {
   return values;
 }
 
-function generateDynamicRanking() {
+/* === GERAÇÃO DE RANKING === */
+function generateDynamicRanking(isRotation = false) {
   const today = new Date();
   const dateKey = today.toISOString().slice(0,10);
   const token = localStorage.getItem("token") || "";
@@ -867,24 +869,47 @@ function generateDynamicRanking() {
 
   const storageKey = `ranking_${dateKey}`;
   const stored = localStorage.getItem(storageKey);
-  if (stored) {
+
+  // Se existir e não for rotação, usa o mesmo
+  if (stored && !isRotation) {
     try {
       const parsed = JSON.parse(stored);
       if (parsed.date === dateKey) return parsed.ranking;
     } catch {}
   }
 
+  // Gera nomes e valores
   const shuffledNames = shuffleWithRng(NAMES_POOL, rng);
-  const namesSelected = shuffledNames.slice(0, RANK_SIZE);
   const values = computeValuesForPositions(rng);
 
-  const ranking = namesSelected.map((name, idx) => ({
-    position: idx + 1,
-    username: name,
-    total_balance: formatarValorRanking(values[idx]),
-    is_current_user: false
-  }));
+  let ranking;
 
+  if (stored) {
+    // Recarrega o ranking existente para manter os 3 primeiros
+    const parsed = JSON.parse(stored);
+    const top3 = parsed.ranking.slice(0, TOP_FIXED);
+    let lower = parsed.ranking.slice(TOP_FIXED);
+
+    if (isRotation) {
+      // Reembaralha apenas os 7 últimos
+      lower = shuffleWithRng(lower, rng);
+    }
+
+    ranking = [...top3, ...lower];
+    // Atualiza os valores (crescem com o tempo)
+    ranking.forEach((user, i) => user.total_balance = formatarValorRanking(values[i]));
+  } else {
+    // Cria ranking inicial completo
+    const namesSelected = shuffledNames.slice(0, RANK_SIZE);
+    ranking = namesSelected.map((name, idx) => ({
+      position: idx + 1,
+      username: name,
+      total_balance: formatarValorRanking(values[idx]),
+      is_current_user: false
+    }));
+  }
+
+  // Salva no localStorage
   localStorage.setItem(storageKey, JSON.stringify({ date: dateKey, ranking }));
   return ranking;
 }
@@ -904,22 +929,23 @@ function populateRankingTable(rankingData) {
   });
 }
 
-/* === CONTROLE DE ATUALIZAÇÃO === */
-function updateRanking() {
-  const ranking = generateDynamicRanking();
+/* === ATUALIZAÇÃO === */
+function updateRanking(isRotation = false) {
+  const ranking = generateDynamicRanking(isRotation);
   populateRankingTable(ranking);
 }
 
 /* === INICIALIZAÇÃO === */
 document.addEventListener("DOMContentLoaded", function () {
-  updateRanking(); // Inicial
+  // Atualiza ao carregar
+  updateRanking();
+
+  // Atualiza os valores e gira posições 4–10 a cada 10 minutos
   setInterval(() => {
-    const dateKey = new Date().toISOString().slice(0,10);
-    localStorage.removeItem(`ranking_${dateKey}`); // força recalcular
-    updateRanking();
+    updateRanking(true); // true = rotação parcial
   }, UPDATE_INTERVAL_MS);
 
-  // Reset automático à meia-noite
+  // Reset total à meia-noite
   const now = new Date();
   const untilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1) - now;
   setTimeout(() => {
