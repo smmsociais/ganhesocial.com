@@ -1782,7 +1782,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { token: bodyToken } = req.body || {};
+  const { token: bodyToken, reset } = req.body || {};
 
   try {
     await connectDB();
@@ -1808,17 +1808,39 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         .status(404)
         .json({ error: "Usuário não encontrado ou token inválido." });
 
-    // Cache de 10 minutos
+    // 🔄 --- BLOCO DE RESET MANUAL ---
+    const resetPorEnv = process.env.RESET_RANKING === "true";
+    const resetPorBody = reset === true || reset === "true";
+
+    if (resetPorEnv || resetPorBody || req.query.reset === "true") {
+      console.log("♻️ Reiniciando ranking e zerando saldos...");
+
+      const del = await DailyEarning.deleteMany({});
+      const upd = await User.updateMany({}, { $set: { balance: 0 } });
+
+      ultimoRanking = null;
+      ultimaAtualizacao = 0;
+      top3FixosHoje = null;
+      diaTop3 = null;
+      horaInicioRanking = Date.now();
+
+      console.log(`✅ Reset concluído: ${del.deletedCount} ganhos removidos, ${upd.modifiedCount} usuários zerados.`);
+      return res.status(200).json({
+        success: true,
+        message: `Ranking e saldos zerados (${del.deletedCount} ganhos, ${upd.modifiedCount} usuários).`,
+      });
+    }
+
+    // 🕒 Cache de 10 minutos
     const agora = Date.now();
     const dezMinutos = 10 * 60 * 1000;
     const hoje = new Date().toLocaleDateString("pt-BR");
 
-    // ⚙️ Se o ranking ainda é válido (mesmo dia e menos de 10 min)
     if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
       return res.status(200).json({ ranking: ultimoRanking });
     }
 
-    // 🔹 Gera novo ranking a partir do banco
+    // 📊 Gera novo ranking a partir do banco
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
         $group: {
@@ -1870,17 +1892,15 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       });
     }
 
-    // --- Ordena ranking por valor real (maior primeiro) ---
+    // --- Ordena ranking por valor real ---
     ranking.sort((a, b) => b.real_total - a.real_total);
 
     // --- Define top3 fixos do dia ---
     if (!top3FixosHoje || diaTop3 !== hoje) {
       top3FixosHoje = ranking.slice(0, 3).map((u) => ({ ...u }));
       diaTop3 = hoje;
-      console.log(
-        "🏆 Novo top3 diário:",
-        top3FixosHoje.map((u) => `${u.username} (${u.real_total})`)
-      );
+      horaInicioRanking = agora;
+      console.log("🏆 Novo top3 diário:", top3FixosHoje.map((u) => `${u.username} (${u.real_total})`));
     } else {
       top3FixosHoje.sort((a, b) => b.real_total - a.real_total);
     }
@@ -1889,51 +1909,36 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const top3Usernames = top3FixosHoje.map((t) => t.username);
     let restantes = ranking.filter((u) => !top3Usernames.includes(u.username));
 
-    // --- Ordena os demais por valor real (mantém ordem correta) ---
+    // --- Ordena os demais corretamente ---
     restantes.sort((a, b) => b.real_total - a.real_total);
 
-// --- Junta top3 fixos + demais corretamente ordenados ---
-let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
+    // --- Junta top3 + demais ---
+    let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
 
-// === 💰 GANHOS PROGRESSIVOS POR TEMPO ===
+    // 💰 Incremento progressivo de ganhos a cada 10 minutos
+    const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
 
-// tabela de ganhos por posição (a cada 10 minutos)
-const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+    finalRankingRaw = finalRankingRaw.map((item, idx) => {
+      const incremento = ganhosPorPosicao[idx] * intervalosDecorridos;
+      return {
+        ...item,
+        real_total: item.real_total + incremento,
+      };
+    });
 
-// registra a hora da primeira geração do ranking diário
-if (!horaInicioRanking || diaTop3 !== hoje) {
-  horaInicioRanking = agora;
-}
+    // --- Formata para exibição ---
+    const finalRanking = finalRankingRaw.map((item, idx) => ({
+      position: idx + 1,
+      username: item.username,
+      total_balance: formatarValorRanking(item.real_total),
+      is_current_user: !!item.is_current_user,
+    }));
 
-// calcula quantos intervalos de 10 min se passaram
-const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
-
-// aplica incremento progressivo no real_total conforme posição e tempo
-finalRankingRaw = finalRankingRaw.map((item, idx) => {
-  const incremento = ganhosPorPosicao[idx] * intervalosDecorridos;
-  return {
-    ...item,
-    real_total: item.real_total + incremento,
-  };
-});
-
-// --- Formata para resposta ---
-const finalRanking = finalRankingRaw.map((item, idx) => ({
-  position: idx + 1,
-  username: item.username,
-  total_balance: formatarValorRanking(item.real_total),
-  is_current_user: !!item.is_current_user,
-}));
-
-
-    // Atualiza cache
     ultimoRanking = finalRanking;
     ultimaAtualizacao = agora;
 
-    console.log(
-      "🔢 final top3 (numeros reais):",
-      top3FixosHoje.map((u) => `${u.username}=${u.real_total}`)
-    );
+    console.log("🔢 final top3 (numeros reais):", top3FixosHoje.map((u) => `${u.username}=${u.real_total}`));
 
     return res.status(200).json({ ranking: finalRanking });
   } catch (error) {
