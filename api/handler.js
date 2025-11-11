@@ -7,9 +7,11 @@ import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-// Cache global do ranking (compartilhado entre requisições)
+// 🧠 Cache global de ranking
 let ultimoRanking = null;
 let ultimaAtualizacao = 0;
+let top3FixosHoje = null;
+let diaTop3 = null;
 
 export default async function handler(req, res) {
     const { method, url } = req;
@@ -1748,144 +1750,126 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
 }
 }
 
+// Rota: /api/ranking_diario
+if (url.startsWith("/api/ranking_diario") && method === "POST") {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
 
+  const { token: bodyToken } = req.body || {};
 
-  // Rota: /api/ranking_diario
-  if (url.startsWith("/api/ranking_diario") && method === "POST") {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Método não permitido" });
+  try {
+    await connectDB();
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader && !bodyToken) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
-    const { token: bodyToken } = req.body || {};
+    // Prefere token do header
+    const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
-    try {
-      await connectDB();
+    const effectiveToken = tokenFromHeader || bodyToken;
+    if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
 
-      const authHeader = req.headers.authorization;
-      if (!authHeader && !bodyToken) {
-        return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-      }
+    const user = await User.findOne({ token: effectiveToken });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-      // prefira o token do header, fallback para bodyToken
-      const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : authHeader;
+    // Cache de 10 minutos
+    const agora = Date.now();
+    const dezMinutos = 10 * 60 * 1000;
+    const hoje = new Date().toLocaleDateString("pt-BR");
 
-      const effectiveToken = tokenFromHeader || bodyToken;
-      console.log("🔹 Token usado para autenticação:", !!effectiveToken);
+    // ⚙️ Se o ranking ainda é válido (mesmo dia e menos de 10 min)
+    if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
+      return res.status(200).json({ ranking: ultimoRanking });
+    }
 
-      if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
-
-      const user = await User.findOne({ token: effectiveToken });
-      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-
-      // Cache de 10 minutos (para todos os usuários verem o mesmo ranking)
-      const agora = Date.now();
-      const dezMinutos = 10 * 60 * 1000;
-
-      if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos) {
-        console.log("🔁 Retornando ranking em cache");
-        return res.status(200).json({ ranking: ultimoRanking });
-      }
-
-      // Gera novo ranking se o cache expirou
-      console.log("⚙️ Gerando novo ranking...");
-
-      // Busca ganhos por usuário
-      const ganhosPorUsuario = await DailyEarning.aggregate([
-        {
-          $group: {
-            _id: "$userId",
-            totalGanhos: { $sum: "$valor" }
-          }
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "_id",
-            foreignField: "_id",
-            as: "usuario"
-          }
-        },
-        { $unwind: "$usuario" },
-        {
-          $project: {
-            _id: 0,
-            username: { $ifNull: ["$usuario.nome", ""] },
-            total_balance: "$totalGanhos",
-            token: "$usuario.token"
-          }
+    // 🔹 Gera novo ranking a partir do banco
+    const ganhosPorUsuario = await DailyEarning.aggregate([
+      {
+        $group: {
+          _id: "$userId",
+          totalGanhos: { $sum: "$valor" }
         }
-      ]);
-
-      // Aplica formatação + filtro
-      let ranking = ganhosPorUsuario
-        .filter(item => item.total_balance > 1)
-        .map(item => ({
-          username: item.username || "Usuário",
-          total_balance: item.total_balance,
-          is_current_user: item.token === effectiveToken
-        }));
-
-      // Caso haja poucos usuários, preenche com nomes fixos para completar 10 posições
-      const nomesFixos = [
-        "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
-        "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2", "ana_follow", "kaduzinho"
-      ];
-
-      // Garante pelo menos 10 usuários no ranking
-      while (ranking.length < 10) {
-        const nome = nomesFixos[ranking.length % nomesFixos.length];
-        ranking.push({
-          username: nome,
-          total_balance: Math.floor(Math.random() * 1000) + 50,
-          is_current_user: false
-        });
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "usuario"
+        }
+      },
+      { $unwind: "$usuario" },
+      {
+        $project: {
+          _id: 0,
+          username: { $ifNull: ["$usuario.nome", "Usuário"] },
+          total_balance: "$totalGanhos",
+          token: "$usuario.token"
+        }
       }
+    ]);
 
-// Ordena por valor real (maior para menor)
-ranking.sort((a, b) => b.total_balance - a.total_balance);
+    // Filtro: remove quem tem ganhos <= 1
+    let ranking = ganhosPorUsuario
+      .filter(item => item.total_balance > 1)
+      .map(item => ({
+        username: item.username,
+        total_balance: item.total_balance,
+        is_current_user: item.token === effectiveToken
+      }));
 
-// Garante que o top 3 permaneça sempre fixo entre atualizações
-const top3Fixos = ranking.slice(0, 3);
-
-// Se já temos um ranking em cache, preserva os mesmos top 3 fixos
-if (ultimoRanking && ultimoRanking.length >= 3) {
-  for (let i = 0; i < 3; i++) {
-    top3Fixos[i].username = ultimoRanking[i].username;
-    top3Fixos[i].total_balance = ultimoRanking[i].total_balance;
-  }
-}
-
-// Embaralha apenas os restantes
-const restantes = ranking.slice(3);
-for (let i = restantes.length - 1; i > 0; i--) {
-  const j = Math.floor(Math.random() * (i + 1));
-  [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
-}
-
-// Junta top 3 fixos + restantes embaralhados
-ranking = [...top3Fixos, ...restantes];
-
-// Aplica o formato de exibição (1+, 5+, etc.)
-ranking = ranking.map((item, i) => ({
-  position: i + 1,
-  username: item.username,
-  total_balance: formatarValorRanking(item.total_balance),
-  is_current_user: item.is_current_user
-}));
-
-// Atualiza cache
-ultimoRanking = ranking;
-ultimaAtualizacao = agora;
-
-      return res.status(200).json({ ranking });
-
-    } catch (error) {
-      console.error("❌ Erro ao buscar ranking:", error);
-      return res.status(500).json({ error: "Erro interno ao buscar ranking" });
+    // Garante mínimo de 10 posições
+    const nomesFixos = [
+      "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
+      "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2", "ana_follow", "kaduzinho"
+    ];
+    while (ranking.length < 10) {
+      const nome = nomesFixos[ranking.length % nomesFixos.length];
+      ranking.push({
+        username: nome,
+        total_balance: Math.floor(Math.random() * 500) + 50,
+        is_current_user: false
+      });
     }
-  }
 
+    // 🔝 Define top 3 fixos diários (somente 1x por dia)
+    if (!top3FixosHoje || diaTop3 !== hoje) {
+      ranking.sort((a, b) => b.total_balance - a.total_balance);
+      top3FixosHoje = ranking.slice(0, 3);
+      diaTop3 = hoje;
+      console.log("🏆 Novo top3 diário definido:", top3FixosHoje.map(u => u.username));
+    }
+
+    // Mantém os 3 primeiros fixos, embaralha os outros
+    const restantes = ranking.filter(u => !top3FixosHoje.some(t => t.username === u.username));
+    for (let i = restantes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [restantes[i], restantes[j]] = [restantes[j], restantes[i]];
+    }
+
+    ranking = [...top3FixosHoje, ...restantes];
+
+    // Aplica formatação final
+    ranking = ranking.map((item, i) => ({
+      position: i + 1,
+      username: item.username,
+      total_balance: formatarValorRanking(item.total_balance),
+      is_current_user: item.is_current_user
+    }));
+
+    ultimoRanking = ranking;
+    ultimaAtualizacao = agora;
+
+    return res.status(200).json({ ranking });
+  } catch (error) {
+    console.error("❌ Erro ao buscar ranking:", error);
+    return res.status(500).json({ error: "Erro interno ao buscar ranking" });
+  }
+}
     return res.status(404).json({ error: "Rota não encontrada." });
 }
