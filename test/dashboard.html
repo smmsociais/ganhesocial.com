@@ -764,15 +764,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         menuCloseBtn.addEventListener('click', closeMenu);
         menuOverlay.addEventListener('click', closeMenu);
 
-        // === Carrega saldo do usuário (mantém igual) ===
-        await carregarSaldos();
-
-        // === Carrega o ranking global ===
-        await carregarRanking();
-
-        // Atualiza ranking a cada 10 minutos (mesmo cache do servidor)
-        setInterval(carregarRanking, 1 * 60 * 1000);
-
     async function carregarSaldos() {
         const token = localStorage.getItem("token");
         if (!token) {
