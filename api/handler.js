@@ -7,12 +7,13 @@ import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
 import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
 
-// 🧠 Cache global de ranking
+// variáveis globais (no topo do arquivo)
 let ultimoRanking = null;
 let ultimaAtualizacao = 0;
 let top3FixosHoje = null;
 let diaTop3 = null;
 let horaInicioRanking = null;
+let zeroedAtMidnight = false;
 
 export default async function handler(req, res) {
     const { method, url, query } = req;
@@ -1782,7 +1783,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { token: bodyToken, reset } = req.body || {};
+  const { token: bodyToken } = req.body || {};
 
   try {
     await connectDB();
@@ -1799,48 +1800,89 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         : authHeader;
 
     const effectiveToken = tokenFromHeader || bodyToken;
-    if (!effectiveToken)
-      return res.status(401).json({ error: "Token inválido." });
+    if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
 
     const user = await User.findOne({ token: effectiveToken });
     if (!user)
-      return res
-        .status(404)
-        .json({ error: "Usuário não encontrado ou token inválido." });
+      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-    // 🔄 --- BLOCO DE RESET MANUAL ---
-    const resetPorEnv = process.env.RESET_RANKING === "true";
-    const resetPorBody = reset === true || reset === "true";
-
-    if (resetPorEnv || resetPorBody || req.query.reset === "true") {
-      console.log("♻️ Reiniciando ranking e zerando saldos...");
-
-      const del = await DailyEarning.deleteMany({});
-      const upd = await User.updateMany({}, { $set: { balance: 0 } });
-
-      ultimoRanking = null;
-      ultimaAtualizacao = 0;
-      top3FixosHoje = null;
-      diaTop3 = null;
-      horaInicioRanking = Date.now();
-
-      console.log(`✅ Reset concluído: ${del.deletedCount} ganhos removidos, ${upd.modifiedCount} usuários zerados.`);
-      return res.status(200).json({
-        success: true,
-        message: `Ranking e saldos zerados (${del.deletedCount} ganhos, ${upd.modifiedCount} usuários).`,
-      });
-    }
-
-    // 🕒 Cache de 10 minutos
+    // Parâmetros/time
     const agora = Date.now();
     const dezMinutos = 10 * 60 * 1000;
     const hoje = new Date().toLocaleDateString("pt-BR");
 
+    // Reset via ENV ou query ?reset=true (manual)
+    const resetPorEnv = process.env.RESET_RANKING === "true";
+    const resetPorURL = (req.query && req.query.reset === "true") || false;
+    if (resetPorEnv || resetPorURL) {
+      // limpa DB e cache
+      await DailyEarning.deleteMany({});
+      await User.updateMany({}, { $set: { balance: 0 } });
+
+      // Placeholder vazio (10 posições sem nomes nem valores)
+      const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
+        position: i + 1,
+        username: "-",
+        total_balance: "0",
+        is_current_user: false,
+      }));
+
+      ultimoRanking = placeholderRanking;
+      ultimaAtualizacao = agora;
+      top3FixosHoje = null;
+      diaTop3 = hoje;
+      horaInicioRanking = agora;
+      zeroedAtMidnight = true;
+
+      console.log(
+        "🔥 Ranking e saldos reiniciados manualmente",
+        resetPorEnv ? "(via ENV)" : "(via URL)"
+      );
+
+      if (resetPorURL) {
+        return res.status(200).json({
+          success: true,
+          message: "Ranking e saldos zerados (reset manual via URL).",
+          ranking: placeholderRanking,
+        });
+      }
+      // if via ENV, we will continue and return placeholder by cache check below
+    }
+
+    // === Automatic midnight reset: se mudou o dia em relação a diaTop3
+    if (diaTop3 && diaTop3 !== hoje) {
+      console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
+
+      // zera ganhos e saldos
+      await DailyEarning.deleteMany({});
+      await User.updateMany({}, { $set: { balance: 0 } });
+
+      // placeholders vazios para retornar imediatamente
+      const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
+        position: i + 1,
+        username: "-",
+        total_balance: "0",
+        is_current_user: false,
+      }));
+
+      ultimoRanking = placeholderRanking;
+      ultimaAtualizacao = agora;
+      top3FixosHoje = null;
+      diaTop3 = hoje;
+      horaInicioRanking = agora;
+      zeroedAtMidnight = true;
+
+      console.log("✅ Ranking diário e saldos zerados automaticamente (meia-noite).");
+      return res.status(200).json({ ranking: placeholderRanking });
+    }
+
+    // Se já temos cache válido (mesmo dia e menos de 10 minutos), retorna
     if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
+      // Se o cache é placeholder (zeroedAtMidnight), retorne também
       return res.status(200).json({ ranking: ultimoRanking });
     }
 
-    // 📊 Gera novo ranking a partir do banco
+    // 🔹 Gera novo ranking a partir do banco
     const ganhosPorUsuario = await DailyEarning.aggregate([
       {
         $group: {
@@ -1867,16 +1909,32 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       },
     ]);
 
-    // --- Montagem inicial do ranking ---
-    let ranking = ganhosPorUsuario
-      .filter((item) => item.totalGanhos > 1)
+    // Se DB vazio e zeroedAtMidnight, mantenha placeholder
+    if ((!ganhosPorUsuario || ganhosPorUsuario.length === 0) && zeroedAtMidnight) {
+      // garante que placeholder esteja salvo e retorna
+      if (!ultimoRanking) {
+        const placeholderRanking = Array.from({ length: 10 }).map((_, i) => ({
+          position: i + 1,
+          username: "-",
+          total_balance: "0",
+          is_current_user: false,
+        }));
+        ultimoRanking = placeholderRanking;
+        ultimaAtualizacao = agora;
+      }
+      return res.status(200).json({ ranking: ultimoRanking });
+    }
+
+    // --- Montagem inicial do ranking: mantenha real_total para ordenação ---
+    let ranking = (ganhosPorUsuario || [])
+      .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
       .map((item) => ({
         username: item.username || "Usuário",
-        real_total: Number(item.totalGanhos),
+        real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
         is_current_user: item.token === effectiveToken,
       }));
 
-    // --- Adiciona nomes fixos se não houver usuários suficientes ---
+    // --- Adiciona nomes fixos se não houver usuários suficientes (opcional) ---
     const nomesFixos = [
       "Allef 🔥", "🤪", "melzinho_443", "noname", "Caioo ⚡",
       "lucasvz___xzz 💪", "joaozinxx_", "brunno777", "raay__s2",
@@ -1892,16 +1950,21 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       });
     }
 
-    // --- Ordena ranking por valor real ---
+    // --- Ordena ranking por valor real (maior primeiro) ---
     ranking.sort((a, b) => b.real_total - a.real_total);
 
-    // --- Define top3 fixos do dia ---
+    // --- Define top3 fixos do dia (somente 1x por dia) ---
     if (!top3FixosHoje || diaTop3 !== hoje) {
       top3FixosHoje = ranking.slice(0, 3).map((u) => ({ ...u }));
       diaTop3 = hoje;
+      zeroedAtMidnight = false; // já temos dados do dia
       horaInicioRanking = agora;
-      console.log("🏆 Novo top3 diário:", top3FixosHoje.map((u) => `${u.username} (${u.real_total})`));
+      console.log(
+        "🏆 Novo top3 diário:",
+        top3FixosHoje.map((u) => `${u.username} (${u.real_total})`)
+      );
     } else {
+      // garante ordenação do top3 por real_total
       top3FixosHoje.sort((a, b) => b.real_total - a.real_total);
     }
 
@@ -1909,25 +1972,31 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const top3Usernames = top3FixosHoje.map((t) => t.username);
     let restantes = ranking.filter((u) => !top3Usernames.includes(u.username));
 
-    // --- Ordena os demais corretamente ---
+    // --- Ordena os demais por valor real (maior -> menor) ---
     restantes.sort((a, b) => b.real_total - a.real_total);
 
-    // --- Junta top3 + demais ---
+    // --- Junta top3 fixos + demais corretamente ordenados ---
     let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
 
-    // 💰 Incremento progressivo de ganhos a cada 10 minutos
+    // === 💰 GANHOS PROGRESSIVOS POR TEMPO ===
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+
+    // se não tivermos horaInicioRanking, inicialize-a
+    if (!horaInicioRanking) horaInicioRanking = agora;
+
+    // calcula quantos intervalos de 10 min se passaram
     const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
 
+    // aplica incremento progressivo no real_total conforme posição e tempo
     finalRankingRaw = finalRankingRaw.map((item, idx) => {
-      const incremento = ganhosPorPosicao[idx] * intervalosDecorridos;
+      const incremento = (ganhosPorPosicao[idx] || 0) * intervalosDecorridos;
       return {
         ...item,
         real_total: item.real_total + incremento,
       };
     });
 
-    // --- Formata para exibição ---
+    // --- Formata para resposta ---
     const finalRanking = finalRankingRaw.map((item, idx) => ({
       position: idx + 1,
       username: item.username,
@@ -1935,10 +2004,14 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       is_current_user: !!item.is_current_user,
     }));
 
+    // Atualiza cache
     ultimoRanking = finalRanking;
     ultimaAtualizacao = agora;
 
-    console.log("🔢 final top3 (numeros reais):", top3FixosHoje.map((u) => `${u.username}=${u.real_total}`));
+    console.log(
+      "🔢 final top3 (numeros reais):",
+      top3FixosHoje.map((u) => `${u.username}=${u.real_total}`)
+    );
 
     return res.status(200).json({ ranking: finalRanking });
   } catch (error) {
