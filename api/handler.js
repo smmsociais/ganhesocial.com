@@ -12,6 +12,7 @@ let ultimoRanking = null;
 let ultimaAtualizacao = 0;
 let top3FixosHoje = null;
 let diaTop3 = null;
+let horaInicioRanking = null;
 
 export default async function handler(req, res) {
     const { method, url } = req;
@@ -1865,7 +1866,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // --- Ordena os demais por valor real (mantém ordem correta) ---
     restantes.sort((a, b) => b.real_total - a.real_total);
-    
+
 // --- Junta top3 fixos + demais corretamente ordenados ---
 let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
 
@@ -1898,6 +1899,7 @@ const finalRanking = finalRankingRaw.map((item, idx) => ({
   total_balance: formatarValorRanking(item.real_total),
   is_current_user: !!item.is_current_user,
 }));
+
 
     // Atualiza cache
     ultimoRanking = finalRanking;
