@@ -1779,7 +1779,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // Cache de 10 minutos
     const agora = Date.now();
-    const dezMinutos = 10 * 60 * 1000;
+    const dezMinutos = 1 * 60 * 1000;
     const hoje = new Date().toLocaleDateString("pt-BR");
 
     // ⚙️ Se o ranking ainda é válido (mesmo dia e menos de 10 min)
