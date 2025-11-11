@@ -33,6 +33,8 @@
     { "source": "/ranking", "destination": "/ranking.html" },
     { "source": "/docs/api/tiktok", "destination": "/docs/api/tiktok.html" },
 
+    { "source": "/test/dashboard", "destination": "/test/dashboard.html" },
+
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
     { "source": "/api/confirmar_acao", "destination": "/api/handler.js" },
