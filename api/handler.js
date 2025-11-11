@@ -5,7 +5,7 @@ import connectDB from "./db.js";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction } from "./schema.js";
+import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction, DailyRanking } from "./schema.js";
 
 // ===== Variáveis globais (colocar no topo do arquivo, fora do handler) =====
 let ultimoRanking = null;
