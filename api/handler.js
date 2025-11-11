@@ -1858,7 +1858,7 @@ const ranking = ganhosPorUsuario
 
       // Cache de 10 minutos (para todos os usuários verem o mesmo ranking)
       const agora = Date.now();
-      const dezMinutos = 1 * 60 * 1000;
+      const dezMinutos = 10 * 60 * 1000;
 
       if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos) {
         console.log("🔁 Retornando ranking em cache");
