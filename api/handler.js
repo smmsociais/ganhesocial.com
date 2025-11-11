@@ -16,7 +16,6 @@ let horaInicioRanking = null;
 let zeroedAtMidnight = false;
 let dailyFixedRanking = null;
 
-
 export default async function handler(req, res) {
     const { method, url, query } = req;
 
@@ -1793,7 +1792,9 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // tempo / dia
     const agora = Date.now();
-    const dezMinutos = 10 * 60 * 1000;
+
+    // <-- CACHE ajustado para 1 minuto para permitir updates por minuto -->
+    const CACHE_MS = 1 * 60 * 1000; // 1 minuto
     const hoje = new Date().toLocaleDateString("pt-BR");
 
     // autenticação (prefere header Authorization Bearer)
@@ -1975,8 +1976,8 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       return res.status(200).json({ ranking: placeholder });
     }
 
-    // === 4) Cache check (mesmo dia e menos de 10 min) ===
-    if (ultimoRanking && agora - ultimaAtualizacao < dezMinutos && diaTop3 === hoje) {
+    // === 4) Cache check (mesmo dia e menos de CACHE_MS) ===
+    if (ultimoRanking && agora - ultimaAtualizacao < CACHE_MS && diaTop3 === hoje) {
       return res.status(200).json({ ranking: ultimoRanking });
     }
 
@@ -2018,16 +2019,22 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // === 6) Limita a 10 posições ===
     let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
-    // === 7) Ganhos progressivos por posição (a cada 10 minutos) ===
+    // === 7) Ganhos progressivos por posição (agora por minuto) ===
+    // valores originais eram por 10 minutos; aqui calculamos ganho por MINUTO
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+    const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // divide por 10 -> ganho por 1 minuto
 
+    // calcula quantos minutos se passaram desde horaInicioRanking
     if (!horaInicioRanking) horaInicioRanking = agora;
-    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (1 * 60 * 1000));
 
-    finalRankingRaw = finalRankingRaw.map((item, idx) => ({
-      ...item,
-      real_total: (Number(item.real_total) || 0) + (ganhosPorPosicao[idx] || 0) * intervalosDecorridos,
-    }));
+    finalRankingRaw = finalRankingRaw.map((item, idx) => {
+      const incremento = (perMinuteGain[idx] || 0) * intervalosDecorridos;
+      return {
+        ...item,
+        real_total: (Number(item.real_total) || 0) + incremento,
+      };
+    });
 
     // === 8) Formata e responde ===
     const finalRanking = finalRankingRaw.map((item, idx) => ({
