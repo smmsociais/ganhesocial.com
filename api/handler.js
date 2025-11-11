@@ -1865,26 +1865,39 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // --- Ordena os demais por valor real (mantém ordem correta) ---
     restantes.sort((a, b) => b.real_total - a.real_total);
+    
+// --- Junta top3 fixos + demais corretamente ordenados ---
+let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
 
-    // Se quiser pequena variação visual entre empates, embaralhe só os empates:
-    /*
-    for (let i = 0; i < restantes.length - 1; i++) {
-      if (restantes[i].real_total === restantes[i + 1].real_total && Math.random() > 0.5) {
-        [restantes[i], restantes[i + 1]] = [restantes[i + 1], restantes[i]];
-      }
-    }
-    */
+// === 💰 GANHOS PROGRESSIVOS POR TEMPO ===
 
-    // --- Junta top3 fixos + demais corretamente ordenados ---
-    let finalRankingRaw = [...top3FixosHoje, ...restantes].slice(0, 10);
+// tabela de ganhos por posição (a cada 10 minutos)
+const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
 
-    // --- Formata para resposta ---
-    const finalRanking = finalRankingRaw.map((item, idx) => ({
-      position: idx + 1,
-      username: item.username,
-      total_balance: formatarValorRanking(item.real_total),
-      is_current_user: !!item.is_current_user,
-    }));
+// registra a hora da primeira geração do ranking diário
+if (!horaInicioRanking || diaTop3 !== hoje) {
+  horaInicioRanking = agora;
+}
+
+// calcula quantos intervalos de 10 min se passaram
+const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (10 * 60 * 1000));
+
+// aplica incremento progressivo no real_total conforme posição e tempo
+finalRankingRaw = finalRankingRaw.map((item, idx) => {
+  const incremento = ganhosPorPosicao[idx] * intervalosDecorridos;
+  return {
+    ...item,
+    real_total: item.real_total + incremento,
+  };
+});
+
+// --- Formata para resposta ---
+const finalRanking = finalRankingRaw.map((item, idx) => ({
+  position: idx + 1,
+  username: item.username,
+  total_balance: formatarValorRanking(item.real_total),
+  is_current_user: !!item.is_current_user,
+}));
 
     // Atualiza cache
     ultimoRanking = finalRanking;
