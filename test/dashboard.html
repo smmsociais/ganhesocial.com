@@ -879,10 +879,12 @@
                 // highlight do usuário atual
                 row.classList.toggle("highlight-row", !!user.is_current_user);
 
-                // username
-                const userCell = row.querySelector(".ranking-user");
-                if (userCell) userCell.textContent = user.username || "-";
-
+// username (marca o usuário logado)
+const userCell = row.querySelector(".ranking-user");
+if (userCell) {
+    const nome = user.username || "-";
+    userCell.textContent = user.is_current_user ? `${nome} [VOCÊ]` : nome;
+}
                 // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
                 let formattedValue = "R$ 0,00";
                 if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
