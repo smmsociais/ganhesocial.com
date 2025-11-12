@@ -72,6 +72,14 @@ if (resetPorEnv || resetPorURL) {
         return `${base}+`;
     };
 
+function shuffleArray(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
         const { nomeUsuario } = req.body;
@@ -1850,38 +1858,47 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // sample 10 users do DB
-      let sampled = [];
-      try {
-        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
-      } catch (e) {
-        console.error("Erro ao samplear users:", e);
-        sampled = [];
-      }
+// sample 10 users do DB
+let sampled = [];
+try {
+  sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
+} catch (e) {
+  console.error("Erro ao samplear users:", e);
+  sampled = [];
+}
 
-      const NAMES_POOL = [
-        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
-      ];
+const NAMES_POOL = [
+  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+];
 
-      dailyFixedRanking = [];
-      for (let i = 0; i < 10; i++) {
-        if (sampled[i]) {
-          dailyFixedRanking.push({
-            username: sampled[i].nome || NAMES_POOL[i % NAMES_POOL.length],
-            token: sampled[i].token || null,
-            real_total: 0,
-            is_current_user: sampled[i].token === effectiveToken
-          });
-        } else {
-          dailyFixedRanking.push({
-            username: NAMES_POOL[i % NAMES_POOL.length],
-            token: null,
-            real_total: 0,
-            is_current_user: false
-          });
-        }
-      }
+// embaralha fallback pool
+const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+
+// monta lista de candidatos: usa sampled nomes (se houver) + fallback para completar
+let candidates = sampled
+  .map(s => ({ username: s.nome || null, token: s.token || null }))
+  .filter(x => !!x.username);
+
+// se faltarem nomes, preencha com fallback (sem repetir)
+let fallbackIdx = 0;
+while (candidates.length < 10) {
+  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+  if (!candidates.some(c => c.username === pick)) {
+    candidates.push({ username: pick, token: null });
+  }
+  fallbackIdx++;
+}
+
+// agora embaralha a lista final para garantir ordem aleatória no primeiro dia
+dailyFixedRanking = shuffleArray(
+  candidates.slice(0, 10).map(c => ({
+    username: c.username,
+    token: c.token || null,
+    real_total: 0,
+    is_current_user: c.token === effectiveToken
+  }))
+);
 
       // persiste com startAt para garantir progressão por minutos
       const startAtDate = new Date(agora);
@@ -1945,47 +1962,48 @@ if (diaTop3 && diaTop3 !== hoje) {
   await DailyEarning.deleteMany({});
   await User.updateMany({}, { $set: { saldo: 0 } });
 
-  // === Sorteia até 10 usuários aleatórios do banco ===
-  let sampled = [];
-  try {
-    sampled = await User.aggregate([
-      { $sample: { size: 10 } },
-      { $project: { nome: 1, token: 1 } }
-    ]);
-  } catch (e) {
-    console.error("Erro ao samplear users (midnight):", e);
-    sampled = [];
+// tenta samplear até 10 usuários aleatórios do DB
+let sampled = [];
+try {
+  sampled = await User.aggregate([
+    { $sample: { size: 10 } },
+    { $project: { nome: 1, token: 1 } }
+  ]);
+} catch (e) {
+  console.error("Erro ao samplear users (midnight):", e);
+  sampled = [];
+}
+
+const NAMES_POOL = [
+  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+];
+
+const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+
+// monta candidatos (sampled + fallback sem repetição)
+let candidates = sampled
+  .map(s => ({ username: s.nome || null, token: s.token || null }))
+  .filter(x => !!x.username);
+
+let fallbackIdx = 0;
+while (candidates.length < 10) {
+  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+  if (!candidates.some(c => c.username === pick)) {
+    candidates.push({ username: pick, token: null });
   }
+  fallbackIdx++;
+}
 
-  // Pool de fallback (nomes aleatórios)
-  const NAMES_POOL = [
-    "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-    "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
-  ];
-
-  function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-  const shuffledFallback = shuffle(NAMES_POOL.slice());
-
-  // === Monta o ranking fixo diário ===
-  dailyFixedRanking = [];
-  for (let i = 0; i < 10; i++) {
-    if (sampled[i] && sampled[i].nome) {
-      dailyFixedRanking.push({
-        username: sampled[i].nome,
-        token: sampled[i].token || null,
-        real_total: 0,
-        is_current_user: sampled[i].token === effectiveToken
-      });
-    } else {
-      const fallbackName = shuffledFallback[i % shuffledFallback.length];
-      dailyFixedRanking.push({
-        username: fallbackName,
-        token: null,
-        real_total: 0,
-        is_current_user: false
-      });
-    }
-  }
+// embaralha para garantir ordem aleatória e cria dailyFixedRanking
+dailyFixedRanking = shuffleArray(
+  candidates.slice(0, 10).map(c => ({
+    username: c.username,
+    token: c.token || null,
+    real_total: 0,
+    is_current_user: c.token === effectiveToken
+  }))
+);
 
   // === Salva o novo ranking no DB ===
   try {
