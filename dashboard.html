@@ -769,13 +769,13 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
 
-                document.getElementById("saldoDisponivel").textContent =
-                    `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent =
-                    `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+                // Mostra os saldos e a página depois de carregar
                 document.getElementById("saldoDisponivel").style.display = "block";
                 document.getElementById("saldoPendente").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
@@ -784,21 +784,30 @@
         /* === SALDO === */
         async function carregarSaldos() {
             const token = localStorage.getItem("token");
-            if (!token) return;
-
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
+            }
             try {
                 const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
                 const data = await response.json();
-
-                if (!response.ok) throw new Error(data.error || "Erro ao buscar saldo.");
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar saldo.");
+                }
 
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 const saldoPendente = parseFloat(data.saldo_pendente || 0);
 
-                document.getElementById("saldoDisponivel").textContent =
-                    `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent =
-                    `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
+                localStorage.setItem("saldoPendente", saldoPendente);
+
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Mostra os saldos e a página depois de carregar
+                document.getElementById("saldoDisponivel").style.display = "block";
+                document.getElementById("saldoPendente").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
