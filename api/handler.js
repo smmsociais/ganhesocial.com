@@ -2214,7 +2214,7 @@ try {
   ganhosPorUsuario = [];
 }
 
-// --- Prepara mapa e helpers de matching ---
+// --- Prepara mapa e helpers de matching (versão corrigida) ---
 const mapa = new Map();
 
 const normalize = s => (String(s || "").trim().toLowerCase());
@@ -2225,15 +2225,25 @@ const makeKeyFrom = (item) => {
   return `U:${normalize(item.username)}`;
 };
 
-// insere itens do ranking fixo (fixed) primeiro
-baseFromFixed.forEach(u => {
+// --- ganhosPorPosicao / perMinuteGain e intervalo (necessários para projetar fixed) ---
+const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
+
+// garante horaInicioRanking para cálculo (se não tiver, usa agora => intervalos 0)
+const agoraMs = Date.now();
+const baseHoraInicio = horaInicioRanking || agoraMs;
+const intervalosDecorridos = Math.floor((agoraMs - baseHoraInicio) / (60 * 1000));
+
+// insere itens do ranking fixo (fixed) primeiro e registra posição
+baseFromFixed.forEach((u, idx) => {
   const entry = {
     username: u.username,
     token: u.token || null,
-    real_total: Number(u.real_total || 0),
+    real_total: Number(u.real_total || 0), // base real do fixed (sem incremento)
     is_current_user: !!u.is_current_user,
     source: 'fixed',
-    userId: u.userId || null // caso você queira dutar userId no futuro
+    userId: u.userId || null,
+    fixedPosition: idx // salva posição para projeção posterior
   };
   const key = makeKeyFrom(entry);
   mapa.set(key, entry);
@@ -2253,14 +2263,13 @@ function findExistingKeyFor(item) {
   const uname = normalize(item.username);
   for (const existingKey of mapa.keys()) {
     if (existingKey.startsWith('U:') && existingKey === `U:${uname}`) return existingKey;
-    // também aceitamos matches por key 'I:' or 'T:' onde username bate — útil se fixed tiver token null e ganhos tiver token
     const ex = mapa.get(existingKey);
     if (ex && normalize(ex.username) === uname) return existingKey;
   }
   return null;
 }
 
-// incorpora ganhos do DailyEarning — PRIORIDADE ao DB (substitui fixed se correspondente)
+// incorpora ganhos do DailyEarning — agora COM COMPARAÇÃO com fixed projetado
 ganhosPorUsuario.forEach(g => {
   const item = {
     username: (g.username || "Usuário").toString(),
@@ -2271,28 +2280,55 @@ ganhosPorUsuario.forEach(g => {
     userId: g.userId ? String(g.userId) : null
   };
 
-  // tenta achar chave já existente (token -> userId -> username)
   const existingKey = findExistingKeyFor(item);
   if (existingKey) {
-    // substitui valores importantes (prioriza DB)
     const ex = mapa.get(existingKey);
-    mapa.set(existingKey, {
-      username: item.username || ex.username,
-      token: item.token || ex.token,
-      real_total: item.real_total, // PRIORIDADE: DB
-      is_current_user: ex.is_current_user || item.is_current_user,
-      source: 'earnings',
-      userId: item.userId || ex.userId || null
-    });
+
+    // se o existente é fixed, projete seu valor atual (base + incremento por posição)
+    if (ex && ex.source === 'fixed') {
+      const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
+      const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
+      const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
+
+      if (Number(item.real_total) >= projectedFixed) {
+        // earnings ganha: substitui (valor real do DB é maior ou igual)
+        mapa.set(existingKey, {
+          username: item.username || ex.username,
+          token: item.token || ex.token,
+          real_total: Number(item.real_total),
+          is_current_user: ex.is_current_user || item.is_current_user,
+          source: 'earnings',
+          userId: item.userId || ex.userId || null
+        });
+      } else {
+        // fixed projetado é maior: mantemos fixed (mantém source='fixed') e opcionalmente anotamos earnings menor
+        // registramos earnings_total apenas para diagnóstico, sem alterar ordenação
+        ex.earnings_total = Number(item.real_total);
+        mapa.set(existingKey, ex);
+      }
+    } else {
+      // caso normal: substitui (ex não é fixed ou não há conflito)
+      mapa.set(existingKey, {
+        username: item.username || (ex && ex.username) || "Usuário",
+        token: item.token || (ex && ex.token) || null,
+        real_total: Number(item.real_total),
+        is_current_user: (ex && ex.is_current_user) || item.is_current_user,
+        source: item.source,
+        userId: item.userId || (ex && ex.userId) || null
+      });
+    }
   } else {
-    // cria nova chave com userId/token/username preferencial
+    // não existe: adiciona novo
     const key = makeKeyFrom(item);
     mapa.set(key, { ...item });
   }
 });
 
-// converte para array e ordena por real_total decrescente
-baseRankingRaw = Array.from(mapa.values()).sort((a, b) => b.real_total - a.real_total);
+// converte para array e ordena por real_total decrescente (garantindo Number)
+baseRankingRaw = Array.from(mapa.values())
+  .map(v => ({ ...v, real_total: Number(v.real_total || 0) }))
+  .sort((a, b) => Number(b.real_total || 0) - Number(a.real_total || 0));
+
 
       // garante pelo menos 10 entradas (fallback)
       if (baseRankingRaw.length < 10) {
