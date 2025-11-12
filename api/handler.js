@@ -1908,12 +1908,27 @@ dailyFixedRanking = shuffleArray(
   }))
 );
 
-// supondo brasilAgora / brasilMidnightTomorrow / startAtDate definidos
+// 🕒 Define hora de início do ranking (horário de Brasília)
+const agora = new Date();
+const offsetBrasilia = -3;
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+
+// A data/hora exata de início da contagem
+const startAtDate = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate(),
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
 await DailyRanking.findOneAndUpdate(
   { data: hoje },
   {
     ranking: dailyFixedRanking,
-    startAt: startAtDate,           // salva o início da progressão
+    startAt: startAtDate,
     expiresAt: brasilMidnightTomorrow,
     criadoEm: new Date()
   },
@@ -2020,11 +2035,27 @@ dailyFixedRanking = shuffleArray(
   // === Salva o novo ranking no DB ===
   try {
 // supondo brasilAgora / brasilMidnightTomorrow / startAtDate definidos
+// 🕒 Define hora de início do ranking (horário de Brasília)
+const agora = new Date();
+const offsetBrasilia = -3;
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+
+// A data/hora exata de início da contagem
+const startAtDate = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate(),
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
 await DailyRanking.findOneAndUpdate(
   { data: hoje },
   {
     ranking: dailyFixedRanking,
-    startAt: startAtDate,           // salva o início da progressão
+    startAt: startAtDate,
     expiresAt: brasilMidnightTomorrow,
     criadoEm: new Date()
   },
