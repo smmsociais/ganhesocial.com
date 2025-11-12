@@ -1870,8 +1870,8 @@ try {
 const NAMES_POOL = [
   "Allef 🔥","🤪","-","noname","⚡",
   "💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
   "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
   "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
@@ -1982,8 +1982,8 @@ try {
 const NAMES_POOL = [
   "Allef 🔥","🤪","-","noname","⚡",
   "💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
   "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
   "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
@@ -2083,8 +2083,8 @@ dailyFixedRanking = shuffleArray(
       const NAMES_POOL2 = [
   "Allef 🔥","🤪","-","noname","⚡",
   "💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
   "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
   "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
