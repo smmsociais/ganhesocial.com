@@ -769,13 +769,13 @@
                 localStorage.setItem("saldoDisponivel", saldoDisponivel);
                 localStorage.setItem("saldoPendente", saldoPendente);
 
-                document.getElementById("saldoDisponivel").textContent =
-                    `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent =
-                    `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+                // Mostra os saldos e a página depois de carregar
                 document.getElementById("saldoDisponivel").style.display = "block";
                 document.getElementById("saldoPendente").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
@@ -784,56 +784,82 @@
         /* === SALDO === */
         async function carregarSaldos() {
             const token = localStorage.getItem("token");
-            if (!token) return;
-
+            if (!token) {
+                console.error("Token não encontrado.");
+                return;
+            }
             try {
                 const response = await fetch(`https://ganhesocial.com/api/get_saldo?token=${token}`);
                 const data = await response.json();
-
-                if (!response.ok) throw new Error(data.error || "Erro ao buscar saldo.");
+                if (!response.ok) {
+                    throw new Error(data.error || "Erro ao buscar saldo.");
+                }
 
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 const saldoPendente = parseFloat(data.saldo_pendente || 0);
 
-                document.getElementById("saldoDisponivel").textContent =
-                    `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent =
-                    `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
+                localStorage.setItem("saldoPendente", saldoPendente);
+
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Mostra os saldos e a página depois de carregar
+                document.getElementById("saldoDisponivel").style.display = "block";
+                document.getElementById("saldoPendente").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
         }
 
         /* === RANKING === */
-        async function carregarRanking(parcial = false) {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+async function carregarRanking() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-            try {
-                const response = await fetch("https://ganhesocial.com/api/ranking_diario", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ token })
-                });
+    try {
+        const [resDiario, resAntigo] = await Promise.all([
+            fetch("https://ganhesocial.com/api/ranking_diario", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ token })
+            }),
+            fetch("https://ganhesocial.com/api/ranking_antigo", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ token })
+            })
+        ]);
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || "Erro ao buscar ranking.");
+        const dataDiario = await resDiario.json();
+        const dataAntigo = await resAntigo.json();
 
-                if (data.ranking && Array.isArray(data.ranking)) {
-                    let ranking = [...data.ranking];
+        const rankingCombinado = [
+            ...(dataDiario.ranking || []),
+            ...(dataAntigo.ranking || [])
+        ];
 
-                    populateRankingTable(ranking);
-                } else {
-                    console.warn("⚠️ Nenhum ranking recebido da API.");
-                }
-            } catch (error) {
-                console.error("❌ Erro ao carregar ranking:", error);
-            }
-        }
+        // Remove duplicados pelo username
+        const rankingUnico = Array.from(
+            new Map(rankingCombinado.map(u => [u.username, u])).values()
+        );
 
+        // Ordena por total_balance
+        rankingUnico.sort((a, b) => b.total_balance - a.total_balance);
+
+        populateRankingTable(rankingUnico, "rankingTable");
+
+    } catch (error) {
+        console.error("❌ Erro ao carregar ranking combinado:", error);
+    }
+}
         /* === POPULAR TABELA === */
         function populateRankingTable(rankingData) {
             const rankingTable = document.getElementById("rankingTable");
