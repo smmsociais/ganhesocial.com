@@ -1865,7 +1865,7 @@ return res.status(200).json({ ranking });
   }
 };
 
-// Rota: /api/ranking_diario
+// Rota: /api/ranking_diario (PATCH: fusão priorizando DailyEarning e incrementos só para 'fixed')
 if (url.startsWith("/api/ranking_diario") && method === "POST") {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
@@ -1899,35 +1899,34 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // --- 1) carregar dailyFixedRanking do DB (normalizando strings -> objetos) ---
     if (!dailyFixedRanking || diaTop3 !== hoje) {
       try {
-const saved = await DailyRanking.findOne({ data: hoje }).lean();
-if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
-  dailyFixedRanking = saved.ranking.map(entry => ({
-    username: entry.username ?? entry.nome ?? "Usuário",
-    token: entry.token ?? null,
-    real_total: Number(entry.real_total ?? 0),
-    is_current_user: !!entry.is_current_user
-  }));
+        const saved = await DailyRanking.findOne({ data: hoje }).lean();
+        if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
+          dailyFixedRanking = saved.ranking.map(entry => ({
+            username: entry.username ?? entry.nome ?? "Usuário",
+            token: entry.token ?? null,
+            real_total: Number(entry.real_total ?? 0),
+            is_current_user: !!entry.is_current_user
+          }));
 
-  // Use startAt salvo no DB (e, se não existir, fallback para criadoEm ou início do dia Brasília)
-  if (saved.startAt) {
-    horaInicioRanking = new Date(saved.startAt).getTime();
-  } else if (saved.criadoEm) {
-    horaInicioRanking = new Date(saved.criadoEm).getTime();
-  } else {
-    // fallback: define para meia-noite BR atual
-    const now = new Date();
-    const offsetBrasilia = -3;
-    const brasilNow = new Date(now.getTime() + offsetBrasilia * 60 * 60 * 1000);
-    const startOfDayBR = new Date(Date.UTC(brasilNow.getUTCFullYear(), brasilNow.getUTCMonth(), brasilNow.getUTCDate(), 3, 0, 0, 0)); // 03:00 UTC = 0:00 BR
-    horaInicioRanking = startOfDayBR.getTime();
-  }
+          // Use startAt salvo no DB (e, se não existir, fallback para criadoEm ou início do dia Brasília)
+          if (saved.startAt) {
+            horaInicioRanking = new Date(saved.startAt).getTime();
+          } else if (saved.criadoEm) {
+            horaInicioRanking = new Date(saved.criadoEm).getTime();
+          } else {
+            // fallback: define para meia-noite BR atual
+            const now = new Date();
+            const offsetBrasilia = -3;
+            const brasilNow = new Date(now.getTime() + offsetBrasilia * 60 * 60 * 1000);
+            const startOfDayBR = new Date(Date.UTC(brasilNow.getUTCFullYear(), brasilNow.getUTCMonth(), brasilNow.getUTCDate(), 3, 0, 0, 0)); // 03:00 UTC = 0:00 BR
+            horaInicioRanking = startOfDayBR.getTime();
+          }
 
-  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-  diaTop3 = hoje;
-  zeroedAtMidnight = false;
-  console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
-}
-
+          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+          diaTop3 = hoje;
+          zeroedAtMidnight = false;
+          console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
+        }
       } catch (e) {
         console.error("Erro ao carregar DailyRanking do DB:", e);
       }
@@ -1940,97 +1939,97 @@ if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-// sample 10 users do DB
-let sampled = [];
-try {
-  sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
-} catch (e) {
-  console.error("Erro ao samplear users:", e);
-  sampled = [];
-}
+      // sample 10 users do DB
+      let sampled = [];
+      try {
+        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
+      } catch (e) {
+        console.error("Erro ao samplear users:", e);
+        sampled = [];
+      }
 
-const NAMES_POOL = [
-  "Allef 🔥","🤪","-","noname","⚡",
-  "💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","-","@_01.kaio0",
-  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
-  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
-];
+      const NAMES_POOL = [
+        "Allef 🔥","🤪","-","noname","⚡",
+        "💪","-","KingdosMTD🥱🥱","kaduzinho",
+        "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+        "vitor das continhas","-","@_01.kaio0",
+        "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+        "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+        "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
+      ];
 
-// embaralha fallback pool
-const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+      // embaralha fallback pool
+      const shuffledFallback = shuffleArray(NAMES_POOL.slice());
 
-// monta lista de candidatos: usa sampled nomes (se houver) + fallback para completar
-let candidates = sampled
-  .map(s => ({ username: s.nome || null, token: s.token || null }))
-  .filter(x => !!x.username);
+      // monta lista de candidatos: usa sampled nomes (se houver) + fallback para completar
+      let candidates = sampled
+        .map(s => ({ username: s.nome || null, token: s.token || null }))
+        .filter(x => !!x.username);
 
-// se faltarem nomes, preencha com fallback (sem repetir)
-let fallbackIdx = 0;
-while (candidates.length < 10) {
-  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
-  if (!candidates.some(c => c.username === pick)) {
-    candidates.push({ username: pick, token: null });
-  }
-  fallbackIdx++;
-}
+      // se faltarem nomes, preencha com fallback (sem repetir)
+      let fallbackIdx = 0;
+      while (candidates.length < 10) {
+        const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+        if (!candidates.some(c => c.username === pick)) {
+          candidates.push({ username: pick, token: null });
+        }
+        fallbackIdx++;
+      }
 
-// agora embaralha a lista final para garantir ordem aleatória no primeiro dia
-dailyFixedRanking = shuffleArray(
-  candidates.slice(0, 10).map(c => ({
-    username: c.username,
-    token: c.token || null,
-    real_total: 0,
-    is_current_user: c.token === effectiveToken
-  }))
-);
+      // agora embaralha a lista final para garantir ordem aleatória no primeiro dia
+      dailyFixedRanking = shuffleArray(
+        candidates.slice(0, 10).map(c => ({
+          username: c.username,
+          token: c.token || null,
+          real_total: 0,
+          is_current_user: c.token === effectiveToken
+        }))
+      );
 
-// 🕒 Define hora atual e configurações de fuso horário de Brasília
-const agora = new Date();
-const offsetBrasilia = -3;
-const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+      // 🕒 Define hora atual e configurações de fuso horário de Brasília
+      const agoraDate = new Date();
+      const offsetBrasilia = -3;
+      const brasilAgora = new Date(agoraDate.getTime() + offsetBrasilia * 60 * 60 * 1000);
 
-const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+      const hojeStr = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
 
-// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
-const brasilMidnightTomorrow = new Date(Date.UTC(
-  brasilAgora.getUTCFullYear(),
-  brasilAgora.getUTCMonth(),
-  brasilAgora.getUTCDate() + 1, // amanhã
-  3, // 03:00 UTC = 00:00 Brasília
-  0,
-  0,
-  0
-));
+      // 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
+      const brasilMidnightTomorrow = new Date(Date.UTC(
+        brasilAgora.getUTCFullYear(),
+        brasilAgora.getUTCMonth(),
+        brasilAgora.getUTCDate() + 1, // amanhã
+        3, // 03:00 UTC = 00:00 Brasília
+        0,
+        0,
+        0
+      ));
 
-// 🕒 Define a hora de início do ranking (meia-noite de hoje)
-const startAtDate = new Date(Date.UTC(
-  brasilAgora.getUTCFullYear(),
-  brasilAgora.getUTCMonth(),
-  brasilAgora.getUTCDate(),
-  3, // 03:00 UTC = 00:00 Brasília
-  0,
-  0,
-  0
-));
+      // 🕒 Define a hora de início do ranking (meia-noite de hoje)
+      const startAtDate = new Date(Date.UTC(
+        brasilAgora.getUTCFullYear(),
+        brasilAgora.getUTCMonth(),
+        brasilAgora.getUTCDate(),
+        3, // 03:00 UTC = 00:00 Brasília
+        0,
+        0,
+        0
+      ));
 
-// 🔢 Cria ou atualiza o ranking fixo do dia
-await DailyRanking.findOneAndUpdate(
-  { data: hoje },
-  {
-    ranking: dailyFixedRanking,
-    startAt: startAtDate,
-    expiresAt: brasilMidnightTomorrow,
-    criadoEm: new Date()
-  },
-  { upsert: true, new: true, setDefaultsOnInsert: true }
-);
+      // 🔢 Cria ou atualiza o ranking fixo do dia
+      await DailyRanking.findOneAndUpdate(
+        { data: hojeStr },
+        {
+          ranking: dailyFixedRanking,
+          startAt: startAtDate,
+          expiresAt: brasilMidnightTomorrow,
+          criadoEm: new Date()
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
 
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-      diaTop3 = hoje;
-      horaInicioRanking = agora;
+      diaTop3 = hojeStr;
+      horaInicioRanking = agoraDate;
       ultimoRanking = null;
       ultimaAtualizacao = 0;
       zeroedAtMidnight = true;
@@ -2052,276 +2051,268 @@ await DailyRanking.findOneAndUpdate(
       }
     }
 
-// === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
-if (diaTop3 && diaTop3 !== hoje) {
-  console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
+    // === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
+    if (diaTop3 && diaTop3 !== hoje) {
+      console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
 
-  // === Horário de Brasília (UTC-3) ===
-  const agora = new Date();
-  console.log("🕒 Agora (UTC):", agora.toISOString());
+      const agoraDate = new Date();
+      console.log("🕒 Agora (UTC):", agoraDate.toISOString());
 
-  const offsetBrasilia = -3; // UTC-3
-  const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
-  console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
+      const offsetBrasilia = -3; // UTC-3
+      const brasilAgora = new Date(agoraDate.getTime() + offsetBrasilia * 60 * 60 * 1000);
+      console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
 
-  const brasilMidnightTomorrow = new Date(Date.UTC(
-    brasilAgora.getUTCFullYear(),
-    brasilAgora.getUTCMonth(),
-    brasilAgora.getUTCDate() + 1,
-    3, // 03:00 UTC = 00:00 Brasília
-    0, 0, 0
-  ));
-  console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
+      const brasilMidnightTomorrow = new Date(Date.UTC(
+        brasilAgora.getUTCFullYear(),
+        brasilAgora.getUTCMonth(),
+        brasilAgora.getUTCDate() + 1,
+        3, // 03:00 UTC = 00:00 Brasília
+        0, 0, 0
+      ));
+      console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
 
-  // === Reset de ganhos e saldos ===
-  await DailyEarning.deleteMany({});
-  await User.updateMany({}, { $set: { saldo: 0 } });
+      // === Reset de ganhos e saldos ===
+      await DailyEarning.deleteMany({});
+      await User.updateMany({}, { $set: { saldo: 0 } });
 
-// tenta samplear até 10 usuários aleatórios do DB
-let sampled = [];
-try {
-  sampled = await User.aggregate([
-    { $sample: { size: 10 } },
-    { $project: { nome: 1, token: 1 } }
-  ]);
-} catch (e) {
-  console.error("Erro ao samplear users (midnight):", e);
-  sampled = [];
-}
+      // tenta samplear até 10 usuários aleatórios do DB
+      let sampled = [];
+      try {
+        sampled = await User.aggregate([
+          { $sample: { size: 10 } },
+          { $project: { nome: 1, token: 1 } }
+        ]);
+      } catch (e) {
+        console.error("Erro ao samplear users (midnight):", e);
+        sampled = [];
+      }
 
-const NAMES_POOL = [
-  "Allef 🔥","🤪","-","noname","⚡",
-  "💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","-","@_01.kaio0",
-  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
-  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
-];
+      const NAMES_POOL = [
+        "Allef 🔥","🤪","-","noname","⚡",
+        "💪","-","KingdosMTD🥱🥱","kaduzinho",
+        "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+        "vitor das continhas","-","@_01.kaio0",
+        "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+        "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+        "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
+      ];
 
-const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+      const shuffledFallback = shuffleArray(NAMES_POOL.slice());
 
-// monta candidatos (sampled + fallback sem repetição)
-let candidates = sampled
-  .map(s => ({ username: s.nome || null, token: s.token || null }))
-  .filter(x => !!x.username);
+      let candidates = sampled
+        .map(s => ({ username: s.nome || null, token: s.token || null }))
+        .filter(x => !!x.username);
 
-let fallbackIdx = 0;
-while (candidates.length < 10) {
-  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
-  if (!candidates.some(c => c.username === pick)) {
-    candidates.push({ username: pick, token: null });
-  }
-  fallbackIdx++;
-}
+      let fallbackIdx = 0;
+      while (candidates.length < 10) {
+        const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+        if (!candidates.some(c => c.username === pick)) {
+          candidates.push({ username: pick, token: null });
+        }
+        fallbackIdx++;
+      }
 
-// embaralha para garantir ordem aleatória e cria dailyFixedRanking
-dailyFixedRanking = shuffleArray(
-  candidates.slice(0, 10).map(c => ({
-    username: c.username,
-    token: c.token || null,
-    real_total: 0,
-    is_current_user: c.token === effectiveToken
-  }))
-);
+      dailyFixedRanking = shuffleArray(
+        candidates.slice(0, 10).map(c => ({
+          username: c.username,
+          token: c.token || null,
+          real_total: 0,
+          is_current_user: c.token === effectiveToken
+        }))
+      );
 
-  // === Salva o novo ranking no DB ===
-  try {
-// 🕒 Define hora atual e configurações de fuso horário de Brasília
-const agora = new Date();
-const offsetBrasilia = -3;
-const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+      try {
+        const agoraDate2 = new Date();
+        const brasilAgora2 = new Date(agoraDate2.getTime() + offsetBrasilia * 60 * 60 * 1000);
+        const hojeStr = brasilAgora2.toLocaleDateString("pt-BR");
 
-const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+        const brasilMidnightTomorrow2 = new Date(Date.UTC(
+          brasilAgora2.getUTCFullYear(),
+          brasilAgora2.getUTCMonth(),
+          brasilAgora2.getUTCDate() + 1,
+          3, 0, 0, 0
+        ));
 
-// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
-const brasilMidnightTomorrow = new Date(Date.UTC(
-  brasilAgora.getUTCFullYear(),
-  brasilAgora.getUTCMonth(),
-  brasilAgora.getUTCDate() + 1, // amanhã
-  3, // 03:00 UTC = 00:00 Brasília
-  0,
-  0,
-  0
-));
+        const startAtDate = new Date(Date.UTC(
+          brasilAgora2.getUTCFullYear(),
+          brasilAgora2.getUTCMonth(),
+          brasilAgora2.getUTCDate(),
+          3, 0, 0, 0
+        ));
 
-// 🕒 Define a hora de início do ranking (meia-noite de hoje)
-const startAtDate = new Date(Date.UTC(
-  brasilAgora.getUTCFullYear(),
-  brasilAgora.getUTCMonth(),
-  brasilAgora.getUTCDate(),
-  3, // 03:00 UTC = 00:00 Brasília
-  0,
-  0,
-  0
-));
+        await DailyRanking.findOneAndUpdate(
+          { data: hojeStr },
+          {
+            ranking: dailyFixedRanking,
+            startAt: startAtDate,
+            expiresAt: brasilMidnightTomorrow2,
+            criadoEm: new Date()
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-// 🔢 Cria ou atualiza o ranking fixo do dia
-await DailyRanking.findOneAndUpdate(
-  { data: hoje },
-  {
-    ranking: dailyFixedRanking,
-    startAt: startAtDate,
-    expiresAt: brasilMidnightTomorrow,
-    criadoEm: new Date()
-  },
-  { upsert: true, new: true, setDefaultsOnInsert: true }
-);
+        console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", brasilAgora2.toISOString());
+      } catch (e) {
+        console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
+      }
 
-    console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", brasilAgora.toISOString());
-  } catch (e) {
-    console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
-  }
+      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+      diaTop3 = hoje;
+      horaInicioRanking = brasilAgora;
+      ultimoRanking = null;
+      ultimaAtualizacao = brasilAgora;
+      zeroedAtMidnight = true;
 
-  // === Atualiza variáveis em memória ===
-  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-  diaTop3 = hoje;
-  horaInicioRanking = brasilAgora;
-  ultimoRanking = null;
-  ultimaAtualizacao = brasilAgora;
-  zeroedAtMidnight = true;
+      const placeholder = dailyFixedRanking.map((d, i) => ({
+        position: i + 1,
+        username: d.username,
+        total_balance: formatarValorRanking(d.real_total),
+        is_current_user: !!d.is_current_user
+      }));
 
-  // === Monta resposta para placeholder ===
-  const placeholder = dailyFixedRanking.map((d, i) => ({
-    position: i + 1,
-    username: d.username,
-    total_balance: formatarValorRanking(d.real_total),
-    is_current_user: !!d.is_current_user
-  }));
-
-  console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
-  return res.status(200).json({ ranking: placeholder });
-}
+      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
+      return res.status(200).json({ ranking: placeholder });
+    }
 
     // === 4) Cache check (mesmo dia e menos de CACHE_MS) ===
     if (ultimoRanking && agora - ultimaAtualizacao < CACHE_MS && diaTop3 === hoje) {
       return res.status(200).json({ ranking: ultimoRanking });
     }
 
-    // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ===
+    // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje, mas incorpora DailyEarning com PRIORIDADE ===
     let baseRankingRaw = null;
-if (dailyFixedRanking && diaTop3 === hoje) {
-  // Clone do ranking fixo do dia (garantindo campos)
-  let baseFromFixed = dailyFixedRanking.map(u => ({
-    username: (u.username || "Usuário").toString(),
-    token: u.token || null,
-    real_total: Number(u.real_total || 0),
-    is_current_user: !!u.is_current_user
-  }));
 
-  // --- Busca ganhos reais do DB (DailyEarning) ---
-  let ganhosPorUsuario = [];
-  try {
-    ganhosPorUsuario = await DailyEarning.aggregate([
-      { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-      { $unwind: "$usuario" },
-      { $project: {
-          _id: 0,
-          username: { $ifNull: ["$usuario.nome", "Usuário"] },
-          token: "$usuario.token",
-          real_total: "$totalGanhos"
-      } }
-    ]);
-  } catch (e) {
-    console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
-    ganhosPorUsuario = [];
-  }
+    // Helper para chave de fusão: prefira token (quando disponível), fallback para username normalizado
+    const makeKey = (item) => (item.token ? `T:${String(item.token)}` : `U:${String(item.username || "").trim().toLowerCase()}`);
 
-  // --- Mapeia e faz a fusão com PRIORIDADE para DailyEarning ---
-  const mapa = new Map();
-  const makeKey = (item) => (item.token ? `T:${String(item.token)}` : `U:${String(item.username).trim().toLowerCase()}`);
+    if (dailyFixedRanking && diaTop3 === hoje) {
+      // Clone do ranking fixo do dia (marca como source: 'fixed')
+      let baseFromFixed = dailyFixedRanking.map(u => ({
+        username: (u.username || "Usuário").toString(),
+        token: u.token || null,
+        real_total: Number(u.real_total || 0),
+        is_current_user: !!u.is_current_user,
+        source: 'fixed'
+      }));
 
-  // 1) insere itens do ranking fixo primeiro
-  baseFromFixed.forEach(u => {
-    const key = makeKey(u);
-    mapa.set(key, {
-      username: u.username,
-      token: u.token || null,
-      real_total: Number(u.real_total || 0),
-      is_current_user: !!u.is_current_user
-    });
-  });
-
-  // 2) incorpora ganhos do DailyEarning — se existir, SUBSTITUI (prioriza)
-  ganhosPorUsuario.forEach(g => {
-    const item = {
-      username: (g.username || "Usuário").toString(),
-      token: g.token || null,
-      real_total: Number(g.real_total || 0),
-      is_current_user: (g.token && g.token === effectiveToken) || false
-    };
-    const key = makeKey(item);
-    if (mapa.has(key)) {
-      // Prioriza o registro do DB (DailyEarning) — substitui valores importantes
-      const ex = mapa.get(key);
-      mapa.set(key, {
-        username: item.username || ex.username,
-        token: item.token || ex.token,
-        real_total: item.real_total, // <-- PRIORIDADE: usa o valor real do DB
-        is_current_user: ex.is_current_user || item.is_current_user
-      });
-    } else {
-      mapa.set(key, { ...item });
-    }
-  });
-
-  // Converte para array e ordena por real_total (decrescente)
-  baseRankingRaw = Array.from(mapa.values()).sort((a, b) => b.real_total - a.real_total);
-
-  // Opcional: garante pelo menos 10 entradas (fallbacks) — se quiser manter esse comportamento:
-  if (baseRankingRaw.length < 10) {
-    const NAMES_POOL2 = [
-      "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
-      "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-      "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-      "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
-    ];
-    let idx = 0;
-    while (baseRankingRaw.length < 10) {
-      const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
-      if (!baseRankingRaw.some(x => x.username === nome)) {
-        baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
+      // --- Busca ganhos reais do DB (DailyEarning) ---
+      let ganhosPorUsuario = [];
+      try {
+        ganhosPorUsuario = await DailyEarning.aggregate([
+          { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+          { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+          { $unwind: "$usuario" },
+          { $project: {
+              _id: 0,
+              username: { $ifNull: ["$usuario.nome", "Usuário"] },
+              token: "$usuario.token",
+              real_total: "$totalGanhos"
+          } }
+        ]);
+      } catch (e) {
+        console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
+        ganhosPorUsuario = [];
       }
-      idx++;
+
+      // --- Mapeia e faz a fusão com PRIORIDADE para DailyEarning (substitui fixed se existir) ---
+      const mapa = new Map();
+
+      // 1) insere itens do ranking fixo primeiro
+      baseFromFixed.forEach(u => {
+        const key = makeKey(u);
+        mapa.set(key, { ...u });
+      });
+
+      // 2) incorpora ganhos do DailyEarning — se existir para a mesma chave, SUBSTITUI (prioridade)
+      ganhosPorUsuario.forEach(g => {
+        const item = {
+          username: (g.username || "Usuário").toString(),
+          token: g.token || null,
+          real_total: Number(g.real_total || 0),
+          is_current_user: (g.token && g.token === effectiveToken) || false,
+          source: 'earnings'
+        };
+        const key = makeKey(item);
+        if (mapa.has(key)) {
+          // substitui (prioridade para real DB)
+          mapa.set(key, {
+            username: item.username || mapa.get(key).username,
+            token: item.token || mapa.get(key).token,
+            real_total: item.real_total, // PRIORIDADE: DB vale mais
+            is_current_user: mapa.get(key).is_current_user || item.is_current_user,
+            source: 'earnings'
+          });
+        } else {
+          mapa.set(key, { ...item });
+        }
+      });
+
+      // Converte para array e ordena por real_total
+      baseRankingRaw = Array.from(mapa.values()).sort((a,b) => b.real_total - a.real_total);
+
+      // garante pelo menos 10 entradas (fallback)
+      if (baseRankingRaw.length < 10) {
+        const NAMES_POOL2 = [
+          "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+          "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+          "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+          "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+        ];
+        let idx = 0;
+        while (baseRankingRaw.length < 10) {
+          const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
+          if (!baseRankingRaw.some(x => x.username === nome)) {
+            baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false, source: 'fixed' });
+          }
+          idx++;
+        }
+      }
+
+    } else {
+      // fallback: gera a partir do DB (sem fixed)
+      const ganhosPorUsuario = await DailyEarning.aggregate([
+        { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+        { $unwind: "$usuario" },
+        { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
+      ]);
+
+      baseRankingRaw = (ganhosPorUsuario || [])
+        .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
+        .map((item) => ({
+          username: item.username || "Usuário",
+          token: item.token || null,
+          real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
+          is_current_user: item.token === effectiveToken,
+          source: 'earnings'
+        }));
+
+      // completa até 10 com fallback estático (determinístico)
+      const NAMES_POOL2 = [
+        "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+        "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+        "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+        "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+      ];
+      while (baseRankingRaw.length < 10) {
+        const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
+        baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false, source: 'fixed' });
+      }
+
+      baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
     }
-  }
-
-} else {
-  // fallback original: gera a partir do DB (mantém seu código existente)
-  const ganhosPorUsuario = await DailyEarning.aggregate([
-    { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-    { $unwind: "$usuario" },
-    { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
-  ]);
-
-  baseRankingRaw = (ganhosPorUsuario || [])
-    .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
-    .map((item) => ({
-      username: item.username || "Usuário",
-      token: item.token || null,
-      real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
-      is_current_user: item.token === effectiveToken,
-    }));
-
-  // completa até 10 com fallback estático (determinístico)
-  const NAMES_POOL2 = [ /* seu pool já existente */ ];
-  while (baseRankingRaw.length < 10) {
-    const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
-    baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
-  }
-
-  baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
-}
 
     // === 6) Limita a 10 posições ===
     let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
     // === 7) Ganhos progressivos por posição (agora por minuto) ===
-    // valores originais eram por 10 minutos; aqui calculamos ganho por MINUTO
     const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
     const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
+
+    // helper: arredonda com 2 casas
+    function round2(n) {
+      return Math.round((Number(n) || 0) * 100) / 100;
+    }
 
     // inicializa horaInicioRanking se necessário (não sobrescrever se já veio do DB)
     if (!horaInicioRanking) {
@@ -2331,11 +2322,19 @@ if (dailyFixedRanking && diaTop3 === hoje) {
     const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (60 * 1000));
     console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(horaInicioRanking).toISOString());
 
+    // APLICAR incremento APENAS para itens 'fixed' (placeholders); itens 'earnings' permanecem com valor real do DB
     finalRankingRaw = finalRankingRaw.map((item, idx) => {
-      const incremento = (perMinuteGain[idx] || 0) * intervalosDecorridos;
+      const baseReal = Number(item.real_total || 0);
+      const incrementoPorMinuto = Number(perMinuteGain[idx] || 0);
+      const deveIncrementar = item.source === 'fixed'; // <- change: only fixed get increment
+      const incremento = deveIncrementar ? incrementoPorMinuto * intervalosDecorridos : 0;
+      const novoTotal = round2(baseReal + incremento);
+      if (deveIncrementar && incremento !== 0) {
+        console.log(`➕ Incremento FIXED posição ${idx+1} (${item.username}): +${round2(incremento)} (base ${round2(baseReal)} => ${novoTotal})`);
+      }
       return {
         ...item,
-        real_total: (Number(item.real_total) || 0) + incremento,
+        real_total: novoTotal
       };
     });
 
@@ -2343,13 +2342,15 @@ if (dailyFixedRanking && diaTop3 === hoje) {
     console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r,i) => `${i+1}=${r.username}:${(r.real_total||0).toFixed(2)}`));
 
     // === 8) Formata e responde ===
-const finalRanking = finalRankingRaw.map((item, idx) => ({
-  position: idx + 1,
-  username: item.username,
-  total_balance: formatarValorRanking(item.real_total),
-  real_total: Number(item.real_total || 0),
-  is_current_user: !!(item.token && item.token === effectiveToken),
-}));
+    const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const finalRanking = finalRankingRaw.map((item, idx) => ({
+      position: idx + 1,
+      username: item.username,
+      total_balance: formatter.format(Number(item.real_total || 0)),
+      real_total: Number(item.real_total || 0),
+      is_current_user: !!(item.token && item.token === effectiveToken),
+      source: item.source || 'unknown'
+    }));
 
     // Atualiza cache
     ultimoRanking = finalRanking;
@@ -2357,8 +2358,8 @@ const finalRanking = finalRankingRaw.map((item, idx) => ({
     zeroedAtMidnight = false;
 
     console.log("🔢 final top3 (numeros reais):", top3FixosHoje ? top3FixosHoje.map((u) => `${u.username}=${u.real_total}`) : []);
-
     return res.status(200).json({ ranking: finalRanking });
+
   } catch (error) {
     console.error("❌ Erro ao buscar ranking:", error);
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
