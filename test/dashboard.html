@@ -834,6 +834,19 @@
             }
         }
 
+ // === Função de formatação do valor no ranking ===
+function formatarValorRanking(valor) {
+    if (valor <= 1) return "1+";
+    if (valor > 1 && valor < 5) return "1+";
+    if (valor < 10) return "5+";
+    if (valor < 50) return "10+";
+    if (valor < 100) return "50+";
+    if (valor < 500) return "100+";
+    if (valor < 1000) return "500+";
+    const base = Math.floor(valor / 1000) * 1000;
+    return `${base}+`;
+}       
+
 /* === POPULAR TABELA (corrigida) === */
 function populateRankingTable(rankingData) {
     const rankingTable = document.getElementById("rankingTable");
@@ -866,14 +879,13 @@ function populateRankingTable(rankingData) {
 
         // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
         let formattedValue = "R$ 0,00";
-        if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
-            formattedValue = `R$ ${user.real_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        } else if (user.total_balance) {
-            // total_balance pode já vir formatado como "1.234,56" ou "R$ 1.234,56"
-            const tb = String(user.total_balance).trim();
-            formattedValue = tb.startsWith("R$") ? tb : `R$ ${tb}`;
-        }
-
+if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
+    formattedValue = formatarValorRanking(user.real_total);
+} else if (user.total_balance) {
+    // Tenta converter texto em número para aplicar a formatação
+    const raw = parseFloat(String(user.total_balance).replace(/[^\d,.-]/g, "").replace(",", "."));
+    formattedValue = !isNaN(raw) ? formatarValorRanking(raw) : "0+";
+}
         const valueCell = row.querySelector(".ranking-value");
         if (valueCell) valueCell.textContent = formattedValue;
 
