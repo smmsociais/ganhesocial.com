@@ -25,22 +25,22 @@ if (!MONGODB_URI) {
 let DailyEarning = null;
 async function tryImportLocalFiles() {
   try {
-    // tenta importar connectDB e schema (compatível com seu repo atual)
+    console.log("→ tryImportLocalFiles: tentando importar ./db.js");
     const modDb = await import("./db.js");
-    if (typeof modDb.default === "function") {
-      await modDb.default(); // conecta o mongoose
-    } else if (modDb.connectDB) {
-      await modDb.connectDB();
-    }
+    console.log("→ db.js import OK", !!modDb);
+    await (modDb.default ? modDb.default() : (modDb.connectDB ? modDb.connectDB() : Promise.resolve()));
+    console.log("→ mongoose conectado (tentativa)");
   } catch (e) {
-    // ok — arquivo não existe, continuamos
+    console.error("! tryImportLocalFiles: erro import ./db.js:", e.message);
   }
 
   try {
+    console.log("→ tryImportLocalFiles: tentando importar ./schema.js");
     const modSchema = await import("./schema.js");
-    if (modSchema.DailyEarning) DailyEarning = modSchema.DailyEarning;
+    DailyEarning = modSchema.DailyEarning;
+    console.log("→ schema import OK, DailyEarning definido?", !!DailyEarning);
   } catch (e) {
-    // também ok se não existir
+    console.error("! tryImportLocalFiles: erro import ./schema.js:", e.message);
   }
 }
 
