@@ -1869,7 +1869,427 @@ const ranking = ganhosPorUsuario
   }
 };
 
+// Rota: /api/ranking_diario
+if (url.startsWith("/api/ranking_diario") && method === "POST") {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
+  }
 
+  const { token: bodyToken } = req.body || {};
+  const query = req.query || {};
+
+  try {
+    await connectDB();
+
+    // tempo / dia
+    const agora = Date.now();
+
+    // CACHE curto para permitir updates por minuto
+    const CACHE_MS = 1 * 60 * 1000; // 1 minuto
+    const hoje = new Date().toLocaleDateString("pt-BR");
+
+    // autenticação (prefere header Authorization Bearer)
+    const authHeader = req.headers.authorization;
+    const tokenFromHeader =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader;
+    const effectiveToken = tokenFromHeader || bodyToken;
+    if (!effectiveToken) return res.status(401).json({ error: "Token inválido." });
+
+    const user = await User.findOne({ token: effectiveToken });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+    // --- 1) carregar dailyFixedRanking do DB (normalizando strings -> objetos) ---
+    if (!dailyFixedRanking || diaTop3 !== hoje) {
+      try {
+const saved = await DailyRanking.findOne({ data: hoje }).lean();
+if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
+  dailyFixedRanking = saved.ranking.map(entry => ({
+    username: entry.username ?? entry.nome ?? "Usuário",
+    token: entry.token ?? null,
+    real_total: Number(entry.real_total ?? 0),
+    is_current_user: !!entry.is_current_user
+  }));
+
+  // Use startAt salvo no DB (e, se não existir, fallback para criadoEm ou início do dia Brasília)
+  if (saved.startAt) {
+    horaInicioRanking = new Date(saved.startAt).getTime();
+  } else if (saved.criadoEm) {
+    horaInicioRanking = new Date(saved.criadoEm).getTime();
+  } else {
+    // fallback: define para meia-noite BR atual
+    const now = new Date();
+    const offsetBrasilia = -3;
+    const brasilNow = new Date(now.getTime() + offsetBrasilia * 60 * 60 * 1000);
+    const startOfDayBR = new Date(Date.UTC(brasilNow.getUTCFullYear(), brasilNow.getUTCMonth(), brasilNow.getUTCDate(), 3, 0, 0, 0)); // 03:00 UTC = 0:00 BR
+    horaInicioRanking = startOfDayBR.getTime();
+  }
+
+  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+  diaTop3 = hoje;
+  zeroedAtMidnight = false;
+  console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
+}
+
+      } catch (e) {
+        console.error("Erro ao carregar DailyRanking do DB:", e);
+      }
+    }
+
+    // === 2) reset manual via ENV ou URL ?reset=true ===
+    const resetPorEnv = process.env.RESET_RANKING === "true";
+    const resetPorURL = query.reset === "true";
+    if (resetPorEnv || resetPorURL) {
+      await DailyEarning.deleteMany({});
+      await User.updateMany({}, { $set: { balance: 0 } });
+
+// sample 10 users do DB
+let sampled = [];
+try {
+  sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
+} catch (e) {
+  console.error("Erro ao samplear users:", e);
+  sampled = [];
+}
+
+const NAMES_POOL = [
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
+];
+
+// embaralha fallback pool
+const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+
+// monta lista de candidatos: usa sampled nomes (se houver) + fallback para completar
+let candidates = sampled
+  .map(s => ({ username: s.nome || null, token: s.token || null }))
+  .filter(x => !!x.username);
+
+// se faltarem nomes, preencha com fallback (sem repetir)
+let fallbackIdx = 0;
+while (candidates.length < 10) {
+  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+  if (!candidates.some(c => c.username === pick)) {
+    candidates.push({ username: pick, token: null });
+  }
+  fallbackIdx++;
+}
+
+// agora embaralha a lista final para garantir ordem aleatória no primeiro dia
+dailyFixedRanking = shuffleArray(
+  candidates.slice(0, 10).map(c => ({
+    username: c.username,
+    token: c.token || null,
+    real_total: 0,
+    is_current_user: c.token === effectiveToken
+  }))
+);
+
+// 🕒 Define hora atual e configurações de fuso horário de Brasília
+const agora = new Date();
+const offsetBrasilia = -3;
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+
+const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+
+// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
+const brasilMidnightTomorrow = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1, // amanhã
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🕒 Define a hora de início do ranking (meia-noite de hoje)
+const startAtDate = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate(),
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🔢 Cria ou atualiza o ranking fixo do dia
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate,
+    expiresAt: brasilMidnightTomorrow,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
+
+      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+      diaTop3 = hoje;
+      horaInicioRanking = agora;
+      ultimoRanking = null;
+      ultimaAtualizacao = 0;
+      zeroedAtMidnight = true;
+
+      console.log("🔥 Reset manual/env — dailyFixedRanking criado:", dailyFixedRanking.map(d => d.username));
+
+      if (resetPorURL) {
+        const placeholder = dailyFixedRanking.map((d, i) => ({
+          position: i + 1,
+          username: d.username,
+          total_balance: formatarValorRanking(d.real_total),
+          is_current_user: !!d.is_current_user
+        }));
+        return res.status(200).json({
+          success: true,
+          message: "Ranking e saldos zerados (reset manual).",
+          ranking: placeholder
+        });
+      }
+    }
+
+// === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
+if (diaTop3 && diaTop3 !== hoje) {
+  console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
+
+  // === Horário de Brasília (UTC-3) ===
+  const agora = new Date();
+  console.log("🕒 Agora (UTC):", agora.toISOString());
+
+  const offsetBrasilia = -3; // UTC-3
+  const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+  console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
+
+  const brasilMidnightTomorrow = new Date(Date.UTC(
+    brasilAgora.getUTCFullYear(),
+    brasilAgora.getUTCMonth(),
+    brasilAgora.getUTCDate() + 1,
+    3, // 03:00 UTC = 00:00 Brasília
+    0, 0, 0
+  ));
+  console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
+
+  // === Reset de ganhos e saldos ===
+  await DailyEarning.deleteMany({});
+  await User.updateMany({}, { $set: { saldo: 0 } });
+
+// tenta samplear até 10 usuários aleatórios do DB
+let sampled = [];
+try {
+  sampled = await User.aggregate([
+    { $sample: { size: 10 } },
+    { $project: { nome: 1, token: 1 } }
+  ]);
+} catch (e) {
+  console.error("Erro ao samplear users (midnight):", e);
+  sampled = [];
+}
+
+const NAMES_POOL = [
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
+];
+
+const shuffledFallback = shuffleArray(NAMES_POOL.slice());
+
+// monta candidatos (sampled + fallback sem repetição)
+let candidates = sampled
+  .map(s => ({ username: s.nome || null, token: s.token || null }))
+  .filter(x => !!x.username);
+
+let fallbackIdx = 0;
+while (candidates.length < 10) {
+  const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
+  if (!candidates.some(c => c.username === pick)) {
+    candidates.push({ username: pick, token: null });
+  }
+  fallbackIdx++;
+}
+
+// embaralha para garantir ordem aleatória e cria dailyFixedRanking
+dailyFixedRanking = shuffleArray(
+  candidates.slice(0, 10).map(c => ({
+    username: c.username,
+    token: c.token || null,
+    real_total: 0,
+    is_current_user: c.token === effectiveToken
+  }))
+);
+
+  // === Salva o novo ranking no DB ===
+  try {
+// 🕒 Define hora atual e configurações de fuso horário de Brasília
+const agora = new Date();
+const offsetBrasilia = -3;
+const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+
+const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+
+// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
+const brasilMidnightTomorrow = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1, // amanhã
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🕒 Define a hora de início do ranking (meia-noite de hoje)
+const startAtDate = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate(),
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🔢 Cria ou atualiza o ranking fixo do dia
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate,
+    expiresAt: brasilMidnightTomorrow,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
+
+    console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", brasilAgora.toISOString());
+  } catch (e) {
+    console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
+  }
+
+  // === Atualiza variáveis em memória ===
+  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+  diaTop3 = hoje;
+  horaInicioRanking = brasilAgora;
+  ultimoRanking = null;
+  ultimaAtualizacao = brasilAgora;
+  zeroedAtMidnight = true;
+
+  // === Monta resposta para placeholder ===
+  const placeholder = dailyFixedRanking.map((d, i) => ({
+    position: i + 1,
+    username: d.username,
+    total_balance: formatarValorRanking(d.real_total),
+    is_current_user: !!d.is_current_user
+  }));
+
+  console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
+  return res.status(200).json({ ranking: placeholder });
+}
+
+    // === 4) Cache check (mesmo dia e menos de CACHE_MS) ===
+    if (ultimoRanking && agora - ultimaAtualizacao < CACHE_MS && diaTop3 === hoje) {
+      return res.status(200).json({ ranking: ultimoRanking });
+    }
+
+    // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ===
+    let baseRankingRaw = null;
+    if (dailyFixedRanking && diaTop3 === hoje) {
+      baseRankingRaw = dailyFixedRanking.map(u => ({ ...u })); // clone
+    } else {
+      // fallback: gera a partir do DB
+      const ganhosPorUsuario = await DailyEarning.aggregate([
+        { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+        { $unwind: "$usuario" },
+        { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
+      ]);
+
+      baseRankingRaw = (ganhosPorUsuario || [])
+        .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
+        .map((item) => ({
+          username: item.username || "Usuário",
+          token: item.token || null,
+          real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
+          is_current_user: item.token === effectiveToken,
+        }));
+
+      // completa até 10 com fallback estático (determinístico)
+      const NAMES_POOL2 = [
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@_01.kaio0",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
+      ];
+      while (baseRankingRaw.length < 10) {
+        const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
+        baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
+      }
+
+      baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
+    }
+
+    // === 6) Limita a 10 posições ===
+    let finalRankingRaw = baseRankingRaw.slice(0, 10);
+
+    // === 7) Ganhos progressivos por posição (agora por minuto) ===
+    // valores originais eram por 10 minutos; aqui calculamos ganho por MINUTO
+    const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+    const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
+
+    // inicializa horaInicioRanking se necessário (não sobrescrever se já veio do DB)
+    if (!horaInicioRanking) {
+      horaInicioRanking = agora;
+      console.log("⏱ horaInicioRanking inicializada em:", new Date(horaInicioRanking).toISOString());
+    }
+    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (60 * 1000));
+    console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(horaInicioRanking).toISOString());
+
+    finalRankingRaw = finalRankingRaw.map((item, idx) => {
+      const incremento = (perMinuteGain[idx] || 0) * intervalosDecorridos;
+      return {
+        ...item,
+        real_total: (Number(item.real_total) || 0) + incremento,
+      };
+    });
+
+    // logs debug do pré-format
+    console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r,i) => `${i+1}=${r.username}:${(r.real_total||0).toFixed(2)}`));
+
+    // === 8) Formata e responde ===
+    const finalRanking = finalRankingRaw.map((item, idx) => ({
+      position: idx + 1,
+      username: item.username,
+      total_balance: formatarValorRanking(item.real_total),
+      is_current_user: !!(item.token && item.token === effectiveToken),
+    }));
+
+    // Atualiza cache
+    ultimoRanking = finalRanking;
+    ultimaAtualizacao = agora;
+    zeroedAtMidnight = false;
+
+    console.log("🔢 final top3 (numeros reais):", top3FixosHoje ? top3FixosHoje.map((u) => `${u.username}=${u.real_total}`) : []);
+
+    return res.status(200).json({ ranking: finalRanking });
+  } catch (error) {
+    console.error("❌ Erro ao buscar ranking:", error);
+    return res.status(500).json({ error: "Erro interno ao buscar ranking" });
+  }
+}
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
