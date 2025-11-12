@@ -841,20 +841,60 @@ async function carregarRanking() {
         const dataDiario = await resDiario.json();
         const dataAntigo = await resAntigo.json();
 
-        const rankingCombinado = [
+        // Combina arrays (se alguma rota não enviar ranking, cai em [])
+        const combined = [
             ...(dataDiario.ranking || []),
             ...(dataAntigo.ranking || [])
         ];
 
-        // Remove duplicados pelo username
-        const rankingUnico = Array.from(
-            new Map(rankingCombinado.map(u => [u.username, u])).values()
-        );
+        // helper para parsear strings formatadas PT-BR -> número
+        function parseFormatted(str) {
+            if (str == null) return 0;
+            const s = String(str).replace(/[^\d,.-]/g, "").trim();
+            if (!s) return 0;
+            // se tem '.' e ',', assume '.' thousands e ',' decimal
+            if (s.indexOf('.') > -1 && s.indexOf(',') > -1) {
+                return Number(s.replace(/\./g, '').replace(',', '.')) || 0;
+            }
+            if (s.indexOf(',') > -1) return Number(s.replace(',', '.')) || 0;
+            return Number(s) || 0;
+        }
 
-        // Ordena por total_balance
-        rankingUnico.sort((a, b) => b.total_balance - a.total_balance);
+        // Normaliza: garante campo real_total numérico
+        const normalized = combined.map(u => {
+            const real = typeof u.real_total === 'number'
+                ? u.real_total
+                : (u.total_balance ? parseFormatted(u.total_balance) : Number(u.total_balance) || 0);
+            return { ...u, real_total: Number(real || 0) };
+        });
 
-        populateRankingTable(rankingUnico, "rankingTable");
+        // Junta por username somando real_total
+        const mapa = new Map();
+        normalized.forEach(u => {
+            const key = (u.username || "").toString();
+            if (mapa.has(key)) {
+                const ex = mapa.get(key);
+                ex.real_total = (ex.real_total || 0) + (u.real_total || 0);
+                ex.is_current_user = ex.is_current_user || !!u.is_current_user;
+            } else {
+                mapa.set(key, { ...u });
+            }
+        });
+
+        const rankingUnico = Array.from(mapa.values())
+            .sort((a, b) => b.real_total - a.real_total)
+            .slice(0, 10); // opcional: limitar top 10
+
+        // formata para exibição (pt-BR)
+        const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const finalForDisplay = rankingUnico.map((u, idx) => ({
+            position: idx + 1,
+            username: u.username,
+            total_balance: formatter.format(u.real_total),
+            is_current_user: !!u.is_current_user
+        }));
+
+        populateRankingTable(finalForDisplay);
 
     } catch (error) {
         console.error("❌ Erro ao carregar ranking combinado:", error);
