@@ -1820,32 +1820,35 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     // --- 1) carregar dailyFixedRanking do DB (normalizando strings -> objetos) ---
     if (!dailyFixedRanking || diaTop3 !== hoje) {
       try {
-        const saved = await DailyRanking.findOne({ data: hoje }).lean();
-        if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
-          dailyFixedRanking = saved.ranking.map(entry => {
-            if (typeof entry === "string") {
-              return { username: entry, token: null, real_total: 0, is_current_user: false };
-            }
-            return {
-              username: entry.username ?? (entry.nome ?? "Usuário"),
-              token: entry.token ?? null,
-              real_total: Number(entry.real_total ?? 0),
-              is_current_user: !!entry.is_current_user
-            };
-          });
+const saved = await DailyRanking.findOne({ data: hoje }).lean();
+if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
+  dailyFixedRanking = saved.ranking.map(entry => ({
+    username: entry.username ?? entry.nome ?? "Usuário",
+    token: entry.token ?? null,
+    real_total: Number(entry.real_total ?? 0),
+    is_current_user: !!entry.is_current_user
+  }));
 
-          // restaura horaInicioRanking a partir do saved.startAt (se existir)
-          if (saved.startAt) {
-            horaInicioRanking = new Date(saved.startAt).getTime();
-          } else {
-            horaInicioRanking = horaInicioRanking || agora;
-          }
+  // Use startAt salvo no DB (e, se não existir, fallback para criadoEm ou início do dia Brasília)
+  if (saved.startAt) {
+    horaInicioRanking = new Date(saved.startAt).getTime();
+  } else if (saved.criadoEm) {
+    horaInicioRanking = new Date(saved.criadoEm).getTime();
+  } else {
+    // fallback: define para meia-noite BR atual
+    const now = new Date();
+    const offsetBrasilia = -3;
+    const brasilNow = new Date(now.getTime() + offsetBrasilia * 60 * 60 * 1000);
+    const startOfDayBR = new Date(Date.UTC(brasilNow.getUTCFullYear(), brasilNow.getUTCMonth(), brasilNow.getUTCDate(), 3, 0, 0, 0)); // 03:00 UTC = 0:00 BR
+    horaInicioRanking = startOfDayBR.getTime();
+  }
 
-          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-          diaTop3 = hoje;
-          zeroedAtMidnight = false;
-          console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
-        }
+  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+  diaTop3 = hoje;
+  zeroedAtMidnight = false;
+  console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
+}
+
       } catch (e) {
         console.error("Erro ao carregar DailyRanking do DB:", e);
       }
@@ -1905,18 +1908,17 @@ dailyFixedRanking = shuffleArray(
   }))
 );
 
-      // persiste com startAt para garantir progressão por minutos
-      const startAtDate = new Date(agora);
-      try {
-        await DailyRanking.findOneAndUpdate(
-          { data: hoje },
-          { ranking: dailyFixedRanking, startAt: startAtDate, criadoEm: new Date() },
-          { upsert: true, new: true }
-        );
-        console.log("💾 dailyFixedRanking salvo no DB (reset) com startAt:", startAtDate.toISOString());
-      } catch (e) {
-        console.error("Erro ao salvar DailyRanking no DB (reset):", e);
-      }
+// supondo brasilAgora / brasilMidnightTomorrow / startAtDate definidos
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate,           // salva o início da progressão
+    expiresAt: brasilMidnightTomorrow,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
 
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
@@ -2017,16 +2019,18 @@ dailyFixedRanking = shuffleArray(
 
   // === Salva o novo ranking no DB ===
   try {
-    await DailyRanking.findOneAndUpdate(
-      { data: hoje },
-      {
-        ranking: dailyFixedRanking,
-        startAt: brasilAgora, // usa hora de Brasília como início
-        expiresAt: brasilMidnightTomorrow, // registra quando deve expirar
-        criadoEm: new Date()
-      },
-      { upsert: true, new: true }
-    );
+// supondo brasilAgora / brasilMidnightTomorrow / startAtDate definidos
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate,           // salva o início da progressão
+    expiresAt: brasilMidnightTomorrow,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
+
     console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", brasilAgora.toISOString());
   } catch (e) {
     console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
