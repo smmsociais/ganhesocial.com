@@ -2167,10 +2167,18 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         };
 
         const existingKey = findExistingKeyFor(item);
-        if (!existingKey) {
-          skippedEarnings.push({ username: item.username, token: item.token, userId: item.userId, valor: item.real_total });
-          return;
-        }
+if (!existingKey) {
+  // adiciona novos usuários que não estão no ranking fixo
+  mapa.set(`U:${String(item.username || "").trim().toLowerCase()}`, {
+    username: item.username || "Usuário",
+    token: item.token || null,
+    real_total: Number(item.real_total || 0),
+    source: 'earnings',
+    userId: item.userId || null,
+    is_current_user: item.is_current_user
+  });
+  return;
+}
 
         const ex = mapa.get(existingKey);
         if (ex && ex.source === 'fixed') {
