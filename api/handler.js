@@ -1868,12 +1868,12 @@ try {
 }
 
 const NAMES_POOL = [
-  "Allef 🔥","🤪","-","noname","Kaioo⚡",
-  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
-  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
-  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
 ];
 
@@ -1980,12 +1980,12 @@ try {
 }
 
 const NAMES_POOL = [
-  "Allef 🔥","🤪","-","noname","Kaioo⚡",
-  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
-  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
-  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
 ];
 
@@ -2081,12 +2081,12 @@ dailyFixedRanking = shuffleArray(
 
       // completa até 10 com fallback estático (determinístico)
       const NAMES_POOL2 = [
-  "Allef 🔥","🤪","-","noname","Kaioo⚡",
-  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
-  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
-  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
-  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Allef 🔥","🤪","-","noname","⚡",
+  "💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","@_01.kaio0","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","-","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+  "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
   "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
       ];
       while (baseRankingRaw.length < 10) {
