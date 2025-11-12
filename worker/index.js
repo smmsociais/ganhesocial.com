@@ -26,7 +26,7 @@ let DailyEarning = null;
 async function tryImportLocalFiles() {
   try {
     console.log("→ tryImportLocalFiles: tentando importar ./db.js");
-    const modDb = await import("../db.js");
+    const modDb = await import("./db.js");
     console.log("→ db.js import OK", !!modDb);
     await (modDb.default ? modDb.default() : (modDb.connectDB ? modDb.connectDB() : Promise.resolve()));
     console.log("→ mongoose conectado (tentativa)");
@@ -36,7 +36,7 @@ async function tryImportLocalFiles() {
 
   try {
     console.log("→ tryImportLocalFiles: tentando importar ./schema.js");
-    const modSchema = await import("../schema.js");
+    const modSchema = await import("./schema.js");
     DailyEarning = modSchema.DailyEarning;
     console.log("→ schema import OK, DailyEarning definido?", !!DailyEarning);
   } catch (e) {
