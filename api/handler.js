@@ -1843,25 +1843,21 @@ if (url.startsWith("/api/ranking_antigo") && method === "POST") {
 
     // Aplica a formatação
 const ranking = ganhosPorUsuario
-  .filter(item => item.total_balance > 1) // 🔥 Remove usuários com valor ≤ 1
+  .filter(item => (item.totalGanhos ?? 0) > 1) // mantém lógica
   .map(item => {
-    const valorFormatado = formatarValorRanking(item.total_balance);
-
+    const real_total = Number(item.totalGanhos ?? 0);
     return {
-      username: item.username,
-      total_balance: valorFormatado,
+      username: item.username || "Usuário",
+      total_balance: formatarValorRanking(real_total), // string pra exibição
+      real_total, // número cru para lógica
       is_current_user: item.token === tokenFromHeader
     };
   });
 
-    // Ordena do maior para o menor (reverter ordenação usando o valor numérico real)
-    ranking.sort((a, b) => {
-      const numA = parseInt(a.total_balance);
-      const numB = parseInt(b.total_balance);
-      return numB - numA;
-    });
+// Ordena usando o número real
+ranking.sort((a, b) => b.real_total - a.real_total);
 
-    return res.status(200).json({ ranking });
+return res.status(200).json({ ranking });
 
   } catch (error) {
     console.error("❌ Erro ao buscar ranking:", error);
@@ -2270,12 +2266,13 @@ await DailyRanking.findOneAndUpdate(
     console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r,i) => `${i+1}=${r.username}:${(r.real_total||0).toFixed(2)}`));
 
     // === 8) Formata e responde ===
-    const finalRanking = finalRankingRaw.map((item, idx) => ({
-      position: idx + 1,
-      username: item.username,
-      total_balance: formatarValorRanking(item.real_total),
-      is_current_user: !!(item.token && item.token === effectiveToken),
-    }));
+const finalRanking = finalRankingRaw.map((item, idx) => ({
+  position: idx + 1,
+  username: item.username,
+  total_balance: formatarValorRanking(item.real_total),
+  real_total: Number(item.real_total || 0),
+  is_current_user: !!(item.token && item.token === effectiveToken),
+}));
 
     // Atualiza cache
     ultimoRanking = finalRanking;
