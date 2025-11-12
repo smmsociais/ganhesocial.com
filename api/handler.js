@@ -2195,60 +2195,104 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         source: 'fixed'
       }));
 
-      // --- Busca ganhos reais do DB (DailyEarning) ---
-      let ganhosPorUsuario = [];
-      try {
-        ganhosPorUsuario = await DailyEarning.aggregate([
-          { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-          { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-          { $unwind: "$usuario" },
-          { $project: {
-              _id: 0,
-              username: { $ifNull: ["$usuario.nome", "Usuário"] },
-              token: "$usuario.token",
-              real_total: "$totalGanhos"
-          } }
-        ]);
-      } catch (e) {
-        console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
-        ganhosPorUsuario = [];
-      }
+// --- Busca ganhos reais do DB (DailyEarning) — agora projetando userId para matching confiável
+let ganhosPorUsuario = [];
+try {
+  ganhosPorUsuario = await DailyEarning.aggregate([
+    { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+    { $unwind: { path: "$usuario", preserveNullAndEmptyArrays: true } },
+    { $project: {
+        userId: "$_id",
+        username: { $ifNull: ["$usuario.nome", "Usuário"] },
+        token: { $ifNull: ["$usuario.token", null] },
+        real_total: "$totalGanhos"
+    } }
+  ]);
+} catch (e) {
+  console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
+  ganhosPorUsuario = [];
+}
 
-      // --- Mapeia e faz a fusão com PRIORIDADE para DailyEarning (substitui fixed se existir) ---
-      const mapa = new Map();
+// --- Prepara mapa e helpers de matching ---
+const mapa = new Map();
 
-      // 1) insere itens do ranking fixo primeiro
-      baseFromFixed.forEach(u => {
-        const key = makeKey(u);
-        mapa.set(key, { ...u });
-      });
+const normalize = s => (String(s || "").trim().toLowerCase());
 
-      // 2) incorpora ganhos do DailyEarning — se existir para a mesma chave, SUBSTITUI (prioridade)
-      ganhosPorUsuario.forEach(g => {
-        const item = {
-          username: (g.username || "Usuário").toString(),
-          token: g.token || null,
-          real_total: Number(g.real_total || 0),
-          is_current_user: (g.token && g.token === effectiveToken) || false,
-          source: 'earnings'
-        };
-        const key = makeKey(item);
-        if (mapa.has(key)) {
-          // substitui (prioridade para real DB)
-          mapa.set(key, {
-            username: item.username || mapa.get(key).username,
-            token: item.token || mapa.get(key).token,
-            real_total: item.real_total, // PRIORIDADE: DB vale mais
-            is_current_user: mapa.get(key).is_current_user || item.is_current_user,
-            source: 'earnings'
-          });
-        } else {
-          mapa.set(key, { ...item });
-        }
-      });
+const makeKeyFrom = (item) => {
+  if (item.token) return `T:${String(item.token)}`;
+  if (item.userId) return `I:${String(item.userId)}`;
+  return `U:${normalize(item.username)}`;
+};
 
-      // Converte para array e ordena por real_total
-      baseRankingRaw = Array.from(mapa.values()).sort((a,b) => b.real_total - a.real_total);
+// insere itens do ranking fixo (fixed) primeiro
+baseFromFixed.forEach(u => {
+  const entry = {
+    username: u.username,
+    token: u.token || null,
+    real_total: Number(u.real_total || 0),
+    is_current_user: !!u.is_current_user,
+    source: 'fixed',
+    userId: u.userId || null // caso você queira dutar userId no futuro
+  };
+  const key = makeKeyFrom(entry);
+  mapa.set(key, entry);
+});
+
+// função que tenta encontrar chave existente no mapa para um item (tenta token, userId, username)
+function findExistingKeyFor(item) {
+  if (item.token) {
+    const k = `T:${String(item.token)}`;
+    if (mapa.has(k)) return k;
+  }
+  if (item.userId) {
+    const k = `I:${String(item.userId)}`;
+    if (mapa.has(k)) return k;
+  }
+  // fallback: procurar por username normalizado
+  const uname = normalize(item.username);
+  for (const existingKey of mapa.keys()) {
+    if (existingKey.startsWith('U:') && existingKey === `U:${uname}`) return existingKey;
+    // também aceitamos matches por key 'I:' or 'T:' onde username bate — útil se fixed tiver token null e ganhos tiver token
+    const ex = mapa.get(existingKey);
+    if (ex && normalize(ex.username) === uname) return existingKey;
+  }
+  return null;
+}
+
+// incorpora ganhos do DailyEarning — PRIORIDADE ao DB (substitui fixed se correspondente)
+ganhosPorUsuario.forEach(g => {
+  const item = {
+    username: (g.username || "Usuário").toString(),
+    token: g.token || null,
+    real_total: Number(g.real_total || 0),
+    is_current_user: (g.token && g.token === effectiveToken) || false,
+    source: 'earnings',
+    userId: g.userId ? String(g.userId) : null
+  };
+
+  // tenta achar chave já existente (token -> userId -> username)
+  const existingKey = findExistingKeyFor(item);
+  if (existingKey) {
+    // substitui valores importantes (prioriza DB)
+    const ex = mapa.get(existingKey);
+    mapa.set(existingKey, {
+      username: item.username || ex.username,
+      token: item.token || ex.token,
+      real_total: item.real_total, // PRIORIDADE: DB
+      is_current_user: ex.is_current_user || item.is_current_user,
+      source: 'earnings',
+      userId: item.userId || ex.userId || null
+    });
+  } else {
+    // cria nova chave com userId/token/username preferencial
+    const key = makeKeyFrom(item);
+    mapa.set(key, { ...item });
+  }
+});
+
+// converte para array e ordena por real_total decrescente
+baseRankingRaw = Array.from(mapa.values()).sort((a, b) => b.real_total - a.real_total);
 
       // garante pelo menos 10 entradas (fallback)
       if (baseRankingRaw.length < 10) {
