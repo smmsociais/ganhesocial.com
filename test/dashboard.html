@@ -795,10 +795,16 @@
                 const saldoDisponivel = parseFloat(data.saldo_disponivel || 0);
                 const saldoPendente = parseFloat(data.saldo_pendente || 0);
 
-                document.getElementById("saldoDisponivel").textContent =
-                    `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-                document.getElementById("saldoPendente").textContent =
-                    `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                localStorage.setItem("saldoDisponivel", saldoDisponivel);
+                localStorage.setItem("saldoPendente", saldoPendente);
+
+                document.getElementById("saldoDisponivel").textContent = `R$ ${saldoDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById("saldoPendente").textContent = `R$ ${saldoPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Mostra os saldos e a página depois de carregar
+                document.getElementById("saldoDisponivel").style.display = "block";
+                document.getElementById("saldoPendente").style.display = "block";
+
             } catch (error) {
                 console.error("Erro ao carregar saldo:", error);
             }
@@ -834,69 +840,69 @@
             }
         }
 
- // === Função de formatação do valor no ranking ===
-function formatarValorRanking(valor) {
-    if (valor <= 1) return "1+";
-    if (valor > 1 && valor < 5) return "1+";
-    if (valor < 10) return "5+";
-    if (valor < 50) return "10+";
-    if (valor < 100) return "50+";
-    if (valor < 500) return "100+";
-    if (valor < 1000) return "500+";
-    const base = Math.floor(valor / 1000) * 1000;
-    return `${base}+`;
-}       
-
-/* === POPULAR TABELA (corrigida) === */
-function populateRankingTable(rankingData) {
-    const rankingTable = document.getElementById("rankingTable");
-    if (!rankingTable) return;
-
-    // pega todas as linhas (th/td)
-    const rows = Array.from(rankingTable.querySelectorAll("tr"));
-
-    // detecta se a primeira linha é cabeçalho (contém <th>) — assim podemos pular corretamente
-    let dataStartIndex = 0;
-    if (rows.length > 0 && rows[0].querySelector("th")) {
-        dataStartIndex = 1; // dados começam na segunda linha
-    }
-
-    // garante que rankingData é array
-    const list = Array.isArray(rankingData) ? rankingData : [];
-
-    list.forEach((user, idx) => {
-        const rowIndex = dataStartIndex + idx;
-        if (rowIndex >= rows.length) return; // tabela menor que o ranking retornado
-
-        const row = rows[rowIndex];
-
-        // highlight do usuário atual
-        row.classList.toggle("highlight-row", !!user.is_current_user);
-
-        // username
-        const userCell = row.querySelector(".ranking-user");
-        if (userCell) userCell.textContent = user.username || "-";
-
-        // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
-        let formattedValue = "R$ 0,00";
-if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
-    formattedValue = formatarValorRanking(user.real_total);
-} else if (user.total_balance) {
-    // Tenta converter texto em número para aplicar a formatação
-    const raw = parseFloat(String(user.total_balance).replace(/[^\d,.-]/g, "").replace(",", "."));
-    formattedValue = !isNaN(raw) ? formatarValorRanking(raw) : "0+";
-}
-        const valueCell = row.querySelector(".ranking-value");
-        if (valueCell) valueCell.textContent = formattedValue;
-
-        // (opcional) badge de faixa (se existir uma célula .ranking-badge)
-        const badgeCell = row.querySelector(".ranking-badge");
-        if (badgeCell) {
-            badgeCell.textContent = user.display_range || "";
-            badgeCell.style.display = user.display_range ? "" : "none";
+        // === Função de formatação do valor no ranking ===
+        function formatarValorRanking(valor) {
+            if (valor <= 1) return "1+";
+            if (valor > 1 && valor < 5) return "1+";
+            if (valor < 10) return "5+";
+            if (valor < 50) return "10+";
+            if (valor < 100) return "50+";
+            if (valor < 500) return "100+";
+            if (valor < 1000) return "500+";
+            const base = Math.floor(valor / 1000) * 1000;
+            return `${base}+`;
         }
-    });
-}
+
+        /* === POPULAR TABELA (corrigida) === */
+        function populateRankingTable(rankingData) {
+            const rankingTable = document.getElementById("rankingTable");
+            if (!rankingTable) return;
+
+            // pega todas as linhas (th/td)
+            const rows = Array.from(rankingTable.querySelectorAll("tr"));
+
+            // detecta se a primeira linha é cabeçalho (contém <th>) — assim podemos pular corretamente
+            let dataStartIndex = 0;
+            if (rows.length > 0 && rows[0].querySelector("th")) {
+                dataStartIndex = 1; // dados começam na segunda linha
+            }
+
+            // garante que rankingData é array
+            const list = Array.isArray(rankingData) ? rankingData : [];
+
+            list.forEach((user, idx) => {
+                const rowIndex = dataStartIndex + idx;
+                if (rowIndex >= rows.length) return; // tabela menor que o ranking retornado
+
+                const row = rows[rowIndex];
+
+                // highlight do usuário atual
+                row.classList.toggle("highlight-row", !!user.is_current_user);
+
+                // username
+                const userCell = row.querySelector(".ranking-user");
+                if (userCell) userCell.textContent = user.username || "-";
+
+                // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
+                let formattedValue = "R$ 0,00";
+                if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
+                    formattedValue = formatarValorRanking(user.real_total);
+                } else if (user.total_balance) {
+                    // Tenta converter texto em número para aplicar a formatação
+                    const raw = parseFloat(String(user.total_balance).replace(/[^\d,.-]/g, "").replace(",", "."));
+                    formattedValue = !isNaN(raw) ? formatarValorRanking(raw) : "0+";
+                }
+                const valueCell = row.querySelector(".ranking-value");
+                if (valueCell) valueCell.textContent = formattedValue;
+
+                // (opcional) badge de faixa (se existir uma célula .ranking-badge)
+                const badgeCell = row.querySelector(".ranking-badge");
+                if (badgeCell) {
+                    badgeCell.textContent = user.display_range || "";
+                    badgeCell.style.display = user.display_range ? "" : "none";
+                }
+            });
+        }
         /* === LOGOUT === */
         function logout() {
             localStorage.removeItem("token");
