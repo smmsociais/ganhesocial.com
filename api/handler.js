@@ -2041,13 +2041,16 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       ultimaAtualizacao = brasilAgora;
       zeroedAtMidnight = true;
 
-      const placeholder = dailyFixedRanking.map((d, i) => ({
-        position: i + 1,
-        username: d.username,
-        total_balance: formatarValorRanking(d.real_total),
-        is_current_user: !!d.is_current_user
-      }));
-
+const placeholder = dailyFixedRanking.map((d, i) => {
+  const v = Number(d.real_total || 0);
+  return {
+    position: i + 1,
+    username: d.username,
+    total_balance: formatter.format(v),
+    display_range: formatarValorRanking(v),
+    is_current_user: !!d.is_current_user
+  };
+});
       console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
       return res.status(200).json({ ranking: placeholder });
     }
@@ -2328,15 +2331,23 @@ if (listaComProjetado.length < 10) {
     console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r, i) => `${i + 1}=${r.username}:${(r.real_total || 0).toFixed(2)}`));
 
     // === 8) Formata e responde ===
-    const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const finalRanking = finalRankingRaw.map((item, idx) => ({
-      position: idx + 1,
-      username: item.username,
-      total_balance: formatter.format(Number(item.real_total || 0)),
-      real_total: Number(item.real_total || 0),
-      is_current_user: !!(item.token && item.token === effectiveToken),
-      source: item.source || 'unknown'
-    }));
+const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const finalRanking = finalRankingRaw.map((item, idx) => {
+  const valorNum = Number(item.real_total || 0);
+  return {
+    position: idx + 1,
+    username: item.username,
+    // string formatada em 'R$ 1.234,56' para exibição monetária tradicional
+    total_balance: formatter.format(valorNum),
+    // valor numérico bruto (em reais)
+    real_total: valorNum,
+    // marca se é o usuário corrente
+    is_current_user: !!(item.token && item.token === effectiveToken),
+    source: item.source || 'unknown',
+    // aqui: categoria compacta gerada pela sua função
+    display_range: formatarValorRanking(valorNum)
+  };
+});
 
     // Atualiza cache
     ultimoRanking = finalRanking;
