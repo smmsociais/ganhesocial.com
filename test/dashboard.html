@@ -835,6 +835,23 @@
                     }
                 });
 
+        /* === POPULAR TABELA === */
+        function populateRankingTable(rankingData) {
+            const rankingTable = document.getElementById("rankingTable");
+            if (!rankingTable) return;
+
+            const rows = rankingTable.querySelectorAll("tr");
+
+            rankingData.forEach((user, index) => {
+                if (index < rows.length) {
+                    const row = rows[index];
+                    row.classList.toggle("highlight-row", user.is_current_user);
+                    row.querySelector(".ranking-user").textContent = user.username;
+                    row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
+                }
+            });
+        }            
+
             } catch (error) {
                 console.error("Erro ao carregar ranking:", error);
                 const rankingTable = document.getElementById('rankingTable');
