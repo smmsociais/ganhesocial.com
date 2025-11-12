@@ -1822,11 +1822,12 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       try {
         const saved = await DailyRanking.findOne({ data: hoje }).lean();
         if (saved && Array.isArray(saved.ranking) && saved.ranking.length) {
-          dailyFixedRanking = saved.ranking.map(entry => ({
+          dailyFixedRanking = saved.ranking.map((entry) => ({
             username: entry.username ?? entry.nome ?? "Usuário",
             token: entry.token ?? null,
             real_total: Number(entry.real_total ?? 0),
-            is_current_user: !!entry.is_current_user
+            is_current_user: !!entry.is_current_user,
+            userId: entry.userId ? String(entry.userId) : null
           }));
 
           // Use startAt salvo no DB (e, se não existir, fallback para criadoEm ou início do dia Brasília)
@@ -1835,18 +1836,28 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           } else if (saved.criadoEm) {
             horaInicioRanking = new Date(saved.criadoEm).getTime();
           } else {
-            // fallback: define para meia-noite BR atual
+            // fallback: define para meia-noite BR atual (03:00 UTC = 00:00 BR)
             const now = new Date();
             const offsetBrasilia = -3;
             const brasilNow = new Date(now.getTime() + offsetBrasilia * 60 * 60 * 1000);
-            const startOfDayBR = new Date(Date.UTC(brasilNow.getUTCFullYear(), brasilNow.getUTCMonth(), brasilNow.getUTCDate(), 3, 0, 0, 0)); // 03:00 UTC = 0:00 BR
+            const startOfDayBR = new Date(
+              Date.UTC(
+                brasilNow.getUTCFullYear(),
+                brasilNow.getUTCMonth(),
+                brasilNow.getUTCDate(),
+                3,
+                0,
+                0,
+                0
+              )
+            );
             horaInicioRanking = startOfDayBR.getTime();
           }
 
-          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+          top3FixosHoje = dailyFixedRanking.slice(0, 3).map((u) => ({ ...u }));
           diaTop3 = hoje;
           zeroedAtMidnight = false;
-          console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map(d => d.username));
+          console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map((d) => d.username));
         }
       } catch (e) {
         console.error("Erro ao carregar DailyRanking do DB:", e);
@@ -1903,7 +1914,8 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           username: c.username,
           token: c.token || null,
           real_total: 0,
-          is_current_user: c.token === effectiveToken
+          is_current_user: c.token === effectiveToken,
+          userId: c.userId ? String(c.userId) : null
         }))
       );
 
@@ -2038,7 +2050,8 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           username: c.username,
           token: c.token || null,
           real_total: 0,
-          is_current_user: c.token === effectiveToken
+          is_current_user: c.token === effectiveToken,
+          userId: c.userId ? String(c.userId) : null
         }))
       );
 
@@ -2104,198 +2117,217 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     let baseRankingRaw = null;
 
     // Helper para chave de fusão: prefira token (quando disponível), fallback para username normalizado
-    const makeKey = (item) => (item.token ? `T:${String(item.token)}` : `U:${String(item.username || "").trim().toLowerCase()}`);
+    const normalize = s => (String(s || "").trim().toLowerCase());
 
     if (dailyFixedRanking && diaTop3 === hoje) {
       // Clone do ranking fixo do dia (marca como source: 'fixed')
-      let baseFromFixed = dailyFixedRanking.map(u => ({
+      const baseFromFixed = dailyFixedRanking.map((u) => ({
         username: (u.username || "Usuário").toString(),
         token: u.token || null,
         real_total: Number(u.real_total || 0),
         is_current_user: !!u.is_current_user,
-        source: 'fixed'
+        source: 'fixed',
+        userId: u.userId ? String(u.userId) : null
       }));
 
-// --- Busca ganhos reais do DB (DailyEarning) — agora projetando userId para matching confiável
-let ganhosPorUsuario = [];
-try {
-  ganhosPorUsuario = await DailyEarning.aggregate([
-    { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-    { $unwind: { path: "$usuario", preserveNullAndEmptyArrays: true } },
-    { $project: {
-        userId: "$_id",
-        username: { $ifNull: ["$usuario.nome", "Usuário"] },
-        token: { $ifNull: ["$usuario.token", null] },
-        real_total: "$totalGanhos"
-    } }
-  ]);
-} catch (e) {
-  console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
-  ganhosPorUsuario = [];
-}
-
-// --- Prepara mapa e helpers de matching (versão corrigida) ---
-const mapa = new Map();
-
-const normalize = s => (String(s || "").trim().toLowerCase());
-
-const makeKeyFrom = (item) => {
-  if (item.token) return `T:${String(item.token)}`;
-  if (item.userId) return `I:${String(item.userId)}`;
-  return `U:${normalize(item.username)}`;
-};
-
-// --- ganhosPorPosicao / perMinuteGain e intervalo (necessários para projetar fixed) ---
-// ======= substitua a lógica de fusão + ordenação por este bloco =======
-
-// --- configura ganhos por posição / perMinuteGain (usado para projetar fixed) ---
-const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
-const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
-
-// prepara mapa e insere fixed (garantindo Number nos valores)
-
-baseFromFixed.forEach((u, idx) => {
-  mapa.set(
-    // chave preferencial por token -> fallback username normalizado
-    (u.token ? `T:${String(u.token)}` : `U:${String((u.username||"").trim().toLowerCase())}`),
-    {
-      username: String(u.username || "Usuário"),
-      token: u.token || null,
-      real_total: Number(u.real_total || 0), // base do fixed (sem incremento ainda)
-      source: 'fixed',
-      fixedPosition: idx,
-      is_current_user: !!u.is_current_user,
-      userId: u.userId || null
-    }
-  );
-});
-
-// helper de busca de chave por token/userId/username (como antes)
-function findExistingKeyFor(item) {
-  if (item.token) {
-    const k = `T:${String(item.token)}`;
-    if (mapa.has(k)) return k;
-  }
-  if (item.userId) {
-    const k = `I:${String(item.userId)}`;
-    if (mapa.has(k)) return k;
-  }
-  const uname = String(item.username || "").trim().toLowerCase();
-  for (const existingKey of mapa.keys()) {
-    if (existingKey === `U:${uname}`) return existingKey;
-    const ex = mapa.get(existingKey);
-    if (ex && String(ex.username || "").trim().toLowerCase() === uname) return existingKey;
-  }
-  return null;
-}
-
-// incorpora ganhos do DB (earnings). Ao encontrar fixed, NÃO substitui cegamente:
-// calcula o projectedFixed (base + incremento acumulado) e usa o maior entre earnings e projectedFixed
-const agoraMs = Date.now();
-const baseHoraInicio = horaInicioRanking || agoraMs;
-const intervalosDecorridos = Math.floor((agoraMs - baseHoraInicio) / (60 * 1000));
-
-ganhosPorUsuario.forEach(g => {
-  const item = {
-    username: String(g.username || "Usuário"),
-    token: g.token || null,
-    real_total: Number(g.real_total || 0),
-    source: 'earnings',
-    userId: g.userId ? String(g.userId) : null,
-    is_current_user: (g.token && g.token === effectiveToken) || false
-  };
-
-  const existingKey = findExistingKeyFor(item);
-  if (existingKey) {
-    const ex = mapa.get(existingKey);
-
-    if (ex && ex.source === 'fixed') {
-      // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
-      const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
-      const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
-      const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
-
-      // escolha o maior entre earnings.real_total e projectedFixed
-      if (Number(item.real_total) >= projectedFixed) {
-        // earnings domina -> substitui com valor real do DB
-        mapa.set(existingKey, {
-          username: item.username || ex.username,
-          token: item.token || ex.token,
-          real_total: Number(item.real_total),
-          source: 'earnings',
-          userId: item.userId || ex.userId || null,
-          is_current_user: ex.is_current_user || item.is_current_user
-        });
-      } else {
-        // fixed projetado vence -> mantenha fixed, mas guarde o earnings para debug (não muda ordering)
-        ex.earnings_total = Number(item.real_total);
-        mapa.set(existingKey, ex);
+      // --- Busca ganhos reais do DB (DailyEarning) — agora projetando userId para matching confiável
+      let ganhosPorUsuario = [];
+      try {
+        ganhosPorUsuario = await DailyEarning.aggregate([
+          { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+          { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+          { $unwind: { path: "$usuario", preserveNullAndEmptyArrays: true } },
+          {
+            $project: {
+              userId: "$_id",
+              username: { $ifNull: ["$usuario.nome", "Usuário"] },
+              token: { $ifNull: ["$usuario.token", null] },
+              real_total: "$totalGanhos"
+            }
+          }
+        ]);
+      } catch (e) {
+        console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
+        ganhosPorUsuario = [];
       }
-    } else {
-      // substitui/merge normal quando não há fixed pré-existente
-      mapa.set(existingKey, {
-        username: item.username,
-        token: item.token || (ex && ex.token) || null,
-        real_total: Number(item.real_total),
-        source: item.source,
-        userId: item.userId || (ex && ex.userId) || null,
-        is_current_user: (ex && ex.is_current_user) || item.is_current_user
+
+      // --- Prepara mapa e helpers de matching (versão final corrigida) ---
+      const mapa = new Map();
+
+      const makeKeyFromFixed = (u, idx) => {
+        if (u.token) return `T:${String(u.token)}`;
+        if (u.userId) return `I:${String(u.userId)}`;
+        return `U:${String((u.username || "").trim().toLowerCase())}`;
+      };
+
+      // ganhos por posição (usado para projeção dos fixed)
+      const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+      const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
+
+      // baseHoraInicio: usa horaInicioRanking (se definida) ou agora
+      const agoraMs = Date.now();
+      const baseHoraInicio = horaInicioRanking || agoraMs;
+      const intervalosDecorridos = Math.floor((agoraMs - baseHoraInicio) / (60 * 1000));
+      console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(baseHoraInicio).toISOString());
+
+      // insere fixed no mapa com posição (fixedPosition)
+      baseFromFixed.forEach((u, idx) => {
+        const key = u.token ? `T:${String(u.token)}` : `U:${String((u.username || "").trim().toLowerCase())}`;
+        mapa.set(key, {
+          username: String(u.username || "Usuário"),
+          token: u.token || null,
+          real_total: Number(u.real_total || 0),
+          source: 'fixed',
+          fixedPosition: idx,
+          is_current_user: !!u.is_current_user,
+          userId: u.userId || null
+        });
       });
-    }
-  } else {
-    // sem chave existente: adiciona novo entry (earnings)
-    const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
-    mapa.set(key, { ...item });
-  }
-});
 
-// --- Agora: antes de ordenar, calcule o valor "atual/projetado" usado para ordenação
-const listaComProjetado = Array.from(mapa.values()).map(entry => {
-  const e = { ...entry };
-  if (e.source === 'fixed') {
-    const pos = (typeof e.fixedPosition === 'number') ? e.fixedPosition : null;
-    const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
-    const projected = Number(e.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
-    // se houver earnings_total anotado (earnings menor que projected), mantemos projected como current_total
-    e.current_total = Number(projected);
-  } else {
-    // earnings ou outros -> current_total é o valor real do DB
-    e.current_total = Number(e.real_total || 0);
-  }
-  return e;
-});
+      // helper para buscar chave existente por token / userId / username
+      function findExistingKeyFor(item) {
+        if (item.token) {
+          const k = `T:${String(item.token)}`;
+          if (mapa.has(k)) return k;
+        }
+        if (item.userId) {
+          const k = `I:${String(item.userId)}`;
+          if (mapa.has(k)) return k;
+        }
+        const uname = String(item.username || "").trim().toLowerCase();
+        for (const existingKey of mapa.keys()) {
+          if (existingKey === `U:${uname}`) return existingKey;
+          const ex = mapa.get(existingKey);
+          if (ex && String(ex.username || "").trim().toLowerCase() === uname) return existingKey;
+        }
+        return null;
+      }
 
-// Ordena pelo valor projetado (current_total) DECRESCENTE e só então pega top10
-listaComProjetado.sort((a, b) => Number(b.current_total || 0) - Number(a.current_total || 0));
+      // incorpora ganhos do DB (earnings). Ao encontrar fixed, compara projectedFixed x earnings.real_total
+      ganhosPorUsuario.forEach(g => {
+        const item = {
+          username: String(g.username || "Usuário"),
+          token: g.token || null,
+          real_total: Number(g.real_total || 0),
+          source: 'earnings',
+          userId: g.userId ? String(g.userId) : null,
+          is_current_user: (g.token && g.token === effectiveToken) || false
+        };
 
-// Se precisar garantir pelo menos 10, complete com placeholders (mantendo source='fixed')
-if (listaComProjetado.length < 10) {
-  const NAMES_POOL2 = [
-    "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
-    "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-    "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-    "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
-  ];
-  let idx = 0;
-  while (listaComProjetado.length < 10) {
-    const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
-    if (!listaComProjetado.some(x => x.username === nome)) {
-      listaComProjetado.push({ username: nome, token: null, real_total: 0, current_total: 0, source: 'fixed', is_current_user: false });
-    }
-    idx++;
-  }
-}
+        const existingKey = findExistingKeyFor(item);
+        if (existingKey) {
+          const ex = mapa.get(existingKey);
 
-// finalmente crie baseRankingRaw usando current_total para ordenação correta (e mantendo real_total para display)
-baseRankingRaw = listaComProjetado.map(e => ({
-  username: e.username,
-  token: e.token || null,
-  real_total: Number(e.real_total || 0),   // base real (para referência)
-  current_total: Number(e.current_total || 0), // valor que será usado para ordenação e display
-  source: e.source || 'unknown',
-  is_current_user: !!e.is_current_user
-}));
+          if (ex && ex.source === 'fixed') {
+            // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
+            const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
+            const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
+            const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
+
+            // escolha o maior entre earnings.real_total e projectedFixed
+            if (Number(item.real_total) >= projectedFixed) {
+              // earnings domina -> substitui com valor real do DB
+              mapa.set(existingKey, {
+                username: item.username || ex.username,
+                token: item.token || ex.token,
+                real_total: Number(item.real_total),
+                source: 'earnings',
+                userId: item.userId || ex.userId || null,
+                is_current_user: ex.is_current_user || item.is_current_user
+              });
+            } else {
+              // fixed projetado vence -> mantenha fixed, mas armazene earnings_total para debug (não altera ordering)
+              ex.earnings_total = Number(item.real_total);
+              mapa.set(existingKey, ex);
+            }
+          } else {
+            // substitui/merge normal quando não há fixed pré-existente
+            mapa.set(existingKey, {
+              username: item.username,
+              token: item.token || (ex && ex.token) || null,
+              real_total: Number(item.real_total),
+              source: item.source,
+              userId: item.userId || (ex && ex.userId) || null,
+              is_current_user: (ex && ex.is_current_user) || item.is_current_user
+            });
+          }
+        } else {
+          // sem chave existente: adiciona novo entry (earnings)
+          const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
+          mapa.set(key, { ...item });
+        }
+      });
+
+      // --- Agora: calcule current_total projetado para todos os items (fixed usam projeção, earnings usam valor real)
+      const listaComProjetado = Array.from(mapa.values()).map(entry => {
+        const e = { ...entry };
+        if (e.source === 'fixed') {
+          const pos = (typeof e.fixedPosition === 'number') ? e.fixedPosition : null;
+          const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
+          const projected = Number(e.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
+          e.current_total = Number(projected);
+        } else {
+          e.current_total = Number(e.real_total || 0);
+        }
+        return e;
+      });
+
+      // --- Garantir pelo menos 10 itens (fallback) sem sobrescrever existentes
+      if (listaComProjetado.length < 10) {
+        const NAMES_POOL2 = [
+          "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+          "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+          "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+          "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+        ];
+        let idx = 0;
+        while (listaComProjetado.length < 10) {
+          const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
+          if (!listaComProjetado.some(x => String(x.username || "").trim() === String(nome).trim())) {
+            listaComProjetado.push({ username: nome, token: null, real_total: 0, current_total: 0, source: 'fixed', is_current_user: false });
+          }
+          idx++;
+        }
+      }
+
+      // Ordena pelo valor projetado (current_total) DECRESCENTE e só então pega top10
+      listaComProjetado.sort((a, b) => Number(b.current_total || 0) - Number(a.current_total || 0));
+
+      // debug opcional
+      console.log("DEBUG: top 12 after projection:", listaComProjetado.slice(0, 12).map((x, i) => `${i+1}=${x.username}:${(Number(x.current_total)||0).toFixed(2)}(src=${x.source})`));
+
+      // pegar top10 definitivo
+      const top10 = listaComProjetado.slice(0, 10);
+
+      // helper de arredondamento
+      function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+      // montar baseRankingRaw usando current_total como valor final
+      baseRankingRaw = top10.map((item) => ({
+        username: item.username,
+        token: item.token || null,
+        real_total: round2(Number(item.current_total || item.real_total || 0)), // representa o valor final exibido
+        source: item.source || 'unknown',
+        is_current_user: !!item.is_current_user
+      }));
+    } else {
+      // fallback quando não há dailyFixedRanking: gera a partir do DB (sem fixed)
+      const ganhosPorUsuario = await DailyEarning.aggregate([
+        { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+        { $unwind: "$usuario" },
+        { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
+      ]);
+
+      baseRankingRaw = (ganhosPorUsuario || [])
+        .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
+        .map((item) => ({
+          username: item.username || "Usuário",
+          token: item.token || null,
+          real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
+          is_current_user: item.token === effectiveToken,
+          source: 'earnings'
+        }));
 
       // completa até 10 com fallback estático (determinístico)
       const NAMES_POOL2 = [
@@ -2309,47 +2341,20 @@ baseRankingRaw = listaComProjetado.map(e => ({
         baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false, source: 'fixed' });
       }
 
-      baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
+      baseRankingRaw.sort((a, b) => Number(b.real_total) - Number(a.real_total));
     }
 
     // === 6) Limita a 10 posições ===
     let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
-    // === 7) Ganhos progressivos por posição (agora por minuto) ===
-    const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
-    const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto
-
-    // helper: arredonda com 2 casas
+    // === 7) (OBS) já aplicamos projeção antes — não re-aplicar incrementos aqui.
+    // helper: arredonda com 2 casas (final polishing)
     function round2(n) {
       return Math.round((Number(n) || 0) * 100) / 100;
     }
 
-    // inicializa horaInicioRanking se necessário (não sobrescrever se já veio do DB)
-    if (!horaInicioRanking) {
-      horaInicioRanking = agora;
-      console.log("⏱ horaInicioRanking inicializada em:", new Date(horaInicioRanking).toISOString());
-    }
-    const intervalosDecorridos = Math.floor((agora - horaInicioRanking) / (60 * 1000));
-    console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(horaInicioRanking).toISOString());
-
-    // APLICAR incremento APENAS para itens 'fixed' (placeholders); itens 'earnings' permanecem com valor real do DB
-    finalRankingRaw = finalRankingRaw.map((item, idx) => {
-      const baseReal = Number(item.real_total || 0);
-      const incrementoPorMinuto = Number(perMinuteGain[idx] || 0);
-      const deveIncrementar = item.source === 'fixed'; // <- change: only fixed get increment
-      const incremento = deveIncrementar ? incrementoPorMinuto * intervalosDecorridos : 0;
-      const novoTotal = round2(baseReal + incremento);
-      if (deveIncrementar && incremento !== 0) {
-        console.log(`➕ Incremento FIXED posição ${idx+1} (${item.username}): +${round2(incremento)} (base ${round2(baseReal)} => ${novoTotal})`);
-      }
-      return {
-        ...item,
-        real_total: novoTotal
-      };
-    });
-
     // logs debug do pré-format
-    console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r,i) => `${i+1}=${r.username}:${(r.real_total||0).toFixed(2)}`));
+    console.log("🔢 pré-format finalRankingRaw:", finalRankingRaw.map((r, i) => `${i + 1}=${r.username}:${(r.real_total || 0).toFixed(2)}`));
 
     // === 8) Formata e responde ===
     const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2367,7 +2372,7 @@ baseRankingRaw = listaComProjetado.map(e => ({
     ultimaAtualizacao = agora;
     zeroedAtMidnight = false;
 
-    console.log("🔢 final top3 (numeros reais):", top3FixosHoje ? top3FixosHoje.map((u) => `${u.username}=${u.real_total}`) : []);
+    console.log("🔢 final top3 (numeros reais):", finalRanking.slice(0, 3).map(r => `${r.username}=${r.real_total}`));
     return res.status(200).json({ ranking: finalRanking });
 
   } catch (error) {
