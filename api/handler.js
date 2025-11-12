@@ -2222,23 +2222,45 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       });
 
       // --- Garantir pelo menos 10 itens (fallback) sem sobrescrever existentes
-      if (listaComProjetado.length < 10) {
-        const NAMES_POOL2 = [
-          "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
-          "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-          "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-          "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
-        ];
-        let idx = 0;
-        while (listaComProjetado.length < 10) {
-          const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
-          if (!listaComProjetado.some(x => String(x.username || "").trim() === String(nome).trim())) {
-            listaComProjetado.push({ username: nome, token: null, real_total: 0, current_total: 0, source: 'fixed', is_current_user: false });
-          }
-          idx++;
-        }
-      }
+// --- substitua o bloco que completa listaComProjetado por este ---
+// (isso garante fixedPosition e current_total projetado para os placeholders)
+if (listaComProjetado.length < 10) {
+  const NAMES_POOL2 = [
+    "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+    "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+    "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+    "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+  ];
 
+  // determina a próxima posição fixa disponível (baseada no maior fixedPosition atual ou 0)
+  const existingPositions = listaComProjetado
+    .map(x => (typeof x.fixedPosition === 'number' ? x.fixedPosition : null))
+    .filter(x => x !== null);
+  let nextPos = existingPositions.length ? (Math.max(...existingPositions) + 1) : listaComProjetado.length;
+
+  while (listaComProjetado.length < 10) {
+    const nome = NAMES_POOL2[nextPos % NAMES_POOL2.length];
+
+    if (!listaComProjetado.some(x => String(x.username || "").trim() === String(nome).trim())) {
+      // calcula incremento por minuto para esta posição (se existir perMinuteGain)
+      const ganhoPorMinuto = (perMinuteGain && typeof perMinuteGain[nextPos] !== 'undefined') ? perMinuteGain[nextPos] : 0;
+      const baseReal = 0; // placeholders do pool tem base 0
+      const projected = Number(baseReal) + ganhoPorMinuto * intervalosDecorridos;
+
+      listaComProjetado.push({
+        username: nome,
+        token: null,
+        real_total: baseReal,
+        current_total: Number(projected),
+        source: 'fixed',
+        fixedPosition: nextPos,
+        is_current_user: false
+      });
+    }
+
+    nextPos++;
+  }
+}
       // Ordena pelo valor projetado (current_total) DECRESCENTE e só então pega top10
       listaComProjetado.sort((a, b) => Number(b.current_total || 0) - Number(a.current_total || 0));
 
