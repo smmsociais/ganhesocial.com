@@ -834,23 +834,57 @@
             }
         }
 
-        /* === POPULAR TABELA === */
-        function populateRankingTable(rankingData) {
-            const rankingTable = document.getElementById("rankingTable");
-            if (!rankingTable) return;
+/* === POPULAR TABELA (corrigida) === */
+function populateRankingTable(rankingData) {
+    const rankingTable = document.getElementById("rankingTable");
+    if (!rankingTable) return;
 
-            const rows = rankingTable.querySelectorAll("tr");
+    // pega todas as linhas (th/td)
+    const rows = Array.from(rankingTable.querySelectorAll("tr"));
 
-            rankingData.forEach((user, index) => {
-                if (index < rows.length) {
-                    const row = rows[index];
-                    row.classList.toggle("highlight-row", user.is_current_user);
-                    row.querySelector(".ranking-user").textContent = user.username;
-                    row.querySelector(".ranking-value").textContent = `R$ ${user.total_balance}`;
-                }
-            });
+    // detecta se a primeira linha é cabeçalho (contém <th>) — assim podemos pular corretamente
+    let dataStartIndex = 0;
+    if (rows.length > 0 && rows[0].querySelector("th")) {
+        dataStartIndex = 1; // dados começam na segunda linha
+    }
+
+    // garante que rankingData é array
+    const list = Array.isArray(rankingData) ? rankingData : [];
+
+    list.forEach((user, idx) => {
+        const rowIndex = dataStartIndex + idx;
+        if (rowIndex >= rows.length) return; // tabela menor que o ranking retornado
+
+        const row = rows[rowIndex];
+
+        // highlight do usuário atual
+        row.classList.toggle("highlight-row", !!user.is_current_user);
+
+        // username
+        const userCell = row.querySelector(".ranking-user");
+        if (userCell) userCell.textContent = user.username || "-";
+
+        // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
+        let formattedValue = "R$ 0,00";
+        if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
+            formattedValue = `R$ ${user.real_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else if (user.total_balance) {
+            // total_balance pode já vir formatado como "1.234,56" ou "R$ 1.234,56"
+            const tb = String(user.total_balance).trim();
+            formattedValue = tb.startsWith("R$") ? tb : `R$ ${tb}`;
         }
 
+        const valueCell = row.querySelector(".ranking-value");
+        if (valueCell) valueCell.textContent = formattedValue;
+
+        // (opcional) badge de faixa (se existir uma célula .ranking-badge)
+        const badgeCell = row.querySelector(".ranking-badge");
+        if (badgeCell) {
+            badgeCell.textContent = user.display_range || "";
+            badgeCell.style.display = user.display_range ? "" : "none";
+        }
+    });
+}
         /* === LOGOUT === */
         function logout() {
             localStorage.removeItem("token");
