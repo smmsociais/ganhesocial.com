@@ -120,12 +120,14 @@ const DailyEarningSchema = new mongoose.Schema({
 DailyEarningSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 TemporaryActionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-/*
-  === NOVO: DailyRankingSchema ===
-  Persistimos o ranking fixo do dia (10 nomes) para sobreviver a reinícios do container.
-  Campo `data` é a string no formato "dd/mm/yyyy" (mesma formatação usada em diaTop3).
-*/
-// 🔹 Schema para Ranking Diário
+// 🔹 Schema para Ranking Diário (atualizado)
+const DailyRankingItemSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  token: { type: String, default: null },
+  real_total: { type: Number, default: 0 },     // valor numérico real persistido
+  is_current_user: { type: Boolean, default: false }
+}, { _id: false });
+
 const DailyRankingSchema = new mongoose.Schema({
   data: {
     type: String, // ex: "11/11/2025"
@@ -133,9 +135,11 @@ const DailyRankingSchema = new mongoose.Schema({
     unique: true
   },
   ranking: {
-    type: Array,
+    type: [DailyRankingItemSchema],
     default: []
   },
+  startAt: { type: Date, default: null },      // momento em que o ranking começou a progredir
+  expiresAt: { type: Date, default: null },    // quando esse ranking expira (meia-noite)
   criadoEm: {
     type: Date,
     default: Date.now
