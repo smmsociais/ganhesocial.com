@@ -1920,74 +1920,109 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       }
     }
 
-    // === 3) reset automático à meia-noite (quando detecta mudança de dia) ===
-    if (diaTop3 && diaTop3 !== hoje) {
-      console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
+// === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
+if (diaTop3 && diaTop3 !== hoje) {
+  console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
 
-      await DailyEarning.deleteMany({});
-      await User.updateMany({}, { $set: { balance: 0 } });
+  // === Horário de Brasília (UTC-3) ===
+  const agora = new Date();
+  console.log("🕒 Agora (UTC):", agora.toISOString());
 
-      let sampled = [];
-      try {
-        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
-      } catch (e) {
-        console.error("Erro ao samplear users (midnight):", e);
-        sampled = [];
-      }
+  const offsetBrasilia = -3; // UTC-3
+  const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
+  console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
 
-      const NAMES_POOL = [
-        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
-      ];
+  const brasilMidnightTomorrow = new Date(Date.UTC(
+    brasilAgora.getUTCFullYear(),
+    brasilAgora.getUTCMonth(),
+    brasilAgora.getUTCDate() + 1,
+    3, // 03:00 UTC = 00:00 Brasília
+    0, 0, 0
+  ));
+  console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
 
-      dailyFixedRanking = [];
-      for (let i = 0; i < 10; i++) {
-        if (sampled[i]) {
-          dailyFixedRanking.push({
-            username: sampled[i].nome || NAMES_POOL[i % NAMES_POOL.length],
-            token: sampled[i].token || null,
-            real_total: 0,
-            is_current_user: sampled[i].token === effectiveToken
-          });
-        } else {
-          dailyFixedRanking.push({
-            username: NAMES_POOL[i % NAMES_POOL.length],
-            token: null,
-            real_total: 0,
-            is_current_user: false
-          });
-        }
-      }
+  // === Reset de ganhos e saldos ===
+  await DailyEarning.deleteMany({});
+  await User.updateMany({}, { $set: { saldo: 0 } });
 
-      const startAtDate = new Date(agora);
-      try {
-        await DailyRanking.findOneAndUpdate(
-          { data: hoje },
-          { ranking: dailyFixedRanking, startAt: startAtDate, criadoEm: new Date() },
-          { upsert: true, new: true }
-        );
-        console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", startAtDate.toISOString());
-      } catch (e) {
-        console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
-      }
+  // === Sorteia até 10 usuários aleatórios do banco ===
+  let sampled = [];
+  try {
+    sampled = await User.aggregate([
+      { $sample: { size: 10 } },
+      { $project: { nome: 1, token: 1 } }
+    ]);
+  } catch (e) {
+    console.error("Erro ao samplear users (midnight):", e);
+    sampled = [];
+  }
 
-      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-      diaTop3 = hoje;
-      horaInicioRanking = agora;
-      ultimoRanking = null;
-      ultimaAtualizacao = agora;
-      zeroedAtMidnight = true;
+  // Pool de fallback (nomes aleatórios)
+  const NAMES_POOL = [
+    "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+    "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+  ];
 
-      const placeholder = dailyFixedRanking.map((d, i) => ({
-        position: i + 1,
-        username: d.username,
-        total_balance: formatarValorRanking(d.real_total),
-        is_current_user: !!d.is_current_user
-      }));
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+  const shuffledFallback = shuffle(NAMES_POOL.slice());
 
-      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
-      return res.status(200).json({ ranking: placeholder });
+  // === Monta o ranking fixo diário ===
+  dailyFixedRanking = [];
+  for (let i = 0; i < 10; i++) {
+    if (sampled[i] && sampled[i].nome) {
+      dailyFixedRanking.push({
+        username: sampled[i].nome,
+        token: sampled[i].token || null,
+        real_total: 0,
+        is_current_user: sampled[i].token === effectiveToken
+      });
+    } else {
+      const fallbackName = shuffledFallback[i % shuffledFallback.length];
+      dailyFixedRanking.push({
+        username: fallbackName,
+        token: null,
+        real_total: 0,
+        is_current_user: false
+      });
     }
+  }
+
+  // === Salva o novo ranking no DB ===
+  try {
+    await DailyRanking.findOneAndUpdate(
+      { data: hoje },
+      {
+        ranking: dailyFixedRanking,
+        startAt: brasilAgora, // usa hora de Brasília como início
+        expiresAt: brasilMidnightTomorrow, // registra quando deve expirar
+        criadoEm: new Date()
+      },
+      { upsert: true, new: true }
+    );
+    console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", brasilAgora.toISOString());
+  } catch (e) {
+    console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
+  }
+
+  // === Atualiza variáveis em memória ===
+  top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+  diaTop3 = hoje;
+  horaInicioRanking = brasilAgora;
+  ultimoRanking = null;
+  ultimaAtualizacao = brasilAgora;
+  zeroedAtMidnight = true;
+
+  // === Monta resposta para placeholder ===
+  const placeholder = dailyFixedRanking.map((d, i) => ({
+    position: i + 1,
+    username: d.username,
+    total_balance: formatarValorRanking(d.real_total),
+    is_current_user: !!d.is_current_user
+  }));
+
+  console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
+  return res.status(200).json({ ranking: placeholder });
+}
 
     // === 4) Cache check (mesmo dia e menos de CACHE_MS) ===
     if (ultimoRanking && agora - ultimaAtualizacao < CACHE_MS && diaTop3 === hoje) {
