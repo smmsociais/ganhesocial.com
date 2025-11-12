@@ -1908,12 +1908,25 @@ dailyFixedRanking = shuffleArray(
   }))
 );
 
-// 🕒 Define hora de início do ranking (horário de Brasília)
+// 🕒 Define hora atual e configurações de fuso horário de Brasília
 const agora = new Date();
 const offsetBrasilia = -3;
 const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
 
-// A data/hora exata de início da contagem
+const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+
+// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
+const brasilMidnightTomorrow = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1, // amanhã
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🕒 Define a hora de início do ranking (meia-noite de hoje)
 const startAtDate = new Date(Date.UTC(
   brasilAgora.getUTCFullYear(),
   brasilAgora.getUTCMonth(),
@@ -1924,6 +1937,7 @@ const startAtDate = new Date(Date.UTC(
   0
 ));
 
+// 🔢 Cria ou atualiza o ranking fixo do dia
 await DailyRanking.findOneAndUpdate(
   { data: hoje },
   {
@@ -2034,13 +2048,25 @@ dailyFixedRanking = shuffleArray(
 
   // === Salva o novo ranking no DB ===
   try {
-// supondo brasilAgora / brasilMidnightTomorrow / startAtDate definidos
-// 🕒 Define hora de início do ranking (horário de Brasília)
+// 🕒 Define hora atual e configurações de fuso horário de Brasília
 const agora = new Date();
 const offsetBrasilia = -3;
 const brasilAgora = new Date(agora.getTime() + offsetBrasilia * 60 * 60 * 1000);
 
-// A data/hora exata de início da contagem
+const hoje = brasilAgora.toLocaleDateString("pt-BR"); // ex: "12/11/2025"
+
+// 🕛 Calcula meia-noite de amanhã no horário de Brasília (em UTC)
+const brasilMidnightTomorrow = new Date(Date.UTC(
+  brasilAgora.getUTCFullYear(),
+  brasilAgora.getUTCMonth(),
+  brasilAgora.getUTCDate() + 1, // amanhã
+  3, // 03:00 UTC = 00:00 Brasília
+  0,
+  0,
+  0
+));
+
+// 🕒 Define a hora de início do ranking (meia-noite de hoje)
 const startAtDate = new Date(Date.UTC(
   brasilAgora.getUTCFullYear(),
   brasilAgora.getUTCMonth(),
@@ -2051,6 +2077,7 @@ const startAtDate = new Date(Date.UTC(
   0
 ));
 
+// 🔢 Cria ou atualiza o ranking fixo do dia
 await DailyRanking.findOneAndUpdate(
   { data: hoje },
   {
