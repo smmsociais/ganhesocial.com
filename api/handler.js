@@ -2112,7 +2112,7 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       const mapa = new Map();
 
       // ganhos por posição (usado para projeção dos fixed)
-      const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+      const ganhosPorPosicao = [15, 13, 11, 9, 7, 5.5, 4.5, 3.5, 2.5, 1.5];
       const perMinuteGain = ganhosPorPosicao.map(g => g / 10); // ganho por minuto (pos 0..9)
 
       // baseHoraInicio: usa horaInicioRanking (se definida) ou agora
