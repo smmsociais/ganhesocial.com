@@ -2315,37 +2315,6 @@ if (dailyFixedRanking && diaTop3 === hoje) {
   baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
 }
 
-  // Se quiser manter tamanho fixo (ex: 10), corte depois:
-  // baseRankingRaw = baseRankingRaw.slice(0, 10);
-
-} else {
-  // fallback original: gera a partir do DB
-  const ganhosPorUsuario = await DailyEarning.aggregate([
-    { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-    { $unwind: "$usuario" },
-    { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
-  ]);
-
-  baseRankingRaw = (ganhosPorUsuario || [])
-    .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
-    .map((item) => ({
-      username: item.username || "Usuário",
-      token: item.token || null,
-      real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
-      is_current_user: item.token === effectiveToken,
-    }));
-
-  // completa até 10 com fallback estático (determinístico)
-  const NAMES_POOL2 = [ /* seu pool já existente */ ];
-  while (baseRankingRaw.length < 10) {
-    const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
-    baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
-  }
-
-  baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
-}
-
     // === 6) Limita a 10 posições ===
     let finalRankingRaw = baseRankingRaw.slice(0, 10);
 
