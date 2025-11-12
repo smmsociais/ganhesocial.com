@@ -814,92 +814,35 @@
         }
 
         /* === RANKING === */
-async function carregarRanking() {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+        async function carregarRanking(parcial = false) {
+            const token = localStorage.getItem("token");
+            if (!token) return;
 
-    try {
-        const [resDiario, resAntigo] = await Promise.all([
-            fetch("https://ganhesocial.com/api/ranking_diario", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ token })
-            }),
-            fetch("https://ganhesocial.com/api/ranking_antigo", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ token })
-            })
-        ]);
+            try {
+                const response = await fetch("https://ganhesocial.com/api/ranking_diario", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ token })
+                });
 
-        const dataDiario = await resDiario.json();
-        const dataAntigo = await resAntigo.json();
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Erro ao buscar ranking.");
 
-        // Combina arrays (se alguma rota não enviar ranking, cai em [])
-        const combined = [
-            ...(dataDiario.ranking || []),
-            ...(dataAntigo.ranking || [])
-        ];
+                if (data.ranking && Array.isArray(data.ranking)) {
+                    let ranking = [...data.ranking];
 
-        // helper para parsear strings formatadas PT-BR -> número
-        function parseFormatted(str) {
-            if (str == null) return 0;
-            const s = String(str).replace(/[^\d,.-]/g, "").trim();
-            if (!s) return 0;
-            // se tem '.' e ',', assume '.' thousands e ',' decimal
-            if (s.indexOf('.') > -1 && s.indexOf(',') > -1) {
-                return Number(s.replace(/\./g, '').replace(',', '.')) || 0;
+                    populateRankingTable(ranking);
+                } else {
+                    console.warn("⚠️ Nenhum ranking recebido da API.");
+                }
+            } catch (error) {
+                console.error("❌ Erro ao carregar ranking:", error);
             }
-            if (s.indexOf(',') > -1) return Number(s.replace(',', '.')) || 0;
-            return Number(s) || 0;
         }
 
-        // Normaliza: garante campo real_total numérico
-        const normalized = combined.map(u => {
-            const real = typeof u.real_total === 'number'
-                ? u.real_total
-                : (u.total_balance ? parseFormatted(u.total_balance) : Number(u.total_balance) || 0);
-            return { ...u, real_total: Number(real || 0) };
-        });
-
-        // Junta por username somando real_total
-        const mapa = new Map();
-        normalized.forEach(u => {
-            const key = (u.username || "").toString();
-            if (mapa.has(key)) {
-                const ex = mapa.get(key);
-                ex.real_total = (ex.real_total || 0) + (u.real_total || 0);
-                ex.is_current_user = ex.is_current_user || !!u.is_current_user;
-            } else {
-                mapa.set(key, { ...u });
-            }
-        });
-
-        const rankingUnico = Array.from(mapa.values())
-            .sort((a, b) => b.real_total - a.real_total)
-            .slice(0, 10); // opcional: limitar top 10
-
-        // formata para exibição (pt-BR)
-        const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const finalForDisplay = rankingUnico.map((u, idx) => ({
-            position: idx + 1,
-            username: u.username,
-            total_balance: formatter.format(u.real_total),
-            is_current_user: !!u.is_current_user
-        }));
-
-        populateRankingTable(finalForDisplay);
-
-    } catch (error) {
-        console.error("❌ Erro ao carregar ranking combinado:", error);
-    }
-}
         /* === POPULAR TABELA === */
         function populateRankingTable(rankingData) {
             const rankingTable = document.getElementById("rankingTable");
