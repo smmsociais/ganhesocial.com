@@ -2201,9 +2201,9 @@ await DailyRanking.findOneAndUpdate(
     // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje ===
     let baseRankingRaw = null;
 if (dailyFixedRanking && diaTop3 === hoje) {
-  // Clone do ranking fixo do dia
+  // Clone do ranking fixo do dia (garantindo campos)
   let baseFromFixed = dailyFixedRanking.map(u => ({
-    username: u.username || "Usuário",
+    username: (u.username || "Usuário").toString(),
     token: u.token || null,
     real_total: Number(u.real_total || 0),
     is_current_user: !!u.is_current_user
@@ -2224,16 +2224,15 @@ if (dailyFixedRanking && diaTop3 === hoje) {
       } }
     ]);
   } catch (e) {
-    console.error("Erro ao agregar DailyEarning durante fusão com dailyFixedRanking:", e);
+    console.error("Erro ao agregar DailyEarning durante fusão (prioridade):", e);
     ganhosPorUsuario = [];
   }
 
-  // --- Mapeia e faz a fusão (chave preferencial: token, fallback: username) ---
+  // --- Mapeia e faz a fusão com PRIORIDADE para DailyEarning ---
   const mapa = new Map();
+  const makeKey = (item) => (item.token ? `T:${String(item.token)}` : `U:${String(item.username).trim().toLowerCase()}`);
 
-  const makeKey = (item) => (item.token ? `T:${item.token}` : `U:${(item.username||"").toString().trim()}`);
-
-  // insere itens do ranking fixo primeiro
+  // 1) insere itens do ranking fixo primeiro
   baseFromFixed.forEach(u => {
     const key = makeKey(u);
     mapa.set(key, {
@@ -2244,27 +2243,77 @@ if (dailyFixedRanking && diaTop3 === hoje) {
     });
   });
 
-  // agora incorpora ganhos do DailyEarning (soma se já existir)
+  // 2) incorpora ganhos do DailyEarning — se existir, SUBSTITUI (prioriza)
   ganhosPorUsuario.forEach(g => {
     const item = {
-      username: g.username || "Usuário",
+      username: (g.username || "Usuário").toString(),
       token: g.token || null,
       real_total: Number(g.real_total || 0),
       is_current_user: (g.token && g.token === effectiveToken) || false
     };
     const key = makeKey(item);
     if (mapa.has(key)) {
+      // Prioriza o registro do DB (DailyEarning) — substitui valores importantes
       const ex = mapa.get(key);
-      ex.real_total = (Number(ex.real_total) || 0) + (Number(item.real_total) || 0);
-      ex.is_current_user = ex.is_current_user || item.is_current_user;
-      // mantemos username/token existentes (fixos têm preferência)
+      mapa.set(key, {
+        username: item.username || ex.username,
+        token: item.token || ex.token,
+        real_total: item.real_total, // <-- PRIORIDADE: usa o valor real do DB
+        is_current_user: ex.is_current_user || item.is_current_user
+      });
     } else {
       mapa.set(key, { ...item });
     }
   });
 
-  // Converte para array e ordena por real_total
-  baseRankingRaw = Array.from(mapa.values()).sort((a,b) => b.real_total - a.real_total);
+  // Converte para array e ordena por real_total (decrescente)
+  baseRankingRaw = Array.from(mapa.values()).sort((a, b) => b.real_total - a.real_total);
+
+  // Opcional: garante pelo menos 10 entradas (fallbacks) — se quiser manter esse comportamento:
+  if (baseRankingRaw.length < 10) {
+    const NAMES_POOL2 = [
+      "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+      "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+      "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+      "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+    ];
+    let idx = 0;
+    while (baseRankingRaw.length < 10) {
+      const nome = NAMES_POOL2[idx % NAMES_POOL2.length];
+      if (!baseRankingRaw.some(x => x.username === nome)) {
+        baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
+      }
+      idx++;
+    }
+  }
+
+} else {
+  // fallback original: gera a partir do DB (mantém seu código existente)
+  const ganhosPorUsuario = await DailyEarning.aggregate([
+    { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+    { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+    { $unwind: "$usuario" },
+    { $project: { _id: 0, username: { $ifNull: ["$usuario.nome", "Usuário"] }, total_balance: "$totalGanhos", token: "$usuario.token" } },
+  ]);
+
+  baseRankingRaw = (ganhosPorUsuario || [])
+    .filter((item) => (item.totalGanhos ?? item.total_balance) > 1)
+    .map((item) => ({
+      username: item.username || "Usuário",
+      token: item.token || null,
+      real_total: Number(item.totalGanhos ?? item.total_balance ?? 0),
+      is_current_user: item.token === effectiveToken,
+    }));
+
+  // completa até 10 com fallback estático (determinístico)
+  const NAMES_POOL2 = [ /* seu pool já existente */ ];
+  while (baseRankingRaw.length < 10) {
+    const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
+    baseRankingRaw.push({ username: nome, token: null, real_total: 0, is_current_user: false });
+  }
+
+  baseRankingRaw.sort((a, b) => b.real_total - a.real_total);
+}
 
   // Se quiser manter tamanho fixo (ex: 10), corte depois:
   // baseRankingRaw = baseRankingRaw.slice(0, 10);
