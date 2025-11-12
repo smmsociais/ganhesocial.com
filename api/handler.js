@@ -1869,7 +1869,12 @@ try {
 
 const NAMES_POOL = [
   "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
+  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
 ];
 
 // embaralha fallback pool
@@ -1976,7 +1981,12 @@ try {
 
 const NAMES_POOL = [
   "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-  "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
+  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
 ];
 
 const shuffledFallback = shuffleArray(NAMES_POOL.slice());
@@ -2071,8 +2081,13 @@ dailyFixedRanking = shuffleArray(
 
       // completa até 10 com fallback estático (determinístico)
       const NAMES_POOL2 = [
-        "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
-        "lucasvz___xzz 💪","joaozinxx_","brunno777","raay__s2","ana_follow","kaduzinho"
+  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
+  "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+  "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
+  "Lipe Rodagem Interna 😄","-","dequelbest 🧙","luiza","-","xxxxxxxxxx",
+  "Bruno tiktok ta uvaa","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
+  "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
       ];
       while (baseRankingRaw.length < 10) {
         const nome = NAMES_POOL2[baseRankingRaw.length % NAMES_POOL2.length];
