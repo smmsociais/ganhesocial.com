@@ -1868,7 +1868,7 @@ try {
 }
 
 const NAMES_POOL = [
-  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "Allef 🔥","🤪","-","noname","Kaioo⚡",
   "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
   "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
   "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
@@ -1980,7 +1980,7 @@ try {
 }
 
 const NAMES_POOL = [
-  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "Allef 🔥","🤪","-","noname","Kaioo⚡",
   "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
   "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
   "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
@@ -2081,7 +2081,7 @@ dailyFixedRanking = shuffleArray(
 
       // completa até 10 com fallback estático (determinístico)
       const NAMES_POOL2 = [
-  "Allef 🔥","🤪","melzinho_443","noname","Caioo ⚡",
+  "Allef 🔥","🤪","-","noname","Kaioo⚡",
   "- 💪","-","KingdosMTD🥱🥱","kaduzinho",
   "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
   "vitor das continhas","the best of TikTok","@sc_geladinhos_gourmet",
