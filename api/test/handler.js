@@ -1844,6 +1844,26 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
     const user = await User.findOne({ token: effectiveToken });
     if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
+    // ---- lista de nomes fornecida (para preencher dailyrankings quando faltar) ----
+    const fillerNames = [
+      "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+      "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
+      "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
+      "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+    ];
+
+    // função utilitária: normaliza username/token/userId para comparações
+    const norm = (s) => String(s || "").trim().toLowerCase();
+
+    // small helper shuffle (in-place) - retorna array
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     // --- 1) carregar dailyFixedRanking do DB (normalizando strings -> objetos) ---
     if (!dailyFixedRanking || diaTop3 !== hoje) {
       try {
@@ -1879,9 +1899,30 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           diaTop3 = hoje;
           zeroedAtMidnight = false;
           console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map((d) => d.username));
+        } else {
+          // Se não houver documento salvo para hoje, tentamos semear/gerar um documento com fillerNames
+          // Isso garante que exista sempre um pool para completar o top10.
+          const baselineValores = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+          // monta ranking inicial com fillerNames (sem token/userId)
+          const seeded = fillerNames.map((nm, idx) => ({
+            username: nm || "Usuário",
+            token: null,
+            real_total: baselineValores[idx] ?? 1,
+            userId: null
+          })).slice(0, 30); // grava 30 como pool
+          await DailyRanking.findOneAndUpdate(
+            { data: hoje },
+            { ranking: seeded, criadoEm: new Date() },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+          dailyFixedRanking = seeded.slice(0, 10);
+          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+          diaTop3 = hoje;
+          horaInicioRanking = Date.now();
+          console.log("⚙️ Sem documento DailyRanking para hoje — semei com fillerNames:", dailyFixedRanking.map(d => d.username));
         }
       } catch (e) {
-        console.error("Erro ao carregar DailyRanking do DB:", e);
+        console.error("Erro ao carregar/semear DailyRanking do DB:", e);
       }
     }
 
@@ -1896,11 +1937,11 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       // Constrói dailyFixedRanking APENAS a partir de dailyearnings (top N)
       let topFromEarnings = await fetchTopFromDailyEarning(10);
 
-      // Se necessário, complete apenas com entradas salvas em DailyRanking (sem pool aleatório)
+      // Se necessário, complete com entradas salvas em DailyRanking (sem pool aleatório)
       if (topFromEarnings.length < 10) {
+        // pega documento DailyRanking (qualquer data) como pool
         const savedOld = await DailyRanking.findOne({}).lean().catch(() => null);
         if (savedOld && Array.isArray(savedOld.ranking)) {
-          // extras sem duplicar userId/token
           const extras = savedOld.ranking
             .map(r => ({
               username: r.username || r.nome || "Usuário",
@@ -1911,16 +1952,31 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
             }))
             .filter(e => !topFromEarnings.some(t =>
               (t.userId && e.userId && t.userId === e.userId) ||
-              (t.token && e.token && t.token === e.token)
+              (t.token && e.token && t.token === e.token) ||
+              (norm(t.username) && norm(e.username) && norm(t.username) === norm(e.username))
             ))
             .slice(0, 10 - topFromEarnings.length);
-          // embaralha extras antes de concatenar para ordem aleatória
           shuffleArray(extras);
           topFromEarnings = topFromEarnings.concat(extras);
         }
       }
 
-      // embaralha para ordem aleatória após reset
+      // se ainda faltar, completar com fillerNames (não duplicar)
+      if (topFromEarnings.length < 10) {
+        const need = 10 - topFromEarnings.length;
+        const usedNorms = new Set(topFromEarnings.map(p => norm(p.username) || ""));
+        const extras = [];
+        for (const nm of fillerNames) {
+          if (extras.length >= need) break;
+          const n = norm(nm);
+          if (!usedNorms.has(n)) {
+            extras.push({ username: nm, token: null, real_total: 0, userId: null, source: "filler" });
+            usedNorms.add(n);
+          }
+        }
+        topFromEarnings = topFromEarnings.concat(extras);
+      }
+
       shuffleArray(topFromEarnings);
 
       // baseline de valores por posição (usado apenas como valor inicial visual)
@@ -2025,12 +2081,29 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
             }))
             .filter(e => !topFromEarnings.some(t =>
               (t.userId && e.userId && t.userId === e.userId) ||
-              (t.token && e.token && t.token === e.token)
+              (t.token && e.token && t.token === e.token) ||
+              (norm(t.username) && norm(e.username) && norm(t.username) === norm(e.username))
             ))
             .slice(0, 10 - topFromEarnings.length);
           shuffleArray(extras);
           topFromEarnings = topFromEarnings.concat(extras);
         }
+      }
+
+      // se ainda faltar, completar com fillerNames (não duplicar)
+      if (topFromEarnings.length < 10) {
+        const need = 10 - topFromEarnings.length;
+        const usedNorms = new Set(topFromEarnings.map(p => norm(p.username) || ""));
+        const extras = [];
+        for (const nm of fillerNames) {
+          if (extras.length >= need) break;
+          const n = norm(nm);
+          if (!usedNorms.has(n)) {
+            extras.push({ username: nm, token: null, real_total: 0, userId: null, source: "filler" });
+            usedNorms.add(n);
+          }
+        }
+        topFromEarnings = topFromEarnings.concat(extras);
       }
 
       shuffleArray(topFromEarnings);
@@ -2104,7 +2177,6 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
 
     // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje, mas incorpora DailyEarning com PRIORIDADE ===
     let baseRankingRaw = null;
-    const normalize = s => (String(s || "").trim().toLowerCase());
 
     if (dailyFixedRanking && diaTop3 === hoje) {
       // Clone do ranking fixo do dia (marca como source: 'fixed')
@@ -2138,7 +2210,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
         ganhosPorUsuario = [];
       }
 
-      // mapa + projeção (mantive sua lógica)
+      // mapa + projeção (mantive sua lógica) - MELHORIA: map keys T:, I:, U: (token, userId, username)
       const mapa = new Map();
       const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
       const perMinuteGain = ganhosPorPosicao.map(g => g / 10);
@@ -2147,9 +2219,12 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       const intervalosDecorridos = Math.floor((agoraMs - baseHoraInicio) / (60 * 1000));
       console.log("📊 intervalosDecorridos (min):", intervalosDecorridos, "horaInicioRanking:", new Date(baseHoraInicio).toISOString());
 
+      // popula mapa com chaves múltiplas quando possível para robustez
       baseFromFixed.forEach((u, idx) => {
-        const key = u.token ? `T:${String(u.token)}` : `U:${String((u.username || "").trim().toLowerCase())}`;
-        mapa.set(key, {
+        const keyToken = u.token ? `T:${String(u.token)}` : null;
+        const keyId = u.userId ? `I:${String(u.userId)}` : null;
+        const keyUname = `U:${norm(u.username)}`;
+        const baseObj = {
           username: String(u.username || "Usuário"),
           token: u.token || null,
           real_total: Number(u.real_total || 0),
@@ -2157,10 +2232,14 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           fixedPosition: idx,
           is_current_user: !!u.is_current_user,
           userId: u.userId || null
-        });
+        };
+        if (keyToken) mapa.set(keyToken, { ...baseObj });
+        if (keyId) mapa.set(keyId, { ...baseObj });
+        mapa.set(keyUname, { ...baseObj });
       });
 
       function findExistingKeyFor(item) {
+        // procura por token -> userId -> username normalizado
         if (item.token) {
           const k = `T:${String(item.token)}`;
           if (mapa.has(k)) return k;
@@ -2169,11 +2248,14 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           const k = `I:${String(item.userId)}`;
           if (mapa.has(k)) return k;
         }
-        const uname = String(item.username || "").trim().toLowerCase();
+        const uname = norm(item.username || "");
+        const unameKey = `U:${uname}`;
+        if (mapa.has(unameKey)) return unameKey;
+
+        // fallback: tentar encontrar por username comparando valores armazenados
         for (const existingKey of mapa.keys()) {
-          if (existingKey === `U:${uname}`) return existingKey;
           const ex = mapa.get(existingKey);
-          if (ex && String(ex.username || "").trim().toLowerCase() === uname) return existingKey;
+          if (ex && norm(ex.username) === uname) return existingKey;
         }
         return null;
       }
@@ -2192,12 +2274,14 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
         if (existingKey) {
           const ex = mapa.get(existingKey);
 
+          // se existir e for fixed, comparar com projected e manter maior
           if (ex && ex.source === "fixed") {
             const pos = (typeof ex.fixedPosition === "number") ? ex.fixedPosition : null;
             const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
             const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
 
             if (Number(item.real_total) >= projectedFixed) {
+              // earnings supera projected fixed -> substitui
               mapa.set(existingKey, {
                 username: item.username || ex.username,
                 token: item.token || ex.token,
@@ -2207,10 +2291,12 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
                 is_current_user: ex.is_current_user || item.is_current_user
               });
             } else {
+              // mantém fixed (com campo earnings_total para debug)
               ex.earnings_total = Number(item.real_total);
               mapa.set(existingKey, ex);
             }
           } else {
+            // substitui/atualiza com dados de earnings
             mapa.set(existingKey, {
               username: item.username,
               token: item.token || (ex && ex.token) || null,
@@ -2221,12 +2307,21 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
             });
           }
         } else {
-          const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
+          // cria nova chave por token ou username normalizado
+          const key = item.token ? `T:${String(item.token)}` : `U:${norm(item.username)}`;
           mapa.set(key, { ...item });
         }
       });
 
-      const listaComProjetado = Array.from(mapa.values()).map(entry => {
+      // monta array projetado
+      const listaComProjetado = Array.from(new Map(
+        // garantir unicidade por username/token/userId: reduce para map por chave definitiva (token>id>username)
+        Array.from(mapa.values()).map(e => {
+          // chave definitiva
+          const definitiveKey = e.token ? `T:${e.token}` : (e.userId ? `I:${e.userId}` : `U:${norm(e.username)}`);
+          return [definitiveKey, e];
+        })
+      ).values()).map(entry => {
         const e = { ...entry };
         if (e.source === "fixed") {
           const pos = (typeof e.fixedPosition === "number") ? e.fixedPosition : null;
@@ -2246,8 +2341,8 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           const extrasShuffled = shuffleArray((saved.ranking || []).slice());
           for (const r of extrasShuffled) {
             if (listaComProjetado.length >= 10) break;
-            const uname = String((r.username || r.nome || "Usuário")).trim().toLowerCase();
-            if (!listaComProjetado.some(x => String((x.userId || x.token || x.username || "")).trim().toLowerCase() === uname)) {
+            const unameNorm = norm(r.username || r.nome || "Usuário");
+            if (!listaComProjetado.some(x => norm(x.username) === unameNorm)) {
               listaComProjetado.push({
                 username: r.username || r.nome || "Usuário",
                 token: r.token || null,
@@ -2260,13 +2355,32 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
             }
           }
         }
-        // se ainda faltar, deixamos com menos de 10 (não adicionamos nomes arbitrários)
+        // se ainda faltar, completar com fillerNames (não duplicar)
+        if (listaComProjetado.length < 10) {
+          const need = 10 - listaComProjetado.length;
+          const used = new Set(listaComProjetado.map(x => norm(x.username)));
+          for (const nm of fillerNames) {
+            if (listaComProjetado.length >= 10) break;
+            if (!used.has(norm(nm))) {
+              listaComProjetado.push({
+                username: nm,
+                token: null,
+                real_total: 0,
+                current_total: 0,
+                source: "filler",
+                is_current_user: false,
+                userId: null
+              });
+              used.add(norm(nm));
+            }
+          }
+        }
       }
 
       // Ordena pelo valor projetado (current_total) DECRESCENTE e só então pega top10
-      listaComProjetado.sort((a, b) => Number(b.current_total || 0) - Number(a.current_total || 0));
+      listaComProjetado.sort((a, b) => Number(b.current_total || b.real_total || 0) - Number(a.current_total || a.real_total || 0));
 
-      console.log("DEBUG: top 12 after projection:", listaComProjetado.slice(0, 12).map((x, i) => `${i+1}=${x.username}:${(Number(x.current_total)||0).toFixed(2)}(src=${x.source})`));
+      console.log("DEBUG: top 12 after projection:", listaComProjetado.slice(0, 12).map((x, i) => `${i+1}=${x.username}:${(Number(x.current_total||x.real_total)||0).toFixed(2)}(src=${x.source})`));
 
       const top10 = listaComProjetado.slice(0, 10);
 
@@ -2280,7 +2394,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
         is_current_user: !!item.is_current_user
       }));
     } else {
-      // fallback: gera a partir do DB (sem fixed)
+      // fallback original: gera a partir do DB (sem fixed) - mantém comportamento
       const ganhosPorUsuario = await DailyEarning.aggregate([
         { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
         { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
@@ -2307,8 +2421,8 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           const extrasShuffled = shuffleArray((saved.ranking || []).slice());
           for (const r of extrasShuffled) {
             if (baseRankingRaw.length >= 10) break;
-            const uname = String((r.username || r.nome || "Usuário")).trim().toLowerCase();
-            if (!baseRankingRaw.some(x => String((x.userId || x.token || x.username || "")).trim().toLowerCase() === uname)) {
+            const uname = norm(r.username || r.nome || "Usuário");
+            if (!baseRankingRaw.some(x => norm(x.username) === uname)) {
               baseRankingRaw.push({
                 username: r.username || r.nome || "Usuário",
                 token: r.token || null,
@@ -2351,11 +2465,6 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
   }
 } // fim if /api/test/ranking_diario
-
-// ------------------ Fim da rota /api/test/ranking_diario ------------------
-
-
-// ------------------ Fim da rota /api/ranking_diario ------------------
 
     return res.status(404).json({ error: "Rota não encontrada." });
 }
