@@ -1836,7 +1836,8 @@ async function fetchTopFromDailyEarning(limit = 10) {
   }
 
   const { token: bodyToken } = req.body || {};
-  const query = req.query || {};
+ const rankingQuery = req.query || {};
+
 
   try {
     await connectDB();
@@ -1902,7 +1903,7 @@ async function fetchTopFromDailyEarning(limit = 10) {
 
     // === 2) reset manual via ENV ou URL ?reset=true ===
     const resetPorEnv = process.env.RESET_RANKING === 'true';
-    const resetPorURL = query.reset === 'true';
+    const resetPorURL = rankingQuery.reset === 'true';
     if (resetPorEnv || resetPorURL) {
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
