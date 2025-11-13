@@ -2373,6 +2373,4 @@ async function handleRankingDiarioRoute(req, res, url, method) {
     return res.status(500).json({ error: 'Erro interno ao buscar ranking' });
   }
 }
-
-return res.status(404).json({ error: "Rota não encontrada." });
-}
+export { handleRankingDiarioRoute };
