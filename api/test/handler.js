@@ -1902,7 +1902,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
         } else {
           // Se não houver documento salvo para hoje, tentamos semear/gerar um documento com fillerNames
           // Isso garante que exista sempre um pool para completar o top10.
-          const baselineValores = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+          const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
           // monta ranking inicial com fillerNames (sem token/userId)
           const seeded = fillerNames.map((nm, idx) => ({
             username: nm || "Usuário",
@@ -1980,7 +1980,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       shuffleArray(topFromEarnings);
 
       // baseline de valores por posição (usado apenas como valor inicial visual)
-      const baselineValores = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+      const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
       // assegura tamanho max 10 e aplica baseline quando necessário
       dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
@@ -2107,7 +2107,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       }
 
       shuffleArray(topFromEarnings);
-      const baselineValores = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+      const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
       dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
         username: c.username,
