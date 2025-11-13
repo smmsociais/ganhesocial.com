@@ -1804,6 +1804,11 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const CACHE_MS = 1 * 60 * 1000; // 1 minuto
     const hoje = new Date().toLocaleDateString("pt-BR");
 
+    // ative no .env: ONLY_FIXED_RANKING=true
+const ONLY_FIXED_RANKING = process.env.ONLY_FIXED_RANKING === 'true';
+// somente ativo quando há um dailyFixedRanking carregado para o dia atual (evita efeitos colaterais)
+const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === hoje;
+
     // autenticação (prefere header Authorization Bearer)
     const authHeader = req.headers.authorization;
     const tokenFromHeader =
@@ -2203,61 +2208,66 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       }
 
       // incorpora ganhos do DB (earnings). Ao encontrar fixed, compara projectedFixed x earnings.real_total
-      ganhosPorUsuario.forEach(g => {
-        const item = {
-          username: String(g.username || "Usuário"),
-          token: g.token || null,
-          real_total: Number(g.real_total || 0),
+ganhosPorUsuario.forEach(g => {
+  const item = {
+    username: String(g.username || "Usuário"),
+    token: g.token || null,
+    real_total: Number(g.real_total || 0),
+    source: 'earnings',
+    userId: g.userId ? String(g.userId) : null,
+    is_current_user: (g.token && g.token === effectiveToken) || false
+  };
+
+  const existingKey = findExistingKeyFor(item);
+  if (existingKey) {
+    const ex = mapa.get(existingKey);
+
+    if (ex && ex.source === 'fixed') {
+      // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
+      const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
+      const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
+      const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
+
+      // escolha o maior entre earnings.real_total e projectedFixed
+      if (Number(item.real_total) >= projectedFixed) {
+        // earnings domina -> substitui com valor real do DB
+        mapa.set(existingKey, {
+          username: item.username || ex.username,
+          token: item.token || ex.token,
+          real_total: Number(item.real_total),
           source: 'earnings',
-          userId: g.userId ? String(g.userId) : null,
-          is_current_user: (g.token && g.token === effectiveToken) || false
-        };
-
-        const existingKey = findExistingKeyFor(item);
-        if (existingKey) {
-          const ex = mapa.get(existingKey);
-
-          if (ex && ex.source === 'fixed') {
-            // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
-            const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
-            const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
-            const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
-
-            // escolha o maior entre earnings.real_total e projectedFixed
-            if (Number(item.real_total) >= projectedFixed) {
-              // earnings domina -> substitui com valor real do DB
-              mapa.set(existingKey, {
-                username: item.username || ex.username,
-                token: item.token || ex.token,
-                real_total: Number(item.real_total),
-                source: 'earnings',
-                userId: item.userId || ex.userId || null,
-                is_current_user: ex.is_current_user || item.is_current_user
-              });
-            } else {
-              // fixed projetado vence -> mantenha fixed, mas armazene earnings_total para debug (não altera ordering)
-              ex.earnings_total = Number(item.real_total);
-              mapa.set(existingKey, ex);
-            }
-          } else {
-            // substitui/merge normal quando não há fixed pré-existente
-            mapa.set(existingKey, {
-              username: item.username,
-              token: item.token || (ex && ex.token) || null,
-              real_total: Number(item.real_total),
-              source: item.source,
-              userId: item.userId || (ex && ex.userId) || null,
-              is_current_user: (ex && ex.is_current_user) || item.is_current_user
-            });
-          }
-        } else {
-          // sem chave existente: adiciona novo entry (earnings)
-          const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
-          mapa.set(key, { ...item });
-        }
+          userId: item.userId || ex.userId || null,
+          is_current_user: ex.is_current_user || item.is_current_user
+        });
+      } else {
+        // fixed projetado vence -> mantenha fixed, mas armazene earnings_total para debug (não altera ordering)
+        ex.earnings_total = Number(item.real_total);
+        mapa.set(existingKey, ex);
+      }
+    } else {
+      // substitui/merge normal quando não há fixed pré-existente
+      mapa.set(existingKey, {
+        username: item.username,
+        token: item.token || (ex && ex.token) || null,
+        real_total: Number(item.real_total),
+        source: item.source,
+        userId: item.userId || (ex && ex.userId) || null,
+        is_current_user: (ex && ex.is_current_user) || item.is_current_user
       });
+    }
+  } else {
+    // <-- ALTERAÇÃO PRINCIPAL: quando ONLY_FIXED_RANKING ativo e estamos usando fixed do dia, IGNORA ganhos sem match
+    if (onlyFixedActive) {
+      console.log("IGNORANDO ganho sem match (ONLY_FIXED_RANKING active):", item.username, item.real_total);
+      return; // pula esse item
+    }
 
-      // --- Agora: calcule current_total projetado para todos os items (fixed usam projeção, earnings usam valor real)
+    // Comportamento antigo (sem ONLY_FIXED_RANKING): adiciona novo entry vindo do DB
+    const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
+    mapa.set(key, { ...item });
+  }
+});
+      // --- Agora calcule current_total projetado para todos os items (fixed usam projeção, earnings usam valor real)
       const listaComProjetado = Array.from(mapa.values()).map(entry => {
         const e = { ...entry };
         if (e.source === 'fixed') {
