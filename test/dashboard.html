@@ -842,15 +842,15 @@
 
         // === Função de formatação do valor no ranking ===
         function formatarValorRanking(valor) {
-            if (valor <= 1) return "1+";
-            if (valor > 1 && valor < 5) return "1+";
-            if (valor < 10) return "5+";
-            if (valor < 50) return "10+";
-            if (valor < 100) return "50+";
-            if (valor < 500) return "100+";
-            if (valor < 1000) return "500+";
-            const base = Math.floor(valor / 1000) * 1000;
-            return `${base}+`;
+        if (valor <= 1) return "R$1+";
+        if (valor > 1 && valor < 5) return "R$1+";
+        if (valor < 10) return "R$5+";
+        if (valor < 50) return "R$10+";
+        if (valor < 100) return "R$50+";
+        if (valor < 500) return "R$100+";
+        if (valor < 1000) return "R$500+";
+        const base = Math.floor(valor / 1000) * 1000;
+        return `${base}+`;
         }
 
         /* === POPULAR TABELA (corrigida) === */
@@ -879,12 +879,12 @@
                 // highlight do usuário atual
                 row.classList.toggle("highlight-row", !!user.is_current_user);
 
-// username (marca o usuário logado)
-const userCell = row.querySelector(".ranking-user");
-if (userCell) {
-    const nome = user.username || "-";
-    userCell.textContent = user.is_current_user ? `${nome} [VOCÊ]` : nome;
-}
+                // username (marca o usuário logado)
+                const userCell = row.querySelector(".ranking-user");
+                if (userCell) {
+                    const nome = user.username || "-";
+                    userCell.textContent = user.is_current_user ? `${nome} [VOCÊ]` : nome;
+                }
                 // valor — preferir real_total (número) se disponível, senão usar total_balance (string)
                 let formattedValue = "R$ 0,00";
                 if (typeof user.real_total === "number" && !Number.isNaN(user.real_total)) {
