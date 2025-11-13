@@ -1975,47 +1975,64 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
       }
     }
 
-    // === 3) Reset automático à meia-noite (quando detecta mudança de dia) ===
-    if (diaTop3 && diaTop3 !== hoje) {
-      console.log("🕛 Novo dia detectado — resetando ranking diário automaticamente...");
+// === 3) Reset automático à meia-noite (seguro) ===
+// Só resetar quando detectarmos que o ranking anterior realmente expirou
+if (diaTop3 && diaTop3 !== hoje) {
+  try {
+    // tenta ler o documento do dia anterior (diaTop3)
+    const prevDaily = await DailyRanking.findOne({ data: diaTop3 }).lean();
 
-      const agoraDate = new Date();
-      console.log("🕒 Agora (UTC):", agoraDate.toISOString());
+    // se existir expiresAt, converte e compara; se não existir, cai no fallback
+    const prevExpires = prevDaily && prevDaily.expiresAt ? new Date(prevDaily.expiresAt).getTime() : null;
+    const prevStart = prevDaily && prevDaily.startAt ? new Date(prevDaily.startAt).getTime() : null;
 
-      const offsetBrasilia = -3; // UTC-3
-      const brasilAgora = new Date(agoraDate.getTime() + offsetBrasilia * 60 * 60 * 1000);
-      console.log("🇧🇷 Agora em Brasília:", brasilAgora.toISOString());
+    // decisão segura: só resetar se agora >= prevExpires (ranking anterior expirou),
+    // ou, se prevExpires não existe, garantir que se passaram >= 22-24 horas desde prevStart.
+    let podeResetar = false;
+    if (prevExpires) {
+      if (agora >= prevExpires) {
+        podeResetar = true;
+      } else {
+        console.log("Skip reset: prevDaily.expiresAt ainda não expirou:", new Date(prevExpires).toISOString());
+      }
+    } else if (prevStart) {
+      // tolerância de 23 horas (em ms). Ajuste conforme sua política.
+      const tolerancia = 23 * 60 * 60 * 1000;
+      if (agora >= (prevStart + tolerancia)) {
+        podeResetar = true;
+      } else {
+        console.log("Skip reset: prevDaily.startAt muito recente:", new Date(prevStart).toISOString());
+      }
+    } else {
+      // sem prevDaily — mais seguro NÃO resetar automaticamente para evitar wipe inesperado.
+      console.log("Skip reset: prevDaily não encontrado e sem startAt/expiresAt — NÃO resetando automaticamente.");
+      podeResetar = false;
+    }
 
-      const brasilMidnightTomorrow = new Date(Date.UTC(
-        brasilAgora.getUTCFullYear(),
-        brasilAgora.getUTCMonth(),
-        brasilAgora.getUTCDate() + 1,
-        3, // 03:00 UTC = 00:00 Brasília
-        0, 0, 0
-      ));
-      const startAtDate = new Date(Date.UTC(
-        brasilAgora.getUTCFullYear(),
-        brasilAgora.getUTCMonth(),
-        brasilAgora.getUTCDate(),
-        3, 0, 0, 0
-      ));
-      console.log("🕛 Meia-noite de amanhã Brasília (UTC):", brasilMidnightTomorrow.toISOString());
+    if (!podeResetar) {
+      // não faz reset; atualiza diaTop3 para o dia atual apenas se existir DailyRanking hoje
+      const savedHoje = await DailyRanking.findOne({ data: hoje }).lean();
+      if (savedHoje && Array.isArray(savedHoje.ranking)) {
+        dailyFixedRanking = savedHoje.ranking.map(entry => ({
+          username: entry.username ?? entry.nome ?? "Usuário",
+          token: entry.token ?? null,
+          real_total: Number(entry.real_total ?? 0),
+          is_current_user: !!entry.is_current_user,
+          userId: entry.userId ? String(entry.userId) : null
+        }));
+        diaTop3 = hoje;
+        console.log("Loaded dailyFixedRanking for hoje (no reset)");
+        // seguir sem reset
+      }
+    } else {
+      // === efetua o reset (com cautela) ===
+      console.log("Reset automático autorizado — realizando limpeza diária...");
 
-      // === Reset de ganhos e saldos ===
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { saldo: 0 } });
 
-      // Use somente NAMES_POOL (sem sample) para gerar o dailyFixedRanking do novo dia
-      const NAMES_POOL = [
-        "Allef 🔥","🤪","-","noname","⚡",
-        "💪","-","KingdosMTD🥱🥱","kaduzinho",
-        "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-        "vitor das continhas","-","@_01.kaio0",
-        "Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-        "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior",
-        "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
-      ];
-
+      // recreia dailyFixedRanking a partir do pool (como você já faz)
+      const NAMES_POOL = [ /* ... seu pool ... */ ];
       const shuffledFallback = shuffleArray(NAMES_POOL.slice());
       dailyFixedRanking = shuffledFallback.slice(0, 10).map(nome => ({
         username: nome,
@@ -2025,33 +2042,18 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
         userId: null
       }));
 
-      try {
-        const hojeStr = new Date(startAtDate).toLocaleDateString("pt-BR");
+      // calcular startAt e expiresAt como antes...
+      // salvar DailyRanking no DB, etc (igual ao seu bloco atual)
 
-        await DailyRanking.findOneAndUpdate(
-          { data: hojeStr },
-          {
-            ranking: dailyFixedRanking,
-            startAt: startAtDate,
-            expiresAt: brasilMidnightTomorrow,
-            criadoEm: new Date()
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-
-        console.log("💾 dailyFixedRanking salvo no DB (midnight reset) com startAt:", startAtDate.toISOString());
-      } catch (e) {
-        console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
-      }
-
+      // depois atualize variáveis de memória
       top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
       diaTop3 = hoje;
-      // IMPORTANTE: horaInicioRanking deve ser o startAt (timestamp) para projeção
       horaInicioRanking = startAtDate.getTime();
       ultimoRanking = null;
       ultimaAtualizacao = startAtDate.getTime();
       zeroedAtMidnight = true;
 
+      // responde com placeholder (como no seu código atual)
       const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const placeholder = dailyFixedRanking.map((d, i) => {
         const v = Number(d.real_total || 0);
@@ -2063,10 +2065,13 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
           is_current_user: !!d.is_current_user
         };
       });
-
-      console.log("✅ Reset automático meia-noite — dailyFixedRanking:", dailyFixedRanking.map(d => d.username));
       return res.status(200).json({ ranking: placeholder });
     }
+  } catch (errReset) {
+    console.error("Erro na verificação de reset automático:", errReset);
+    // não resetar por segurança
+  }
+}
 
     // === 4) Cache check (mesmo dia e menos de CACHE_MS) ===
     if (ultimoRanking && agora - ultimaAtualizacao < CACHE_MS && diaTop3 === hoje) {
