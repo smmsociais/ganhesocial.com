@@ -2374,5 +2374,8 @@ async function handleRankingDiarioRoute(req, res, url, method) {
   }
 }
 
+module.exports = { handleRankingDiarioRoute };
+
+
     return res.status(404).json({ error: "Rota não encontrada." });
 }
