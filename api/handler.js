@@ -1829,8 +1829,6 @@ async function fetchTopFromDailyEarning(limit = 10) {
   }
 }
 
-// Handler da rota (substitua/integrar no seu bloco if (url.startsWith...))
-async function handleRankingDiarioRoute(req, res, url, method) {
   if (!(url.startsWith('/api/ranking_diario') && method === 'POST')) return false;
 
   if (req.method !== 'POST') {
@@ -2373,4 +2371,6 @@ async function handleRankingDiarioRoute(req, res, url, method) {
     return res.status(500).json({ error: 'Erro interno ao buscar ranking' });
   }
 }
-export { handleRankingDiarioRoute };
+
+return res.status(404).json({ error: "Rota não encontrada." });
+}
