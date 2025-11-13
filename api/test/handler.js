@@ -80,6 +80,9 @@ function shuffleArray(a) {
   return a;
 }
 
+// baseline consistente usada sempre que preencher com nomes
+const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3]; // 10 valores para top10
+
 // garante helper acessível mesmo em hot-reload / diferentes escopos
 if (typeof globalThis.fetchTopFromDailyEarning !== "function") {
   globalThis.fetchTopFromDailyEarning = async function(limit = 10) {
