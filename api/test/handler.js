@@ -113,6 +113,16 @@ if (typeof globalThis.fetchTopFromDailyEarning !== "function") {
 }
 const fetchTopFromDailyEarning = globalThis.fetchTopFromDailyEarning;
 
+const norm = (s) => String(s || "").trim().toLowerCase();
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
         const { nomeUsuario } = req.body;
@@ -1905,22 +1915,17 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
           // monta ranking inicial com fillerNames (sem token/userId)
 // --- trecho dentro do bloco que trata "if (!saved || saved.ranking vazia)" ---
-const seeded = fillerNames.map((nm, idx) => ({
+// monte pool com nomes
+let pool = fillerNames.slice(); // copia
+shuffleArray(pool); // embaralha nomes primeiro
+// atribui baseline aos primeiros 10; resto recebe 0 (ou valores baixos)
+const seeded = pool.map((nm, idx) => ({
   username: nm || "Usuário",
   token: null,
-  real_total: baselineValores[idx] ?? 1,
-  userId: null
+  real_total: Number(baselineValores[idx] ?? 1), // garante non-zero para top10
+  userId: null,
+  source: "fixed"
 })).slice(0, 30);
-
-// <-- ADICIONE ESTA LINHA -->
-shuffleArray(seeded);
-
-await DailyRanking.findOneAndUpdate(
-  { data: hoje },
-  { ranking: seeded, criadoEm: new Date() },
-  { upsert: true, new: true, setDefaultsOnInsert: true }
-);
-dailyFixedRanking = seeded.slice(0, 10);
 
           top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
           diaTop3 = hoje;
@@ -1944,28 +1949,29 @@ dailyFixedRanking = seeded.slice(0, 10);
       let topFromEarnings = await fetchTopFromDailyEarning(10);
 
       // Se necessário, complete com entradas salvas em DailyRanking (sem pool aleatório)
-      if (topFromEarnings.length < 10) {
-        // pega documento DailyRanking (qualquer data) como pool
-        const savedOld = await DailyRanking.findOne({}).lean().catch(() => null);
-        if (savedOld && Array.isArray(savedOld.ranking)) {
-          const extras = savedOld.ranking
-            .map(r => ({
-              username: r.username || r.nome || "Usuário",
-              token: r.token || null,
-              real_total: Number(r.real_total || 0),
-              userId: r.userId ? String(r.userId) : null,
-              source: "fixed_from_saved"
-            }))
-            .filter(e => !topFromEarnings.some(t =>
-              (t.userId && e.userId && t.userId === e.userId) ||
-              (t.token && e.token && t.token === e.token) ||
-              (norm(t.username) && norm(e.username) && norm(t.username) === norm(e.username))
-            ))
-            .slice(0, 10 - topFromEarnings.length);
-          shuffleArray(extras);
-          topFromEarnings = topFromEarnings.concat(extras);
-        }
-      }
+if (topFromEarnings.length < 10) {
+  const need = 10 - topFromEarnings.length;
+  const usedNorms = new Set(topFromEarnings.map(p => norm(p.username) || ""));
+  const extras = [];
+  // startIndex = quantas posições já ocupadas; usamos baselineValores[startIndex + extras.length]
+  const startIndex = topFromEarnings.length;
+  for (const nm of fillerNames) {
+    if (extras.length >= need) break;
+    const n = norm(nm);
+    if (!usedNorms.has(n)) {
+      const idxForBaseline = startIndex + extras.length;
+      extras.push({
+        username: nm,
+        token: null,
+        real_total: Number(baselineValores[idxForBaseline] ?? 0), // non-zero quando possível
+        userId: null,
+        source: "fixed" // marca como fixed para que receba projeção
+      });
+      usedNorms.add(n);
+    }
+  }
+  topFromEarnings = topFromEarnings.concat(extras);
+}
 
       // se ainda faltar, completar com fillerNames (não duplicar)
       if (topFromEarnings.length < 10) {
@@ -2077,28 +2083,29 @@ shuffleArray(dailyFixedRanking);
       let topFromEarnings = await fetchTopFromDailyEarning(10);
 
       // Se precisar completar, use ranking salvo (APENAS) da coleção DailyRanking
-      if (topFromEarnings.length < 10) {
-        const saved = await DailyRanking.findOne({}).lean().catch(() => null);
-        if (saved && Array.isArray(saved.ranking)) {
-          const extras = saved.ranking
-            .map(r => ({
-              username: r.username || r.nome || "Usuário",
-              token: r.token || null,
-              real_total: Number(r.real_total || 0),
-              userId: r.userId ? String(r.userId) : null,
-              source: "fixed_from_saved"
-            }))
-            .filter(e => !topFromEarnings.some(t =>
-              (t.userId && e.userId && t.userId === e.userId) ||
-              (t.token && e.token && t.token === e.token) ||
-              (norm(t.username) && norm(e.username) && norm(t.username) === norm(e.username))
-            ))
-            .slice(0, 10 - topFromEarnings.length);
-          shuffleArray(extras);
-          topFromEarnings = topFromEarnings.concat(extras);
-        }
-      }
-
+if (topFromEarnings.length < 10) {
+  const need = 10 - topFromEarnings.length;
+  const usedNorms = new Set(topFromEarnings.map(p => norm(p.username) || ""));
+  const extras = [];
+  // startIndex = quantas posições já ocupadas; usamos baselineValores[startIndex + extras.length]
+  const startIndex = topFromEarnings.length;
+  for (const nm of fillerNames) {
+    if (extras.length >= need) break;
+    const n = norm(nm);
+    if (!usedNorms.has(n)) {
+      const idxForBaseline = startIndex + extras.length;
+      extras.push({
+        username: nm,
+        token: null,
+        real_total: Number(baselineValores[idxForBaseline] ?? 0), // non-zero quando possível
+        userId: null,
+        source: "fixed" // marca como fixed para que receba projeção
+      });
+      usedNorms.add(n);
+    }
+  }
+  topFromEarnings = topFromEarnings.concat(extras);
+}
       // se ainda faltar, completar com fillerNames (não duplicar)
       if (topFromEarnings.length < 10) {
         const need = 10 - topFromEarnings.length;
@@ -2347,26 +2354,26 @@ shuffleArray(dailyFixedRanking);
       });
 
       // preencher apenas com entradas salvas em DailyRanking (embaralhadas) quando faltar
-      if (listaComProjetado.length < 10) {
-        const saved = await DailyRanking.findOne({}).lean().catch(() => null);
-        if (saved && Array.isArray(saved.ranking)) {
-          const extrasShuffled = shuffleArray((saved.ranking || []).slice());
-          for (const r of extrasShuffled) {
-            if (listaComProjetado.length >= 10) break;
-            const unameNorm = norm(r.username || r.nome || "Usuário");
-            if (!listaComProjetado.some(x => norm(x.username) === unameNorm)) {
-              listaComProjetado.push({
-                username: r.username || r.nome || "Usuário",
-                token: r.token || null,
-                real_total: Number(r.real_total || 0),
-                current_total: Number(r.real_total || 0),
-                source: "fixed_from_saved",
-                is_current_user: false,
-                userId: r.userId ? String(r.userId) : null
-              });
-            }
-          }
-        }
+if (listaComProjetado.length < 10) {
+  const need = 10 - listaComProjetado.length;
+  const used = new Set(listaComProjetado.map(x => norm(x.username)));
+  for (const nm of fillerNames) {
+    if (listaComProjetado.length >= 10) break;
+    if (!used.has(norm(nm))) {
+      // atribui baseline pela posição que ficará no array
+      const idxForBaseline = listaComProjetado.length;
+      listaComProjetado.push({
+        username: nm,
+        token: null,
+        real_total: Number(baselineValores[idxForBaseline] ?? 0),
+        current_total: Number(baselineValores[idxForBaseline] ?? 0),
+        source: "fixed",
+        is_current_user: false,
+        userId: null,
+      });
+      used.add(norm(nm));
+    }
+  }
         // se ainda faltar, completar com fillerNames (não duplicar)
         if (listaComProjetado.length < 10) {
           const need = 10 - listaComProjetado.length;
