@@ -16,6 +16,21 @@ let horaInicioRanking = null;
 let zeroedAtMidnight = false;
 let dailyFixedRanking = null;
 
+// ---- HELPERS E CONSTANTES GLOBAIS (apenas uma vez) ----
+function norm(s) { return String(s || "").trim().toLowerCase(); }
+
+function shuffleArray(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// baseline consistente usada sempre que preencher com nomes (10 posições)
+const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3];
+
+
 export default async function handler(req, res) {
     const { method, url, query } = req;
 
@@ -72,16 +87,6 @@ if (resetPorEnv || resetPorURL) {
         return `${base}+`;
     };
 
-function shuffleArray(a) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// baseline consistente usada sempre que preencher com nomes
-const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3]; // 10 valores para top10
 
 // garante helper acessível mesmo em hot-reload / diferentes escopos
 if (typeof globalThis.fetchTopFromDailyEarning !== "function") {
@@ -1913,27 +1918,44 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           zeroedAtMidnight = false;
           console.log("📥 Loaded dailyFixedRanking from DB for", hoje, dailyFixedRanking.map((d) => d.username));
         } else {
-          // Se não houver documento salvo para hoje, tentamos semear/gerar um documento com fillerNames
-          // Isso garante que exista sempre um pool para completar o top10.
-          const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-          // monta ranking inicial com fillerNames (sem token/userId)
-// --- trecho dentro do bloco que trata "if (!saved || saved.ranking vazia)" ---
-// monte pool com nomes
-let pool = fillerNames.slice(); // copia
+
+let pool = fillerNames.slice(); // copia a lista
 shuffleArray(pool); // embaralha nomes primeiro
-// atribui baseline aos primeiros 10; resto recebe 0 (ou valores baixos)
-const seeded = pool.map((nm, idx) => ({
+
+// atribui baseline aos primeiros 10 (garante non-zero para top10) e marca como fixed
+const seededFull = pool.map((nm, idx) => ({
   username: nm || "Usuário",
   token: null,
-  real_total: Number(baselineValores[idx] ?? 1), // garante non-zero para top10
+  real_total: Number(baselineValores[idx] ?? 1),
   userId: null,
   source: "fixed"
-})).slice(0, 30);
+}));
 
-          top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-          diaTop3 = hoje;
-          horaInicioRanking = Date.now();
-          console.log("⚙️ Sem documento DailyRanking para hoje — semei com fillerNames:", dailyFixedRanking.map(d => d.username));
+// salva um pool (por exemplo os primeiros 30) para usar como fallback
+const toSave = seededFull.slice(0, Math.min(30, seededFull.length));
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  { ranking: toSave, startAt: new Date(), criadoEm: new Date() },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
+
+// atribui dailyFixedRanking com os 10 primeiros (já embaralhados)
+dailyFixedRanking = toSave.slice(0, 10).map((x, i) => ({
+  username: x.username,
+  token: x.token || null,
+  real_total: Number(x.real_total || baselineValores[i] || 1),
+  is_current_user: x.token === effectiveToken,
+  userId: x.userId || null,
+  source: x.source || "fixed"
+}));
+
+// define horaInicioRanking a partir do startAt que salvamos (consistente)
+horaInicioRanking = (new Date()).getTime();
+
+top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+diaTop3 = hoje;
+zeroedAtMidnight = false;
+console.log("⚙️ Sem documento DailyRanking para hoje — semei com fillerNames:", dailyFixedRanking.map(d => d.username));
         }
       } catch (e) {
         console.error("Erro ao carregar/semear DailyRanking do DB:", e);
@@ -1994,57 +2016,43 @@ if (topFromEarnings.length < 10) {
 
       shuffleArray(topFromEarnings);
 
-      // baseline de valores por posição (usado apenas como valor inicial visual)
-      const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-
-// depois de dailyFixedRanking = topFromEarnings.slice(0, 10).map(...)
 dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
   username: c.username,
   token: c.token || null,
   real_total: Number((c.real_total && c.real_total > 0) ? c.real_total : baselineValores[idx] || 0),
   is_current_user: c.token === effectiveToken,
-  userId: c.userId || null
+  userId: c.userId || null,
+  source: c.source || "fixed"
 }));
 
-// <-- ADICIONE ESTA LINHA -->
+// embaralha para variar a ordem após reset
 shuffleArray(dailyFixedRanking);
 
-      // define startAt / expiresAt como antes (meia-noite BR)
-      const agoraDate = new Date();
-      const offsetBrasilia = -3;
-      const brasilAgora = new Date(agoraDate.getTime() + offsetBrasilia * 60 * 60 * 1000);
+// define datas startAt / expiresAt e salve (use startAtDate para horaInicio)
+const agoraDate = new Date();
+const brasilAgora = new Date(agoraDate.getTime() + (-3) * 60 * 60 * 1000);
+const hojeStr = brasilAgora.toLocaleDateString("pt-BR");
+const brasilMidnightTomorrow = new Date(Date.UTC(brasilAgora.getUTCFullYear(), brasilAgora.getUTCMonth(), brasilAgora.getUTCDate() + 1, 3, 0, 0, 0));
+const startAtDate = new Date(Date.UTC(brasilAgora.getUTCFullYear(), brasilAgora.getUTCMonth(), brasilAgora.getUTCDate(), 3, 0, 0, 0));
 
-      const hojeStr = brasilAgora.toLocaleDateString("pt-BR");
-      const brasilMidnightTomorrow = new Date(Date.UTC(
-        brasilAgora.getUTCFullYear(),
-        brasilAgora.getUTCMonth(),
-        brasilAgora.getUTCDate() + 1,
-        3, 0, 0, 0
-      ));
-      const startAtDate = new Date(Date.UTC(
-        brasilAgora.getUTCFullYear(),
-        brasilAgora.getUTCMonth(),
-        brasilAgora.getUTCDate(),
-        3, 0, 0, 0
-      ));
+await DailyRanking.findOneAndUpdate(
+  { data: hojeStr },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate,
+    expiresAt: brasilMidnightTomorrow,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
 
-      await DailyRanking.findOneAndUpdate(
-        { data: hojeStr },
-        {
-          ranking: dailyFixedRanking,
-          startAt: startAtDate,
-          expiresAt: brasilMidnightTomorrow,
-          criadoEm: new Date()
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
-
-      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-      diaTop3 = hojeStr;
-      horaInicioRanking = agoraDate;
-      ultimoRanking = null;
-      ultimaAtualizacao = 0;
-      zeroedAtMidnight = true;
+// agora horaInicioRanking usa startAtDate
+horaInicioRanking = startAtDate.getTime();
+top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+diaTop3 = hojeStr;
+ultimoRanking = null;
+ultimaAtualizacao = 0;
+zeroedAtMidnight = true;
 
       console.log("🔥 Reset manual — dailyFixedRanking criado (somente dailyearnings/dailyrankings):", dailyFixedRanking.map(d => d.username));
 
@@ -2126,7 +2134,6 @@ if (topFromEarnings.length < 10) {
       }
 
       shuffleArray(topFromEarnings);
-      const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
   username: c.username,
@@ -2158,28 +2165,28 @@ shuffleArray(dailyFixedRanking);
           3, 0, 0, 0
         ));
 
-        await DailyRanking.findOneAndUpdate(
-          { data: hojeStr },
-          {
-            ranking: dailyFixedRanking,
-            startAt: startAtDate2,
-            expiresAt: brasilMidnightTomorrow2,
-            criadoEm: new Date()
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
+await DailyRanking.findOneAndUpdate(
+  { data: hojeStr },
+  {
+    ranking: dailyFixedRanking,
+    startAt: startAtDate2,
+    expiresAt: brasilMidnightTomorrow2,
+    criadoEm: new Date()
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
 
         console.log("💾 dailyFixedRanking salvo no DB (midnight reset) — somente dailyearnings/dailyrankings");
       } catch (e) {
         console.error("Erro ao salvar DailyRanking no DB (midnight):", e);
       }
 
-      top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
-      diaTop3 = hoje;
-      horaInicioRanking = brasilAgora;
-      ultimoRanking = null;
-      ultimaAtualizacao = brasilAgora;
-      zeroedAtMidnight = true;
+horaInicioRanking = startAtDate2.getTime();
+top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
+diaTop3 = hojeStr;
+ultimoRanking = null;
+ultimaAtualizacao = startAtDate2;
+zeroedAtMidnight = true;
 
       const placeholder = dailyFixedRanking.map((d, i) => ({
         position: i + 1,
@@ -2363,7 +2370,6 @@ if (listaComProjetado.length < 10) {
   for (const nm of fillerNames) {
     if (listaComProjetado.length >= 10) break;
     if (!used.has(norm(nm))) {
-      // atribui baseline pela posição que ficará no array
       const idxForBaseline = listaComProjetado.length;
       listaComProjetado.push({
         username: nm,
@@ -2372,7 +2378,7 @@ if (listaComProjetado.length < 10) {
         current_total: Number(baselineValores[idxForBaseline] ?? 0),
         source: "fixed",
         is_current_user: false,
-        userId: null,
+        userId: null
       });
       used.add(norm(nm));
     }
