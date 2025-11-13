@@ -2212,7 +2212,7 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
 
       // mapa + projeção (mantive sua lógica) - MELHORIA: map keys T:, I:, U: (token, userId, username)
       const mapa = new Map();
-      const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
+      const ganhosPorPosicao = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
       const perMinuteGain = ganhosPorPosicao.map(g => g / 10);
       const agoraMs = Date.now();
       const baseHoraInicio = horaInicioRanking || agoraMs;
