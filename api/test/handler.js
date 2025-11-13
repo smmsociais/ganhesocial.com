@@ -1904,18 +1904,24 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
           // Isso garante que exista sempre um pool para completar o top10.
           const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
           // monta ranking inicial com fillerNames (sem token/userId)
-          const seeded = fillerNames.map((nm, idx) => ({
-            username: nm || "Usuário",
-            token: null,
-            real_total: baselineValores[idx] ?? 1,
-            userId: null
-          })).slice(0, 30); // grava 30 como pool
-          await DailyRanking.findOneAndUpdate(
-            { data: hoje },
-            { ranking: seeded, criadoEm: new Date() },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-          );
-          dailyFixedRanking = seeded.slice(0, 10);
+// --- trecho dentro do bloco que trata "if (!saved || saved.ranking vazia)" ---
+const seeded = fillerNames.map((nm, idx) => ({
+  username: nm || "Usuário",
+  token: null,
+  real_total: baselineValores[idx] ?? 1,
+  userId: null
+})).slice(0, 30);
+
+// <-- ADICIONE ESTA LINHA -->
+shuffleArray(seeded);
+
+await DailyRanking.findOneAndUpdate(
+  { data: hoje },
+  { ranking: seeded, criadoEm: new Date() },
+  { upsert: true, new: true, setDefaultsOnInsert: true }
+);
+dailyFixedRanking = seeded.slice(0, 10);
+
           top3FixosHoje = dailyFixedRanking.slice(0, 3).map(u => ({ ...u }));
           diaTop3 = hoje;
           horaInicioRanking = Date.now();
@@ -1982,14 +1988,17 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       // baseline de valores por posição (usado apenas como valor inicial visual)
       const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-      // assegura tamanho max 10 e aplica baseline quando necessário
-      dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
-        username: c.username,
-        token: c.token || null,
-        real_total: Number((c.real_total && c.real_total > 0) ? c.real_total : baselineValores[idx] || 0),
-        is_current_user: c.token === effectiveToken,
-        userId: c.userId || null
-      }));
+// depois de dailyFixedRanking = topFromEarnings.slice(0, 10).map(...)
+dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
+  username: c.username,
+  token: c.token || null,
+  real_total: Number((c.real_total && c.real_total > 0) ? c.real_total : baselineValores[idx] || 0),
+  is_current_user: c.token === effectiveToken,
+  userId: c.userId || null
+}));
+
+// <-- ADICIONE ESTA LINHA -->
+shuffleArray(dailyFixedRanking);
 
       // define startAt / expiresAt como antes (meia-noite BR)
       const agoraDate = new Date();
@@ -2109,13 +2118,16 @@ if (url.startsWith("/api/test/ranking_diario") && method === "POST") {
       shuffleArray(topFromEarnings);
       const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-      dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
-        username: c.username,
-        token: c.token || null,
-        real_total: Number((c.real_total && c.real_total > 0) ? c.real_total : baselineValores[idx] || 0),
-        is_current_user: c.token === effectiveToken,
-        userId: c.userId || null
-      }));
+dailyFixedRanking = topFromEarnings.slice(0, 10).map((c, idx) => ({
+  username: c.username,
+  token: c.token || null,
+  real_total: Number((c.real_total && c.real_total > 0) ? c.real_total : baselineValores[idx] || 0),
+  is_current_user: c.token === effectiveToken,
+  userId: c.userId || null
+}));
+
+// <-- ADICIONE ESTA LINHA -->
+shuffleArray(dailyFixedRanking);
 
       try {
         const agoraDate2 = new Date();
