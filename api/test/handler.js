@@ -80,6 +80,38 @@ function shuffleArray(a) {
   return a;
 }
 
+// ---------- Helper top-level: fetchTopFromDailyEarning ----------
+async function fetchTopFromDailyEarning(limit = 10) {
+  try {
+    const ganhos = await DailyEarning.aggregate([
+      { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
+      { $unwind: { path: "$usuario", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          userId: "$_id",
+          username: { $ifNull: ["$usuario.nome", "Usuário"] },
+          token: { $ifNull: ["$usuario.token", null] },
+          real_total: "$totalGanhos"
+        }
+      },
+      { $sort: { real_total: -1 } },
+      { $limit: limit }
+    ]);
+
+    return ganhos.map(g => ({
+      username: g.username || "Usuário",
+      token: g.token || null,
+      real_total: Number(g.real_total || 0),
+      userId: g.userId ? String(g.userId) : null,
+      source: "earnings"
+    }));
+  } catch (e) {
+    console.error("Erro fetchTopFromDailyEarning:", e);
+    return [];
+  }
+}
+
     // Rota: /api/vincular_conta (POST)
     if (url.startsWith("/api/vincular_conta") && method === "POST") {
         const { nomeUsuario } = req.body;
@@ -1784,42 +1816,6 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
   console.error("Erro ao registrar ação pendente:", error);
   return res.status(500).json({ error: "Erro ao registrar ação." });
 }
-}
-
-// ------------------ Início da rota /api/ranking_diario (cole sobre o bloco antigo) ------------------
-
-// Helper: define apenas se ainda não existir (evita redeclaração ao recarregar arquivo)
-if (typeof fetchTopFromDailyEarning !== "function") {
-  async function fetchTopFromDailyEarning(limit = 10) {
-    try {
-      const ganhos = await DailyEarning.aggregate([
-        { $group: { _id: "$userId", totalGanhos: { $sum: "$valor" } } },
-        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "usuario" } },
-        { $unwind: { path: "$usuario", preserveNullAndEmptyArrays: true } },
-        {
-          $project: {
-            userId: "$_id",
-            username: { $ifNull: ["$usuario.nome", "Usuário"] },
-            token: { $ifNull: ["$usuario.token", null] },
-            real_total: "$totalGanhos"
-          }
-        },
-        { $sort: { real_total: -1 } },
-        { $limit: limit }
-      ]);
-
-      return ganhos.map(g => ({
-        username: g.username || "Usuário",
-        token: g.token || null,
-        real_total: Number(g.real_total || 0),
-        userId: g.userId ? String(g.userId) : null,
-        source: "earnings"
-      }));
-    } catch (e) {
-      console.error("Erro fetchTopFromDailyEarning:", e);
-      return [];
-    }
-  }
 }
 
 // Executa somente quando a rota e método baterem
