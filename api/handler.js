@@ -1804,11 +1804,6 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
     const CACHE_MS = 1 * 60 * 1000; // 1 minuto
     const hoje = new Date().toLocaleDateString("pt-BR");
 
-    // ative no .env: ONLY_FIXED_RANKING=true
-const ONLY_FIXED_RANKING = process.env.ONLY_FIXED_RANKING === 'true';
-// somente ativo quando há um dailyFixedRanking carregado para o dia atual (evita efeitos colaterais)
-const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === hoje;
-
     // autenticação (prefere header Authorization Bearer)
     const authHeader = req.headers.authorization;
     const tokenFromHeader =
@@ -1875,15 +1870,7 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { balance: 0 } });
 
-      // sample 10 users do DB
-      let sampled = [];
-      try {
-        sampled = await User.aggregate([{ $sample: { size: 10 } }, { $project: { nome: 1, token: 1 } }]);
-      } catch (e) {
-        console.error("Erro ao samplear users:", e);
-        sampled = [];
-      }
-
+      // Use somente NAMES_POOL para popular o ranking fixo (sem sample aleatório do DB)
       const NAMES_POOL = [
         "Allef 🔥","🤪","-","noname","⚡",
         "💪","-","KingdosMTD🥱🥱","kaduzinho",
@@ -1894,34 +1881,14 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
         "Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-",
       ];
 
-      // embaralha fallback pool
-      const shuffledFallback = shuffleArray(NAMES_POOL.slice());
-
-      // monta lista de candidatos: usa sampled nomes (se houver) + fallback para completar
-      let candidates = sampled
-        .map(s => ({ username: s.nome || null, token: s.token || null }))
-        .filter(x => !!x.username);
-
-      // se faltarem nomes, preencha com fallback (sem repetir)
-      let fallbackIdx = 0;
-      while (candidates.length < 10) {
-        const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
-        if (!candidates.some(c => c.username === pick)) {
-          candidates.push({ username: pick, token: null });
-        }
-        fallbackIdx++;
-      }
-
-      // agora embaralha a lista final para garantir ordem aleatória no primeiro dia
-      dailyFixedRanking = shuffleArray(
-        candidates.slice(0, 10).map(c => ({
-          username: c.username,
-          token: c.token || null,
-          real_total: 0,
-          is_current_user: c.token === effectiveToken,
-          userId: c.userId ? String(c.userId) : null
-        }))
-      );
+      const shuffled = shuffleArray(NAMES_POOL.slice());
+      dailyFixedRanking = shuffled.slice(0, 10).map((nome) => ({
+        username: nome,
+        token: null,
+        real_total: 0,
+        is_current_user: false,
+        userId: null
+      }));
 
       // 🕒 Define hora atual e configurações de fuso horário de Brasília
       const agoraDate = new Date();
@@ -2012,18 +1979,7 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
       await DailyEarning.deleteMany({});
       await User.updateMany({}, { $set: { saldo: 0 } });
 
-      // tenta samplear até 10 usuários aleatórios do DB
-      let sampled = [];
-      try {
-        sampled = await User.aggregate([
-          { $sample: { size: 10 } },
-          { $project: { nome: 1, token: 1 } }
-        ]);
-      } catch (e) {
-        console.error("Erro ao samplear users (midnight):", e);
-        sampled = [];
-      }
-
+      // Use somente NAMES_POOL (sem sample) para gerar o dailyFixedRanking do novo dia
       const NAMES_POOL = [
         "Allef 🔥","🤪","-","noname","⚡",
         "💪","-","KingdosMTD🥱🥱","kaduzinho",
@@ -2035,29 +1991,13 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
       ];
 
       const shuffledFallback = shuffleArray(NAMES_POOL.slice());
-
-      let candidates = sampled
-        .map(s => ({ username: s.nome || null, token: s.token || null }))
-        .filter(x => !!x.username);
-
-      let fallbackIdx = 0;
-      while (candidates.length < 10) {
-        const pick = shuffledFallback[fallbackIdx % shuffledFallback.length];
-        if (!candidates.some(c => c.username === pick)) {
-          candidates.push({ username: pick, token: null });
-        }
-        fallbackIdx++;
-      }
-
-      dailyFixedRanking = shuffleArray(
-        candidates.slice(0, 10).map(c => ({
-          username: c.username,
-          token: c.token || null,
-          real_total: 0,
-          is_current_user: c.token === effectiveToken,
-          userId: c.userId ? String(c.userId) : null
-        }))
-      );
+      dailyFixedRanking = shuffledFallback.slice(0, 10).map(nome => ({
+        username: nome,
+        token: null,
+        real_total: 0,
+        is_current_user: false,
+        userId: null
+      }));
 
       try {
         const agoraDate2 = new Date();
@@ -2120,9 +2060,6 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
     // === 5) Montagem do ranking base: prioriza dailyFixedRanking se definido para hoje, mas incorpora DailyEarning com PRIORIDADE ===
     let baseRankingRaw = null;
 
-    // Helper para chave de fusão: prefira token (quando disponível), fallback para username normalizado
-    const normalize = s => (String(s || "").trim().toLowerCase());
-
     if (dailyFixedRanking && diaTop3 === hoje) {
       // Clone do ranking fixo do dia (marca como source: 'fixed')
       const baseFromFixed = dailyFixedRanking.map((u) => ({
@@ -2134,7 +2071,7 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
         userId: u.userId ? String(u.userId) : null
       }));
 
-      // --- Busca ganhos reais do DB (DailyEarning) — agora projetando userId para matching confiável
+      // --- Busca ganhos reais do DB (DailyEarning)
       let ganhosPorUsuario = [];
       try {
         ganhosPorUsuario = await DailyEarning.aggregate([
@@ -2155,14 +2092,8 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
         ganhosPorUsuario = [];
       }
 
-      // --- Prepara mapa e helpers de matching (versão final corrigida) ---
+      // --- Prepara mapa e helpers de matching ---
       const mapa = new Map();
-
-      const makeKeyFromFixed = (u, idx) => {
-        if (u.token) return `T:${String(u.token)}`;
-        if (u.userId) return `I:${String(u.userId)}`;
-        return `U:${String((u.username || "").trim().toLowerCase())}`;
-      };
 
       // ganhos por posição (usado para projeção dos fixed)
       const ganhosPorPosicao = [20, 18, 16, 14, 10, 5.5, 4.5, 3.5, 2.5, 1.5];
@@ -2207,67 +2138,69 @@ const onlyFixedActive = ONLY_FIXED_RANKING && dailyFixedRanking && diaTop3 === h
         return null;
       }
 
-      // incorpora ganhos do DB (earnings). Ao encontrar fixed, compara projectedFixed x earnings.real_total
-ganhosPorUsuario.forEach(g => {
-  const item = {
-    username: String(g.username || "Usuário"),
-    token: g.token || null,
-    real_total: Number(g.real_total || 0),
-    source: 'earnings',
-    userId: g.userId ? String(g.userId) : null,
-    is_current_user: (g.token && g.token === effectiveToken) || false
-  };
-
-  const existingKey = findExistingKeyFor(item);
-  if (existingKey) {
-    const ex = mapa.get(existingKey);
-
-    if (ex && ex.source === 'fixed') {
-      // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
-      const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
-      const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
-      const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
-
-      // escolha o maior entre earnings.real_total e projectedFixed
-      if (Number(item.real_total) >= projectedFixed) {
-        // earnings domina -> substitui com valor real do DB
-        mapa.set(existingKey, {
-          username: item.username || ex.username,
-          token: item.token || ex.token,
-          real_total: Number(item.real_total),
+      // === NOVO: permita aplicar ganhos apenas para entradas existentes no mapa (não crie novas entradas)
+      const skippedEarnings = []; // para auditoria
+      ganhosPorUsuario.forEach(g => {
+        const item = {
+          username: String(g.username || "Usuário"),
+          token: g.token || null,
+          real_total: Number(g.real_total || 0),
           source: 'earnings',
-          userId: item.userId || ex.userId || null,
-          is_current_user: ex.is_current_user || item.is_current_user
-        });
-      } else {
-        // fixed projetado vence -> mantenha fixed, mas armazene earnings_total para debug (não altera ordering)
-        ex.earnings_total = Number(item.real_total);
-        mapa.set(existingKey, ex);
-      }
-    } else {
-      // substitui/merge normal quando não há fixed pré-existente
-      mapa.set(existingKey, {
-        username: item.username,
-        token: item.token || (ex && ex.token) || null,
-        real_total: Number(item.real_total),
-        source: item.source,
-        userId: item.userId || (ex && ex.userId) || null,
-        is_current_user: (ex && ex.is_current_user) || item.is_current_user
-      });
-    }
-  } else {
-    // <-- ALTERAÇÃO PRINCIPAL: quando ONLY_FIXED_RANKING ativo e estamos usando fixed do dia, IGNORA ganhos sem match
-    if (onlyFixedActive) {
-      console.log("IGNORANDO ganho sem match (ONLY_FIXED_RANKING active):", item.username, item.real_total);
-      return; // pula esse item
-    }
+          userId: g.userId ? String(g.userId) : null,
+          is_current_user: (g.token && g.token === effectiveToken) || false
+        };
 
-    // Comportamento antigo (sem ONLY_FIXED_RANKING): adiciona novo entry vindo do DB
-    const key = item.token ? `T:${String(item.token)}` : `U:${String(item.username.trim().toLowerCase())}`;
-    mapa.set(key, { ...item });
-  }
-});
-      // --- Agora calcule current_total projetado para todos os items (fixed usam projeção, earnings usam valor real)
+        const existingKey = findExistingKeyFor(item);
+        if (!existingKey) {
+          // não adiciona novos — apenas loga para auditoria
+          skippedEarnings.push({ username: item.username, token: item.token, userId: item.userId, valor: item.real_total });
+          return;
+        }
+
+        const ex = mapa.get(existingKey);
+        if (ex && ex.source === 'fixed') {
+          // projeção do fixed pelo tempo decorrido (usa fixedPosition quando disponível)
+          const pos = (typeof ex.fixedPosition === 'number') ? ex.fixedPosition : null;
+          const incrementoPorMinuto = pos !== null ? (perMinuteGain[pos] || 0) : 0;
+          const projectedFixed = Number(ex.real_total || 0) + incrementoPorMinuto * intervalosDecorridos;
+
+          // escolha o maior entre earnings.real_total e projectedFixed
+          if (Number(item.real_total) >= projectedFixed) {
+            // earnings domina -> substitui com valor real do DB
+            mapa.set(existingKey, {
+              username: item.username || ex.username,
+              token: item.token || ex.token,
+              real_total: Number(item.real_total),
+              source: 'earnings',
+              userId: item.userId || ex.userId || null,
+              is_current_user: ex.is_current_user || item.is_current_user
+            });
+          } else {
+            // fixed projetado vence -> mantenha fixed (mas guarde earnings_total para debug)
+            ex.earnings_total = Number(item.real_total);
+            mapa.set(existingKey, ex);
+          }
+        } else {
+          // caso improvável: sobrescreve/merge (quando ex não é fixed)
+          mapa.set(existingKey, {
+            username: item.username,
+            token: item.token || (ex && ex.token) || null,
+            real_total: Number(item.real_total),
+            source: item.source,
+            userId: item.userId || (ex && ex.userId) || null,
+            is_current_user: (ex && ex.is_current_user) || item.is_current_user
+          });
+        }
+      });
+
+      if (skippedEarnings.length) {
+        console.log("AUDIT: skipped earnings (not in fixed) count=", skippedEarnings.length);
+        skippedEarnings.slice(0, 20).forEach(s => {
+          console.log(`SKIP_EARN: username='${s.username}' token='${s.token}' userId='${s.userId}' valor=${s.valor}`);
+        });
+      }
+
+      // --- Agora: calcule current_total projetado para todos os items (fixed usam projeção, earnings usam valor real)
       const listaComProjetado = Array.from(mapa.values()).map(entry => {
         const e = { ...entry };
         if (e.source === 'fixed') {
@@ -2279,6 +2212,13 @@ ganhosPorUsuario.forEach(g => {
           e.current_total = Number(e.real_total || 0);
         }
         return e;
+      });
+
+      // auditoria detalhada (mostra origem e valor projetado)
+      console.log("AUDIT: listaComProjetado (username:current_total:source:key):");
+      listaComProjetado.forEach(e => {
+        const keyGuess = e.token ? `T:${e.token}` : (e.userId ? `I:${e.userId}` : `U:${String((e.username||"").trim().toLowerCase())}`);
+        console.log(`${e.username}:${(Number(e.current_total)||0).toFixed(2)}:src=${e.source}:key=${keyGuess}`);
       });
 
       // --- Garantir pelo menos 10 itens (fallback) sem sobrescrever existentes
