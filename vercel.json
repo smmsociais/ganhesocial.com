@@ -66,7 +66,7 @@
     { "source": "/api/tiktok/get_user", "destination": "/api/test/handler.js" },
     { "source": "/api/tiktok/get_action", "destination": "/api/test/handler.js" },
     { "source": "/api/tiktok/confirm_action", "destination": "/api/test/handler.js" },
-    { "source": "/api/contas", "destination": "/api/test/handler.js" },
+    { "source": "/api/test/contas", "destination": "/api/test/handler.js" },
     { "source": "/api/get_saldo", "destination": "/api/test/handler.js" },
     { "source": "/api/profile", "destination": "/api/test/handler.js" },
     { "source": "/api/withdraw", "destination": "/api/test/handler.js" },
