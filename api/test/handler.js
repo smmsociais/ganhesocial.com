@@ -2494,33 +2494,33 @@ if (listaComProjetado.length < 10) {
   }
 } // fim if /api/test/ranking_diario
 
-if (!url.startsWith("/api/test/gerenciar_acoes")) {
+  if (!url.startsWith("/api/test/gerenciar_acoes")) {
     console.log("❌ Rota não corresponde:", url);
     return res.status(404).json({ error: "Rota não encontrada." });
-}
+  }
 
-console.log("👉 [ROTA] /api/test/gerenciar_acoes acessada.");
-console.log("🔹 Método:", method);
+  console.log("👉 [ROTA] /api/test/gerenciar_acoes acessada.");
+  console.log("🔹 Método:", method);
 
-try {
+  try {
     console.log("🟧 Conectando ao banco...");
     await connectDB();
     console.log("🟩 Banco conectado.");
 
     // ========================
-    // 1️⃣ Autenticação
+    // 1️⃣ Autenticação (verifica token apenas para permitir acesso)
     // ========================
     console.log("🔍 Verificando header Authorization...");
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        console.log("❌ Token não enviado.");
-        return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+      console.log("❌ Token não enviado.");
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
     const token = authHeader.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : authHeader;
+      ? authHeader.split(" ")[1]
+      : authHeader;
 
     console.log("🔍 Token recebido:", token);
 
@@ -2528,8 +2528,8 @@ try {
     console.log("🔍 Usuário encontrado:", user ? user._id : "NÃO ENCONTRADO");
 
     if (!user) {
-        console.log("❌ Usuário não encontrado, token inválido.");
-        return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+      console.log("❌ Usuário não encontrado, token inválido.");
+      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
     }
 
     // ========================
@@ -2537,75 +2537,103 @@ try {
     // ========================
     console.log("🔸 Verificando método POST...");
     if (method !== "POST") {
-        console.log("❌ Método inválido:", method);
-        return res.status(405).json({ error: "Use POST." });
+      console.log("❌ Método inválido:", method);
+      return res.status(405).json({ error: "Use POST." });
     }
 
     console.log("📥 Body recebido:", req.body);
-
     const { modo, periodo, status, tipo, pagina = 1 } = req.body;
 
-    // =====================================================================================
-    // 3️⃣ MODO RESUMO
-    // =====================================================================================
+    // Helper: calcula data inicial com base no 'periodo' que o frontend envia
+    function calcularInicioPorPeriodo(p) {
+      if (!p || p === "all" || p === "todos") return null;
+      const agora = Date.now();
 
-    if (modo === "resumo") {
-        console.log("📌 MODO RESUMO ativado.");
-
-        const userFilter = {}; // pega todos os usuários
-        console.log("🔍 Filtro resumo:", userFilter);
-
-        console.log("🔄 Contando ações pendentes...");
-        console.time("⏱ pendentes");
-        const pendentes = await ActionHistory.countDocuments({
-            ...userFilter,
-            acao_validada: "pendente"
-        });
-        console.timeEnd("⏱ pendentes");
-        console.log("📌 Pendentes:", pendentes);
-
-        console.log("🔄 Contando ações válidas...");
-        console.time("⏱ validas");
-        const validas = await ActionHistory.countDocuments({
-            ...userFilter,
-            acao_validada: "valida"
-        });
-        console.timeEnd("⏱ validas");
-        console.log("📌 Válidas:", validas);
-
-        console.log("🔄 Contando ações inválidas...");
-        console.time("⏱ invalidas");
-        const invalidas = await ActionHistory.countDocuments({
-            ...userFilter,
-            acao_validada: "invalida"
-        });
-        console.timeEnd("⏱ invalidas");
-        console.log("📌 Inválidas:", invalidas);
-
-        console.log("🔄 Calculando total ganho...");
-        console.time("⏱ total");
-        const totalGanhoArr = await ActionHistory.aggregate([
-            { $match: { ...userFilter, acao_validada: "valida" } },
-            { $group: { _id: null, soma: { $sum: "$valor" } } }
-        ]);
-        console.timeEnd("⏱ total");
-
-        console.log("📌 Aggregation total ganho:", totalGanhoArr);
-
-        const total = totalGanhoArr[0]?.soma || 0;
-        console.log("💰 Total ganho calculado:", total);
-
-        console.log("📦 Enviando resposta do resumo...");
-        return res.status(200).json({
-            pendentes,
-            validas,
-            invalidas,
-            total
-        });
+      switch (String(p)) {
+        case "24h":
+        case "24horas":
+          return new Date(agora - 24 * 60 * 60 * 1000);
+        case "7d":
+        case "7dias":
+          return new Date(agora - 7 * 24 * 60 * 60 * 1000);
+        case "30d":
+        case "30dias":
+          return new Date(agora - 30 * 24 * 60 * 60 * 1000);
+        case "90d":
+        case "90dias":
+          return new Date(agora - 90 * 24 * 60 * 60 * 1000);
+        case "365d":
+        case "365dias":
+          return new Date(agora - 365 * 24 * 60 * 60 * 1000);
+        case "hoje":
+          const inicioHoje = new Date();
+          inicioHoje.setHours(0, 0, 0, 0);
+          return inicioHoje;
+        default:
+          return null;
+      }
     }
 
     // =====================================================================================
-    // 4️⃣ MODO LISTA
+    // 3️⃣ MODO RESUMO (agrega TODAS as ações do sistema)
+    // =====================================================================================
+    if (modo === "resumo") {
+      console.log("📌 MODO RESUMO ativado.");
+
+      const globalFilter = {}; // pega todas as ações do sistema
+      console.log("🔍 Filtro resumo (global):", globalFilter);
+
+      console.log("🔄 Contando ações pendentes...");
+      console.time("⏱ pendentes");
+      const pendentes = await ActionHistory.countDocuments({
+        ...globalFilter,
+        acao_validada: "pendente"
+      });
+      console.timeEnd("⏱ pendentes");
+      console.log("📌 Pendentes:", pendentes);
+
+      console.log("🔄 Contando ações válidas...");
+      console.time("⏱ validas");
+      const validas = await ActionHistory.countDocuments({
+        ...globalFilter,
+        acao_validada: "valida"
+      });
+      console.timeEnd("⏱ validas");
+      console.log("📌 Válidas:", validas);
+
+      console.log("🔄 Contando ações inválidas...");
+      console.time("⏱ invalidas");
+      const invalidas = await ActionHistory.countDocuments({
+        ...globalFilter,
+        acao_validada: "invalida"
+      });
+      console.timeEnd("⏱ invalidas");
+      console.log("📌 Inválidas:", invalidas);
+
+      console.log("🔄 Calculando total ganho...");
+      console.time("⏱ total");
+      const totalGanhoArr = await ActionHistory.aggregate([
+        { $match: { ...globalFilter, acao_validada: "valida" } },
+        { $group: { _id: null, soma: { $sum: "$valor" } } }
+      ]);
+      console.timeEnd("⏱ total");
+
+      console.log("📌 Aggregation total ganho:", totalGanhoArr);
+
+      const total = totalGanhoArr[0]?.soma || 0;
+      console.log("💰 Total ganho calculado:", total);
+
+      console.log("📦 Enviando resposta do resumo...");
+      return res.status(200).json({
+        pendentes,
+        validas,
+        invalidas,
+        total
+      });
+    }
+
+    // =====================================================================================
+    // 4️⃣ MODO LISTA (filtros, periodo, status, tipo, paginação) — lista TODAS as ações do sistema
     // =====================================================================================
 
     console.log("📌 MODO LISTA ativado.");
@@ -2613,91 +2641,84 @@ try {
     const filtros = {}; // lista ações de todo mundo
     console.log("🔍 Filtros iniciais:", filtros);
 
-    // STATUS
-    if (status && status !== "todos") {
-        const mapStatus = {
-            pending: "pendente",
-            valid: "valida",
-            invalid: "invalida"
-        };
-        filtros.acao_validada = mapStatus[status] || status;
-        console.log("🔍 Filtro por status:", filtros.acao_validada);
+    // STATUS (aceita 'all' ou 'todos' para sem filtro)
+    if (status && status !== "todos" && status !== "all") {
+      const mapStatus = {
+        pending: "pendente",
+        valid: "valida",
+        invalid: "invalida"
+      };
+      filtros.acao_validada = mapStatus[status] || status;
+      console.log("🔍 Filtro por status:", filtros.acao_validada);
     }
 
-    // TIPO
-    if (tipo && tipo !== "todos") {
-        filtros.tipo = tipo;
-        console.log("🔍 Filtro por tipo:", tipo);
+    // TIPO (aceita 'all' para sem filtro)
+    if (tipo && tipo !== "todos" && tipo !== "all") {
+      filtros.tipo = tipo;
+      console.log("🔍 Filtro por tipo:", tipo);
     }
 
-    // PERÍODO
-    if (periodo && periodo !== "todos") {
-        const agora = new Date();
-        let inicio;
-
-        if (periodo === "hoje") {
-            inicio = new Date();
-            inicio.setHours(0, 0, 0, 0);
-        }
-        if (periodo === "7dias") {
-            inicio = new Date(agora - 7 * 24 * 60 * 60 * 1000);
-        }
-        if (periodo === "30dias") {
-            inicio = new Date(agora - 30 * 24 * 60 * 60 * 1000);
-        }
-
+    // PERÍODO (aceita valores do frontend: 24h, 7d, 30d, 90d, 365d, all)
+    if (periodo && periodo !== "todos" && periodo !== "all") {
+      const inicio = calcularInicioPorPeriodo(periodo);
+      if (inicio) {
+        // sua collection usa createdAt (conforme exemplos), então filtramos por createdAt
         filtros.createdAt = { $gte: inicio };
         console.log("🔍 Filtro por período:", filtros.createdAt);
+      } else {
+        console.log("🔍 Período informado não mapeado para intervalo:", periodo);
+      }
     }
 
     // PAGINAÇÃO
     const porPagina = 20;
-    const skip = (pagina - 1) * porPagina;
+    const page = Number(pagina) > 0 ? Number(pagina) : 1;
+    const skip = (page - 1) * porPagina;
 
-    console.log("🔢 Paginando: página", pagina, "skip", skip);
+    console.log("🔢 Paginando: página", page, "skip", skip);
 
-    console.log("🔄 Contando total de documentos...");
+    console.log("🔄 Contando total de documentos com filtro...");
     const total = await ActionHistory.countDocuments(filtros);
     const totalPaginas = Math.ceil(total / porPagina);
-
     console.log("📌 Total registros:", total, "| Total páginas:", totalPaginas);
 
     console.log("🔄 Buscando ações...");
     const acoes = await ActionHistory.find(filtros)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(porPagina)
-        .lean();
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(porPagina)
+      .lean();
 
     console.log("📌 Ações encontradas:", acoes.length);
 
     // FORMATAÇÃO
     const resultado = acoes.map(a => ({
-        data: a.createdAt,
-        tipo: a.tipo,
-        descricao: a.descricao || "",
-        status:
-            a.acao_validada === "valida"
-                ? "valid"
-                : a.acao_validada === "invalida"
-                ? "invalid"
-                : "pending",
-        valor: Number(a.valor || 0)
+      data: a.createdAt,
+      tipo: a.tipo,
+      descricao: a.descricao || "",
+      status:
+        a.acao_validada === "valida"
+          ? "valid"
+          : a.acao_validada === "invalida"
+          ? "invalid"
+          : "pending",
+      valor: Number(a.valor || 0)
     }));
 
     console.log("📦 Enviando lista com", resultado.length, "registros.");
 
     return res.status(200).json({
-        pagina_atual: pagina,
-        total_paginas: totalPaginas,
-        acoes: resultado
+      pagina_atual: page,
+      total_paginas: totalPaginas,
+      acoes: resultado
     });
 
-} catch (error) {
+  } catch (error) {
     console.error("❌ ERRO GERAL EM /api/test/gerenciar_acoes:");
     console.error("📄 Mensagem:", error.message);
     console.error("📄 Stack:", error.stack);
 
     return res.status(500).json({ error: "Erro interno no servidor." });
-}}
+  }
+}
 
