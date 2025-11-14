@@ -2523,9 +2523,39 @@ try {
         return res.status(405).json({ error: "Use POST." });
     }
 
-    const { periodo, status, tipo, pagina = 1 } = req.body;
+    const { modo, periodo, status, tipo, pagina = 1 } = req.body;
 
-    const filtros = {};
+    // =====================================================================================
+    // 3️⃣ MODO RESUMO (🔥 Chamado pelo topo da página)
+    // =====================================================================================
+    if (modo === "resumo") {
+        const userFilter = { user_id: user._id };
+
+        const [pendentes, validas, invalidas, totalGanhoArr] = await Promise.all([
+            ActionHistory.countDocuments({ ...userFilter, acao_validada: "pendente" }),
+            ActionHistory.countDocuments({ ...userFilter, acao_validada: "valida" }),
+            ActionHistory.countDocuments({ ...userFilter, acao_validada: "invalida" }),
+            ActionHistory.aggregate([
+                { $match: { ...userFilter, acao_validada: "valida" } },
+                { $group: { _id: null, soma: { $sum: "$valor" } } }
+            ])
+        ]);
+
+        const total = totalGanhoArr[0]?.soma || 0;
+
+        return res.status(200).json({
+            pendentes,
+            validas,
+            invalidas,
+            total
+        });
+    }
+
+    // =====================================================================================
+    // 4️⃣ MODO LISTA (Filtros, tabela, paginação)
+    // =====================================================================================
+
+    const filtros = { user_id: user._id };
 
     // ------------------------
     // FILTRO POR STATUS
@@ -2599,35 +2629,12 @@ try {
     }));
 
     // ------------------------
-    // 3️⃣ RESUMO COMPLETO
-    // ------------------------
-    const [pendentes, validas, invalidas, totalGanhoArr] = await Promise.all([
-        ActionHistory.countDocuments({ acao_validada: "pendente" }),
-        ActionHistory.countDocuments({ acao_validada: "valida" }),
-        ActionHistory.countDocuments({ acao_validada: "invalida" }),
-        ActionHistory.aggregate([
-            { $match: { acao_validada: "valida" } },
-            { $group: { _id: null, soma: { $sum: "$valor" } } }
-        ])
-    ]);
-
-    const totalGanho = totalGanhoArr[0]?.soma || 0;
-
-    // ------------------------
-    // RETORNO FINAL
+    // RETORNO FINAL DA LISTA
     // ------------------------
     return res.status(200).json({
         pagina_atual: pagina,
         total_paginas: totalPaginas,
-        acoes: resultado,
-
-        // NOVO RESUMO (para o painel)
-        resumo: {
-            pendentes,
-            validas,
-            invalidas,
-            totalGanho
-        }
+        acoes: resultado
     });
 
 } catch (error) {
