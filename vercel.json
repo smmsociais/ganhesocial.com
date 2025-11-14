@@ -35,6 +35,7 @@
 
     { "source": "/test/dashboard", "destination": "/test/dashboard.html" },
     { "source": "/test/gerenciar_acoes", "destination": "/test/gerenciar_acoes.html" },
+    { "source": "/test/adicionar_conta_tiktok", "destination": "/test/adicionar_conta_tiktok.html" },
 
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
