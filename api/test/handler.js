@@ -2494,5 +2494,90 @@ if (listaComProjetado.length < 10) {
   }
 } // fim if /api/test/ranking_diario
 
+// /api/test/gerenciar_acoes.js
+    if (!url.startsWith("/api/test/gerenciar_acoes")) {
+        return res.status(404).json({ error: "Rota não encontrada." });
+    }
+
+    try {
+        await connectDB();
+
+        // ===============================
+        // 1️⃣ Autenticação via Token
+        // ===============================
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+        }
+
+        const token = authHeader.startsWith("Bearer ")
+            ? authHeader.split(" ")[1]
+            : authHeader;
+
+        if (!token) {
+            return res.status(401).json({ error: "Token inválido." });
+        }
+
+        const user = await User.findOne({ token });
+        if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+        }
+
+        // ===============================
+        // 2️⃣ Método GET → Consultar ações
+        // ===============================
+        if (method === "GET") {
+            // Contagens
+            const [
+                totalValidadas,
+                totalInvalidas,
+                totalPendentes,
+                validadas,
+                invalidas,
+                pendentes
+            ] = await Promise.all([
+                ActionHistory.countDocuments({ acao_validada: "valida" }),
+                ActionHistory.countDocuments({ acao_validada: "invalida" }),
+                ActionHistory.countDocuments({ acao_validada: "pendente" }),
+
+                ActionHistory.find({ acao_validada: "valida" })
+                    .sort({ createdAt: -1 })
+                    .limit(50),
+
+                ActionHistory.find({ acao_validada: "invalida" })
+                    .sort({ createdAt: -1 })
+                    .limit(50),
+
+                ActionHistory.find({ acao_validada: "pendente" })
+                    .sort({ createdAt: -1 })
+                    .limit(50)
+            ]);
+
+            return res.status(200).json({
+                status: "ok",
+                totals: {
+                    validadas: totalValidadas,
+                    invalidas: totalInvalidas,
+                    pendentes: totalPendentes,
+                },
+                detalhes: {
+                    validadas,
+                    invalidas,
+                    pendentes,
+                }
+            });
+        }
+
+        // ===============================
+        // 3️⃣ Método não permitido
+        // ===============================
+        return res.status(405).json({ error: "Método não permitido nesta rota." });
+
+    } catch (error) {
+        console.error("❌ Erro em /api/test/gerenciar_acoes:", error);
+        return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+}
+
     return res.status(404).json({ error: "Rota não encontrada." });
 }
