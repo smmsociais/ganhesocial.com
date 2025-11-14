@@ -2577,60 +2577,104 @@ if (listaComProjetado.length < 10) {
     // =====================================================================================
     // 3️⃣ MODO RESUMO (agrega TODAS as ações do sistema)
     // =====================================================================================
-    if (modo === "resumo") {
-      console.log("📌 MODO RESUMO ativado.");
+// === INÍCIO: bloco modo === "resumo" ajustado para respeitar filtros ===
+if (modo === "resumo") {
+    console.log("📌 MODO RESUMO ativado (com filtros).");
+    // monta filtros a partir do que veio no body
+    const filtrosResum = {};
 
-      const globalFilter = {}; // pega todas as ações do sistema
-      console.log("🔍 Filtro resumo (global):", globalFilter);
+    // STATUS
+    if (status && status !== "todos" && status !== "all") {
+        const mapStatus = { pending: "pendente", valid: "valida", invalid: "invalida" };
+        filtrosResum.acao_validada = mapStatus[status] || status;
+        console.log("🔍 Resumo -> filtro status:", filtrosResum.acao_validada);
+    }
 
-      console.log("🔄 Contando ações pendentes...");
-      console.time("⏱ pendentes");
-      const pendentes = await ActionHistory.countDocuments({
-        ...globalFilter,
+    // TIPO
+    if (tipo && tipo !== "todos" && tipo !== "all") {
+        filtrosResum.tipo = tipo;
+        console.log("🔍 Resumo -> filtro tipo:", filtrosResum.tipo);
+    }
+
+    // PERÍODO (usa a mesma função/calculo do modo lista)
+    function calcularInicioPorPeriodo(p) {
+        if (!p || p === "all" || p === "todos") return null;
+        const agora = Date.now();
+        switch (String(p)) {
+            case "24h": return new Date(agora - 24 * 60 * 60 * 1000);
+            case "7d": return new Date(agora - 7 * 24 * 60 * 60 * 1000);
+            case "30d": return new Date(agora - 30 * 24 * 60 * 60 * 1000);
+            case "90d": return new Date(agora - 90 * 24 * 60 * 60 * 1000);
+            case "365d": return new Date(agora - 365 * 24 * 60 * 60 * 1000);
+            case "hoje":
+                const inicioHoje = new Date(); inicioHoje.setHours(0,0,0,0); return inicioHoje;
+            default: return null;
+        }
+    }
+
+    if (periodo && periodo !== "todos" && periodo !== "all") {
+        const inicio = calcularInicioPorPeriodo(periodo);
+        if (inicio) {
+            // sua collection tem createdAt, então filtramos por createdAt
+            filtrosResum.createdAt = { $gte: inicio };
+            console.log("🔍 Resumo -> filtro período desde:", inicio.toISOString());
+        } else {
+            console.log("🔍 Resumo -> período não mapeado:", periodo);
+        }
+    }
+
+    // Agora usamos filtrosResum para contar (cada contagem pode adicionar/alterar acao_validada)
+    console.log("🔍 Resumo -> filtro final:", filtrosResum);
+
+    console.log("🔄 Contando ações pendentes (com filtros)...");
+    console.time("⏱ pendentes");
+    const pendentes = await ActionHistory.countDocuments({
+        ...filtrosResum,
         acao_validada: "pendente"
-      });
-      console.timeEnd("⏱ pendentes");
-      console.log("📌 Pendentes:", pendentes);
+    });
+    console.timeEnd("⏱ pendentes");
+    console.log("📌 Pendentes (filtrados):", pendentes);
 
-      console.log("🔄 Contando ações válidas...");
-      console.time("⏱ validas");
-      const validas = await ActionHistory.countDocuments({
-        ...globalFilter,
+    console.log("🔄 Contando ações válidas (com filtros)...");
+    console.time("⏱ validas");
+    const validas = await ActionHistory.countDocuments({
+        ...filtrosResum,
         acao_validada: "valida"
-      });
-      console.timeEnd("⏱ validas");
-      console.log("📌 Válidas:", validas);
+    });
+    console.timeEnd("⏱ validas");
+    console.log("📌 Válidas (filtradas):", validas);
 
-      console.log("🔄 Contando ações inválidas...");
-      console.time("⏱ invalidas");
-      const invalidas = await ActionHistory.countDocuments({
-        ...globalFilter,
+    console.log("🔄 Contando ações inválidas (com filtros)...");
+    console.time("⏱ invalidas");
+    const invalidas = await ActionHistory.countDocuments({
+        ...filtrosResum,
         acao_validada: "invalida"
-      });
-      console.timeEnd("⏱ invalidas");
-      console.log("📌 Inválidas:", invalidas);
+    });
+    console.timeEnd("⏱ invalidas");
+    console.log("📌 Inválidas (filtradas):", invalidas);
 
-      console.log("🔄 Calculando total ganho...");
-      console.time("⏱ total");
-      const totalGanhoArr = await ActionHistory.aggregate([
-        { $match: { ...globalFilter, acao_validada: "valida" } },
+    // Para o total somamos apenas as válidas, mas respeitando outros filtros (tipo/periodo)
+    console.log("🔄 Calculando total ganho (válidas + filtros)...");
+    console.time("⏱ total");
+    const ganhosMatch = { ...filtrosResum, acao_validada: "valida" };
+    const totalGanhoArr = await ActionHistory.aggregate([
+        { $match: ganhosMatch },
         { $group: { _id: null, soma: { $sum: "$valor" } } }
-      ]);
-      console.timeEnd("⏱ total");
+    ]);
+    console.timeEnd("⏱ total");
+    console.log("📌 Aggregation total ganho (filtrado):", totalGanhoArr);
 
-      console.log("📌 Aggregation total ganho:", totalGanhoArr);
+    const total = totalGanhoArr[0]?.soma || 0;
+    console.log("💰 Total ganho calculado (filtrado):", total);
 
-      const total = totalGanhoArr[0]?.soma || 0;
-      console.log("💰 Total ganho calculado:", total);
-
-      console.log("📦 Enviando resposta do resumo...");
-      return res.status(200).json({
+    return res.status(200).json({
         pendentes,
         validas,
         invalidas,
         total
-      });
-    }
+    });
+}
+// === FIM: bloco modo === "resumo" ajustado ===
 
     // =====================================================================================
     // 4️⃣ MODO LISTA (filtros, periodo, status, tipo, paginação) — lista TODAS as ações do sistema
