@@ -255,84 +255,75 @@ if (url.startsWith("/api/contas")) {
         const user = await User.findOne({ token });
         if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-if (method === "POST") {
-    const { nomeConta, id_conta, id_tiktok } = req.body;
+        // ===========================
+        // 📌 POST → Adicionar conta
+        // ===========================
+        if (method === "POST") {
+            const { nomeConta, id_conta, id_tiktok } = req.body;
 
-    if (!nomeConta) {
-        return res.status(400).json({ error: "Nome da conta é obrigatório." });
-    }
+            if (!nomeConta) {
+                return res.status(400).json({ error: "Nome da conta é obrigatório." });
+            }
 
-    // Normaliza o nome para comparação/unicidade
-    const nomeNormalized = String(nomeConta).trim();
+            const nomeNormalized = String(nomeConta).trim();
 
-    // 🔍 Verifica se a conta já existe neste próprio usuário
-    const contaExistente = user.contas.find(c => c.nomeConta === nomeNormalized);
+            // 🔍 Verifica se a conta já existe no próprio usuário
+            const contaExistente = user.contas.find(c => c.nomeConta === nomeNormalized);
 
-    if (contaExistente) {
-        if (contaExistente.status === "ativa") {
-            return res.status(400).json({ error: "Esta conta já está ativa." });
+            if (contaExistente) {
+                if (contaExistente.status === "ativa") {
+                    return res.status(400).json({ error: "Esta conta já está ativa." });
+                }
+
+                // 🔄 Reativar conta
+                contaExistente.status = "ativa";
+                contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
+                contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
+                contaExistente.dataDesativacao = undefined;
+
+                await user.save();
+                return res.status(200).json({ message: "Conta reativada com sucesso!" });
+            }
+
+            // ❌ Verifica se outro usuário já tem esta conta
+            const contaDeOutroUsuario = await User.findOne({
+                _id: { $ne: user._id },
+                "contas.nomeConta": nomeNormalized
+            });
+
+            if (contaDeOutroUsuario) {
+                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
+            }
+
+            // ===========================
+            // ➕ Adiciona nova conta (SEM validação externa)
+            // ===========================
+            user.contas.push({
+                nomeConta: nomeNormalized,
+                id_conta,
+                id_tiktok,
+                status: "ativa"
+            });
+
+            await user.save();
+
+            return res.status(201).json({
+                message: "Conta adicionada com sucesso!",
+                nomeConta: nomeNormalized
+            });
         }
 
-        // ✅ Reativar a conta (mantemos lógica atual)
-        contaExistente.status = "ativa";
-        contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
-        contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
-        contaExistente.dataDesativacao = undefined;
-
-        await user.save();
-        return res.status(200).json({ message: "Conta reativada com sucesso!" });
-    }
-
-    // 🔒 Verifica se nome já está em uso por outro usuário
-    const contaDeOutroUsuario = await User.findOne({
-        _id: { $ne: user._id },
-        "contas.nomeConta": nomeNormalized
-    });
-
-    if (contaDeOutroUsuario) {
-        return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
-    }
-
-// === Validação prévia: consulta a API externa / bind ===
-try {
-    const bindUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nomeNormalized)}`;
-
-    const bindResp = await fetch(bindUrl, { method: 'GET', timeout: 8000 });
-    const bindText = String(await bindResp.text()).trim();
-    const bindUpper = bindText.toUpperCase();
-
-    console.log("🔍 Resposta do bind:", bindText);
-
-    // ❗ SE A API RETORNAR NOT_FOUND → NÃO ADICIONAR A CONTA
-    if (bindUpper.includes("NOT_FOUND")) {
-        return res.status(200).json({
-            error: "Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente."
-        });
-    }
-
-    // ❗ QUALQUER OUTRO ERRO → IGNORAR E ADICIONAR A CONTA MESMO ASSIM
-    // Ou seja, só não adiciona se for NOT_FOUND.
-} catch (bindError) {
-    console.error("⚠ Erro ao validar bind (IGNORADO, conta será adicionada):", bindError);
-    // ❗ Não retornamos erro → continua fluxo e cria a conta normalmente
-}
-
-    // ➕ Adiciona nova conta (somente chega aqui se bind foi OK)
-    user.contas.push({ nomeConta: nomeNormalized, id_conta, id_tiktok, status: "ativa" });
-    await user.save();
-
-    return res.status(201).json({ message: "Conta adicionada com sucesso!", nomeConta: nomeNormalized });
-}
+        // ===========================
+        // 📌 GET → Listar contas ativas
+        // ===========================
         if (method === "GET") {
             if (!user.contas || user.contas.length === 0) {
                 return res.status(200).json([]);
             }
 
-            // Filtra contas ativas (ou sem status) e mapeia para objeto plano com dados do usuário
             const contasAtivas = user.contas
                 .filter(conta => !conta.status || conta.status === "ativa")
                 .map(conta => {
-                    // se for documento Mongoose, transforma em objeto JS plano
                     const contaObj = typeof conta.toObject === "function" ? conta.toObject() : conta;
                     return {
                         ...contaObj,
@@ -346,8 +337,12 @@ try {
             return res.status(200).json(contasAtivas);
         }
 
+        // ===========================
+        // 📌 DELETE → Desativar conta
+        // ===========================
         if (method === "DELETE") {
             const { nomeConta } = req.query;
+
             if (!nomeConta) {
                 return res.status(400).json({ error: "Nome da conta não fornecido." });
             }
@@ -362,9 +357,12 @@ try {
 
             user.contas[contaIndex].status = "inativa";
             user.contas[contaIndex].dataDesativacao = new Date();
+
             await user.save();
 
-            return res.status(200).json({ message: `Conta ${nomeConta} desativada com sucesso.` });
+            return res.status(200).json({
+                message: `Conta ${nomeConta} desativada com sucesso.`
+            });
         }
 
     } catch (error) {
