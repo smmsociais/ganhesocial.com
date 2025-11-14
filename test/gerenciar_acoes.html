@@ -876,7 +876,6 @@ async function carregarResumo(filters = {}) {
             document.getElementById("acoesPendentes").textContent = 0;
             document.getElementById("acoesValidas").textContent = 0;
             document.getElementById("acoesInvalidas").textContent = 0;
-            document.getElementById("totalGanho").textContent = "R$ 0,00";
             return;
         }
 
@@ -884,13 +883,6 @@ async function carregarResumo(filters = {}) {
         document.getElementById("acoesPendentes").textContent = Number(data.pendentes || 0);
         document.getElementById("acoesValidas").textContent = Number(data.validas || 0);
         document.getElementById("acoesInvalidas").textContent = Number(data.invalidas || 0);
-
-        const totalNum = Number(data.total || 0);
-        document.getElementById("totalGanho").textContent =
-            "R$ " + totalNum.toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
 
     } catch (error) {
         console.error("Erro ao carregar resumo:", error);
