@@ -2552,7 +2552,7 @@ try {
     if (modo === "resumo") {
         console.log("📌 MODO RESUMO ativado.");
 
-        const userFilter = { user_id: user._id };
+        const userFilter = {}; // pega todos os usuários
         console.log("🔍 Filtro resumo:", userFilter);
 
         console.log("🔄 Contando ações pendentes...");
@@ -2610,7 +2610,7 @@ try {
 
     console.log("📌 MODO LISTA ativado.");
 
-    const filtros = { user_id: user._id };
+    const filtros = {}; // lista ações de todo mundo
     console.log("🔍 Filtros iniciais:", filtros);
 
     // STATUS
