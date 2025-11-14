@@ -799,42 +799,6 @@
             document.body.classList.add('loaded');
         });
 
-        async function carregarDadosAcoes() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Token não encontrado.");
-                return;
-            }
-
-            try {
-                // Carregar resumo
-                const resumoResponse = await fetch("https://ganhesocial.com/api/acoes/resumo", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                });
-                const resumoData = await resumoResponse.json();
-
-                if (!resumoResponse.ok) {
-                    throw new Error(resumoData.error || "Erro ao buscar resumo de ações.");
-                }
-
-                // Atualiza os valores no resumo
-                document.getElementById("acoesPendentes").textContent = resumoData.pendentes || 0;
-                document.getElementById("acoesValidas").textContent = resumoData.validas || 0;
-                document.getElementById("acoesInvalidas").textContent = resumoData.invalidas || 0;
-                document.getElementById("totalGanho").textContent = `R$ ${parseFloat(resumoData.total_ganho || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-                // Carregar lista de ações
-                await carregarListaAcoes();
-
-            } catch (error) {
-                console.error("Erro ao carregar dados de ações:", error);
-            }
-        }
-
         async function carregarListaAcoes(pagina = 1) {
             const token = localStorage.getItem("token");
             if (!token) return;
