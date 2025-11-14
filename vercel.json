@@ -81,6 +81,7 @@
     { "source": "/api/pular_acao", "destination": "/api/test/handler.js" },
     { "source": "/api/proxy_bind_tk", "destination": "/api/test/handler.js" },
     { "source": "/api/afiliados", "destination": "/api/test/handler.js" },
-    { "source": "/api/test/ranking_diario", "destination": "/api/test/handler.js" }
+    { "source": "/api/test/ranking_diario", "destination": "/api/test/handler.js" },
+    { "source": "/api/test/gerenciar_acoes", "destination": "/api/test/handler.js" }
   ]
 }
