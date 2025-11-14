@@ -1,22 +1,19 @@
 {
   "crons": [
     { "path": "/api/worker", "schedule": "*/5 * * * *" }
-  ]
-}
-{
+  ],
+
   "redirects": [
     {
       "source": "/",
       "has": [
-        {
-          "type": "query",
-          "key": "ref"
-        }
+        { "type": "query", "key": "ref" }
       ],
       "destination": "/signup",
       "permanent": false
     }
   ],
+
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
