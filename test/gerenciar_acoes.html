@@ -744,63 +744,81 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            const token = localStorage.getItem("token");
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const token = localStorage.getItem("token");
 
-            if (!token) {
-                setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com/login";
-                },);
-                return;
-            }
+    if (!token) {
+        setTimeout(() => {
+            window.location.href = "https://ganhesocial.com/login";
+        }, 0);
+        return;
+    }
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
-            const menuCloseBtn = document.getElementById('menuCloseBtn');
+    // Controle do menu hamburguer (mantive seu código)
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuContent = document.getElementById('menuContent');
+    const menuCloseBtn = document.getElementById('menuCloseBtn');
 
-            function toggleMenu() {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
+    function toggleMenu() {
+        menuContent.classList.toggle('active');
+        menuOverlay.classList.toggle('active');
 
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
-            }
+        const spans = menuToggle.querySelectorAll('span');
+        if (menuContent.classList.contains('active')) {
+            spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+            spans[1].style.opacity = '0';
+            spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+        } else {
+            spans[0].style.transform = 'none';
+            spans[1].style.opacity = '1';
+            spans[2].style.transform = 'none';
+        }
+    }
 
-            function closeMenu() {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            }
+    function closeMenu() {
+        menuContent.classList.remove('active');
+        menuOverlay.classList.remove('active');
+        const spans = menuToggle.querySelectorAll('span');
+        spans[0].style.transform = 'none';
+        spans[1].style.opacity = '1';
+        spans[2].style.transform = 'none';
+    }
 
-            menuToggle.addEventListener('click', toggleMenu);
-            menuCloseBtn.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', closeMenu);
+    menuToggle.addEventListener('click', toggleMenu);
+    menuCloseBtn.addEventListener('click', closeMenu);
+    menuOverlay.addEventListener('click', closeMenu);
 
     document.getElementById('aplicarFiltro').addEventListener('click', aplicarFiltros);
 
-    // 🔥 CARREGAR RESUMO
-    carregarResumo();
+    // Carrega lista + resumo inicialmente com os valores padrões dos selects
+    carregarListaAcoes(1);
+    carregarResumo(getSelectedFilters());
 
     document.body.classList.add('loaded');
 });
 
-async function carregarResumo() {
+/**
+ * Retorna objeto { periodo, status, tipo } com os valores atuais dos selects
+ */
+function getSelectedFilters() {
+    return {
+        periodo: document.getElementById('periodoSelect').value || 'all',
+        status: document.getElementById('statusSelect').value || 'all',
+        tipo: document.getElementById('tipoSelect').value || 'all'
+    };
+}
+
+/**
+ * Carrega a LISTA de ações (modo: "listar").
+ * Sempre pede os dados ao servidor (sem usar sessão).
+ */
+async function carregarListaAcoes(pagina = 1) {
     const token = localStorage.getItem("token");
     if (!token) return;
+
+    const { periodo, status, tipo } = getSelectedFilters();
 
     try {
         const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
@@ -810,134 +828,194 @@ async function carregarResumo() {
                 "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
-                modo: "resumo"   // 🔥 IMPORTANTE!!!
+                modo: "listar",
+                periodo,
+                status,
+                tipo,
+                pagina
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("Erro no resumo:", data.error);
+            console.error("Erro ao buscar lista de ações:", data.error || data);
+            atualizarTabelaAcoes([]); // limpa tabela em erro
+            atualizarPaginacao(1, 1);
             return;
         }
 
-        // Atualiza valores no HTML
-        document.getElementById("acoesPendentes").textContent = data.pendentes;
-        document.getElementById("acoesValidas").textContent = data.validas;
-        document.getElementById("acoesInvalidas").textContent = data.invalidas;
+        // backend retorna pagina_atual, total_paginas, acoes
+        atualizarTabelaAcoes(data.acoes || []);
+        atualizarPaginacao(data.pagina_atual || 1, data.total_paginas || 1);
+
+    } catch (error) {
+        console.error("Erro ao carregar lista de ações:", error);
+        atualizarTabelaAcoes([]);
+        atualizarPaginacao(1, 1);
+    }
+}
+
+/**
+ * Carrega o RESUMO (modo: "resumo") aplicando os mesmos filtros (periodo/status/tipo).
+ * Assim o resumo reflete o filtro de data.
+ */
+async function carregarResumo(filters = {}) {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const payload = Object.assign({ modo: "resumo" }, filters);
+
+    try {
+        const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Erro no resumo:", data.error || data);
+            // manter valores anteriores ou zerar
+            document.getElementById("acoesPendentes").textContent = 0;
+            document.getElementById("acoesValidas").textContent = 0;
+            document.getElementById("acoesInvalidas").textContent = 0;
+            document.getElementById("totalGanho").textContent = "R$ 0,00";
+            return;
+        }
+
+        // Atualiza valores no HTML (protegendo contra undefined)
+        document.getElementById("acoesPendentes").textContent = Number(data.pendentes || 0);
+        document.getElementById("acoesValidas").textContent = Number(data.validas || 0);
+        document.getElementById("acoesInvalidas").textContent = Number(data.invalidas || 0);
+
+        const totalNum = Number(data.total || 0);
         document.getElementById("totalGanho").textContent =
-"R$ " + Number(data.total || 0).toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-});
+            "R$ " + totalNum.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
 
     } catch (error) {
         console.error("Erro ao carregar resumo:", error);
     }
 }
 
-        function atualizarTabelaAcoes(acoes) {
-            const tbody = document.getElementById('acoesTableBody');
-            const emptyState = document.getElementById('emptyState');
+/* === Funções de UI já existentes (mantive sua lógica) === */
 
-            tbody.innerHTML = '';
+function atualizarTabelaAcoes(acoes) {
+    const tbody = document.getElementById('acoesTableBody');
+    const emptyState = document.getElementById('emptyState');
 
-            if (acoes.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
+    tbody.innerHTML = '';
 
-            emptyState.style.display = 'none';
+    if (!acoes || acoes.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+    }
 
-            acoes.forEach(acao => {
-                const tr = document.createElement('tr');
+    emptyState.style.display = 'none';
 
-                // Formatar data
-                const data = new Date(acao.data);
-                const dataFormatada = data.toLocaleString('pt-BR');
+    acoes.forEach(acao => {
+        const tr = document.createElement('tr');
 
-                // Determinar classe de status
-                let statusClass = '';
-                let statusText = '';
+        const data = new Date(acao.data);
+        const dataFormatada = isNaN(data.getTime()) ? "-" : data.toLocaleString('pt-BR');
 
-                switch (acao.status) {
-                    case 'pending':
-                        statusClass = 'status-pending';
-                        statusText = 'Pendente';
-                        break;
-                    case 'valid':
-                        statusClass = 'status-valid';
-                        statusText = 'Válida';
-                        break;
-                    case 'invalid':
-                        statusClass = 'status-invalid';
-                        statusText = 'Inválida';
-                        break;
-                }
+        let statusClass = '';
+        let statusText = '';
 
-                // Determinar classe de valor
-                const valorClass = acao.valor >= 0 ? 'positive' : 'negative';
-                const valorFormatado = acao.valor >= 0 ?
-                    `R$ ${acao.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-                    `-R$ ${Math.abs(acao.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-                tr.innerHTML = `
-                    <td>${dataFormatada}</td>
-                    <td>${acao.tipo}</td>
-                    <td>${acao.descricao}</td>
-                    <td class="action-value ${valorClass}">${valorFormatado}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                `;
-
-                tbody.appendChild(tr);
-            });
+        switch (acao.status) {
+            case 'pending':
+                statusClass = 'status-pending';
+                statusText = 'Pendente';
+                break;
+            case 'valid':
+                statusClass = 'status-valid';
+                statusText = 'Válida';
+                break;
+            case 'invalid':
+                statusClass = 'status-invalid';
+                statusText = 'Inválida';
+                break;
+            default:
+                statusClass = '';
+                statusText = acao.status || '-';
         }
 
-        function atualizarPaginacao(paginaAtual, totalPaginas) {
-            const pagination = document.getElementById('pagination');
+        const valor = Number(acao.valor || 0);
+        const valorClass = valor >= 0 ? 'positive' : 'negative';
+        const valorFormatado = valor >= 0 ?
+            `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+            `-R$ ${Math.abs(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-            if (totalPaginas <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
+        tr.innerHTML = `
+            <td>${dataFormatada}</td>
+            <td>${acao.tipo || '-'}</td>
+            <td>${acao.descricao || '-'}</td>
+            <td class="action-value ${valorClass}">${valorFormatado}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        `;
 
-            let paginacaoHTML = '';
+        tbody.appendChild(tr);
+    });
+}
 
-            // Botão anterior
-            if (paginaAtual > 1) {
-                paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${paginaAtual - 1})">
-                    <i class="fas fa-chevron-left"></i>
-                </button>`;
-            }
+function atualizarPaginacao(paginaAtual, totalPaginas) {
+    const pagination = document.getElementById('pagination');
 
-            // Páginas
-            for (let i = 1; i <= totalPaginas; i++) {
-                if (i === paginaAtual) {
-                    paginacaoHTML += `<button class="pagination-btn active">${i}</button>`;
-                } else {
-                    paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${i})">${i}</button>`;
-                }
-            }
+    if (!totalPaginas || totalPaginas <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
 
-            // Botão próximo
-            if (paginaAtual < totalPaginas) {
-                paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${paginaAtual + 1})">
-                    <i class="fas fa-chevron-right"></i>
-                </button>`;
-            }
+    let paginacaoHTML = '';
 
-            pagination.innerHTML = paginacaoHTML;
+    if (paginaAtual > 1) {
+        paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${paginaAtual - 1})">
+            <i class="fas fa-chevron-left"></i>
+        </button>`;
+    }
+
+    // limitar número de botões visíveis (por usabilidade)
+    const maxButtons = 7;
+    let start = Math.max(1, paginaAtual - Math.floor(maxButtons / 2));
+    let end = Math.min(totalPaginas, start + maxButtons - 1);
+    if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
+
+    for (let i = start; i <= end; i++) {
+        if (i === paginaAtual) {
+            paginacaoHTML += `<button class="pagination-btn active">${i}</button>`;
+        } else {
+            paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${i})">${i}</button>`;
         }
+    }
 
-        function aplicarFiltros() {
-            carregarListaAcoes(1);
-        }
+    if (paginaAtual < totalPaginas) {
+        paginacaoHTML += `<button class="pagination-btn" onclick="carregarListaAcoes(${paginaAtual + 1})">
+            <i class="fas fa-chevron-right"></i>
+        </button>`;
+    }
 
-        function logout() {
-            localStorage.removeItem("token");
-            window.location.href = "https://ganhesocial.com";
-        }
-    </script>
+    pagination.innerHTML = paginacaoHTML;
+}
+
+/* Aplica filtros: atualiza lista (página 1) e resumo usando os mesmos filtros */
+function aplicarFiltros() {
+    const filters = getSelectedFilters();
+    carregarListaAcoes(1);
+    carregarResumo(filters);
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "https://ganhesocial.com";
+}
+</script>
 </body>
 
 </html>
