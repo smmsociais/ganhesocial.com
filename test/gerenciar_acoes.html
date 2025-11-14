@@ -790,47 +790,51 @@
             menuCloseBtn.addEventListener('click', closeMenu);
             menuOverlay.addEventListener('click', closeMenu);
 
-            // Configura botão de aplicar filtros
-            document.getElementById('aplicarFiltro').addEventListener('click', aplicarFiltros);
+    document.getElementById('aplicarFiltro').addEventListener('click', aplicarFiltros);
 
-            document.body.classList.add('loaded');
+    // 🔥 CARREGAR RESUMO
+    carregarResumo();
+
+    // 🔥 CARREGAR LISTA
+    carregarListaAcoes(1);
+
+    document.body.classList.add('loaded');
+});
+
+async function carregarResumo() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+        const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                modo: "resumo"   // 🔥 IMPORTANTE!!!
+            })
         });
 
-        async function carregarListaAcoes(pagina = 1) {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+        const data = await response.json();
 
-            const periodo = document.getElementById('periodoSelect').value;
-            const status = document.getElementById('statusSelect').value;
-            const tipo = document.getElementById('tipoSelect').value;
-
-            try {
-                const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        periodo: periodo,
-                        status: status,
-                        tipo: tipo,
-                        pagina: pagina
-                    })
-                });
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || "Erro ao buscar lista de ações.");
-                }
-
-                atualizarTabelaAcoes(data.acoes);
-                atualizarPaginacao(data.pagina_atual, data.total_paginas);
-
-            } catch (error) {
-                console.error("Erro ao carregar lista de ações:", error);
-            }
+        if (!response.ok) {
+            console.error("Erro no resumo:", data.error);
+            return;
         }
+
+        // Atualiza valores no HTML
+        document.getElementById("acoesPendentes").textContent = data.pendentes;
+        document.getElementById("acoesValidas").textContent = data.validas;
+        document.getElementById("acoesInvalidas").textContent = data.invalidas;
+        document.getElementById("totalGanho").textContent =
+            "R$ " + data.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+    } catch (error) {
+        console.error("Erro ao carregar resumo:", error);
+    }
+}
 
         function atualizarTabelaAcoes(acoes) {
             const tbody = document.getElementById('acoesTableBody');
