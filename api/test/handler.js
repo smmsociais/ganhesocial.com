@@ -240,7 +240,7 @@ if (url.startsWith("/api/confirmar_acao") && method === "POST") {
 }
 
 // Rota: /api/contas (GET, POST, DELETE)
-if (url.startsWith("/api/contas")) {
+if (url.startsWith("/api/test/contas")) {
     try {
         await connectDB();
 
@@ -293,33 +293,29 @@ if (method === "POST") {
         return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
     }
 
-    // === Validação prévia: consulta a API externa / bind para conferir se o perfil existe ===
-    try {
-        // opção A: chamar diretamente a mesma API externa usada no proxy
-        const bindUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nomeNormalized)}`;
+// === Validação prévia: consulta a API externa / bind ===
+try {
+    const bindUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nomeNormalized)}`;
 
-        const bindResp = await fetch(bindUrl, { method: 'GET', timeout: 8000 }); // timeout se suportado
-        const bindText = String(await bindResp.text()).trim();
+    const bindResp = await fetch(bindUrl, { method: 'GET', timeout: 8000 });
+    const bindText = String(await bindResp.text()).trim();
+    const bindUpper = bindText.toUpperCase();
 
-        // Normaliza resposta para comparação
-        const bindUpper = bindText.toUpperCase();
+    console.log("🔍 Resposta do bind:", bindText);
 
-        // Se a resposta contém NOT_FOUND, não criamos a conta
-        if (bindUpper.includes("NOT_FOUND")) {
-            return res.status(200).json({ error: "Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente." });
-        }
-
-        // Se a API externa devolveu algum erro textual óbvio, bloqueie também
-        if (/ERROR|FAIL|INVALID/i.test(bindText) && !/SUCCESS|SUCESSO/i.test(bindText)) {
-            // retorna a mensagem da API (cuidado com exposição de detalhes)
-            return res.status(400).json({ error: `Erro ao validar perfil. Verifique se sua conta segue os requisitos da plataforma.` });
-        }
-
-        // Caso contrário, consideramos válido e continuamos para adicionar a conta
-    } catch (bindError) {
-        console.error("Erro ao validar bind antes de criar conta:", bindError);
-        return res.status(500).json({ error: "Não foi possível verificar o perfil no momento. Tente novamente mais tarde." });
+    // ❗ SE A API RETORNAR NOT_FOUND → NÃO ADICIONAR A CONTA
+    if (bindUpper.includes("NOT_FOUND")) {
+        return res.status(200).json({
+            error: "Não conseguimos encontrar o seu perfil. Verifique se o nome de usuário está correto e tente novamente."
+        });
     }
+
+    // ❗ QUALQUER OUTRO ERRO → IGNORAR E ADICIONAR A CONTA MESMO ASSIM
+    // Ou seja, só não adiciona se for NOT_FOUND.
+} catch (bindError) {
+    console.error("⚠ Erro ao validar bind (IGNORADO, conta será adicionada):", bindError);
+    // ❗ Não retornamos erro → continua fluxo e cria a conta normalmente
+}
 
     // ➕ Adiciona nova conta (somente chega aqui se bind foi OK)
     user.contas.push({ nomeConta: nomeNormalized, id_conta, id_tiktok, status: "ativa" });
