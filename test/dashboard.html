@@ -559,8 +559,8 @@
         <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
         <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
         <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
+        <a class="menu-item" href="gerenciar_acoes"><i class="fas fa-chart-bar"></i> Gerenciar Ações</a>
         <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
-
         <div class="menu-footer">
             <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
@@ -841,19 +841,18 @@
         }
 
         // === Função de formatação do valor no ranking ===
-function formatarValorRanking(valor) {
-  valor = Number(valor) || 0;
-  if (valor <= 1) return "R$ 1+";
-  if (valor > 1 && valor < 5) return "R$ 1+";
-  if (valor < 10) return "R$ 5+";
-  if (valor < 50) return "R$ 10+";
-  if (valor < 100) return "R$ 50+";
-  if (valor < 500) return "R$ 100+";
-  if (valor < 1000) return "R$ 500+";
-
-  const base = Math.floor(valor / 1000) * 1000;
-  return `R$ ${base}+`;
-}
+        function formatarValorRanking(valor) {
+            valor = Number(valor) || 0;
+            if (valor <= 1) return "R$ 1+";
+            if (valor > 1 && valor < 5) return "R$ 1+";
+            if (valor < 10) return "R$ 5+";
+            if (valor < 50) return "R$ 10+";
+            if (valor < 100) return "R$ 50+";
+            if (valor < 500) return "R$ 100+";
+            if (valor < 1000) return "R$ 500+";
+            const base = Math.floor(valor / 1000) * 1000;
+            return `R$ ${base}+`;
+        }
         /* === POPULAR TABELA (corrigida) === */
         function populateRankingTable(rankingData) {
             const rankingTable = document.getElementById("rankingTable");
