@@ -34,6 +34,7 @@
     { "source": "/docs/api/tiktok", "destination": "/docs/api/tiktok.html" },
 
     { "source": "/test/dashboard", "destination": "/test/dashboard.html" },
+    { "source": "/test/gerenciar_acoes.html", "destination": "/test/gerenciar_acoes.html" },
 
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
