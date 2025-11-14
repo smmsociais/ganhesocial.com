@@ -2494,115 +2494,143 @@ if (listaComProjetado.length < 10) {
   }
 } // fim if /api/test/ranking_diario
 
-    if (!url.startsWith("/api/test/gerenciar_acoes")) {
-        return res.status(404).json({ error: "Rota não encontrada." });
-    }
-
-    try {
-        await connectDB();
-
-        // ========================
-        // 1️⃣ Autenticação
-        // ========================
-        const authHeader = req.headers.authorization;
-        if (!authHeader)
-            return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-
-        const token = authHeader.startsWith("Bearer ") 
-            ? authHeader.split(" ")[1] 
-            : authHeader;
-
-        const user = await User.findOne({ token });
-        if (!user)
-            return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-
-        // ========================
-        // 2️⃣ Somente POST
-        // ========================
-        if (method !== "POST") {
-            return res.status(405).json({ error: "Use POST." });
-        }
-
-        const { periodo, status, tipo, pagina = 1 } = req.body;
-
-        const filtros = {};
-
-        // ------------------------
-        // FILTRO POR STATUS
-        // ------------------------
-        if (status && status !== "todos") {
-            const mapStatus = {
-                pending: "pendente",
-                valid: "valida",
-                invalid: "invalida"
-            };
-            filtros.acao_validada = mapStatus[status] || status;
-        }
-
-        // ------------------------
-        // FILTRO POR TIPO
-        // ------------------------
-        if (tipo && tipo !== "todos") {
-            filtros.tipo = tipo;
-        }
-
-        // ------------------------
-        // FILTRO POR PERÍODO
-        // ------------------------
-        if (periodo && periodo !== "todos") {
-            const agora = new Date();
-            let inicio;
-
-            if (periodo === "hoje") {
-                inicio = new Date();
-                inicio.setHours(0, 0, 0, 0);
-            }
-            if (periodo === "7dias") {
-                inicio = new Date(agora - 7 * 24 * 60 * 60 * 1000);
-            }
-            if (periodo === "30dias") {
-                inicio = new Date(agora - 30 * 24 * 60 * 60 * 1000);
-            }
-
-            filtros.createdAt = { $gte: inicio };
-        }
-
-        // ------------------------
-        // PAGINAÇÃO
-        // ------------------------
-        const porPagina = 20;
-        const skip = (pagina - 1) * porPagina;
-
-        const total = await ActionHistory.countDocuments(filtros);
-        const totalPaginas = Math.ceil(total / porPagina);
-
-        const acoes = await ActionHistory.find(filtros)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(porPagina)
-            .lean();
-
-        // ------------------------
-        // FORMATAÇÃO
-        // ------------------------
-        const resultado = acoes.map(a => ({
-            data: a.createdAt,
-            tipo: a.tipo,
-            descricao: a.descricao || "",
-            status: a.acao_validada === "valida" ? "valid" :
-                    a.acao_validada === "invalida" ? "invalid" :
-                    "pending",
-            valor: Number(a.valor || 0)
-        }));
-
-        return res.status(200).json({
-            pagina_atual: pagina,
-            total_paginas: totalPaginas,
-            acoes: resultado
-        });
-
-    } catch (error) {
-        console.error("❌ Erro em /api/test/gerenciar_acoes:", error);
-        return res.status(500).json({ error: "Erro interno no servidor." });
-    }
+if (!url.startsWith("/api/test/gerenciar_acoes")) {
+    return res.status(404).json({ error: "Rota não encontrada." });
 }
+
+try {
+    await connectDB();
+
+    // ========================
+    // 1️⃣ Autenticação
+    // ========================
+    const authHeader = req.headers.authorization;
+    if (!authHeader)
+        return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+    const token = authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader;
+
+    const user = await User.findOne({ token });
+    if (!user)
+        return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+    // ========================
+    // 2️⃣ Somente POST
+    // ========================
+    if (method !== "POST") {
+        return res.status(405).json({ error: "Use POST." });
+    }
+
+    const { periodo, status, tipo, pagina = 1 } = req.body;
+
+    const filtros = {};
+
+    // ------------------------
+    // FILTRO POR STATUS
+    // ------------------------
+    if (status && status !== "todos") {
+        const mapStatus = {
+            pending: "pendente",
+            valid: "valida",
+            invalid: "invalida"
+        };
+        filtros.acao_validada = mapStatus[status] || status;
+    }
+
+    // ------------------------
+    // FILTRO POR TIPO
+    // ------------------------
+    if (tipo && tipo !== "todos") {
+        filtros.tipo = tipo;
+    }
+
+    // ------------------------
+    // FILTRO POR PERÍODO
+    // ------------------------
+    if (periodo && periodo !== "todos") {
+        const agora = new Date();
+        let inicio;
+
+        if (periodo === "hoje") {
+            inicio = new Date();
+            inicio.setHours(0, 0, 0, 0);
+        }
+        if (periodo === "7dias") {
+            inicio = new Date(agora - 7 * 24 * 60 * 60 * 1000);
+        }
+        if (periodo === "30dias") {
+            inicio = new Date(agora - 30 * 24 * 60 * 60 * 1000);
+        }
+
+        filtros.createdAt = { $gte: inicio };
+    }
+
+    // ------------------------
+    // PAGINAÇÃO
+    // ------------------------
+    const porPagina = 20;
+    const skip = (pagina - 1) * porPagina;
+
+    const total = await ActionHistory.countDocuments(filtros);
+    const totalPaginas = Math.ceil(total / porPagina);
+
+    const acoes = await ActionHistory.find(filtros)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(porPagina)
+        .lean();
+
+    // ------------------------
+    // FORMATAÇÃO DA LISTA
+    // ------------------------
+    const resultado = acoes.map(a => ({
+        data: a.createdAt,
+        tipo: a.tipo,
+        descricao: a.descricao || "",
+        status:
+            a.acao_validada === "valida"
+                ? "valid"
+                : a.acao_validada === "invalida"
+                ? "invalid"
+                : "pending",
+        valor: Number(a.valor || 0)
+    }));
+
+    // ------------------------
+    // 3️⃣ RESUMO COMPLETO
+    // ------------------------
+    const [pendentes, validas, invalidas, totalGanhoArr] = await Promise.all([
+        ActionHistory.countDocuments({ acao_validada: "pendente" }),
+        ActionHistory.countDocuments({ acao_validada: "valida" }),
+        ActionHistory.countDocuments({ acao_validada: "invalida" }),
+        ActionHistory.aggregate([
+            { $match: { acao_validada: "valida" } },
+            { $group: { _id: null, soma: { $sum: "$valor" } } }
+        ])
+    ]);
+
+    const totalGanho = totalGanhoArr[0]?.soma || 0;
+
+    // ------------------------
+    // RETORNO FINAL
+    // ------------------------
+    return res.status(200).json({
+        pagina_atual: pagina,
+        total_paginas: totalPaginas,
+        acoes: resultado,
+
+        // NOVO RESUMO (para o painel)
+        resumo: {
+            pendentes,
+            validas,
+            invalidas,
+            totalGanho
+        }
+    });
+
+} catch (error) {
+    console.error("❌ Erro em /api/test/gerenciar_acoes:", error);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+}}
