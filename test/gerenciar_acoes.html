@@ -826,7 +826,10 @@ async function carregarResumo() {
         document.getElementById("acoesValidas").textContent = data.validas;
         document.getElementById("acoesInvalidas").textContent = data.invalidas;
         document.getElementById("totalGanho").textContent =
-            "R$ " + data.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+"R$ " + Number(data.total || 0).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+});
 
     } catch (error) {
         console.error("Erro ao carregar resumo:", error);
