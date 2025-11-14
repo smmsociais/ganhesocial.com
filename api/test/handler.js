@@ -2494,7 +2494,6 @@ if (listaComProjetado.length < 10) {
   }
 } // fim if /api/test/ranking_diario
 
-// /api/test/gerenciar_acoes.js
     if (!url.startsWith("/api/test/gerenciar_acoes")) {
         return res.status(404).json({ error: "Rota não encontrada." });
     }
@@ -2502,82 +2501,108 @@ if (listaComProjetado.length < 10) {
     try {
         await connectDB();
 
-        // ===============================
-        // 1️⃣ Autenticação via Token
-        // ===============================
+        // ========================
+        // 1️⃣ Autenticação
+        // ========================
         const authHeader = req.headers.authorization;
-        if (!authHeader) {
+        if (!authHeader)
             return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-        }
 
-        const token = authHeader.startsWith("Bearer ")
-            ? authHeader.split(" ")[1]
+        const token = authHeader.startsWith("Bearer ") 
+            ? authHeader.split(" ")[1] 
             : authHeader;
 
-        if (!token) {
-            return res.status(401).json({ error: "Token inválido." });
-        }
-
         const user = await User.findOne({ token });
-        if (!user) {
+        if (!user)
             return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+        // ========================
+        // 2️⃣ Somente POST
+        // ========================
+        if (method !== "POST") {
+            return res.status(405).json({ error: "Use POST." });
         }
 
-        // ===============================
-        // 2️⃣ Método GET → Consultar ações
-        // ===============================
-        if (method === "GET") {
-            // Contagens
-            const [
-                totalValidadas,
-                totalInvalidas,
-                totalPendentes,
-                validadas,
-                invalidas,
-                pendentes
-            ] = await Promise.all([
-                ActionHistory.countDocuments({ acao_validada: "valida" }),
-                ActionHistory.countDocuments({ acao_validada: "invalida" }),
-                ActionHistory.countDocuments({ acao_validada: "pendente" }),
+        const { periodo, status, tipo, pagina = 1 } = req.body;
 
-                ActionHistory.find({ acao_validada: "valida" })
-                    .sort({ createdAt: -1 })
-                    .limit(50),
+        const filtros = {};
 
-                ActionHistory.find({ acao_validada: "invalida" })
-                    .sort({ createdAt: -1 })
-                    .limit(50),
-
-                ActionHistory.find({ acao_validada: "pendente" })
-                    .sort({ createdAt: -1 })
-                    .limit(50)
-            ]);
-
-            return res.status(200).json({
-                status: "ok",
-                totals: {
-                    validadas: totalValidadas,
-                    invalidas: totalInvalidas,
-                    pendentes: totalPendentes,
-                },
-                detalhes: {
-                    validadas,
-                    invalidas,
-                    pendentes,
-                }
-            });
+        // ------------------------
+        // FILTRO POR STATUS
+        // ------------------------
+        if (status && status !== "todos") {
+            const mapStatus = {
+                pending: "pendente",
+                valid: "valida",
+                invalid: "invalida"
+            };
+            filtros.acao_validada = mapStatus[status] || status;
         }
 
-        // ===============================
-        // 3️⃣ Método não permitido
-        // ===============================
-        return res.status(405).json({ error: "Método não permitido nesta rota." });
+        // ------------------------
+        // FILTRO POR TIPO
+        // ------------------------
+        if (tipo && tipo !== "todos") {
+            filtros.tipo = tipo;
+        }
+
+        // ------------------------
+        // FILTRO POR PERÍODO
+        // ------------------------
+        if (periodo && periodo !== "todos") {
+            const agora = new Date();
+            let inicio;
+
+            if (periodo === "hoje") {
+                inicio = new Date();
+                inicio.setHours(0, 0, 0, 0);
+            }
+            if (periodo === "7dias") {
+                inicio = new Date(agora - 7 * 24 * 60 * 60 * 1000);
+            }
+            if (periodo === "30dias") {
+                inicio = new Date(agora - 30 * 24 * 60 * 60 * 1000);
+            }
+
+            filtros.createdAt = { $gte: inicio };
+        }
+
+        // ------------------------
+        // PAGINAÇÃO
+        // ------------------------
+        const porPagina = 20;
+        const skip = (pagina - 1) * porPagina;
+
+        const total = await ActionHistory.countDocuments(filtros);
+        const totalPaginas = Math.ceil(total / porPagina);
+
+        const acoes = await ActionHistory.find(filtros)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(porPagina)
+            .lean();
+
+        // ------------------------
+        // FORMATAÇÃO
+        // ------------------------
+        const resultado = acoes.map(a => ({
+            data: a.createdAt,
+            tipo: a.tipo,
+            descricao: a.descricao || "",
+            status: a.acao_validada === "valida" ? "valid" :
+                    a.acao_validada === "invalida" ? "invalid" :
+                    "pending",
+            valor: Number(a.valor || 0)
+        }));
+
+        return res.status(200).json({
+            pagina_atual: pagina,
+            total_paginas: totalPaginas,
+            acoes: resultado
+        });
 
     } catch (error) {
         console.error("❌ Erro em /api/test/gerenciar_acoes:", error);
         return res.status(500).json({ error: "Erro interno no servidor." });
     }
-}
-
-    return res.status(404).json({ error: "Rota não encontrada." });
 }
