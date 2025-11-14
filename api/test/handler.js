@@ -2495,54 +2495,107 @@ if (listaComProjetado.length < 10) {
 } // fim if /api/test/ranking_diario
 
 if (!url.startsWith("/api/test/gerenciar_acoes")) {
+    console.log("❌ Rota não corresponde:", url);
     return res.status(404).json({ error: "Rota não encontrada." });
 }
 
+console.log("👉 [ROTA] /api/test/gerenciar_acoes acessada.");
+console.log("🔹 Método:", method);
+
 try {
+    console.log("🟧 Conectando ao banco...");
     await connectDB();
+    console.log("🟩 Banco conectado.");
 
     // ========================
     // 1️⃣ Autenticação
     // ========================
+    console.log("🔍 Verificando header Authorization...");
     const authHeader = req.headers.authorization;
-    if (!authHeader)
+
+    if (!authHeader) {
+        console.log("❌ Token não enviado.");
         return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    }
 
     const token = authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
         : authHeader;
 
+    console.log("🔍 Token recebido:", token);
+
     const user = await User.findOne({ token });
-    if (!user)
+    console.log("🔍 Usuário encontrado:", user ? user._id : "NÃO ENCONTRADO");
+
+    if (!user) {
+        console.log("❌ Usuário não encontrado, token inválido.");
         return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    }
 
     // ========================
     // 2️⃣ Somente POST
     // ========================
+    console.log("🔸 Verificando método POST...");
     if (method !== "POST") {
+        console.log("❌ Método inválido:", method);
         return res.status(405).json({ error: "Use POST." });
     }
+
+    console.log("📥 Body recebido:", req.body);
 
     const { modo, periodo, status, tipo, pagina = 1 } = req.body;
 
     // =====================================================================================
-    // 3️⃣ MODO RESUMO (🔥 Chamado pelo topo da página)
+    // 3️⃣ MODO RESUMO
     // =====================================================================================
-    if (modo === "resumo") {
-        const userFilter = { user_id: user._id };
 
-        const [pendentes, validas, invalidas, totalGanhoArr] = await Promise.all([
-            ActionHistory.countDocuments({ ...userFilter, acao_validada: "pendente" }),
-            ActionHistory.countDocuments({ ...userFilter, acao_validada: "valida" }),
-            ActionHistory.countDocuments({ ...userFilter, acao_validada: "invalida" }),
-            ActionHistory.aggregate([
-                { $match: { ...userFilter, acao_validada: "valida" } },
-                { $group: { _id: null, soma: { $sum: "$valor" } } }
-            ])
+    if (modo === "resumo") {
+        console.log("📌 MODO RESUMO ativado.");
+
+        const userFilter = { user_id: user._id };
+        console.log("🔍 Filtro resumo:", userFilter);
+
+        console.log("🔄 Contando ações pendentes...");
+        console.time("⏱ pendentes");
+        const pendentes = await ActionHistory.countDocuments({
+            ...userFilter,
+            acao_validada: "pendente"
+        });
+        console.timeEnd("⏱ pendentes");
+        console.log("📌 Pendentes:", pendentes);
+
+        console.log("🔄 Contando ações válidas...");
+        console.time("⏱ validas");
+        const validas = await ActionHistory.countDocuments({
+            ...userFilter,
+            acao_validada: "valida"
+        });
+        console.timeEnd("⏱ validas");
+        console.log("📌 Válidas:", validas);
+
+        console.log("🔄 Contando ações inválidas...");
+        console.time("⏱ invalidas");
+        const invalidas = await ActionHistory.countDocuments({
+            ...userFilter,
+            acao_validada: "invalida"
+        });
+        console.timeEnd("⏱ invalidas");
+        console.log("📌 Inválidas:", invalidas);
+
+        console.log("🔄 Calculando total ganho...");
+        console.time("⏱ total");
+        const totalGanhoArr = await ActionHistory.aggregate([
+            { $match: { ...userFilter, acao_validada: "valida" } },
+            { $group: { _id: null, soma: { $sum: "$valor" } } }
         ]);
+        console.timeEnd("⏱ total");
+
+        console.log("📌 Aggregation total ganho:", totalGanhoArr);
 
         const total = totalGanhoArr[0]?.soma || 0;
+        console.log("💰 Total ganho calculado:", total);
 
+        console.log("📦 Enviando resposta do resumo...");
         return res.status(200).json({
             pendentes,
             validas,
@@ -2552,14 +2605,15 @@ try {
     }
 
     // =====================================================================================
-    // 4️⃣ MODO LISTA (Filtros, tabela, paginação)
+    // 4️⃣ MODO LISTA
     // =====================================================================================
 
-    const filtros = { user_id: user._id };
+    console.log("📌 MODO LISTA ativado.");
 
-    // ------------------------
-    // FILTRO POR STATUS
-    // ------------------------
+    const filtros = { user_id: user._id };
+    console.log("🔍 Filtros iniciais:", filtros);
+
+    // STATUS
     if (status && status !== "todos") {
         const mapStatus = {
             pending: "pendente",
@@ -2567,18 +2621,16 @@ try {
             invalid: "invalida"
         };
         filtros.acao_validada = mapStatus[status] || status;
+        console.log("🔍 Filtro por status:", filtros.acao_validada);
     }
 
-    // ------------------------
-    // FILTRO POR TIPO
-    // ------------------------
+    // TIPO
     if (tipo && tipo !== "todos") {
         filtros.tipo = tipo;
+        console.log("🔍 Filtro por tipo:", tipo);
     }
 
-    // ------------------------
-    // FILTRO POR PERÍODO
-    // ------------------------
+    // PERÍODO
     if (periodo && periodo !== "todos") {
         const agora = new Date();
         let inicio;
@@ -2595,26 +2647,31 @@ try {
         }
 
         filtros.createdAt = { $gte: inicio };
+        console.log("🔍 Filtro por período:", filtros.createdAt);
     }
 
-    // ------------------------
     // PAGINAÇÃO
-    // ------------------------
     const porPagina = 20;
     const skip = (pagina - 1) * porPagina;
 
+    console.log("🔢 Paginando: página", pagina, "skip", skip);
+
+    console.log("🔄 Contando total de documentos...");
     const total = await ActionHistory.countDocuments(filtros);
     const totalPaginas = Math.ceil(total / porPagina);
 
+    console.log("📌 Total registros:", total, "| Total páginas:", totalPaginas);
+
+    console.log("🔄 Buscando ações...");
     const acoes = await ActionHistory.find(filtros)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(porPagina)
         .lean();
 
-    // ------------------------
-    // FORMATAÇÃO DA LISTA
-    // ------------------------
+    console.log("📌 Ações encontradas:", acoes.length);
+
+    // FORMATAÇÃO
     const resultado = acoes.map(a => ({
         data: a.createdAt,
         tipo: a.tipo,
@@ -2628,9 +2685,8 @@ try {
         valor: Number(a.valor || 0)
     }));
 
-    // ------------------------
-    // RETORNO FINAL DA LISTA
-    // ------------------------
+    console.log("📦 Enviando lista com", resultado.length, "registros.");
+
     return res.status(200).json({
         pagina_atual: pagina,
         total_paginas: totalPaginas,
@@ -2638,6 +2694,10 @@ try {
     });
 
 } catch (error) {
-    console.error("❌ Erro em /api/test/gerenciar_acoes:", error);
+    console.error("❌ ERRO GERAL EM /api/test/gerenciar_acoes:");
+    console.error("📄 Mensagem:", error.message);
+    console.error("📄 Stack:", error.stack);
+
     return res.status(500).json({ error: "Erro interno no servidor." });
 }}
+
