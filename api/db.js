@@ -1,7 +1,7 @@
 // api/db.js
 import mongoose from "mongoose";
 
-const URI = process.env.MONGODBTEST;
+const URI = process.env.MONGODB_URI;
 if (!URI) throw new Error("MONGODB_URI não definida!");
 
 let cached = global.mongoose;
