@@ -813,7 +813,7 @@ async function carregarListaAcoes(pagina = 1) {
     const { periodo, status, tipo } = getSelectedFilters();
 
     try {
-        const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
+        const response = await fetch("https://ganhesocial.com/test/gerenciar_acoes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -859,7 +859,7 @@ async function carregarResumo(filters = {}) {
     const payload = Object.assign({ modo: "resumo" }, filters);
 
     try {
-        const response = await fetch("https://ganhesocial.com/api/test/gerenciar_acoes", {
+        const response = await fetch("https://ganhesocial.com/api/gerenciar_acoes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
