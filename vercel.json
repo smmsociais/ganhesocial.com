@@ -32,10 +32,7 @@
     { "source": "/reset-password", "destination": "/reset-password.html" },
     { "source": "/ranking", "destination": "/ranking.html" },
     { "source": "/docs/api/tiktok", "destination": "/docs/api/tiktok.html" },
-
-    { "source": "/test/dashboard", "destination": "/test/dashboard.html" },
-    { "source": "/test/gerenciar_acoes", "destination": "/test/gerenciar_acoes.html" },
-    { "source": "/test/adicionar_conta_tiktok", "destination": "/test/adicionar_conta_tiktok.html" },
+    { "source": "/gerenciar_acoes", "destination": "/gerenciar_acoes.html" },
 
     { "source": "/api/vincular_conta", "destination": "/api/handler.js" },
     { "source": "/api/buscar_acao", "destination": "/api/handler.js" },
@@ -59,30 +56,6 @@
     { "source": "/api/proxy_bind_tk", "destination": "/api/handler.js" },
     { "source": "/api/afiliados", "destination": "/api/handler.js" },
     { "source": "/api/ranking_diario", "destination": "/api/handler.js" },
-    { "source": "/worker/index", "destination": "/api/handler.js" },
-
-    { "source": "/api/vincular_conta", "destination": "/api/test/handler.js" },
-    { "source": "/api/buscar_acao", "destination": "/api/test/handler.js" },
-    { "source": "/api/confirmar_acao", "destination": "/api/test/handler.js" },
-    { "source": "/api/tiktok/get_user", "destination": "/api/test/handler.js" },
-    { "source": "/api/tiktok/get_action", "destination": "/api/test/handler.js" },
-    { "source": "/api/tiktok/confirm_action", "destination": "/api/test/handler.js" },
-    { "source": "/api/test/contas", "destination": "/api/test/handler.js" },
-    { "source": "/api/get_saldo", "destination": "/api/test/handler.js" },
-    { "source": "/api/profile", "destination": "/api/test/handler.js" },
-    { "source": "/api/withdraw", "destination": "/api/test/handler.js" },
-    { "source": "/api/historico_acoes", "destination": "/api/test/handler.js" },
-    { "source": "/api/login", "destination": "/api/test/handler.js" },
-    { "source": "/api/signup", "destination": "/api/test/handler.js" },
-    { "source": "/api/change-password", "destination": "/api/test/handler.js" },
-    { "source": "/api/recover-password", "destination": "/api/test/handler.js" },
-    { "source": "/api/validate-reset-token", "destination": "/api/test/handler.js" },
-    { "source": "/api/registrar_acao_pendente", "destination": "/api/test/handler.js" },
-    { "source": "/api/ranking_antigo", "destination": "/api/test/handler.js" },
-    { "source": "/api/pular_acao", "destination": "/api/test/handler.js" },
-    { "source": "/api/proxy_bind_tk", "destination": "/api/test/handler.js" },
-    { "source": "/api/afiliados", "destination": "/api/test/handler.js" },
-    { "source": "/api/test/ranking_diario", "destination": "/api/test/handler.js" },
-    { "source": "/api/test/gerenciar_acoes", "destination": "/api/test/handler.js" }
+    { "source": "/api/gerenciar_acoes", "destination": "/api/handler.js" }
   ]
 }
