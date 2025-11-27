@@ -5,7 +5,7 @@ import connectDB from "./db.js";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction, DailyRanking } from "./schema.js";
+import { User, ActionHistory, DailyEarning, Pedido, DailyRanking } from "./schema.js";
 
 console.log(">>> MONGODB_URI:", process.env.MONGODB_URI);
 
@@ -133,8 +133,151 @@ function shuffleArray(arr) {
   return arr;
 }
 
-// Rota: /api/contas (GET, POST, DELETE)
-if (url.startsWith("/api/contas")) {
+// Rota: /api/contas_instagram (GET, POST, DELETE)
+if (url.startsWith("/api/contas_instagram")) {
+    try {
+        await connectDB();
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+        const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+
+        if (!token) return res.status(401).json({ error: "Token inválido." });
+
+        const user = await User.findOne({ token });
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+        // ===========================
+        // 📌 POST → Adicionar conta Instagram
+        // ===========================
+        if (method === "POST") {
+            const { nomeConta, id_conta, id_instagram } = req.body;
+
+            if (!nomeConta)
+                return res.status(400).json({ error: "Nome da conta é obrigatório." });
+
+            const nomeNormalized = String(nomeConta).trim();
+
+            // 🔍 Verifica se já existe no próprio usuário
+            const contaExistente = user.contas.find(c => c.nomeConta === nomeNormalized);
+
+            if (contaExistente) {
+                if (contaExistente.status === "ativa") {
+                    return res.status(400).json({ error: "Esta conta já está ativa." });
+                }
+
+                // 🔄 Reativar conta
+                contaExistente.status = "ativa";
+                contaExistente.rede = "Instagram";
+                contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
+                contaExistente.id_instagram = id_instagram ?? contaExistente.id_instagram;
+                contaExistente.dataDesativacao = undefined;
+
+                await user.save();
+                return res.status(200).json({ message: "Conta reativada com sucesso!" });
+            }
+
+            // ❌ Verifica se outro usuário já possui esta mesma conta
+            const contaDeOutroUsuario = await User.findOne({
+                _id: { $ne: user._id },
+                "contas.nomeConta": nomeNormalized
+            });
+
+            if (contaDeOutroUsuario) {
+                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
+            }
+
+            // ➕ Adicionar nova conta Instagram
+            user.contas.push({
+                nomeConta: nomeNormalized,
+                id_conta,
+                id_instagram,
+                rede: "Instagram",
+                status: "ativa"
+            });
+
+            await user.save();
+
+            return res.status(201).json({
+                message: "Conta Instagram adicionada com sucesso!",
+                nomeConta: nomeNormalized
+            });
+        }
+
+        // ===========================
+        // 📌 GET → Listar contas Instagram ATIVAS
+        // ===========================
+        if (method === "GET") {
+            console.log("▶ GET /api/contas_instagram - iniciando");
+            console.log(`▶ Usuário: ${user._id}`);
+
+            (user.contas || []).forEach((c, idx) => {
+                console.log(
+                    `  - conta[${idx}]: nome='${c.nomeConta}', rede='${c.rede}', status='${c.status}'`
+                );
+            });
+
+            // 🔥 Filtrar apenas contas Instagram ativas
+            const contasInstagram = (user.contas || [])
+                .filter(conta => {
+                    const rede = String(conta.rede ?? "").trim().toLowerCase();
+                    const status = String(conta.status ?? "").trim().toLowerCase();
+                    return rede === "instagram" && status === "ativa";
+                })
+                .map(conta => {
+                    const contaObj = conta && typeof conta.toObject === "function"
+                        ? conta.toObject()
+                        : JSON.parse(JSON.stringify(conta));
+
+                    return {
+                        ...contaObj,
+                        usuario: {
+                            _id: user._id,
+                            nome: user.nome || ""
+                        }
+                    };
+                });
+
+            console.log("▶ contasInstagram encontradas:", contasInstagram.length);
+
+            return res.status(200).json(contasInstagram);
+        }
+
+        // ===========================
+        // 📌 DELETE → Desativar conta Instagram
+        // ===========================
+        if (method === "DELETE") {
+            const { nomeConta } = req.query;
+
+            if (!nomeConta) {
+                return res.status(400).json({ error: "Nome da conta não fornecido." });
+            }
+
+            const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
+
+            if (contaIndex === -1) {
+                return res.status(404).json({ error: "Conta não encontrada." });
+            }
+
+            user.contas[contaIndex].status = "inativa";
+            user.contas[contaIndex].dataDesativacao = new Date();
+
+            await user.save();
+
+            return res.status(200).json({
+                message: `Conta ${nomeConta} desativada com sucesso.`
+            });
+        }
+
+    } catch (error) {
+        console.error("❌ Erro:", error);
+        return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+}
+
+// Rota: /api/contas_tiktok (GET, POST, DELETE)
+if (url.startsWith("/api/contas_tiktok")) {
     try {
         await connectDB();
 
@@ -171,6 +314,7 @@ if (url.startsWith("/api/contas")) {
 
                 // 🔄 Reativar conta
                 contaExistente.status = "ativa";
+                contaExistente.rede = "TikTok"; // 🔥 Garantir que a conta tenha rede correta
                 contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
                 contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
                 contaExistente.dataDesativacao = undefined;
@@ -189,13 +333,12 @@ if (url.startsWith("/api/contas")) {
                 return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
             }
 
-            // ===========================
-            // ➕ Adiciona nova conta (SEM validação externa)
-            // ===========================
+            // ➕ Adiciona nova conta TikTok
             user.contas.push({
                 nomeConta: nomeNormalized,
                 id_conta,
                 id_tiktok,
+                rede: "TikTok",  // 🔥 Definindo rede
                 status: "ativa"
             });
 
@@ -206,31 +349,53 @@ if (url.startsWith("/api/contas")) {
                 nomeConta: nomeNormalized
             });
         }
+    
+// ===========================
+// 📌 GET → Listar contas TikTok ATIVAS
+// ===========================
 
-        // ===========================
-        // 📌 GET → Listar contas ativas
-        // ===========================
-        if (method === "GET") {
-            if (!user.contas || user.contas.length === 0) {
-                return res.status(200).json([]);
-            }
+if (method === "GET") {
+    console.log("▶ GET /api/contas_tiktok - iniciando");
+    console.log("▶ Token usado:", token);
 
-            const contasAtivas = user.contas
-                .filter(conta => !conta.status || conta.status === "ativa")
-                .map(conta => {
-                    const contaObj = typeof conta.toObject === "function" ? conta.toObject() : conta;
-                    return {
-                        ...contaObj,
-                        usuario: {
-                            _id: user._id,
-                            nome: user.nome
-                        }
-                    };
-                });
+    if (!user) {
+        console.log("⚠ Usuário não encontrado para token:", token);
+        return res.status(404).json([]);
+    }
 
-            return res.status(200).json(contasAtivas);
-        }
+    console.log(`▶ user ${user._id} tem ${Array.isArray(user.contas) ? user.contas.length : 0} contas`);
 
+    (user.contas || []).forEach((c, idx) => {
+        console.log(
+            `  - conta[${idx}].nomeConta='${c.nomeConta}', rede='${String(c.rede ?? "")}', status='${String(c.status ?? "")}'`
+        );
+    });
+
+    // 🔥 AGORA FILTRA SOMENTE CONTAS TIKTOK *ATIVAS*
+    const contasTikTok = (user.contas || [])
+        .filter(conta => {
+            const rede = String(conta.rede ?? "").trim().toLowerCase();
+            const status = String(conta.status ?? "").trim().toLowerCase();
+            return rede === "tiktok" && status === "ativa";
+        })
+        .map(conta => {
+            const contaObj = conta && typeof conta.toObject === "function"
+                ? conta.toObject()
+                : JSON.parse(JSON.stringify(conta));
+
+            return {
+                ...contaObj,
+                usuario: {
+                    _id: user._id,
+                    nome: user.nome || ""
+                }
+            };
+        });
+
+    console.log("▶ contasTikTok encontradas:", contasTikTok.length, contasTikTok.map(c => c.nomeConta));
+
+    return res.status(200).json(contasTikTok);
+}
         // ===========================
         // 📌 DELETE → Desativar conta
         // ===========================
@@ -365,12 +530,11 @@ if (url.startsWith("/api/historico_acoes")) {
   
       return {
         nome_usuario: action.nome_usuario,
-        acao_validada: action.acao_validada,
-        valor_confirmacao: action.valor_confirmacao,
+        quantidade_pontos: action.quantidade_pontos,
         data: action.data,
-        rede_social: action.rede_social || "TikTok",
-        tipo: action.tipo || "Seguir",
-        url_dir: action.url_dir || null,
+        rede_social: action.rede_social,
+        tipo: action.tipo,
+        url: action.url,
         status
       };
     });
@@ -391,16 +555,15 @@ if (url.startsWith("/api/historico_acoes")) {
 
       return {
         nome_usuario: action.nome_usuario,
-        acao_validada: action.acao_validada,
-        valor_confirmacao: action.valor_confirmacao,
+        quantidade_pontos: action.quantidade_pontos,
         data: action.data,
-        rede_social: action.rede_social || "TikTok",
-        tipo: action.tipo || "Seguir",
-        url_dir: action.url_dir || null,
+        rede_social: action.rede_social,
+        tipo: action.tipo,
+        url: action.url,
         status
       };
-    });    
-
+    });
+    
     return res.status(200).json(formattedData);
   } catch (error) {
     console.error("💥 Erro em /historico_acoes:", error);
@@ -1106,284 +1269,245 @@ await acaoComissao.save();
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
-}    
+}
 
-// Rota: /api/tiktok/get_user (GET)
+// Rota: /api/tiktok/get_user
 if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
   await connectDB();
   let { token, nome_usuario } = req.query;
 
-  // Normaliza nome de usuário
   if (!token || !nome_usuario) {
     return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
   }
 
   nome_usuario = nome_usuario.trim().toLowerCase();
 
-  function generateFakeTikTokId() {
-    const prefix = "74";
-    const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
-    return prefix + randomDigits;
-  }
-
   try {
+    // Verifica usuário pelo token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // Verifica se a conta TikTok já está vinculada a outro usuário
+    // Verifica se essa conta já está vinculada a outro usuário
     const contaJaRegistrada = await User.findOne({
-      "contas.nomeConta": nome_usuario,
+      "contas.nome_usuario": nome_usuario,
       token: { $ne: token }
     });
 
     if (contaJaRegistrada) {
       return res.status(200).json({
-        status: 'fail',
-        message: 'Essa conta TikTok já está vinculada a outro usuário.'
+        status: "fail",
+        message: "Essa conta TikTok já está vinculada a outro usuário."
       });
     }
 
-    // Consulta API externa
-    const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
-    const bindResponse = await axios.get(bindTkUrl);
-    const bindData = bindResponse.data;
-
-    if (bindData.error === "TOKEN_INCORRETO") {
-      return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
-    }
-
-    const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
-
-    // Caso o usuário não seja encontrado na API externa
-    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-      let fakeId;
-
-      if (contaIndex !== -1) {
-        // Já existe, apenas atualiza
-        fakeId = usuario.contas[contaIndex].id_fake || generateFakeTikTokId();
-        usuario.contas[contaIndex].id_tiktok = null;
-        usuario.contas[contaIndex].id_fake = fakeId;
-        usuario.contas[contaIndex].status = "Pendente";
-      } else {
-        // Nova conta, adiciona
-        fakeId = generateFakeTikTokId();
-        usuario.contas.push({
-          nomeConta: nome_usuario,
-          id_tiktok: null,
-          id_fake: fakeId,
-          status: "Pendente"
-        });
-      }
-
-      await usuario.save();
-      return res.status(200).json({
-        status: "success",
-        id_tiktok: fakeId
-      });
-    }
-
-    // Conta válida com ID retornado
-    const returnedId = bindData.id_tiktok || generateFakeTikTokId();
-    const isFake = !bindData.id_tiktok;
+    // PROCURAR conta IGUAL pelo nome_usuario E PELA REDE "TikTok"
+    const contaIndex = usuario.contas.findIndex(
+      c => c.nome_usuario === nome_usuario && c.rede === "TikTok"
+    );
 
     if (contaIndex !== -1) {
-      usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
-      usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
+      // Conta já existe → reativar e garantir rede="TikTok"
       usuario.contas[contaIndex].status = "ativa";
+      usuario.contas[contaIndex].rede = "TikTok";
     } else {
+      // Criar nova conta com rede TikTok
       usuario.contas.push({
-        nomeConta: nome_usuario,
-        id_tiktok: isFake ? null : returnedId,
-        id_fake: isFake ? returnedId : null,
-        status: "ativa"
+        nome_usuario,
+        status: "ativa",
+        rede: "TikTok"
       });
     }
 
     await usuario.save();
+
     return res.status(200).json({
       status: "success",
-      id_tiktok: returnedId
+      nome_usuario
     });
 
   } catch (error) {
-    console.error("Erro ao processar requisição:", error.response?.data || error.message);
+    console.error("Erro ao processar requisição:", error);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
 }
 
-// Rota: /api/get_action (GET)
+// ROTA: /api/tiktok/get_action (GET)
 if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido" });
-  }
+  const { nome_usuario, token, tipo, debug } = req.query;
 
-const { id_tiktok, token, tipo } = req.query;
-
-let tipoAcao = "seguir";
-if (tipo === "2") tipoAcao = "curtir";
-else if (tipo === "3") tipoAcao = { $in: ["seguir", "curtir"] };
-
-
-  if (!id_tiktok || !token) {
-    return res.status(400).json({ error: "Parâmetros 'id_tiktok' e 'token' são obrigatórios" });
+  if (!nome_usuario || !token) {
+    return res.status(400).json({ error: "Parâmetros 'nome_usuario' e 'token' são obrigatórios" });
   }
 
   try {
     await connectDB();
 
-    console.log("[GET_ACTION] Iniciando busca de ação para:", id_tiktok);
+    console.log("[GET_ACTION] Requisição:", {
+      nome_usuario,
+      token: token ? "***" + token.slice(-6) : null,
+      tipo,
+      debug: !!debug
+    });
 
-    // 🔐 Validação do token
+    // validar usuário via token
     const usuario = await User.findOne({ token });
     if (!usuario) {
-      console.log("[GET_ACTION] Token inválido:", token);
+      console.log("[GET_ACTION] Token inválido");
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
+    // garantir que o token corresponde à conta vinculada
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => c.nome_usuario === nome_usuario);
 
-    // 🔍 Buscar pedidos locais válidos
-const pedidos = await Pedido.find({
-  rede: "tiktok",
-  tipo: tipoAcao,
-  status: { $ne: "concluida" },
-  $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-}).sort({ dataCriacao: -1 });
-
-    console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
-
-    for (const pedido of pedidos) {
-      const id_action = pedido._id;
-
-const jaFez = await ActionHistory.findOne({
-  id_pedido: pedido._id,
-  id_conta: id_tiktok,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
-
-      if (jaFez) {
-        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_action}, pulando`);
-        continue;
-      }
-
-const feitas = await ActionHistory.countDocuments({
-  id_pedido: pedido._id,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
-
-      if (feitas >= pedido.quantidade) {
-        console.log(`[GET_ACTION] Limite atingido para pedido ${id_action}, pulando`);
-        continue;
-      }
-
-      console.log("[GET_ACTION] Ação local encontrada:", pedido.link);
-
-      const nomeUsuario = pedido.link.includes("@")
-        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-        : pedido.nome;
-
-let valorFinal;
-if (pedido.tipo === "curtir") {
-  valorFinal = "0.001";
-} else {
-  valorFinal = "0.006";
-}
-
-const tipoAcaoRetorno = pedido.tipo === "curtir" ? "curtir" : "seguir";
-
-return res.status(200).json({
-  status: "sucess",
-  id_tiktok,
-  id_action: pedido._id.toString(),
-  url: pedido.link,
-  nome_usuario: nomeUsuario,
-  tipo_acao: tipoAcaoRetorno,
-  valor: valorFinal
-});
-
+    if (!contaVinculada) {
+      console.log("[GET_ACTION] Token não pertence à conta solicitada:", nome_usuario);
+      return res.status(401).json({ error: "Token não pertence à conta solicitada" });
     }
 
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+    // normalizar tipo
+    const tipoNormalized = typeof tipo === 'string' ? String(tipo).trim().toLowerCase() : null;
+    let tipoBanco;
 
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada.");
+    if (tipo === "2" || tipoNormalized === "2" || tipoNormalized === "curtir") {
+      tipoBanco = "curtir";
+    } else if (tipo === "3" || tipoNormalized === "3" || tipoNormalized === "seguir_curtir") {
+      tipoBanco = { $in: ["seguir", "curtir"] };
+    } else {
+      tipoBanco = "seguir";
+    }
 
-if (tipo === "2") {
-  console.log("[GET_ACTION] Tipo 2 (curtidas locais) e nenhuma ação local encontrada. Ignorando API externa.");
-  return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
-}
+    // query base
+    const query = {
+      quantidade: { $gt: 0 },
+      status: { $in: ["pendente", "reservada"] },
+      rede: { $regex: /^tiktok$/i }
+    };
 
-// 🔁 Se não for tipo 2, continua buscando na API externa
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+    query.tipo = tipoBanco;
 
-const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
-const response = await axios.get(apiURL);
-const data = response.data;
+    const totalMatching = await Pedido.countDocuments(query);
+    console.log(`[GET_ACTION] Pedidos que batem com query inicial: ${totalMatching}`);
 
-if (data.status === "CONTA_INEXISTENTE") {
-  console.log("[GET_ACTION] Conta inexistente na API externa:", id_tiktok);
-  return res.status(200).json({ status: "fail", id_tiktok, message: "Nenhuma ação disponível no momento." });
-}
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }).lean();
+    console.log(`[GET_ACTION] ${pedidos.length} pedidos encontrados (após find)`);
 
-if (data.status === "ENCONTRADA") {
-  const pontos = parseFloat(data.quantidade_pontos);
+    if (debug === "1") {
+      return res.status(200).json({
+        debug: true,
+        totalMatching,
+        sampleQuery: query,
+        pedidosSample: pedidos.slice(0, 6)
+      });
+    }
 
-  // ❌ REMOVIDO o trecho que ignorava ações com 4 pontos
+    // varrer pedidos
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;
+      const idPedidoStr = String(id_pedido);
 
-  // ✅ Agora processa qualquer valor de pontos normalmente
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004)
-    ? valorBruto - 0.001
-    : valorBruto;
-  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+      const quantidadePedido = Number(pedido.quantidade || 0);
+      if (isNaN(quantidadePedido) || quantidadePedido <= 0) continue;
 
-  const idPedidoOriginal = String(data.id_pedido);
+      // total validadas
+      const validadas = await ActionHistory.countDocuments({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        status: "valida"
+      });
 
-  const temp = await TemporaryAction.create({
-    id_tiktok,
-    url_dir: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: "seguir",
-    valor: valorFinal,
-    id_action: idPedidoOriginal,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-  });
+      if (validadas >= quantidadePedido) continue;
 
-  console.log("[GET_ACTION] TemporaryAction salva:", temp);
-  console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
+      // total feitas (pendente + valida)
+      const feitas = await ActionHistory.countDocuments({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        status: { $in: ["pendente", "valida"] }
+      });
 
-  return res.status(200).json({
-    status: "sucess",
-    id_tiktok,
-    id_action: idPedidoOriginal,
-    url: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: data.tipo_acao,
-    valor: valorFinal
-  });
-}
+      if (feitas >= quantidadePedido) continue;
 
-    console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
+      // verificar se esta conta pulou
+      const pulada = await ActionHistory.findOne({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        nome_usuario,
+        status: "pulada"
+      });
+
+      if (pulada) continue;
+
+      // verificar se esta conta já fez
+      const jaFez = await ActionHistory.findOne({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        nome_usuario,
+        status: { $in: ["pendente", "valida"] }
+      });
+
+      if (jaFez) continue;
+
+      // extrair nome do perfil alvo
+      let nomeUsuarioAlvo = "";
+      if (typeof pedido.link === "string") {
+        if (pedido.link.includes("@")) {
+          nomeUsuarioAlvo = pedido.link.split("@")[1].split(/[/?#]/)[0];
+        } else {
+          const m = pedido.link.match(/tiktok\.com\/@?([^\/?#&]+)/i);
+          if (m && m[1]) nomeUsuarioAlvo = m[1].replace(/\/$/, "");
+        }
+      }
+
+      console.log(`✅ Ação disponível para ${nome_usuario}: ${nomeUsuarioAlvo || '<sem-usuario>'}`);
+
+      const valorFinal = pedido.valor
+        ? String(pedido.valor)
+        : (pedido.tipo === "curtir" ? "0.001" : "0.006");
+
+      const tipoAcao = pedido.tipo;
+
+      // 🔥 DIFERENCIAÇÃO SEGUIR vs CURTIR
+      if (tipoAcao === "seguir") {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          usuario: nomeUsuarioAlvo, // ← só para seguir
+          tipo_acao: tipoAcao,
+          valor: valorFinal
+        });
+      } else {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          tipo_acao: tipoAcao,
+          valor: valorFinal
+        });
+      }
+    }
+
+    console.log("[GET_ACTION] Nenhuma ação disponível");
     return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
 
   } catch (err) {
     console.error("[GET_ACTION] Erro ao buscar ação:", err);
     return res.status(500).json({ error: "Erro interno ao buscar ação" });
   }
-  
-};
+}
 
-// Rota: /api/confirm_action (POST)
+// ROTA: /api/tiktok/confirm_action (POST)
 if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
   await connectDB();
 
-  const { token, id_action, id_tiktok } = req.body;
-  if (!token || !id_action || !id_tiktok) {
-    return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
+  const { token, id_action, nome_usuario } = req.body;
+
+  if (!token || !id_action || !nome_usuario) {
+    return res.status(400).json({
+      error: "Parâmetros 'token', 'id_action' e 'nome_usuario' são obrigatórios."
+    });
   }
 
   try {
+    // 🔐 Validar token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
@@ -1391,6 +1515,7 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
+    // Normalizar tipo
     function normalizarTipo(tipo) {
       const mapa = {
         seguir: "seguir",
@@ -1403,120 +1528,469 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
       return mapa[tipo?.toLowerCase?.()] || "seguir";
     }
 
-    // 🔍 Verificar se a ação é local (existe no Pedido)
+    // 🔍 Buscar pedido local
     const pedidoLocal = await Pedido.findById(id_action);
 
-    let valorFinal = 0;
-    let tipo_acao = "Seguir";
-    let url_dir = "";
-
-    if (pedidoLocal) {
-      console.log("📦 Confirmando ação local:", id_action);
-
-      tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
-
-      if (tipo_acao === "curtir") {
-        valorFinal = 0.001;
-      } else if (tipo_acao === "seguir") {
-        valorFinal = 0.006;
-      }
-
-      url_dir = pedidoLocal.link;
-    } else {
-      // 🔍 AÇÃO EXTERNA – Buscar no TemporaryAction
-      const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
-
-      if (!tempAction) {
-        console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-        return res.status(404).json({ error: "Ação temporária não encontrada" });
-      }
-
-      // 🔐 Confirmar ação via API externa
-      const payload = {
-        token: "944c736c-6408-465d-9129-0b2f11ce0971",
-        sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-        id_conta: id_tiktok,
-        id_pedido: id_action,
-        is_tiktok: "1",
-      };
-
-      let confirmData = {};
-      try {
-        const confirmResponse = await axios.post(
-          "https://api.ganharnoinsta.com/confirm_action.php",
-          payload,
-          { timeout: 5000 }
-        );
-        confirmData = confirmResponse.data || {};
-        console.log("📬 Resposta da API confirmar ação:", confirmData);
-      } catch (err) {
-        console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
-        return res.status(502).json({ error: "Falha na confirmação externa." });
-      }
-
-      const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
-      const valorDescontado = valorOriginal > 0.003 ? valorOriginal - 0.001 : valorOriginal;
-      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3));
-      tipo_acao = normalizarTipo(confirmData.tipo_acao || tempAction?.tipo_acao);
-      url_dir = tempAction?.url_dir || "";
+    if (!pedidoLocal) {
+      console.log("❌ Pedido local não encontrado:", id_action);
+      return res.status(404).json({ error: "Ação não encontrada." });
     }
 
-    // 💾 Salva o valor real (sem arredondar para exibição)
+    console.log("📦 Confirmando ação local:", id_action);
+
+    // Definir tipo da ação
+    const tipo_acao = normalizarTipo(
+      pedidoLocal.tipo_acao ||
+      pedidoLocal.tipo
+    );
+
+    // Valor da ação
+    const valorFinal = tipo_acao === "curtir" ? 0.001 : 0.006;
+
+    // URL do perfil alvo
+    const url_dir = pedidoLocal.link;
+
+    // Criar registro no histórico
     const newAction = new ActionHistory({
+      user: usuario._id,
       token,
-      nome_usuario: usuario.contas.find(
-        (c) => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok
-      )?.nomeConta,
+      nome_usuario,
       tipo_acao,
       tipo: tipo_acao,
       quantidade_pontos: valorFinal,
-      url_dir,
-      id_conta: id_tiktok,
+      rede_social: "TikTok",
+      url: url_dir,            // ✔ CORRIGIDO
       id_action,
-      id_pedido: id_action,
-      user: usuario._id,
-      acao_validada: "pendente",
-      valor_confirmacao: valorFinal,
+      status: "pendente",
       data: new Date(),
     });
 
     const saved = await newAction.save();
+
     usuario.historico_acoes.push(saved._id);
     await usuario.save();
 
-    // ✅ Exibição: apenas 0.003 vira 0.004 no retorno
-    const valorExibicao = valorFinal === 0.003 ? 0.004 : valorFinal;
-
     return res.status(200).json({
-      status: "sucess",
-      message: "ação confirmada com sucesso",
-      valor: valorExibicao,
+      status: "success",
+      message: "Ação confirmada com sucesso.",
+      valor: valorFinal,
     });
+
   } catch (error) {
     console.error("💥 Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
 }
 
-// Rota: /api/pular_acao
+// Rota: /api/instagram/get_user
+if (url.startsWith("/api/instagram/get_user") && method === "GET") {
+  await connectDB();
+  let { token, nome_usuario } = req.query;
+
+  if (!token || !nome_usuario) {
+    return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
+  }
+
+  nome_usuario = nome_usuario.trim().toLowerCase();
+
+  try {
+    // Verifica usuário pelo token
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
+    }
+
+    // Verifica se essa conta já está vinculada a outro usuário
+    const contaJaRegistrada = await User.findOne({
+      "contas.nome_usuario": nome_usuario,
+      token: { $ne: token }
+    });
+
+    if (contaJaRegistrada) {
+      return res.status(200).json({
+        status: "fail",
+        message: "Essa conta Instagram já está vinculada a outro usuário."
+      });
+    }
+
+    // PROCURAR conta IGUAL pelo nome_usuario E PELA REDE "Instagram"
+    const contaIndex = usuario.contas.findIndex(
+      c => c.nome_usuario === nome_usuario && c.rede === "Instagram"
+    );
+
+    if (contaIndex !== -1) {
+      // Conta IG existente → reativar
+      usuario.contas[contaIndex].status = "ativa";
+    } else {
+      // Criar NOVO documento mesmo se nome_usuario for igual ao de outra rede
+      usuario.contas.push({
+        nome_usuario,
+        status: "ativa",
+        rede: "Instagram"
+      });
+    }
+
+    await usuario.save();
+
+    return res.status(200).json({
+      status: "success",
+      nome_usuario
+    });
+
+  } catch (error) {
+    console.error("Erro ao processar requisição:", error);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  }
+}
+
+// Rota: /api/instagram/get_action (GET) — corrige conflito entre tipos (seguir vs curtir)
+if (url.startsWith("/api/instagram/get_action") && method === "GET") {
+  const { nome_usuario, token, tipo, debug } = req.query;
+
+  if (!nome_usuario || !token) {
+    return res.status(400).json({ error: "Parâmetros 'nome_usuario' e 'token' são obrigatórios" });
+  }
+
+  // normaliza nome_usuario para comparação consistente
+  const nomeUsuarioRequest = String(nome_usuario).trim().toLowerCase();
+
+  try {
+    await connectDB();
+
+    console.log("[GET_ACTION][IG] Requisição:", {
+      nome_usuario: nomeUsuarioRequest,
+      token: token ? "***" + token.slice(-6) : null,
+      tipo,
+      debug: !!debug
+    });
+
+    // valida token (acha o usuário dono do token)
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      console.log("[GET_ACTION][IG] Token inválido");
+      return res.status(401).json({ error: "Token inválido" });
+    }
+
+    // garante que o token corresponde à conta nome_usuario enviada
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => String(c.nome_usuario).trim().toLowerCase() === nomeUsuarioRequest);
+
+    if (!contaVinculada) {
+      console.log("[GET_ACTION][IG] Token não pertence à conta solicitada:", nomeUsuarioRequest);
+      return res.status(401).json({ error: "Token não pertence à conta solicitada" });
+    }
+
+    // normalizar tipo (entrada)
+    const tipoNormalized = typeof tipo === 'string' ? String(tipo).trim().toLowerCase() : null;
+    let tipoBanco;
+    if (tipo === "2" || tipoNormalized === "2" || tipoNormalized === "curtir") tipoBanco = "curtir";
+    else if (tipo === "3" || tipoNormalized === "3" || tipoNormalized === "seguir_curtir")
+      tipoBanco = { $in: ["seguir", "curtir"] };
+    else tipoBanco = "seguir";
+
+    // query base — instagram, status e quantidade disponível
+    const query = {
+      quantidade: { $gt: 0 },
+      status: { $in: ["pendente", "reservada"] },
+      rede: { $regex: new RegExp(`^instagram$`, "i") }
+    };
+    if (typeof tipoBanco === "string") query.tipo = tipoBanco;
+    else query.tipo = tipoBanco;
+
+    const totalMatching = await Pedido.countDocuments(query);
+    console.log(`[GET_ACTION][IG] Pedidos que batem com query inicial: ${totalMatching}`);
+
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }).lean();
+    console.log(`[GET_ACTION][IG] ${pedidos.length} pedidos encontrados (após find)`);
+
+    if (debug === "1") {
+      return res.status(200).json({ debug: true, totalMatching, sampleQuery: query, pedidosSample: pedidos.slice(0, 6) });
+    }
+
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;
+      const idPedidoStr = String(id_pedido);
+
+      console.log("[GET_ACTION][IG] Verificando pedido:", {
+        id_pedido,
+        tipo: pedido.tipo,
+        quantidade: pedido.quantidade,
+        link: pedido.link
+      });
+
+      // garantir que quantidade é número válido
+      const quantidadePedido = Number(pedido.quantidade || 0);
+      if (isNaN(quantidadePedido) || quantidadePedido <= 0) {
+        console.log(`[GET_ACTION][IG] Ignorando pedido ${id_pedido} por quantidade inválida:`, pedido.quantidade);
+        continue;
+      }
+
+      // --- IMPORTANTE: filtrar histórico PELO MESMO TIPO do pedido ---
+      const tipoFilter = { tipo: pedido.tipo }; // ex: { tipo: "seguir" } ou { tipo: "curtir" }
+
+      // helpers para checar estados: consideram tanto acao_validada quanto status
+      const matchValida = { $or: [{ acao_validada: "valida" }, { status: "valida" }] };
+      const matchPendenteOrValida = { $or: [{ acao_validada: { $in: ["pendente", "valida"] } }, { status: { $in: ["pendente", "valida"] } }] };
+      const matchPulada = { $or: [{ acao_validada: "pulada" }, { status: "pulada" }] };
+
+      // 0) Se já houver N confirmações (valida) do MESMO TIPO >= quantidade, fecha
+      const validadas = await ActionHistory.countDocuments({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          tipoFilter,
+          matchValida
+        ]
+      });
+      if (validadas >= quantidadePedido) {
+        console.log(`[GET_ACTION][IG] Pedido ${id_pedido} fechado (tipo ${pedido.tipo}) — já tem ${validadas} validações.`);
+        continue;
+      }
+
+      // 1) Total feitas (pendente + valida) DO MESMO TIPO
+      const feitas = await ActionHistory.countDocuments({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          tipoFilter,
+          matchPendenteOrValida
+        ]
+      });
+      console.log(`[GET_ACTION][IG] Ação ${id_pedido} (tipo ${pedido.tipo}): feitas=${feitas}, limite=${quantidadePedido}`);
+      if (feitas >= quantidadePedido) {
+        console.log(`[GET_ACTION][IG] Pedido ${id_pedido} atingiu limite (tipo ${pedido.tipo}) — pulando`);
+        continue;
+      }
+
+      // 2) Verificar se ESTE NOME_DE_CONTA pulou => bloqueia só esta conta e só para este tipo
+      const pulada = await ActionHistory.findOne({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          tipoFilter,
+          { nome_usuario: nomeUsuarioRequest },
+          matchPulada
+        ]
+      });
+      if (pulada) {
+        console.log(`[GET_ACTION][IG] Usuário ${nomeUsuarioRequest} pulou o pedido ${id_pedido} (tipo ${pedido.tipo}) — pulando`);
+        continue;
+      }
+
+      // 3) Verificar se ESTE NOME_DE_CONTA já possui pendente/valida => bloqueia só esta conta (mesmo tipo)
+      const jaFez = await ActionHistory.findOne({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          tipoFilter,
+          { nome_usuario: nomeUsuarioRequest },
+          matchPendenteOrValida
+        ]
+      });
+      if (jaFez) {
+        console.log(`[GET_ACTION][IG] Usuário ${nomeUsuarioRequest} já possuí ação pendente/validada para pedido ${id_pedido} (tipo ${pedido.tipo}) — pulando`);
+        continue;
+      }
+
+      // Se chegou aqui: feitas < quantidade AND este nome_usuario ainda NÃO fez (para este tipo) => pode pegar
+      // extrair alvo do link (Instagram tolerant)
+      let nomeUsuarioAlvo = "";
+      if (typeof pedido.link === "string") {
+        const link = pedido.link.trim();
+
+        // 1) post (curtir): /p/POST_ID/
+        const postMatch = link.match(/instagram\.com\/p\/([^\/?#&]+)/i);
+        if (postMatch && postMatch[1]) {
+          nomeUsuarioAlvo = postMatch[1]; // devolve o id do post
+        } else {
+          // 2) perfil: /username/
+          const m = link.match(/instagram\.com\/@?([^\/?#&\/]+)/i);
+          if (m && m[1]) {
+            nomeUsuarioAlvo = m[1].replace(/\/$/, "");
+          } else {
+            nomeUsuarioAlvo = pedido.nome || "";
+          }
+        }
+      }
+
+      console.log(`[GET_ACTION][IG] Ação disponível para ${nomeUsuarioRequest}: ${nomeUsuarioAlvo || '<sem-usuario>'} (pedido ${id_pedido}, tipo ${pedido.tipo}) — feitas=${feitas}/${quantidadePedido}`);
+
+      const valorFinal = typeof pedido.valor !== "undefined" && pedido.valor !== null
+        ? String(pedido.valor)
+        : (pedido.tipo === "curtir" ? "0.001" : "0.006");
+
+      // retorno diferenciado para seguir x curtir
+      if (pedido.tipo === "seguir") {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          usuario: nomeUsuarioAlvo,
+          tipo_acao: pedido.tipo,
+          valor: valorFinal
+        });
+      } else {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          tipo_acao: pedido.tipo,
+          valor: valorFinal
+        });
+      }
+    }
+
+    console.log("[GET_ACTION][IG] Nenhuma ação disponível");
+    return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
+
+  } catch (err) {
+    console.error("[GET_ACTION][IG] Erro ao buscar ação:", err);
+    return res.status(500).json({ error: "Erro interno ao buscar ação" });
+  }
+}
+
+// ROTA: /api/instagram/confirm_action (POST)
+if (url.startsWith("/api/instagram/confirm_action") && method === "POST") {
+  await connectDB();
+
+  let { token, id_action, nome_usuario } = req.body;
+
+  if (!token || !id_action || !nome_usuario) {
+    return res.status(400).json({
+      error: "Parâmetros 'token', 'id_action' e 'nome_usuario' são obrigatórios."
+    });
+  }
+
+  // Normaliza o nome de usuário recebido para comparações
+  nome_usuario = String(nome_usuario).trim().toLowerCase();
+
+  try {
+    // 🔐 Validar token (acha o usuário dono do token)
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
+    }
+
+    // Garantir que o token pertence à conta informada (evita token de A agir por B)
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => String(c.nome_usuario).trim().toLowerCase() === nome_usuario);
+    if (!contaVinculada) {
+      console.log("[CONFIRM_ACTION][IG] Token não pertence à conta:", nome_usuario);
+      return res.status(403).json({ error: "Token não pertence à conta informada." });
+    }
+
+    console.log("🧩 id_action recebido:", id_action);
+
+    // Normalizar tipo (mapa robusto)
+    function normalizarTipo(tipo) {
+      const mapa = {
+        seguir: "seguir",
+        seguiram: "seguir",
+        Seguir: "seguir",
+        curtidas: "curtir",
+        curtir: "curtir",
+        Curtir: "curtir",
+      };
+      return mapa[String(tipo || "").toLowerCase()] || "seguir";
+    }
+
+    // 🔍 Buscar pedido local (pelo id numérico)
+    const pedidoLocal = await Pedido.findById(id_action);
+
+    if (!pedidoLocal) {
+      console.log("[CONFIRM_ACTION][IG] Pedido local não encontrado:", id_action);
+      return res.status(404).json({ error: "Ação não encontrada." });
+    }
+
+    console.log("📦 Confirmando ação local (IG):", id_action);
+
+    // Definir tipo da ação (pode vir de pedidoLocal.tipo_acao ou pedidoLocal.tipo)
+    const tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
+
+    // Valor da ação (mesma regra já usada)
+    const valorFinal = tipo_acao === "curtir" ? 0.001 : 0.006;
+
+    // URL do alvo
+    const url_dir = pedidoLocal.link;
+
+    // Extrair alvo do link (perfil ou post)
+    let nomeDoPerfil = "";
+    if (typeof url_dir === "string" && url_dir.length) {
+      const link = url_dir.trim();
+
+      // tentativa 1: post (/p/ID/)
+      const postMatch = link.match(/instagram\.com\/p\/([^\/?#&]+)/i);
+      if (postMatch && postMatch[1]) {
+        nomeDoPerfil = postMatch[1];
+      } else {
+        // tentativa 2: perfil (/username/)
+        const profileMatch = link.match(/instagram\.com\/@?([^\/?#&\/]+)/i);
+        if (profileMatch && profileMatch[1]) {
+          nomeDoPerfil = profileMatch[1].replace(/\/$/, "");
+        } else {
+          // fallback para usar campo nome do pedido
+          nomeDoPerfil = pedidoLocal.nome || "";
+        }
+      }
+    }
+
+    // Criar registro no histórico
+    const newAction = new ActionHistory({
+      user: usuario._id,
+      token,
+      nome_usuario,
+      tipo_acao,
+      tipo: tipo_acao,
+      quantidade_pontos: valorFinal,
+      rede_social: "Instagram",
+      url: url_dir,
+      id_action: String(pedidoLocal._id),
+      status: "pendente",
+      data: new Date(),
+    });
+
+    const saved = await newAction.save();
+
+    // vincular histórico ao usuário e salvar
+    usuario.historico_acoes.push(saved._id);
+    await usuario.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Ação confirmada com sucesso.",
+      valor: valorFinal,
+    });
+
+  } catch (error) {
+    console.error("💥 [CONFIRM_ACTION][IG] Erro ao processar requisição:", error);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
+  }
+}
+
+// ROTA: /api/pular_acao
 if (url.startsWith("/api/pular_acao") && method === "POST") {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
   }
 
   const {
     token,
     id_pedido,
     id_conta,
-    nome_usuario,
+    nome_usuario,        // ✔ agora este nome será salvo corretamente
     url_dir,
     quantidade_pontos,
     tipo_acao,
     tipo
   } = req.body;
 
-  if (!token || !id_pedido || !id_conta || !nome_usuario || !url_dir || !quantidade_pontos || !tipo_acao || !tipo) {
-    return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+  if (
+    !token ||
+    !id_pedido ||
+    !id_conta ||
+    !nome_usuario ||
+    !url_dir ||
+    !quantidade_pontos ||
+    !tipo_acao ||
+    !tipo
+  ) {
+    return res.status(400).json({ error: "Campos obrigatórios ausentes" });
   }
 
   try {
@@ -1524,79 +1998,46 @@ if (url.startsWith("/api/pular_acao") && method === "POST") {
 
     const user = await User.findOne({ token });
     if (!user) {
-      return res.status(401).json({ error: 'Token inválido' });
+      return res.status(401).json({ error: "Token inválido" });
     }
 
-const existente = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
-  acao_validada: 'pulada',
-});
+    // Verificar se já existe ação pulada deste pedido + conta
+    const existente = await ActionHistory.findOne({
+      id_pedido,
+      id_conta,
+      acao_validada: "pulada",
+    });
 
-if (existente) {
-  return res.status(200).json({ status: 'JA_PULADA' });
-}
+    if (existente) {
+      return res.status(200).json({ status: "JA_PULADA" });
+    }
 
-const novaAcao = new ActionHistory({
-  user: user._id,
-  token,
-  nome_usuario,
-  id_action: crypto.randomUUID(),
-  id_pedido,
-  id_conta,
-  url_dir,
-  quantidade_pontos,
-  tipo_acao,
-  tipo,
-  acao_validada: 'pulada',
-  rede_social: 'TikTok',
-  createdAt: new Date()
-});
+    // Registrar ação pulada
+    const novaAcao = new ActionHistory({
+      user: user._id,
+      token,
+      nome_usuario,         // ✔ salvo corretamente
+      id_action: crypto.randomUUID(),
+      id_pedido,
+      id_conta,
+      url_dir,
+      quantidade_pontos,
+      tipo_acao,
+      tipo,
+      acao_validada: "pulada",
+      rede_social: "TikTok",
+      createdAt: new Date(),
+    });
 
     await novaAcao.save();
 
-    return res.status(200).json({ status: 'PULADA_REGISTRADA' });
+    return res.status(200).json({ status: "PULADA_REGISTRADA" });
+
   } catch (error) {
-    console.error('Erro ao registrar ação pulada:', error);
-    return res.status(500).json({ error: 'Erro interno' });
+    console.error("Erro ao registrar ação pulada:", error);
+    return res.status(500).json({ error: "Erro interno" });
   }
-};
-
-// Rota: /api/proxy_bind_tk
-if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método não permitido' });
-  }
-
-  const { nome_usuario } = req.query;
-  if (!nome_usuario) {
-    return res.status(400).json({ error: 'Parâmetro nome_usuario é obrigatório' });
-  }
-
-  try {
-    const url = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nome_usuario)}`;
-
-    const response = await fetch(url);
-    const data = await response.text(); // texto cru vindo da API externa
-    const txt = String(data || "").trim();
-
-    // Normaliza: se o texto contém NOT_FOUND devolvemos status fail/message
-    if (txt.toUpperCase().includes("NOT_FOUND")) {
-      return res.status(200).json({ status: 'fail', message: 'NOT_FOUND', resposta: txt });
-    }
-
-    // outros casos de erro detectáveis pela string (opcional)
-    if (/ERROR|FAIL|INVALID/i.test(txt)) {
-      return res.status(200).json({ status: 'fail', message: txt, resposta: txt });
-    }
-
-    // sucesso (ou resposta que não indica erro)
-    return res.status(200).json({ status: 'SUCESSO', resposta: txt });
-  } catch (error) {
-    console.error('Erro ao consultar API externa:', error);
-    return res.status(500).json({ error: 'Erro ao consultar API externa' });
-  }
-};
+}
 
 // 🔹 Rota: /api/afiliados
 if (url.startsWith("/api/afiliados") && method === "POST") {
@@ -1676,7 +2117,7 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     id_conta,
     id_pedido,
     nome_usuario,
-    url_dir,
+    url,
     tipo_acao,
     quantidade_pontos,
     unique_id
@@ -1686,43 +2127,56 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
- try {
-  const idPedidoStr = id_pedido.toString();
-  const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
+  try {
+    const idPedidoStr = id_pedido.toString();
 
-  const pontos = parseFloat(quantidade_pontos);
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
-  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
-  const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+    // === Detectar Rede Social ===
+    let redeFinal = "TikTok";
+    if (url?.includes("instagram.com") || tipo_acao?.toLowerCase().includes("instagram")) {
+      redeFinal = "Instagram";
+    }
 
-  const novaAcao = new ActionHistory({
-    user: usuario._id,
-    token: usuario.token,
-    nome_usuario,
-    id_pedido: idPedidoStr,
-    id_action: idPedidoStr,
-    id_conta,
-    url_dir,
-    unique_id,
-    tipo_acao,
-    quantidade_pontos,
-    tipo: tipoAcaoFinal,
-    rede_social: "TikTok",
-    valor_confirmacao: valorConfirmacaoFinal,
-    acao_validada: "pendente",
-    data: new Date()
-  });
+    // === Detectar Tipo de Ação ===
+    let tipoAcaoFinal = "seguir";
+    if (url.includes("/video/") || url.includes("/p/") || url.includes("/reel/")) {
+      tipoAcaoFinal = "curtir";
+    }
 
-  // 🔁 Salva com controle de limite por usuário
-  await salvarAcaoComLimitePorUsuario(novaAcao);
+    // === Cálculo de valores ===
+    const pontos = parseFloat(quantidade_pontos);
+    const valorBruto = pontos / 1000;
+    const valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
+    const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
+    const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
 
-  return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+    // === Criar Ação ===
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
+      nome_usuario,
+      id_pedido: idPedidoStr,
+      id_action: idPedidoStr,
+      id_conta,
+      url,
+      unique_id,
+      tipo_acao,
+      quantidade_pontos,
+      tipo: tipoAcaoFinal,
+      rede_social: redeFinal,     // <---- AQUI AGORA ESTÁ CORRETO
+      valor_confirmacao: valorConfirmacaoFinal,
+      acao_validada: "pendente",
+      data: new Date()
+    });
 
-} catch (error) {
-  console.error("Erro ao registrar ação pendente:", error);
-  return res.status(500).json({ error: "Erro ao registrar ação." });
-}
+    // Salvar com limite
+    await salvarAcaoComLimitePorUsuario(novaAcao);
+
+    return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+
+  } catch (error) {
+    console.error("Erro ao registrar ação pendente:", error);
+    return res.status(500).json({ error: "Erro ao registrar ação." });
+  }
 }
 
 // Rota: /api/test/ranking_diario (POST)
@@ -2649,6 +3103,7 @@ if (modo === "resumo") {
     console.error("❌ ERRO GERAL EM /api/gerenciar_acoes:");
     console.error("📄 Mensagem:", error.message);
     console.error("📄 Stack:", error.stack);
+
 
     return res.status(500).json({ error: "Erro interno no servidor." });
   }
