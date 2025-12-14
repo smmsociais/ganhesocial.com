@@ -582,7 +582,12 @@ router.post("/login", async (req, res) => {
         try {
             await connectDB();
     
-            const { email, senha } = req.body;
+const { email, senha } = req.body;
+
+console.log("📥 BODY RECEBIDO:", req.body);
+console.log("📧 email:", email);
+console.log("🔑 senha:", senha);
+
     
             if (!email || !senha) {
                 return res.status(400).json({ error: "E-mail e senha são obrigatórios!" });
