@@ -1,3 +1,4 @@
+//handler.js
 import axios from "axios";
 import https from 'https';
 import { v4 as uuidv4 } from 'uuid';
@@ -5,11 +6,35 @@ import connectDB from "./db.js";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
-import { User, ActionHistory, DailyEarning, Pedido, TemporaryAction, DailyRanking } from "./schema.js";
+import { User, ActionHistory, DailyEarning, Pedido, DailyRanking } from "./schema.js";
+import express from "express";
+import jwt from "jsonwebtoken";
 
-console.log(">>> MONGODB_URI:", process.env.MONGODB_URI);
+// IMPORTAÇÃO DAS ROTAS INDEPENDENTES
+import buscarInstagram from "./buscar_acao_smm_instagram.js";
+import buscarTikTok from "./buscar_acao_smm_tiktok.js";
+import getInstagramUser from "./get-instagram-user.js";
+import getTikTokUser from "./get-tiktok-user.js";
+import smmAcao from "./smm_acao.js";
+import verificarFollowing from "./user-following.js";
+import googleSignup from "./auth/google/signup.js";
+import googleSignupCallback from "./auth/google/signup/callback.js";
+import googleLogin from "./auth/google.js";
+import googleCallback from "./auth/google/callback.js";
 
-// ===== Variáveis globais (colocar no topo do arquivo, fora do handler) =====
+const router = express.Router();
+
+router.get("/buscar_acao_smm_instagram", buscarInstagram);
+router.get("/buscar_acao_smm_tiktok", buscarTikTok);
+router.get("/get-instagram-user", getInstagramUser);
+router.get("/get-tiktok-user", getTikTokUser);
+router.post("/smm_acao", smmAcao);
+router.get("/user-following", verificarFollowing);
+router.get("/auth/google", googleLogin);
+router.get("/auth/google/callback", googleCallback);
+router.get("/auth/google/signup", googleSignup);
+router.get("/auth/google/signup/callback", googleSignupCallback);
+
 let ultimoRanking = null;
 let ultimaAtualizacao = 0;
 let top3FixosHoje = null;
@@ -18,77 +43,7 @@ let horaInicioRanking = null;
 let zeroedAtMidnight = false;
 let dailyFixedRanking = null;
 
-// ---- HELPERS E CONSTANTES GLOBAIS (apenas uma vez) ----
-function norm(s) { return String(s || "").trim().toLowerCase(); }
-
-function shuffleArray(a) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// baseline consistente usada sempre que preencher com nomes (10 posições)
-const baselineValores = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3];
-
-
-export default async function handler(req, res) {
-    const { method, url, query } = req;
-
-    // 🚨 RESET MANUAL DO RANKING (via variável de ambiente OU parâmetro na URL)
-    const resetPorEnv = process.env.RESET_RANKING === 'true';
-    const resetPorURL = query?.reset === 'true';
-
-if (resetPorEnv || resetPorURL) {
-    await connectDB(); // garante conexão antes de limpar o banco
-
-    // 🧹 Limpa todos os ganhos diários (zera saldos)
-    const resultado = await DailyEarning.deleteMany({});
-    console.log(`🧾 ${resultado.deletedCount} registros de ganhos diários removidos.`);
-
-    // 🧠 Limpa cache do ranking
-    ultimoRanking = null;
-    ultimaAtualizacao = 0;
-    top3FixosHoje = null;
-    diaTop3 = null;
-    horaInicioRanking = Date.now();
-    console.log("🔥 Ranking e saldos reiniciados manualmente", resetPorEnv ? "(via ENV)" : "(via URL)");
-
-    if (resetPorURL) {
-        return res.status(200).json({
-            success: true,
-            message: `Ranking e saldos zerados (${resultado.deletedCount} ganhos removidos).`
-        });
-    }
-}
-    async function salvarAcaoComLimitePorUsuario(novaAcao) {
-        const LIMITE = 2000;
-        const total = await ActionHistory.countDocuments({ user: novaAcao.user });
-
-        if (total >= LIMITE) {
-            const excess = total - LIMITE + 1;
-            await ActionHistory.find({ user: novaAcao.user })
-                .sort({ createdAt: 1 })
-                .limit(excess)
-                .deleteMany();
-        }
-
-        await novaAcao.save();
-    }
-
-    const formatarValorRanking = (valor) => {
-        if (valor <= 1) return "1+";
-        if (valor > 1 && valor < 5) return "1+";
-        if (valor < 10) return "5+";
-        if (valor < 50) return "10+";
-        if (valor < 100) return "50+";
-        if (valor < 500) return "100+";
-        if (valor < 1000) return "500+";
-        const base = Math.floor(valor / 1000) * 1000;
-        return `${base}+`;
-    };
-
+const baselineValores = [10, 9, 8, 7, 6, 5.9, 5.8, 5.7, 5.6, 5.5];
 
 // garante helper acessível mesmo em hot-reload / diferentes escopos
 if (typeof globalThis.fetchTopFromDailyEarning !== "function") {
@@ -123,157 +78,419 @@ if (typeof globalThis.fetchTopFromDailyEarning !== "function") {
 }
 const fetchTopFromDailyEarning = globalThis.fetchTopFromDailyEarning;
 
-const norm = (s) => String(s || "").trim().toLowerCase();
+async function salvarAcaoComLimitePorUsuario(novaAcao) {
+    const LIMITE = 10000;
 
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+    // Conta apenas ações válidas e inválidas
+    const totalValidasOuInvalidas = await ActionHistory.countDocuments({
+        user: novaAcao.user,
+        status: { $in: ["valida", "invalida"] }
+    });
 
-// Rota: /api/contas (GET, POST, DELETE)
-if (url.startsWith("/api/contas")) {
-    try {
-        await connectDB();
+    // Se excedeu o limite, remover somente as mais antigas
+    if (totalValidasOuInvalidas >= LIMITE) {
+        const excess = totalValidasOuInvalidas - LIMITE + 1;
 
-        const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-
-        const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
-        console.log("🔹 Token recebido:", token);
-
-        if (!token) return res.status(401).json({ error: "Token inválido." });
-
-        const user = await User.findOne({ token });
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-
-        // ===========================
-        // 📌 POST → Adicionar conta
-        // ===========================
-        if (method === "POST") {
-            const { nomeConta, id_conta, id_tiktok } = req.body;
-
-            if (!nomeConta) {
-                return res.status(400).json({ error: "Nome da conta é obrigatório." });
-            }
-
-            const nomeNormalized = String(nomeConta).trim();
-
-            // 🔍 Verifica se a conta já existe no próprio usuário
-            const contaExistente = user.contas.find(c => c.nomeConta === nomeNormalized);
-
-            if (contaExistente) {
-                if (contaExistente.status === "ativa") {
-                    return res.status(400).json({ error: "Esta conta já está ativa." });
-                }
-
-                // 🔄 Reativar conta
-                contaExistente.status = "ativa";
-                contaExistente.id_conta = id_conta ?? contaExistente.id_conta;
-                contaExistente.id_tiktok = id_tiktok ?? contaExistente.id_tiktok;
-                contaExistente.dataDesativacao = undefined;
-
-                await user.save();
-                return res.status(200).json({ message: "Conta reativada com sucesso!" });
-            }
-
-            // ❌ Verifica se outro usuário já tem esta conta
-            const contaDeOutroUsuario = await User.findOne({
-                _id: { $ne: user._id },
-                "contas.nomeConta": nomeNormalized
-            });
-
-            if (contaDeOutroUsuario) {
-                return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
-            }
-
-            // ===========================
-            // ➕ Adiciona nova conta (SEM validação externa)
-            // ===========================
-            user.contas.push({
-                nomeConta: nomeNormalized,
-                id_conta,
-                id_tiktok,
-                status: "ativa"
-            });
-
-            await user.save();
-
-            return res.status(201).json({
-                message: "Conta adicionada com sucesso!",
-                nomeConta: nomeNormalized
-            });
-        }
-
-        // ===========================
-        // 📌 GET → Listar contas ativas
-        // ===========================
-        if (method === "GET") {
-            if (!user.contas || user.contas.length === 0) {
-                return res.status(200).json([]);
-            }
-
-            const contasAtivas = user.contas
-                .filter(conta => !conta.status || conta.status === "ativa")
-                .map(conta => {
-                    const contaObj = typeof conta.toObject === "function" ? conta.toObject() : conta;
-                    return {
-                        ...contaObj,
-                        usuario: {
-                            _id: user._id,
-                            nome: user.nome
-                        }
-                    };
-                });
-
-            return res.status(200).json(contasAtivas);
-        }
-
-        // ===========================
-        // 📌 DELETE → Desativar conta
-        // ===========================
-        if (method === "DELETE") {
-            const { nomeConta } = req.query;
-
-            if (!nomeConta) {
-                return res.status(400).json({ error: "Nome da conta não fornecido." });
-            }
-
-            console.log("🔹 Nome da conta recebido para exclusão:", nomeConta);
-
-            const contaIndex = user.contas.findIndex(conta => conta.nomeConta === nomeConta);
-
-            if (contaIndex === -1) {
-                return res.status(404).json({ error: "Conta não encontrada." });
-            }
-
-            user.contas[contaIndex].status = "inativa";
-            user.contas[contaIndex].dataDesativacao = new Date();
-
-            await user.save();
-
-            return res.status(200).json({
-                message: `Conta ${nomeConta} desativada com sucesso.`
-            });
-        }
-
-    } catch (error) {
-        console.error("❌ Erro:", error);
-        return res.status(500).json({ error: "Erro interno no servidor." });
+        await ActionHistory.find({
+            user: novaAcao.user,
+            status: { $in: ["valida", "invalida"] }
+        })
+        .sort({ createdAt: 1 }) // remove as mais antigas
+        .limit(excess)
+        .deleteMany();
     }
+
+    // Salva a nova ação (pendente, válida ou inválida)
+    await novaAcao.save();
 }
 
-// Rota: /api/profile (GET ou PUT)
-if (url.startsWith("/api/profile")) {
-  if (method !== "GET" && method !== "PUT") {
-    return res.status(405).json({ error: "Método não permitido." });
+// 🔥 FUNÇÃO GLOBAL COM SUPORTE A VARIÁVEIS DE AMBIENTE
+export function getValorAcao(pedidoOuTipo, rede = "TikTok") {
+
+  // Se veio o pedido completo com valor explícito, usa ele
+  if (pedidoOuTipo && typeof pedidoOuTipo === "object") {
+    if (pedidoOuTipo.valor !== undefined && pedidoOuTipo.valor !== null) {
+      return String(pedidoOuTipo.valor);
+    }
   }
 
+  // Tipo pode vir do pedido ou da string
+  const tipo = typeof pedidoOuTipo === "object"
+    ? String(pedidoOuTipo.tipo).toLowerCase()
+    : String(pedidoOuTipo).toLowerCase();
+
+  const redeNorm = String(rede).toLowerCase();
+
+  // 🔍 Primeiro tenta ENV específico por rede e tipo (ex: VALOR_TIKTOK_CURTIR)
+  const envKey = `VALOR_${redeNorm.toUpperCase()}_${tipo.toUpperCase()}`;
+  const valorEnv = process.env[envKey];
+  if (valorEnv) return String(valorEnv);
+
+  // 🔍 Depois tenta ENV genérico
+  if (tipo === "curtir" && process.env.VALOR_CURTIR) return String(process.env.VALOR_CURTIR);
+  if (tipo === "seguir" && process.env.VALOR_SEGUIR) return String(process.env.VALOR_SEGUIR);
+
+}
+
+// 📌 ROTA PARA CONSULTAR VALORES DAS AÇÕES
+router.get("/valor_acao", (req, res) => {
+  const { tipo = "seguir", rede = "TikTok" } = req.query;
+
+  const valor = getValorAcao(tipo, rede);
+
+  return res.json({
+    status: "success",
+    tipo,
+    rede,
+    valor
+  });
+});
+
+// Rota: /api/contas_tiktok (POST, GET, DELETE)
+function getTokenFromHeader(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader) return null;
+  return authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+router.route("/contas_tiktok")
+
+  // POST -> adicionar / reativar conta TikTok (aceita nome_usuario ou nomeConta)
+  .post(async (req, res) => {
+    try {
+      await connectDB();
+
+      const token = getTokenFromHeader(req);
+      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+      const user = await User.findOne({ token });
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+      // aceita nome_usuario (novo) ou nomeConta (frontend antigo)
+      const rawName = req.body?.nome_usuario ?? req.body?.nomeConta ?? req.body?.username;
+      if (!rawName || String(rawName).trim() === "") {
+        return res.status(400).json({ error: "Nome da conta é obrigatório." });
+      }
+
+      const nomeNormalized = String(rawName).trim();
+      const nomeLower = nomeNormalized.toLowerCase();
+
+// 🔍 Verificar se já existe conta TikTok com o mesmo nome
+const contaExistenteIndex = (user.contas || []).findIndex(
+  c =>
+    String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
+    String(c.rede ?? "").toLowerCase() === "tiktok"
+);
+
+      if (contaExistenteIndex !== -1) {
+        const contaExistente = user.contas[contaExistenteIndex];
+
+        if (String(contaExistente.status ?? "").toLowerCase() === "ativa") {
+          return res.status(400).json({ error: "Esta conta já está ativa." });
+        }
+
+        // Reativar conta existente e garantir ambos os campos preenchidos
+        contaExistente.status = "ativa";
+        contaExistente.rede = "TikTok";
+        contaExistente.dataDesativacao = undefined;
+
+        // garantir nome_usuario e nomeConta
+        contaExistente.nome_usuario = nomeNormalized;
+
+        await user.save();
+        return res.status(200).json({ message: "Conta reativada com sucesso!", nomeConta: nomeNormalized });
+      }
+
+      // Verifica se outro usuário já possui essa mesma conta (case-insensitive) — checa ambos campos
+      const regex = new RegExp(`^${escapeRegExp(nomeNormalized)}$`, "i");
+      const contaDeOutroUsuario = await User.findOne({
+        _id: { $ne: user._id },
+        $or: [
+          { "contas.nome_usuario": regex }
+        ]
+      });
+
+      if (contaDeOutroUsuario) {
+        return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
+      }
+
+      // Adicionar nova conta — preencher nome_usuario (canônico) E nomeConta (compat)
+      user.contas = user.contas || [];
+      user.contas.push({
+        nome_usuario: nomeNormalized,
+        rede: "TikTok",
+        status: "ativa",
+        dataCriacao: new Date()
+      });
+
+      await user.save();
+
+      return res.status(201).json({
+        message: "Conta TikTok adicionada com sucesso!",
+        nomeConta: nomeNormalized
+      });
+    } catch (err) {
+      console.error("❌ Erro em POST /contas_tiktok", err);
+      return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+  })
+
+  // GET -> listar contas Instagram ativas do usuário
+  .get(async (req, res) => {
+    try {
+      await connectDB();
+
+      const token = getTokenFromHeader(req);
+      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+      const user = await User.findOne({ token });
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+      const contasInstagram = (user.contas || [])
+        .filter(conta => {
+          const rede = String(conta.rede ?? "").trim().toLowerCase();
+          const status = String(conta.status ?? "").trim().toLowerCase();
+          return rede === "tiktok" && status === "ativa";
+        })
+        .map(conta => {
+          const contaObj = conta && typeof conta.toObject === "function"
+            ? conta.toObject()
+            : JSON.parse(JSON.stringify(conta));
+
+          return {
+            ...contaObj,
+            usuario: {
+              _id: user._id,
+              nome: user.nome || ""
+            }
+          };
+        });
+
+      return res.status(200).json(contasInstagram);
+    } catch (err) {
+      console.error("❌ Erro em GET /contas_tiktok:", err);
+      return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+  })
+
+// DELETE -> desativar conta Instagram (accept nome_usuario OR nomeConta)
+.delete(async (req, res) => {
+  try {
+    await connectDB();
+
+    const token = getTokenFromHeader(req);
+    if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+    const user = await User.findOne({ token });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+    // aceita nome_usuario (DB atual) OU nomeConta (rotas antigas)
+    const nomeRaw = req.query.nome_usuario ?? req.body?.nome_usuario;
+    if (!nomeRaw) return res.status(400).json({ error: "Nome da conta não fornecido." });
+
+    const nomeLower = String(nomeRaw).trim().toLowerCase();
+
+// 🔍 Encontrar conta específica DO TIKTOK
+const contaIndex = (user.contas || []).findIndex(c =>
+  String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
+  String(c.rede ?? "").toLowerCase() === "tiktok"
+);
+
+    if (contaIndex === -1) return res.status(404).json({ error: "Conta não encontrada." });
+
+    user.contas[contaIndex].status = "inativa";
+    user.contas[contaIndex].dataDesativacao = new Date();
+
+    await user.save();
+
+    return res.status(200).json({ message: `Conta ${user.contas[contaIndex].nome_usuario || user.contas[contaIndex].nomeConta} desativada com sucesso.` });
+
+  } catch (err) {
+    console.error("❌ Erro em DELETE /contas_tiktok:", err);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+  }
+});
+
+router.route("/contas_instagram")
+
+  // POST -> adicionar / reativar conta Instagram (aceita nome_usuario ou nomeConta)
+  .post(async (req, res) => {
+    try {
+      await connectDB();
+
+      const token = getTokenFromHeader(req);
+      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+      const user = await User.findOne({ token });
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+      // aceita nome_usuario (novo) ou nomeConta (frontend antigo)
+      const rawName = req.body?.nome_usuario ?? req.body?.nomeConta ?? req.body?.username;
+      if (!rawName || String(rawName).trim() === "") {
+        return res.status(400).json({ error: "Nome da conta é obrigatório." });
+      }
+
+      const nomeNormalized = String(rawName).trim();
+      const nomeLower = nomeNormalized.toLowerCase();
+
+// 🔍 Verificar se já existe conta TikTok com o mesmo nome
+const contaExistenteIndex = (user.contas || []).findIndex(
+  c =>
+    String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
+    String(c.rede ?? "").toLowerCase() === "instagram"
+);
+      if (contaExistenteIndex !== -1) {
+        const contaExistente = user.contas[contaExistenteIndex];
+
+        if (String(contaExistente.status ?? "").toLowerCase() === "ativa") {
+          return res.status(400).json({ error: "Esta conta já está ativa." });
+        }
+
+        // Reativar conta existente e garantir ambos os campos preenchidos
+        contaExistente.status = "ativa";
+        contaExistente.rede = "Instagram";
+        contaExistente.id_conta = req.body.id_conta ?? contaExistente.id_conta;
+        contaExistente.id_instagram = req.body.id_instagram ?? contaExistente.id_instagram;
+        contaExistente.dataDesativacao = undefined;
+
+        // garantir nome_usuario e nomeConta
+        contaExistente.nome_usuario = nomeNormalized;
+        contaExistente.nomeConta = nomeNormalized;
+
+        await user.save();
+        return res.status(200).json({ message: "Conta reativada com sucesso!", nomeConta: nomeNormalized });
+      }
+
+      // Verifica se outro usuário já possui essa mesma conta (case-insensitive) — checa ambos campos
+      const regex = new RegExp(`^${escapeRegExp(nomeNormalized)}$`, "i");
+      const contaDeOutroUsuario = await User.findOne({
+        _id: { $ne: user._id },
+        $or: [
+          { "contas.nome_usuario": regex },
+          { "contas.nomeConta": regex }
+        ]
+      });
+
+      if (contaDeOutroUsuario) {
+        return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
+      }
+
+      // Adicionar nova conta — preencher nome_usuario (canônico) E nomeConta (compat)
+      user.contas = user.contas || [];
+      user.contas.push({
+        nome_usuario: nomeNormalized,
+        nomeConta: nomeNormalized,
+        id_conta: req.body.id_conta,
+        id_instagram: req.body.id_instagram,
+        rede: "Instagram",
+        status: "ativa",
+        dataCriacao: new Date()
+      });
+
+      await user.save();
+
+      return res.status(201).json({
+        message: "Conta Instagram adicionada com sucesso!",
+        nomeConta: nomeNormalized
+      });
+    } catch (err) {
+      console.error("❌ Erro em POST /contas_instagram:", err);
+      return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+  })
+
+  // GET -> listar contas Instagram ativas do usuário
+  .get(async (req, res) => {
+    try {
+      await connectDB();
+
+      const token = getTokenFromHeader(req);
+      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+      const user = await User.findOne({ token });
+      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+      const contasInstagram = (user.contas || [])
+        .filter(conta => {
+          const rede = String(conta.rede ?? "").trim().toLowerCase();
+          const status = String(conta.status ?? "").trim().toLowerCase();
+          return rede === "instagram" && status === "ativa";
+        })
+        .map(conta => {
+          const contaObj = conta && typeof conta.toObject === "function"
+            ? conta.toObject()
+            : JSON.parse(JSON.stringify(conta));
+
+          return {
+            ...contaObj,
+            usuario: {
+              _id: user._id,
+              nome: user.nome || ""
+            }
+          };
+        });
+
+      return res.status(200).json(contasInstagram);
+    } catch (err) {
+      console.error("❌ Erro em GET /contas_instagram:", err);
+      return res.status(500).json({ error: "Erro interno no servidor." });
+    }
+  })
+
+// DELETE -> desativar conta Instagram (accept nome_usuario OR nomeConta)
+.delete(async (req, res) => {
+  try {
+    await connectDB();
+
+    const token = getTokenFromHeader(req);
+    if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+
+    const user = await User.findOne({ token });
+    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+
+    // aceita nome_usuario (DB atual) OU nomeConta (rotas antigas)
+    const nomeRaw = req.query.nome_usuario ?? req.query.nomeConta ?? req.body?.nome_usuario ?? req.body?.nomeConta;
+    if (!nomeRaw) return res.status(400).json({ error: "Nome da conta não fornecido." });
+
+    const nomeLower = String(nomeRaw).trim().toLowerCase();
+
+// 🔍 Encontrar conta específica DO TIKTOK
+const contaIndex = (user.contas || []).findIndex(c =>
+  String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
+  String(c.rede ?? "").toLowerCase() === "instagram"
+);
+
+
+    if (contaIndex === -1) return res.status(404).json({ error: "Conta não encontrada." });
+
+    user.contas[contaIndex].status = "inativa";
+    user.contas[contaIndex].dataDesativacao = new Date();
+
+    await user.save();
+
+    return res.status(200).json({ message: `Conta ${user.contas[contaIndex].nome_usuario || user.contas[contaIndex].nomeConta} desativada com sucesso.` });
+
+  } catch (err) {
+    console.error("❌ Erro em DELETE /contas_instagram:", err);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+  }
+});
+
+// ===============================
+// ROTA: /api/profile
+// GET → retorna dados do usuário
+// PUT → atualiza dados do usuário
+// ===============================
+
+router.get("/profile", async (req, res) => {
   await connectDB();
 
   const authHeader = req.headers.authorization;
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Não autorizado." });
   }
@@ -287,168 +504,77 @@ if (url.startsWith("/api/profile")) {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-    if (method === "GET") {
-      let actionHistory = null;
+    return res.status(200).json({
+      nome_usuario: usuario.nome,
+      email: usuario.email,
+      token: usuario.token
+    });
 
-      if (usuario.historico_acoes?.length > 0) {
-        actionHistory = await ActionHistory.findOne({
-          _id: { $in: usuario.historico_acoes }
-        }).sort({ data: -1 });
-      }
-
-      return res.status(200).json({
-        nome_usuario: usuario.nome,
-        email: usuario.email,
-        token: usuario.token
-      });
-    }
-
-    if (method === "PUT") {
-      const { nome_usuario, email, senha } = req.body;
-
-      const updateFields = { nome: nome_usuario, email };
-      if (senha) {
-        updateFields.senha = senha; // ⚠️ Criptografar se necessário
-      }
-
-      const usuarioAtualizado = await User.findOneAndUpdate(
-        { token },
-        updateFields,
-        { new: true }
-      );
-
-      if (!usuarioAtualizado) {
-        return res.status(404).json({ error: "Usuário não encontrado." });
-      }
-
-      return res.status(200).json({ message: "Perfil atualizado com sucesso!" });
-    }
   } catch (error) {
-    console.error("💥 Erro ao processar /profile:", error);
+    console.error("💥 Erro no GET /profile:", error);
     return res.status(500).json({ error: "Erro ao processar perfil." });
   }
-}
+});
 
-// Rota: /api/historico_acoes (GET)
-if (url.startsWith("/api/historico_acoes")) {
-  if (method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido." });
-  }
-
+// Rota: /api/profile (GET ou PUT)
+router.put("/profile", async (req, res) => {
   await connectDB();
 
   const authHeader = req.headers.authorization;
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Token não fornecido ou inválido." });
+    return res.status(401).json({ error: "Não autorizado." });
   }
 
-  const token = authHeader.split(" ")[1];
-  const usuario = await User.findOne({ token });
-
-  if (!usuario) {
-    return res.status(401).json({ error: "Usuário não autenticado." });
-  }
-
-  const nomeUsuarioParam = req.query.usuario;
-
-  if (nomeUsuarioParam) {
-    // Busca diretamente pelo nome de usuário, ignorando o token
-    const historico = await ActionHistory
-      .find({ nome_usuario: nomeUsuarioParam, acao_validada: { $ne: "pulada" } })
-      .sort({ data: -1 });
-  
-    const formattedData = historico.map(action => {
-      let status;
-      if (action.acao_validada === "valida") status = "Válida";
-      else if (action.acao_validada === "invalida") status = "Inválida";
-      else status = "Pendente";
-  
-      return {
-        nome_usuario: action.nome_usuario,
-        acao_validada: action.acao_validada,
-        valor_confirmacao: action.valor_confirmacao,
-        data: action.data,
-        rede_social: action.rede_social || "TikTok",
-        tipo: action.tipo || "Seguir",
-        url_dir: action.url_dir || null,
-        status
-      };
-    });
-  
-    return res.status(200).json(formattedData);
-  }  
+  const token = authHeader.split(" ")[1].trim();
+  console.log("🔐 Token recebido:", token);
 
   try {
-    const historico = await ActionHistory
-      .find({ user: usuario._id, acao_validada: { $ne: "pulada" } })
-      .sort({ data: -1 });
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
 
-    const formattedData = historico.map(action => {
-      let status;
-      if (action.acao_validada === "valida") status = "Válida";
-      else if (action.acao_validada === "invalida") status = "Inválida";
-      else status = "Pendente";
+const { nome_usuario, email, senha } = req.body;
 
-      return {
-        nome_usuario: action.nome_usuario,
-        acao_validada: action.acao_validada,
-        valor_confirmacao: action.valor_confirmacao,
-        data: action.data,
-        rede_social: action.rede_social || "TikTok",
-        tipo: action.tipo || "Seguir",
-        url_dir: action.url_dir || null,
-        status
-      };
-    });    
+const updateFields = {};
 
-    return res.status(200).json(formattedData);
+if (nome_usuario !== undefined) {
+  updateFields.nome = nome_usuario;
+}
+
+if (email !== undefined) {
+  updateFields.email = email;
+}
+
+if (senha !== undefined) {
+  updateFields.senha = senha; 
+}
+
+    const usuarioAtualizado = await User.findOneAndUpdate(
+      { token },
+      updateFields,
+      { new: true }
+    );
+
+    if (!usuarioAtualizado) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    return res.status(200).json({
+      message: "Perfil atualizado com sucesso!",
+      nome_usuario: usuarioAtualizado.nome,
+      email: usuarioAtualizado.email
+    });
+
   } catch (error) {
-    console.error("💥 Erro em /historico_acoes:", error);
-    return res.status(500).json({ error: "Erro ao buscar histórico de ações." });
+    console.error("💥 Erro no PUT /profile:", error);
+    return res.status(500).json({ error: "Erro ao atualizar perfil." });
   }
-}
-
-// Rota: /api/get_saldo (GET)
-if (url.startsWith("/api/get_saldo")) {
-    if (method !== "GET") {
-        return res.status(405).json({ error: "Método não permitido." });
-    }
-
-    await connectDB();
-
-    const { token } = req.query;
-    if (!token) {
-        return res.status(400).json({ error: "Token obrigatório." });
-    }
-
-    try {
-        const usuario = await User.findOne({ token }).select("saldo pix_key _id");
-        if (!usuario) {
-            return res.status(403).json({ error: "Acesso negado." });
-        }
-        
-        // calcula o saldo pendente com base nas ações ainda não validadas
-        const pendentes = await ActionHistory.find({
-            user: usuario._id,
-            acao_validada: "pendente"
-        }).select("valor_confirmacao");
-        
-        const saldo_pendente = pendentes.reduce((soma, acao) => soma + (acao.valor_confirmacao || 0), 0);
-        
-        return res.status(200).json({
-            saldo_disponivel: typeof usuario.saldo === "number" ? usuario.saldo : 0,
-            saldo_pendente,
-            pix_key: usuario.pix_key
-        });
-        
-    } catch (error) {
-        console.error("💥 Erro ao obter saldo:", error);
-        return res.status(500).json({ error: "Erro ao buscar saldo." });
-    }
-}
+});
 
 // Rota: /api/login
-if (url.startsWith("/api/login")) {
+router.post("/login", async (req, res) => {
         if (req.method !== "POST") {
             return res.status(405).json({ error: "Método não permitido" });
         }
@@ -492,10 +618,11 @@ if (url.startsWith("/api/login")) {
         } catch (error) {
             console.error("❌ Erro ao realizar login:", error);
             return res.status(500).json({ error: "Erro ao realizar login" });
-        }
-    };
+  }
+});
 
-if (url.startsWith("/api/signup") && method === "POST") {
+// rota api/signup
+router.post("/signup", async (req, res) => {
   await connectDB();
 
   const { email, senha, ref } = req.body;
@@ -505,19 +632,26 @@ if (url.startsWith("/api/signup") && method === "POST") {
   }
 
   try {
+    // 🔥 NOVO: Bloqueia se já existir qualquer usuário no banco
+    const totalUsuarios = await User.countDocuments();
+    if (totalUsuarios >= 1) {
+      return res.status(403).json({
+        error: "Erro."
+      });
+    }
 
-    // ✅ Verifica se e-mail já existe
+    // Verifica se email já existe (não é necessário, pois só 1 usuário pode existir,
+    // mas deixei por segurança)
     const emailExiste = await User.findOne({ email });
     if (emailExiste) return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    // ✅ Gera token obrigatório
+    // Gera token
     const token = crypto.randomBytes(32).toString("hex");
 
-    // ✅ Função para gerar código de afiliado numérico (8 dígitos)
+    // Gera código de afiliado
     const gerarCodigo = () =>
       Math.floor(10000000 + Math.random() * 90000000).toString();
 
-    // Retentativa para evitar colisão de código
     const maxRetries = 5;
     let attempt = 0;
     let savedUser = null;
@@ -525,8 +659,8 @@ if (url.startsWith("/api/signup") && method === "POST") {
     while (attempt < maxRetries && !savedUser) {
       const codigo_afiliado = gerarCodigo();
 
-      // Novo usuário
-      const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias de ativo
+      const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
       const novoUsuario = new User({
         email,
         senha,
@@ -534,7 +668,7 @@ if (url.startsWith("/api/signup") && method === "POST") {
         codigo_afiliado,
         status: "ativo",
         ativo_ate,
-        indicado_por: ref || null, // vincula ao código do afiliado, se houver
+        indicado_por: ref || null,
       });
 
       try {
@@ -550,7 +684,9 @@ if (url.startsWith("/api/signup") && method === "POST") {
     }
 
     if (!savedUser) {
-      return res.status(500).json({ error: "Não foi possível gerar um código de afiliado único. Tente novamente." });
+      return res.status(500).json({
+        error: "Não foi possível gerar um código de afiliado único. Tente novamente."
+      });
     }
 
     return res.status(201).json({
@@ -562,15 +698,12 @@ if (url.startsWith("/api/signup") && method === "POST") {
 
   } catch (error) {
     console.error("Erro ao cadastrar usuário:", error);
-    if (error?.code === 11000 && error.keyPattern?.email) {
-      return res.status(400).json({ error: "E-mail já cadastrado." });
-    }
     return res.status(500).json({ error: "Erro interno ao registrar usuário. Tente novamente mais tarde." });
   }
-}
+});
 
 // Rota: /api/change-password
-if (url.startsWith("/api/change-password")) {
+router.post("/change-password", async (req, res) => {
         if (req.method !== "POST") {
             return res.status(405).json({ error: "Método não permitido" });
         }
@@ -625,11 +758,11 @@ if (url.startsWith("/api/change-password")) {
         } catch (error) {
             console.error("❌ Erro ao alterar senha:", error);
             return res.status(500).json({ error: "Erro ao alterar senha" });
-        }
-    }; 
+  }
+});
 
- // Rota: /api/recover-password
-if (url.startsWith("/api/recover-password")) { 
+// Rota: /api/recover-password
+router.post("/recover-password", async (req, res) => {
   if (req.method !== "POST")
     return res.status(405).json({ error: "Método não permitido" });
 
@@ -652,7 +785,7 @@ if (url.startsWith("/api/recover-password")) {
     user.resetPasswordExpires = new Date(expires);
     await user.save();
 
-    const link = `https://ganhesocial.com/reset-password?token=${token}`;
+    const link = `https://ganhesocialtest.com/reset-password?token=${token}`;
     await sendRecoveryEmail(email, link);
 
     return res.status(200).json({ message: "Link enviado com sucesso" });
@@ -660,10 +793,10 @@ if (url.startsWith("/api/recover-password")) {
     console.error("Erro em recover-password:", err);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
-}
+});
 
- // Rota: api/validate-reset-token
- if (url.startsWith("/api/validate-reset-token")) { 
+// Rota: api/validate-reset-token
+router.get("/validate-reset-token", async (req, res) => {
         if (req.method !== "GET") {
             return res.status(405).json({ error: "Método não permitido" });
         }
@@ -717,36 +850,69 @@ if (url.startsWith("/api/recover-password")) {
     
         } catch (error) {
             return res.status(500).json({ error: "Erro ao validar token" });
-        }
-    };
+  }
+});
 
-// 🔹 Rota: /api/withdraw
-if (url.startsWith("/api/withdraw")) {
+// api/withdraw.js
+router.all("/withdraw", async (req, res) => {
+  const method = req.method;
+
   if (method !== "GET" && method !== "POST") {
     console.log("[DEBUG] Método não permitido:", method);
     return res.status(405).json({ error: "Método não permitido." });
   }
 
-  const OPENPIX_API_KEY = process.env.OPENPIX_API_KEY;
-  const OPENPIX_API_URL = process.env.OPENPIX_API_URL || "https://api.openpix.com.br";
-
-  // conecta DB (assume função global connectDB e modelo User)
-  await connectDB();
-
-  // 🔹 Autenticação
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    console.log("[DEBUG] Token ausente ou inválido:", authHeader);
-    return res.status(401).json({ error: "Token ausente ou inválido." });
-  }
-  const token = authHeader.split(" ")[1];
-  const user = await User.findOne({ token });
-  if (!user) {
-    console.log("[DEBUG] Usuário não encontrado para token:", token);
-    return res.status(401).json({ error: "Usuário não autenticado." });
-  }
-
   try {
+    await connectDB();
+
+    // ===== Autenticação =====
+    const authHeader = (req.headers.authorization || "").toString();
+    let token = null;
+
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1].trim();
+    } else if (authHeader.length > 0) {
+      token = authHeader.trim();
+    }
+
+    if (!token) {
+      console.log("[DEBUG] Token ausente no header Authorization:", authHeader);
+      return res.status(401).json({ error: "Token ausente ou inválido." });
+    }
+
+    console.log("[DEBUG] withdraw - token recebido (primeiros 12 chars):", token.slice(0,12));
+
+    let user = null;
+
+    if (process.env.JWT_SECRET) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = payload?.id || payload?.sub;
+        if (userId) {
+          user = await User.findById(userId);
+          console.log("[DEBUG] withdraw - token JWT válido, userId:", userId, "user found:", !!user);
+        }
+      } catch (errJwt) {
+        console.log("[DEBUG] withdraw - jwt.verify falhou (provavelmente não é JWT):", errJwt.message);
+      }
+    }
+
+    if (!user) {
+      try {
+        user = await User.findOne({ token }).select("+token +saldo +pix_key +pix_key_type +saques");
+        console.log("[DEBUG] withdraw - busca por token cru no DB result:", !!user);
+      } catch (errFind) {
+        console.error("[ERROR] withdraw - erro ao buscar user por token no DB:", errFind);
+        return res.status(500).json({ error: "Erro interno na autenticação." });
+      }
+    }
+
+    if (!user) {
+      console.log("[DEBUG] Usuário não encontrado por token/jwt:", token.slice(0,12));
+      return res.status(401).json({ error: "Usuário não autenticado." });
+    }
+
+    // ===== GET: retornar histórico de saques =====
     if (method === "GET") {
       const saquesFormatados = (user.saques || []).map(s => ({
         amount: s.valor ?? s.amount ?? null,
@@ -757,74 +923,105 @@ if (url.startsWith("/api/withdraw")) {
         externalReference: s.externalReference || null,
         providerId: s.providerId || s.wooviId || s.openpixId || null,
       }));
-      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados);
+      console.log("[DEBUG] Histórico de saques retornado:", saquesFormatados.length, "itens");
       return res.status(200).json(saquesFormatados);
     }
 
-    // ===== POST =====
-    // Normaliza body (compatível com body já parseado ou string)
+    // ===== POST: criar saque =====
     let body = req.body;
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch (e) { /* keep as-is */ }
     }
 
     const { amount, payment_method, payment_data } = body || {};
-    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method, payment_data });
+    console.log("[DEBUG] Dados recebidos para saque:", { amount, payment_method });
 
-    // Validações básicas
-    if (!amount || (typeof amount !== "number" && typeof amount !== "string")) {
-      console.log("[DEBUG] Valor de saque inválido:", amount);
+    if (amount == null || (typeof amount !== "number" && typeof amount !== "string")) {
       return res.status(400).json({ error: "Valor de saque inválido (mínimo R$0,01)." });
     }
     const amountNum = Number(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      console.log("[DEBUG] Valor de saque inválido após parse:", amountNum);
       return res.status(400).json({ error: "Valor de saque inválido." });
     }
 
     if (!payment_method || !payment_data?.pix_key || !payment_data?.pix_key_type) {
-      console.log("[DEBUG] Dados de pagamento incompletos:", payment_data);
       return res.status(400).json({ error: "Dados de pagamento incompletos." });
     }
 
-    // Verifica saldo (assumindo user.saldo em reais)
     if ((user.saldo ?? 0) < amountNum) {
-      console.log("[DEBUG] Saldo insuficiente:", { saldo: user.saldo, amount: amountNum });
       return res.status(400).json({ error: "Saldo insuficiente." });
     }
 
-    // Permitir apenas CPF por enquanto (ajuste se quiser permitir outros)
-    const allowedTypes = ["CPF"];
-    const keyType = (payment_data.pix_key_type || "").toUpperCase();
-    if (!allowedTypes.includes(keyType)) {
-      console.log("[DEBUG] Tipo de chave PIX inválido:", keyType);
-      return res.status(400).json({ error: "Tipo de chave PIX inválido." });
-    }
+// === VALIDAÇÃO: remover checagens por quantidade de dígitos ===
+const rawType = String((payment_data.pix_key_type || "")).trim().toLowerCase();
+    
+// normaliza tipos conhecidos do frontend
+const typeMap = {
+  "cpf": "CPF",
+  "cnpj": "CNPJ",
+  "phone": "PHONE",
+  "telefone": "PHONE",
+  "celular": "PHONE",
+  "mobile": "PHONE",
+  "email": "EMAIL",
+  "e-mail": "EMAIL",
+  "mail": "EMAIL",
+  "random": "RANDOM",
+  "aleatoria": "RANDOM",
+  "aleatória": "RANDOM",
+  "uuid": "RANDOM",
+  "evp": "RANDOM"
+};
+let keyTypeNormalized = typeMap[rawType] || null;
+let pixRaw = String(payment_data.pix_key || "").trim();
 
-    // Formata chave
-    let pixKey = String(payment_data.pix_key || "");
-    if (keyType === "CPF" || keyType === "CNPJ") pixKey = pixKey.replace(/\D/g, "");
-    console.log("[DEBUG] Chave PIX formatada:", pixKey);
+// Se frontend não enviou tipo, detecta apenas email ou uuid; caso contrário usa PHONE como fallback
+if (!keyTypeNormalized) {
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pixRaw)) {
+    keyTypeNormalized = "EMAIL";
+  } else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pixRaw)) {
+    keyTypeNormalized = "RANDOM";
+  } else {
+    // NÃO deduzir CPF/CNPJ por quantidade de dígitos — evita erro do provedor.
+    // Usamos PHONE como fallback (mais comum para chaves que são números).
+    keyTypeNormalized = "PHONE";
+  }
+}
 
-    // Salva PIX do usuário se ainda não existir; se existir e diferente, bloqueia
-    if (!user.pix_key) {
-      user.pix_key = pixKey;
-      user.pix_key_type = keyType;
-      console.log("[DEBUG] Chave PIX salva no usuário:", { pixKey, keyType });
-    } else if (user.pix_key !== pixKey) {
-      console.log("[DEBUG] Chave PIX diferente da cadastrada:", { userPix: user.pix_key, novaPix: pixKey });
-      return res.status(400).json({ error: "Chave PIX já cadastrada e não pode ser alterada." });
-    }
+// validação mínima: apenas garante chave não vazia; e valida email caso type seja EMAIL
+if (!pixRaw) {
+  return res.status(400).json({ error: "Chave PIX inválida (vazia)." });
+}
 
-    // Cria externalReference único
+let pixKey = pixRaw;
+if (keyTypeNormalized === "EMAIL") {
+  pixKey = pixRaw.toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pixKey)) {
+    return res.status(400).json({ error: "E-mail inválido para chave PIX." });
+  }
+} else {
+  // para PHONE / RANDOM / CPF / CNPJ etc. NÃO aplicar checagens por quantidade
+  pixKey = pixRaw;
+}
+
+// mapear para o provedor (ajuste se o provedor exigir rótulos específicos)
+const providerTypeMap = {
+  "CPF": "CPF",
+  "CNPJ": "CNPJ",
+  "PHONE": "PHONE",
+  "EMAIL": "EMAIL",
+  "RANDOM": "RANDOM"
+};
+const providerKeyType = providerTypeMap[keyTypeNormalized] || keyTypeNormalized;
+
+console.log("[DEBUG] withdraw - pixKey final:", pixKey, "tipo:", keyTypeNormalized, "providerType:", providerKeyType);
+
     const externalReference = `saque_${user._id}_${Date.now()}`;
-    console.log("[DEBUG] externalReference gerada:", externalReference);
 
-    // Monta objeto de saque e atualiza saldo & array (marca PENDING inicialmente)
     const novoSaque = {
       valor: amountNum,
       chave_pix: pixKey,
-      tipo_chave: keyType,
+      tipo_chave: keyTypeNormalized,  
       status: "PENDING",
       data: new Date(),
       providerId: null,
@@ -832,19 +1029,16 @@ if (url.startsWith("/api/withdraw")) {
       ownerName: user.name || user.nome || "Usuário",
     };
 
-    // Deduz saldo e armazena saque
     user.saldo = (user.saldo ?? 0) - amountNum;
     user.saques = user.saques || [];
     user.saques.push(novoSaque);
     await user.save();
-    console.log("[DEBUG] Usuário atualizado com novo saque. Saldo agora:", user.saldo);
 
-    // ===== Comunica com o provedor OpenPix (create -> approve) =====
-    const valueInCents = Math.round(amountNum * 100);
+    // ===== Comunica com provedor OpenPix =====
+    const OPENPIX_API_KEY = process.env.OPENPIX_API_KEY;
+    const OPENPIX_API_URL = process.env.OPENPIX_API_URL || "https://api.openpix.com.br";
 
     if (!OPENPIX_API_KEY) {
-      console.error("[ERROR] OPENPIX_API_KEY não configurada");
-      // restaura saldo e marca erro
       const idxErr0 = user.saques.findIndex(s => s.externalReference === externalReference);
       if (idxErr0 >= 0) {
         user.saques[idxErr0].status = "FAILED";
@@ -861,90 +1055,172 @@ if (url.startsWith("/api/withdraw")) {
       "Idempotency-Key": externalReference
     };
 
+    const valueInCents = Math.round(amountNum * 100);
     const createPayload = {
       value: valueInCents,
       destinationAlias: pixKey,
-      destinationAliasType: keyType,
+      destinationAliasType: providerKeyType,
       correlationID: externalReference,
       comment: `Saque para ${user._id}`
     };
 
-    console.log("[DEBUG] Payload createPayment enviado ao OpenPix:", createPayload);
+    console.log("[DEBUG] Enviando createPayment para OpenPix:", createPayload);
 
-    // Faz create payment
-    let createRes;
-    try {
-      createRes = await fetch(`${OPENPIX_API_URL}/api/v1/payment`, {
-        method: "POST",
-        headers: createHeaders,
-        body: JSON.stringify(createPayload)
-      });
-    } catch (err) {
-      console.error("[ERROR] Falha na requisição createPayment:", err);
-      // marca erro no saque e restaura saldo
-      const idxErr = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (idxErr >= 0) {
-        user.saques[idxErr].status = "FAILED";
-        user.saques[idxErr].error = { msg: "Falha na requisição createPayment", detail: err.message };
-        user.saldo += amountNum; // restaura saldo
-        await user.save();
-      }
-      return res.status(500).json({ error: "Erro ao comunicar com o provedor de pagamentos." });
+// --- Antes do aliasForType: detecta se o frontend forneceu explicitamente o tipo ---
+const explicitTypeProvided = Boolean(payment_data.pix_key_type && String(payment_data.pix_key_type).trim());
+
+// normaliza só-dígitos para CPF/CNPJ (útil para enviar ao provedor)
+const onlyDigits = (pixKey || "").replace(/\D/g, "");
+const cpfDigits = onlyDigits.length >= 11 ? onlyDigits.slice(-11) : onlyDigits; // garante pelo menos os 11 finais se houver lixo
+const cnpjDigits = onlyDigits.length >= 14 ? onlyDigits.slice(-14) : onlyDigits;
+
+// aliasForType contém a chave que será enviada para cada destinationAliasType
+const aliasForType = {
+  "CPF": cpfDigits || pixKey,    // preferir dígitos puros
+  "CNPJ": cnpjDigits || pixKey,
+  "EMAIL": (pixKey || "").toLowerCase(),
+  "RANDOM": pixKey,
+  // PHONE: normaliza para formato internacional sem '+' — ex: 55 + DDD + número
+  "PHONE": (() => {
+    let phone = (pixKey || "").replace(/\D/g, "");
+    if (!phone) return phone;
+    // remove zeros à esquerda se houver
+    phone = phone.replace(/^0+/, "");
+    // se já tem DDI 55, mantém; senão prefixa 55
+    if (!/^55/.test(phone)) phone = `55${phone}`;
+    return phone;
+  })()
+};
+
+console.log("[DEBUG] aliasForType:", aliasForType, "explicitTypeProvided:", explicitTypeProvided);
+
+// ======== createPayment com retries automáticos em caso de "Chave Pix inválida para tipo X" ========
+async function createPaymentAttempt(key, aliasType, idempSuffix) {
+  // key aqui já será aliasForType[aliasType] passado na chamada
+  const hdrs = {
+    "Content-Type": "application/json",
+    "Authorization": OPENPIX_API_KEY,
+    "Idempotency-Key": `${externalReference}_${String(idempSuffix || aliasType)}`
+  };
+  const payload = {
+    value: valueInCents,
+    destinationAlias: key,
+    destinationAliasType: aliasType,
+    correlationID: externalReference,
+    comment: `Saque para ${user._id}`
+  };
+  console.log("[DEBUG] createPaymentAttempt payload:", payload, "Idempotency-Key:", hdrs["Idempotency-Key"]);
+  let res;
+  try {
+    res = await fetch(`${OPENPIX_API_URL}/api/v1/payment`, {
+      method: "POST",
+      headers: hdrs,
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    // falha de rede — retorna objeto com erro
+    return { ok: false, error: err, http: null, text: null, data: null };
+  }
+
+  const text = await res.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch (e) { data = null; }
+  return { ok: res.ok, http: res, text, data };
+}
+
+// ===== define ordem de tentativas =====
+// se o frontend passou explicitTypeProvided, respeitamos a ordem (não forçamos PHONE antes de CPF)
+const prioritizedTypes = (() => {
+  const initial = providerKeyType || keyTypeNormalized || "RANDOM";
+  const tries = [initial];
+
+  if (!explicitTypeProvided && initial === "CPF") {
+    // somente se o tipo veio de inferência do backend, tentar PHONE primeiro
+    tries.unshift("PHONE");
+  }
+
+  // garantir unicidade e ordem prática
+  const possible = ["PHONE", "CPF", "CNPJ", "EMAIL", "RANDOM"];
+  possible.forEach(t => { if (!tries.includes(t)) tries.push(t); });
+  return tries;
+})();
+
+let createResult = null;
+let lastCreateData = null;
+for (let i = 0; i < prioritizedTypes.length; i++) {
+  const tryType = prioritizedTypes[i];
+const attempt = await createPaymentAttempt(aliasForType[tryType] || pixKey, tryType, tryType);
+  lastCreateData = attempt.data ?? { raw: attempt.text ?? null, error: attempt.error?.message ?? null };
+  if (attempt.ok) {
+    createResult = { success: true, data: attempt.data, http: attempt.http, usedType: tryType };
+    break;
+  } else {
+    // se a resposta do provedor indicar explicitamente "Chave Pix inválida para tipo" — tentar próximo tipo
+    const msg = JSON.stringify(attempt.data || attempt.text || "");
+    const indicatesInvalidType = /chave\s*pix.*inv[aá]lida.*tipo/i.test(msg) || /invalid.*for.*type/i.test(msg);
+    console.log("[DEBUG] createPayment attempt failed:", { tryType, indicatesInvalidType, data: attempt.data, text: attempt.text });
+    if (!indicatesInvalidType) {
+      // se o erro não parece ser "tipo inválido", abortamos e retornamos este erro ao cliente (após marcação/rollback)
+      createResult = { success: false, data: attempt.data, http: attempt.http, error: attempt.error || attempt.text || "Erro ao criar pagamento" };
+      break;
     }
+    // caso contrário, continua o loop tentando o próximo tipo
+  }
+}
 
-    const createText = await createRes.text();
-    let createData;
-    try { createData = JSON.parse(createText); } catch (err) {
-      console.error("[ERROR] Resposta createPayment não-JSON:", createText);
-      // restaura saldo e marca erro
-      const idx = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (idx >= 0) {
-        user.saques[idx].status = "FAILED";
-        user.saques[idx].error = { msg: "Resposta createPayment inválida", raw: createText };
-        user.saldo += amountNum;
-        await user.save();
-      }
-      return res.status(createRes.status || 500).json({ error: createText });
-    }
+if (!createResult) {
+  // nenhuma tentativa obteve resposta ok; marcar failed e restaurar saldo
+  console.error("[DEBUG] createPayment todas as tentativas falharam. último retorno:", lastCreateData);
+  const idxErr = user.saques.findIndex(s => s.externalReference === externalReference);
+  if (idxErr >= 0) {
+    user.saques[idxErr].status = "FAILED";
+    user.saques[idxErr].error = { msg: "Todas as tentativas de createPayment falharam", last: lastCreateData };
+    user.saldo += amountNum;
+    await user.save();
+  }
+  return res.status(400).json({ error: lastCreateData?.error || lastCreateData?.message || "Erro ao criar pagamento no provedor." });
+}
 
-    console.log("[DEBUG] Resposta createPayment:", createData, "Status HTTP:", createRes.status);
+if (!createResult.success) {
+  // createResult foi definido com um erro não relacionado a tipo — já tratado acima mas por segurança:
+  const idxErr = user.saques.findIndex(s => s.externalReference === externalReference);
+  if (idxErr >= 0) {
+    user.saques[idxErr].status = "FAILED";
+    user.saques[idxErr].error = createResult.data || createResult.error || lastCreateData;
+    user.saldo += amountNum;
+    await user.save();
+  }
+  return res.status(400).json({ error: (createResult.data && (createResult.data.message || createResult.data.error)) || createResult.error || "Erro ao criar pagamento no provedor." });
+}
 
-    if (!createRes.ok) {
-      console.error("[DEBUG] Erro createPayment:", createData);
-      // marca erro no saque e restaura saldo
-      const idxErr = user.saques.findIndex(s => s.externalReference === externalReference);
-      if (idxErr >= 0) {
-        user.saques[idxErr].status = "FAILED";
-        user.saques[idxErr].error = createData;
-        user.saldo += amountNum;
-        await user.save();
-      }
+// Se chegou aqui, createResult tem sucesso
+const createData = createResult.data;
+const createHttp = createResult.http;
+console.log("[DEBUG] createPayment succeed with type:", createResult.usedType, "response:", createData);
+// continua fluxo normal (approve) com createData
 
-      if (createRes.status === 403) {
-        return res.status(403).json({ error: createData.error || createData.message || "Recurso não habilitado." });
-      }
+   // ======= EXTRAÇÃO ROBUSTA DO IDENTIFICADOR (paymentId) =======
+    const paymentId =
+      createData.id ||
+      createData.paymentId ||
+      createData.payment_id ||
+      createData.transaction?.id ||
+      createData.payment?.id ||
+      createData.payment?.paymentId ||
+      createData.transactionId ||
+      null;
 
-      return res.status(400).json({ error: createData.message || createData.error || "Erro ao criar pagamento no provedor." });
-    }
-
-    // Extrai possíveis identificadores úteis
-    const paymentId = createData.id || createData.paymentId || createData.payment_id || createData.transaction?.id || null;
     const returnedCorrelation = createData.correlationID || createData.correlationId || createData.correlation || null;
 
-    console.log("[DEBUG] paymentId extraído:", paymentId, "correlation retornada:", returnedCorrelation);
-
-    // Atualiza o saque com providerId/correlation, mantendo status PENDING
     const createdIndex = user.saques.findIndex(s => s.externalReference === externalReference);
     if (createdIndex >= 0) {
       if (paymentId) user.saques[createdIndex].providerId = paymentId;
-      if (!user.saques[createdIndex].externalReference) user.saques[createdIndex].externalReference = externalReference;
       user.saques[createdIndex].status = "PENDING";
       await user.save();
     }
 
-    // Decide identificador para aprovação
+    // Decide identificador para aprovação: prefira paymentId (mais confiável)
     const toApproveIdentifier = paymentId || returnedCorrelation || externalReference;
-
     if (!toApproveIdentifier) {
       console.warn("[WARN] createPayment não retornou identificador usável — saque permanece PENDING.");
       return res.status(200).json({
@@ -953,7 +1229,7 @@ if (url.startsWith("/api/withdraw")) {
       });
     }
 
-    // ===== Approve =====
+    // monta payload de approve (prefira paymentId quando disponível)
     const approveHeaders = {
       "Content-Type": "application/json",
       "Authorization": OPENPIX_API_KEY,
@@ -961,8 +1237,8 @@ if (url.startsWith("/api/withdraw")) {
     };
 
     const approvePayload = paymentId ? { paymentId } : { correlationID: toApproveIdentifier };
-    console.log("[DEBUG] Enviando approvePayment:", approvePayload);
 
+    // chama endpoint de approve
     let approveRes;
     try {
       approveRes = await fetch(`${OPENPIX_API_URL}/api/v1/payment/approve`, {
@@ -971,10 +1247,10 @@ if (url.startsWith("/api/withdraw")) {
         body: JSON.stringify(approvePayload)
       });
     } catch (err) {
-      console.error("[ERROR] Falha na requisição approvePayment:", err);
+      console.error("[ERROR] Falha approvePayment (network):", err);
       if (createdIndex >= 0) {
         user.saques[createdIndex].status = "PENDING_APPROVAL";
-        user.saques[createdIndex].error = { msg: "Falha na requisição de aprovação", detail: err.message };
+        user.saques[createdIndex].error = { msg: "Falha na requisição de aprovação (network)", detail: err.message };
         await user.save();
       }
       return res.status(500).json({ error: "Erro ao aprovar pagamento (comunicação com provedor)." });
@@ -982,118 +1258,97 @@ if (url.startsWith("/api/withdraw")) {
 
     const approveText = await approveRes.text();
     let approveData;
-    try { approveData = JSON.parse(approveText); } catch (err) {
-      console.error("[ERROR] Resposta approvePayment não-JSON:", approveText);
-      if (createdIndex >= 0) {
-        user.saques[createdIndex].status = "PENDING_APPROVAL";
-        user.saques[createdIndex].error = { msg: "Resposta de aprovação inválida", raw: approveText };
-        await user.save();
-      }
-      return res.status(approveRes.status || 500).json({ error: approveText });
-    }
-
-    console.log("[DEBUG] Resposta approvePayment:", approveData, "Status HTTP:", approveRes.status);
+    try { approveData = JSON.parse(approveText); } catch (err) { approveData = null; }
 
     if (!approveRes.ok) {
-      console.error("[DEBUG] Erro approvePayment:", approveData);
-      if (approveRes.status === 403) {
-        if (createdIndex >= 0) {
-          user.saques[createdIndex].status = "PENDING_APPROVAL";
-          user.saques[createdIndex].error = approveData;
-          await user.save();
-        }
-        return res.status(403).json({ error: approveData.error || approveData.message || "Aprovação negada." });
-      }
+      // log completo para debugging
+      console.error("[DEBUG] Erro approvePayment:", { status: approveRes.status, body: approveData ?? approveText });
+
+      // Mensagens do provedor que indicam "chave não encontrada" ou similar
+      const bodyMsg = JSON.stringify(approveData || approveText || "");
+      const notFoundKey = /chave\s*pix.*n[aã]o encontrada/i.test(bodyMsg) || /not.*found.*pix/i.test(bodyMsg) || /chave.*nao.*encontrada/i.test(bodyMsg);
 
       if (createdIndex >= 0) {
-        user.saques[createdIndex].status = "PENDING_APPROVAL";
-        user.saques[createdIndex].error = approveData;
-        await user.save();
+        // marcar como FAILED ou PENDING_APPROVAL dependendo do erro
+        if (notFoundKey) {
+          user.saques[createdIndex].status = "FAILED";
+          user.saques[createdIndex].error = approveData || { raw: approveText };
+          // restaura saldo
+          user.saldo = (user.saldo ?? 0) + amountNum;
+          await user.save();
+          return res.status(400).json({ error: approveData?.error || approveData?.message || "Chave Pix não encontrada (proveedor)." });
+        } else {
+          // erro genérico de aprovação -> marcar PENDING_APPROVAL para investigação manual
+          user.saques[createdIndex].status = "PENDING_APPROVAL";
+          user.saques[createdIndex].error = approveData || { raw: approveText };
+          await user.save();
+          return res.status(400).json({ error: approveData?.error || approveData?.message || "Erro ao aprovar pagamento (pendente)." });
+        }
+      } else {
+        return res.status(400).json({ error: approveData?.error || approveData?.message || "Erro ao aprovar pagamento." });
       }
-      return res.status(400).json({ error: approveData.message || approveData.error || "Erro ao aprovar pagamento." });
     }
 
-    // Se approve ok -> atualiza status conforme retorno
-    const approveStatus = approveData.status || approveData.transaction?.status || "COMPLETED";
+    // approve ok -> parse e atualiza status do saque
+    let realApproveData = approveData;
+    if (!realApproveData) {
+      try { realApproveData = JSON.parse(approveText); } catch (e) { realApproveData = { raw: approveText }; }
+    }
+
+    const approveStatus = realApproveData.status || realApproveData.transaction?.status || "COMPLETED";
     if (createdIndex >= 0) {
       user.saques[createdIndex].status = (approveStatus === "COMPLETED" || approveStatus === "EXECUTED") ? "COMPLETED" : approveStatus;
-      user.saques[createdIndex].providerId = user.saques[createdIndex].providerId || paymentId || approveData.id || null;
+      user.saques[createdIndex].providerId = user.saques[createdIndex].providerId || paymentId || realApproveData.id || null;
       await user.save();
     }
 
-    // ===== Processar comissão de afiliado (5%) se saque COMPLETED =====
+    // processa comissão
     try {
       const COMMISSION_RATE = 0.05;
       const isCompleted = approveStatus === "COMPLETED" || approveStatus === "EXECUTED";
       if (isCompleted) {
-        // Recarrega user para garantir dados atualizados (opcional)
         const saqueRecord = (user.saques || []).find(s => s.externalReference === externalReference || s.providerId === (paymentId || null));
         const saqueValor = saqueRecord ? (saqueRecord.valor ?? amountNum) : amountNum;
 
-        console.log("[DEBUG] Saque finalizado para comissão. Valor:", saqueValor, "externalReference:", externalReference);
-
-        // Verifica se usuário foi indicado
         if (user.indicado_por) {
-          // Evita pagar duas vezes: verificar se já existe ActionHistory para esse externalReference + tipo comissao
           const existente = await ActionHistory.findOne({ id_action: externalReference, tipo: "comissao" });
-          if (existente) {
-            console.log("[DEBUG] Comissão já registrada para esse saque (ignorar).", externalReference);
-          } else {
-            // verifica se o usuário que sacou está ativo (dentro do período ativo_ate)
+          if (!existente) {
             const agora = new Date();
             if (user.ativo_ate && new Date(user.ativo_ate) > agora) {
-              // encontra afiliado (quem indicou)
               const afiliado = await User.findOne({ codigo_afiliado: user.indicado_por });
               if (afiliado) {
-                const comissaoValor = Number((saqueValor * COMMISSION_RATE).toFixed(2)); // em reais, 2 decimais
-                console.log("[DEBUG] Criando comissão para afiliado:", afiliado._id.toString(), "valor:", comissaoValor);
-
-// cria registro de comissão no ActionHistory (com url_dir preenchido)
-const acaoComissao = new ActionHistory({
-  user: afiliado._id,
-  token: afiliado.token || null,
-  nome_usuario: afiliado.nome || afiliado.email || null,
-  id_action: externalReference,                     // usado para evitar duplicidade
-  id_pedido: `comissao_${externalReference}`,        // identificador próprio
-  id_conta: user._id.toString(),                    // conta/usuário que gerou o saque
-  unique_id: null,
-  // Preenchendo url_dir com referência ao saque - evita erro de validação
-  url_dir: `/saques/${externalReference}`,          
-  acao_validada: "valida",
-  valor_confirmacao: comissaoValor,
-  quantidade_pontos: 0,
-  tipo_acao: "comissao",
-  rede_social: "Sistema",
-  tipo: "comissao",
-  afiliado: afiliado.codigo_afiliado,
-  valor: comissaoValor,
-  data: new Date(),
-});
-await acaoComissao.save();
-
-                // Atualiza saldo do afiliado e histórico
+                const comissaoValor = Number((saqueValor * COMMISSION_RATE).toFixed(2));
+                const acaoComissao = new ActionHistory({
+                  user: afiliado._id,
+                  token: afiliado.token || null,
+                  nome_usuario: afiliado.nome || afiliado.email || null,
+                  id_action: externalReference,
+                  id_pedido: `comissao_${externalReference}`,
+                  id_conta: user._id.toString(),
+                  unique_id: null,
+                  url_dir: `/saques/${externalReference}`,
+                  acao_validada: "valida",
+                  valor_confirmacao: comissaoValor,
+                  quantidade_pontos: 0,
+                  tipo_acao: "comissao",
+                  rede_social: "Sistema",
+                  tipo: "comissao",
+                  afiliado: afiliado.codigo_afiliado,
+                  valor: comissaoValor,
+                  data: new Date(),
+                });
+                await acaoComissao.save();
                 afiliado.saldo = (afiliado.saldo ?? 0) + comissaoValor;
                 afiliado.historico_acoes = afiliado.historico_acoes || [];
                 afiliado.historico_acoes.push(acaoComissao._id);
                 await afiliado.save();
-
-                console.log("[DEBUG] Comissão registrada e saldo do afiliado atualizado:", { afiliadoId: afiliado._id, novoSaldo: afiliado.saldo });
-              } else {
-                console.log("[DEBUG] Afiliado não encontrado para codigo:", user.indicado_por);
               }
-            } else {
-              console.log("[DEBUG] Usuário que sacou não está ativo ou ativo_ate expirou, sem comissão.", { indicado_por: user.indicado_por, ativo_ate: user.ativo_ate });
             }
           }
-        } else {
-          console.log("[DEBUG] Usuário não foi indicado (sem comissão).");
         }
-      } else {
-        console.log("[DEBUG] Saque não finalizado (status:", approveStatus, ") — sem comissão.");
       }
     } catch (errCom) {
       console.error("[ERROR] Falha ao processar comissão de afiliado:", errCom);
-      // Não reverte o saque — apenas loga o erro
     }
 
     return res.status(200).json({
@@ -1106,284 +1361,468 @@ await acaoComissao.save();
     console.error("💥 Erro em /withdraw:", error);
     return res.status(500).json({ error: "Erro ao processar saque." });
   }
-}    
+});
 
-// Rota: /api/tiktok/get_user (GET)
-if (url.startsWith("/api/tiktok/get_user") && method === "GET") {
+// ROTA: /api/get_saldo (GET)
+router.get("/get_saldo", async (req, res) => {
+  try {
+    await connectDB();
+
+    // DEBUG: mostra o que chega (remova/ajuste em produção)
+    console.log("[DEBUG] get_saldo headers.authorization:", req.headers.authorization, "query.token:", req.query.token);
+
+    // 1) pegar token: primeiro query, depois Authorization: Bearer <token>
+    let token = req.query?.token || null;
+    const authHeader = (req.headers.authorization || "").toString();
+    if (!token && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1].trim();
+    }
+
+    if (!token) {
+      return res.status(400).json({ error: "Token obrigatório." });
+    }
+
+    // 2) tenta interpretar token como JWT (melhor fluxo) — se falhar, fallback para buscar por token no DB
+    let usuario = null;
+
+    if (process.env.JWT_SECRET) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = payload?.id || payload?.sub;
+        if (userId) {
+          // incluir saques para podermos retornar last_saque
+          usuario = await User.findById(userId)
+            .select("saldo pix_key pix_key_type _id ativo_ate indicado_por nome email saques")
+            .lean();
+        }
+      } catch (errJwt) {
+        // não é JWT válido; segue para fallback (não tratar como erro aqui)
+        console.log("[DEBUG] token não é JWT válido / jwt.verify falhou:", errJwt.message);
+      }
+    }
+
+    // fallback: buscar por campo token (compatibilidade com implementação anterior)
+    if (!usuario) {
+      usuario = await User.findOne({ token })
+        .select("saldo pix_key pix_key_type _id ativo_ate indicado_por nome email saques")
+        .lean();
+    }
+
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado." });
+    }
+
+    // Busca ações pendentes (não validadas)
+    const pendentes = await ActionHistory.find({
+      user: usuario._id,
+      acao_validada: "pendente"
+    }).select("valor_confirmacao").lean();
+
+    const saldo_pendente = (pendentes || []).reduce(
+      (soma, acao) => soma + (acao.valor_confirmacao || 0),
+      0
+    );
+
+    // Helper: normaliza tipo e chave
+    function normalizePixPair(rawKey, rawType) {
+      if (!rawKey && !rawType) return { key: null, type: null };
+
+      let key = rawKey ?? null;
+      let type = rawType ?? null;
+      if (type) type = String(type).toLowerCase();
+
+      // normaliza tipo textual
+      if (type === "c" || type === "cpf_cnpj") type = "cpf"; // casos estranhos
+      if (type === "telefone" || type === "celular") type = "phone";
+
+      if (key && typeof key === "string") key = key.trim();
+
+      // aplica limpeza por tipo
+      try {
+        if (type === "cpf") {
+          key = String(key).replace(/\D/g, "");
+        } else if (type === "cnpj") {
+          key = String(key).replace(/\D/g, "");
+        } else if (type === "phone") {
+          key = String(key).replace(/\D/g, "");
+        } else if (type === "email") {
+          key = String(key).toLowerCase();
+        }
+      } catch (e) {
+        // ignore, retornar raw
+      }
+
+      return { key: key || null, type: type || null };
+    }
+
+    // Normaliza usuário.pix_key
+    const userPix = normalizePixPair(usuario.pix_key ?? null, usuario.pix_key_type ?? null);
+
+    // Determina last_saque (mais recente) a partir do array usuario.saques
+    let lastSaque = null;
+    if (Array.isArray(usuario.saques) && usuario.saques.length > 0) {
+      // safe sort: por data -> new Date(...)
+      const copy = usuario.saques.slice();
+      copy.sort((a, b) => {
+        const da = a?.data ? new Date(a.data) : (a?.createdAt ? new Date(a.createdAt) : new Date(0));
+        const db = b?.data ? new Date(b.data) : (b?.createdAt ? new Date(b.createdAt) : new Date(0));
+        return db - da;
+      });
+      const rawLast = copy[0];
+      if (rawLast) {
+        lastSaque = {
+          chave_pix: rawLast.chave_pix ?? rawLast.pix_key ?? rawLast.destination ?? null,
+          tipo_chave: rawLast.tipo_chave ?? rawLast.pix_key_type ?? rawLast.tipo ?? null,
+          valor: rawLast.valor ?? rawLast.amount ?? null,
+          data: rawLast.data ? new Date(rawLast.data).toISOString() : (rawLast.createdAt ? new Date(rawLast.createdAt).toISOString() : null)
+        };
+      }
+    }
+
+    // Normaliza last_saque pix info (se existir)
+    let lastSaquePix = { key: null, type: null };
+    if (lastSaque && lastSaque.chave_pix) {
+      lastSaquePix = normalizePixPair(lastSaque.chave_pix, lastSaque.tipo_chave);
+    }
+
+    // Escolhe a chave efetiva que o frontend pode preferir:
+    // prioriza last_saque quando existir; caso contrário usa user.pix_key
+    const pixKeyEffective = lastSaquePix.key ?? userPix.key ?? null;
+    const pixKeyEffectiveType = lastSaquePix.type ?? userPix.type ?? null;
+
+    // DEBUG: log resumido
+    console.log("[DEBUG] get_saldo - userPix:", userPix, "lastSaquePix:", lastSaquePix, "effective:", { pixKeyEffective, pixKeyEffectiveType });
+
+    return res.status(200).json({
+      saldo_disponivel: typeof usuario.saldo === "number" ? usuario.saldo : 0,
+      saldo_pendente,
+      // mantém os valores do usuário (não sobrescreve DB)
+      pix_key: userPix.key,
+      pix_key_type: userPix.type,
+      // fornece a última operação para UI preferir quando desejar
+      last_saque: lastSaque,
+      // chave efetiva (conveniência para front) — prefira usar esse campo no frontend
+      pix_key_effective: pixKeyEffective,
+      pix_key_effective_type: pixKeyEffectiveType
+    });
+  } catch (error) {
+    console.error("💥 Erro ao obter saldo:", error);
+    return res.status(500).json({ error: "Erro ao buscar saldo." });
+  }
+});
+
+// Rota: /api/historico_acoes (GET)
+router.get("/historico_acoes", async (req, res) => {
+if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método não permitido." });
+  }
+
+  await connectDB();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token não fornecido ou inválido." });
+  }
+
+  const token = authHeader.split(" ")[1];
+  const usuario = await User.findOne({ token });
+
+  if (!usuario) {
+    return res.status(401).json({ error: "Usuário não autenticado." });
+  }
+
+  const nomeUsuarioParam = req.query.usuario;
+
+  if (nomeUsuarioParam) {
+    // Busca diretamente pelo nome de usuário, ignorando o token
+    const historico = await ActionHistory
+      .find({ nome_usuario: nomeUsuarioParam, status: { $ne: "pulada" } })
+      .sort({ data: -1 });
+  
+    const formattedData = historico.map(action => {
+      let status;
+      if (action.status === "valida") status = "Válida";
+      else if (action.status === "invalida") status = "Inválida";
+      else status = "Pendente";
+  
+      return {
+        nome_usuario: action.nome_usuario,
+        valor: action.valor,
+        data: action.data,
+        rede_social: action.rede_social,
+        tipo_acao: action.tipo_acao,
+        url: action.url,
+        status
+      };
+    });
+  
+    return res.status(200).json(formattedData);
+  }  
+
+  try {
+    const historico = await ActionHistory
+      .find({ user: usuario._id, status: { $ne: "pulada" } })
+      .sort({ data: -1 });
+
+    const formattedData = historico.map(action => {
+      let status;
+      if (action.status === "valida") status = "Válida";
+      else if (action.status === "invalida") status = "Inválida";
+      else status = "Pendente";
+
+      return {
+        nome_usuario: action.nome_usuario,
+        valor: action.valor,
+        data: action.data,
+        rede_social: action.rede_social,
+        tipo_acao: action.tipo_acao,
+        url: action.url,
+        status
+      };
+    });
+    
+    return res.status(200).json(formattedData);
+  } catch (error) {
+    console.error("💥 Erro em /historico_acoes:", error);
+    return res.status(500).json({ error: "Erro ao buscar histórico de ações." });
+  }
+});
+
+// Rota: /api/tiktok/get_user
+router.get("/tiktok/get_user", async (req, res) => {
   await connectDB();
   let { token, nome_usuario } = req.query;
 
-  // Normaliza nome de usuário
   if (!token || !nome_usuario) {
     return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
   }
 
   nome_usuario = nome_usuario.trim().toLowerCase();
 
-  function generateFakeTikTokId() {
-    const prefix = "74";
-    const randomDigits = Array.from({ length: 17 }, () => Math.floor(Math.random() * 10)).join("");
-    return prefix + randomDigits;
-  }
-
   try {
+    // Verifica usuário pelo token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
     }
 
-    // Verifica se a conta TikTok já está vinculada a outro usuário
+    // Verifica se essa conta já está vinculada a outro usuário
     const contaJaRegistrada = await User.findOne({
-      "contas.nomeConta": nome_usuario,
+      "contas.nome_usuario": nome_usuario,
       token: { $ne: token }
     });
 
     if (contaJaRegistrada) {
       return res.status(200).json({
-        status: 'fail',
-        message: 'Essa conta TikTok já está vinculada a outro usuário.'
+        status: "fail",
+        message: "Essa conta TikTok já está vinculada a outro usuário."
       });
     }
 
-    // Consulta API externa
-    const bindTkUrl = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${nome_usuario}`;
-    const bindResponse = await axios.get(bindTkUrl);
-    const bindData = bindResponse.data;
-
-    if (bindData.error === "TOKEN_INCORRETO") {
-      return res.status(403).json({ error: "Token incorreto ao acessar API externa." });
-    }
-
-    const contaIndex = usuario.contas.findIndex(c => c.nomeConta === nome_usuario);
-
-    // Caso o usuário não seja encontrado na API externa
-    if (bindData.status === "fail" && bindData.message === "WRONG_USER") {
-      let fakeId;
-
-      if (contaIndex !== -1) {
-        // Já existe, apenas atualiza
-        fakeId = usuario.contas[contaIndex].id_fake || generateFakeTikTokId();
-        usuario.contas[contaIndex].id_tiktok = null;
-        usuario.contas[contaIndex].id_fake = fakeId;
-        usuario.contas[contaIndex].status = "Pendente";
-      } else {
-        // Nova conta, adiciona
-        fakeId = generateFakeTikTokId();
-        usuario.contas.push({
-          nomeConta: nome_usuario,
-          id_tiktok: null,
-          id_fake: fakeId,
-          status: "Pendente"
-        });
-      }
-
-      await usuario.save();
-      return res.status(200).json({
-        status: "success",
-        id_tiktok: fakeId
-      });
-    }
-
-    // Conta válida com ID retornado
-    const returnedId = bindData.id_tiktok || generateFakeTikTokId();
-    const isFake = !bindData.id_tiktok;
+    // PROCURAR conta IGUAL pelo nome_usuario E PELA REDE "TikTok"
+    const contaIndex = usuario.contas.findIndex(
+      c => c.nome_usuario === nome_usuario && c.rede === "TikTok"
+    );
 
     if (contaIndex !== -1) {
-      usuario.contas[contaIndex].id_tiktok = isFake ? null : returnedId;
-      usuario.contas[contaIndex].id_fake = isFake ? returnedId : null;
+      // Conta já existe → reativar e garantir rede="TikTok"
       usuario.contas[contaIndex].status = "ativa";
+      usuario.contas[contaIndex].rede = "TikTok";
     } else {
+      // Criar nova conta com rede TikTok
       usuario.contas.push({
-        nomeConta: nome_usuario,
-        id_tiktok: isFake ? null : returnedId,
-        id_fake: isFake ? returnedId : null,
-        status: "ativa"
+        nome_usuario,
+        status: "ativa",
+        rede: "TikTok"
       });
     }
 
     await usuario.save();
+
     return res.status(200).json({
       status: "success",
-      id_tiktok: returnedId
+      nome_usuario
     });
 
   } catch (error) {
-    console.error("Erro ao processar requisição:", error.response?.data || error.message);
+    console.error("Erro ao processar requisição:", error);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
-}
+});
 
-// Rota: /api/get_action (GET)
-if (url.startsWith("/api/tiktok/get_action") && method === "GET") {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método não permitido" });
-  }
+// ROTA: /api/tiktok/get_action (GET)
+router.get("/tiktok/get_action", async (req, res) => {
+  const { nome_usuario, token, tipo, debug } = req.query;
 
-const { id_tiktok, token, tipo } = req.query;
-
-let tipoAcao = "seguir";
-if (tipo === "2") tipoAcao = "curtir";
-else if (tipo === "3") tipoAcao = { $in: ["seguir", "curtir"] };
-
-
-  if (!id_tiktok || !token) {
-    return res.status(400).json({ error: "Parâmetros 'id_tiktok' e 'token' são obrigatórios" });
+  if (!nome_usuario || !token) {
+    return res.status(400).json({ error: "Parâmetros 'nome_usuario' e 'token' são obrigatórios" });
   }
 
   try {
     await connectDB();
 
-    console.log("[GET_ACTION] Iniciando busca de ação para:", id_tiktok);
+    console.log("[GET_ACTION] Requisição:", {
+      nome_usuario,
+      token: token ? "***" + token.slice(-6) : null,
+      tipo,
+      debug: !!debug
+    });
 
-    // 🔐 Validação do token
+    // validar usuário via token
     const usuario = await User.findOne({ token });
     if (!usuario) {
-      console.log("[GET_ACTION] Token inválido:", token);
+      console.log("[GET_ACTION] Token inválido");
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    console.log("[GET_ACTION] Token válido para usuário:", usuario._id);
+    // garantir que o token corresponde à conta vinculada
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => c.nome_usuario === nome_usuario);
 
-    // 🔍 Buscar pedidos locais válidos
-const pedidos = await Pedido.find({
-  rede: "tiktok",
-  tipo: tipoAcao,
-  status: { $ne: "concluida" },
-  $expr: { $lt: ["$quantidadeExecutada", "$quantidade"] }
-}).sort({ dataCriacao: -1 });
-
-    console.log(`[GET_ACTION] ${pedidos.length} pedidos locais encontrados`);
-
-    for (const pedido of pedidos) {
-      const id_action = pedido._id;
-
-const jaFez = await ActionHistory.findOne({
-  id_pedido: pedido._id,
-  id_conta: id_tiktok,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
-
-      if (jaFez) {
-        console.log(`[GET_ACTION] Ação local já feita para pedido ${id_action}, pulando`);
-        continue;
-      }
-
-const feitas = await ActionHistory.countDocuments({
-  id_pedido: pedido._id,
-  acao_validada: { $in: ['pendente', 'validada'] }
-});
-
-      if (feitas >= pedido.quantidade) {
-        console.log(`[GET_ACTION] Limite atingido para pedido ${id_action}, pulando`);
-        continue;
-      }
-
-      console.log("[GET_ACTION] Ação local encontrada:", pedido.link);
-
-      const nomeUsuario = pedido.link.includes("@")
-        ? pedido.link.split("@")[1].split(/[/?#]/)[0]
-        : pedido.nome;
-
-let valorFinal;
-if (pedido.tipo === "curtir") {
-  valorFinal = "0.001";
-} else {
-  valorFinal = "0.006";
-}
-
-const tipoAcaoRetorno = pedido.tipo === "curtir" ? "curtir" : "seguir";
-
-return res.status(200).json({
-  status: "sucess",
-  id_tiktok,
-  id_action: pedido._id.toString(),
-  url: pedido.link,
-  nome_usuario: nomeUsuario,
-  tipo_acao: tipoAcaoRetorno,
-  valor: valorFinal
-});
-
+    if (!contaVinculada) {
+      console.log("[GET_ACTION] Token não pertence à conta solicitada:", nome_usuario);
+      return res.status(401).json({ error: "Token não pertence à conta solicitada" });
     }
 
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+    // normalizar tipo
+    const tipoNormalized = typeof tipo === 'string' ? String(tipo).trim().toLowerCase() : null;
+    let tipoBanco;
 
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada.");
+    if (tipo === "2" || tipoNormalized === "2" || tipoNormalized === "curtir") {
+      tipoBanco = "curtir";
+    } else if (tipo === "3" || tipoNormalized === "3" || tipoNormalized === "seguir_curtir") {
+      tipoBanco = { $in: ["seguir", "curtir"] };
+    } else {
+      tipoBanco = "seguir";
+    }
 
-if (tipo === "2") {
-  console.log("[GET_ACTION] Tipo 2 (curtidas locais) e nenhuma ação local encontrada. Ignorando API externa.");
-  return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
-}
+    // query base
+    const query = {
+      quantidade: { $gt: 0 },
+      status: { $in: ["pendente", "reservada"] },
+      rede: { $regex: /^tiktok$/i }
+    };
 
-// 🔁 Se não for tipo 2, continua buscando na API externa
-console.log("[GET_ACTION] Nenhuma ação local válida encontrada, buscando na API externa...");
+    query.tipo = tipoBanco;
 
-const apiURL = `https://api.ganharnoinsta.com/get_action.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&id_conta=${id_tiktok}&is_tiktok=1&tipo=1`;
-const response = await axios.get(apiURL);
-const data = response.data;
+    const totalMatching = await Pedido.countDocuments(query);
+    console.log(`[GET_ACTION] Pedidos que batem com query inicial: ${totalMatching}`);
 
-if (data.status === "CONTA_INEXISTENTE") {
-  console.log("[GET_ACTION] Conta inexistente na API externa:", id_tiktok);
-  return res.status(200).json({ status: "fail", id_tiktok, message: "Nenhuma ação disponível no momento." });
-}
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }).lean();
+    console.log(`[GET_ACTION] ${pedidos.length} pedidos encontrados (após find)`);
 
-if (data.status === "ENCONTRADA") {
-  const pontos = parseFloat(data.quantidade_pontos);
+    if (debug === "1") {
+      return res.status(200).json({
+        debug: true,
+        totalMatching,
+        sampleQuery: query,
+        pedidosSample: pedidos.slice(0, 6)
+      });
+    }
 
-  // ❌ REMOVIDO o trecho que ignorava ações com 4 pontos
+    // varrer pedidos
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;
+      const idPedidoStr = String(id_pedido);
 
-  // ✅ Agora processa qualquer valor de pontos normalmente
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.004)
-    ? valorBruto - 0.001
-    : valorBruto;
-  const valorFinal = Math.min(Math.max(valorDescontado, 0.004), 0.006).toFixed(3);
+      const quantidadePedido = Number(pedido.quantidade || 0);
+      if (isNaN(quantidadePedido) || quantidadePedido <= 0) continue;
 
-  const idPedidoOriginal = String(data.id_pedido);
+      // total validadas
+      const validadas = await ActionHistory.countDocuments({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        status: "valida"
+      });
 
-  const temp = await TemporaryAction.create({
-    id_tiktok,
-    url_dir: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: "seguir",
-    valor: valorFinal,
-    id_action: idPedidoOriginal,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-  });
+      if (validadas >= quantidadePedido) continue;
 
-  console.log("[GET_ACTION] TemporaryAction salva:", temp);
-  console.log("[GET_ACTION] Ação externa registrada em TemporaryAction");
+      // total feitas (pendente + valida)
+      const feitas = await ActionHistory.countDocuments({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        status: { $in: ["pendente", "valida"] }
+      });
 
-  return res.status(200).json({
-    status: "sucess",
-    id_tiktok,
-    id_action: idPedidoOriginal,
-    url: data.url_dir,
-    nome_usuario: data.nome_usuario,
-    tipo_acao: data.tipo_acao,
-    valor: valorFinal
-  });
-}
+      if (feitas >= quantidadePedido) continue;
 
-    console.log("[GET_ACTION] Nenhuma ação encontrada local ou externa.");
+      // verificar se esta conta pulou
+      const pulada = await ActionHistory.findOne({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        nome_usuario,
+        status: "pulada"
+      });
+
+      if (pulada) continue;
+
+      // verificar se esta conta já fez
+      const jaFez = await ActionHistory.findOne({
+        $or: [{ id_pedido }, { id_action: idPedidoStr }],
+        nome_usuario,
+        status: { $in: ["pendente", "valida"] }
+      });
+
+      if (jaFez) continue;
+
+      // extrair nome do perfil alvo
+      let nomeUsuarioAlvo = "";
+      if (typeof pedido.link === "string") {
+        if (pedido.link.includes("@")) {
+          nomeUsuarioAlvo = pedido.link.split("@")[1].split(/[/?#]/)[0];
+        } else {
+          const m = pedido.link.match(/tiktok\.com\/@?([^\/?#&]+)/i);
+          if (m && m[1]) nomeUsuarioAlvo = m[1].replace(/\/$/, "");
+        }
+      }
+
+      console.log(`✅ Ação disponível para ${nome_usuario}: ${nomeUsuarioAlvo || '<sem-usuario>'}`);
+
+const valorFinal = getValorAcao(pedido, "TikTok");
+
+      const tipoAcao = pedido.tipo;
+
+      // 🔥 DIFERENCIAÇÃO SEGUIR vs CURTIR
+      if (tipoAcao === "seguir") {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          usuario: nomeUsuarioAlvo, // ← só para seguir
+          tipo_acao: tipoAcao,
+          valor: valorFinal
+        });
+      } else {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          tipo_acao: tipoAcao,
+          valor: valorFinal
+        });
+      }
+    }
+
+    console.log("[GET_ACTION] Nenhuma ação disponível");
     return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
 
   } catch (err) {
     console.error("[GET_ACTION] Erro ao buscar ação:", err);
     return res.status(500).json({ error: "Erro interno ao buscar ação" });
   }
-  
-};
+});
 
-// Rota: /api/confirm_action (POST)
-if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
+// ROTA: /api/tiktok/confirm_action (POST)
+router.post("/tiktok/confirm_action", async (req, res) => {
   await connectDB();
 
-  const { token, id_action, id_tiktok } = req.body;
-  if (!token || !id_action || !id_tiktok) {
-    return res.status(400).json({ error: "Parâmetros obrigatórios ausentes." });
+  const { token, id_action, nome_usuario } = req.body;
+
+  if (!token || !id_action || !nome_usuario) {
+    return res.status(400).json({
+      error: "Parâmetros 'token', 'id_action' e 'nome_usuario' são obrigatórios."
+    });
   }
 
   try {
+    // 🔐 Validar token
     const usuario = await User.findOne({ token });
     if (!usuario) {
       return res.status(403).json({ error: "Acesso negado. Token inválido." });
@@ -1391,6 +1830,7 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
 
     console.log("🧩 id_action recebido:", id_action);
 
+    // Normalizar tipo
     function normalizarTipo(tipo) {
       const mapa = {
         seguir: "seguir",
@@ -1403,203 +1843,517 @@ if (url.startsWith("/api/tiktok/confirm_action") && method === "POST") {
       return mapa[tipo?.toLowerCase?.()] || "seguir";
     }
 
-    // 🔍 Verificar se a ação é local (existe no Pedido)
+    // 🔍 Buscar pedido local
     const pedidoLocal = await Pedido.findById(id_action);
 
-    let valorFinal = 0;
-    let tipo_acao = "Seguir";
-    let url_dir = "";
-
-    if (pedidoLocal) {
-      console.log("📦 Confirmando ação local:", id_action);
-
-      tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
-
-      if (tipo_acao === "curtir") {
-        valorFinal = 0.001;
-      } else if (tipo_acao === "seguir") {
-        valorFinal = 0.006;
-      }
-
-      url_dir = pedidoLocal.link;
-    } else {
-      // 🔍 AÇÃO EXTERNA – Buscar no TemporaryAction
-      const tempAction = await TemporaryAction.findOne({ id_tiktok, id_action });
-
-      if (!tempAction) {
-        console.log("❌ TemporaryAction não encontrada para ação externa:", id_tiktok, id_action);
-        return res.status(404).json({ error: "Ação temporária não encontrada" });
-      }
-
-      // 🔐 Confirmar ação via API externa
-      const payload = {
-        token: "944c736c-6408-465d-9129-0b2f11ce0971",
-        sha1: "e5990261605cd152f26c7919192d4cd6f6e22227",
-        id_conta: id_tiktok,
-        id_pedido: id_action,
-        is_tiktok: "1",
-      };
-
-      let confirmData = {};
-      try {
-        const confirmResponse = await axios.post(
-          "https://api.ganharnoinsta.com/confirm_action.php",
-          payload,
-          { timeout: 5000 }
-        );
-        confirmData = confirmResponse.data || {};
-        console.log("📬 Resposta da API confirmar ação:", confirmData);
-      } catch (err) {
-        console.error("❌ Erro ao confirmar ação (externa):", err.response?.data || err.message);
-        return res.status(502).json({ error: "Falha na confirmação externa." });
-      }
-
-      const valorOriginal = parseFloat(confirmData.valor || tempAction?.valor || 0);
-      const valorDescontado = valorOriginal > 0.003 ? valorOriginal - 0.001 : valorOriginal;
-      valorFinal = parseFloat(Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3));
-      tipo_acao = normalizarTipo(confirmData.tipo_acao || tempAction?.tipo_acao);
-      url_dir = tempAction?.url_dir || "";
+    if (!pedidoLocal) {
+      console.log("❌ Pedido local não encontrado:", id_action);
+      return res.status(404).json({ error: "Ação não encontrada." });
     }
 
-    // 💾 Salva o valor real (sem arredondar para exibição)
+    console.log("📦 Confirmando ação local:", id_action);
+
+    // Definir tipo da ação
+    const tipo_acao = normalizarTipo(
+      pedidoLocal.tipo_acao ||
+      pedidoLocal.tipo
+    );
+
+// Valor da ação (agora usando função global)
+const valorFinal = getValorAcao({
+  tipo: tipo_acao,
+  valor: pedidoLocal.valor
+});
+
+    // URL do perfil alvo
+    const url_dir = pedidoLocal.link;
+
+    // Criar registro no histórico
     const newAction = new ActionHistory({
+      user: usuario._id,
       token,
-      nome_usuario: usuario.contas.find(
-        (c) => c.id_tiktok === id_tiktok || c.id_fake === id_tiktok
-      )?.nomeConta,
+      nome_usuario,
       tipo_acao,
       tipo: tipo_acao,
-      quantidade_pontos: valorFinal,
-      url_dir,
-      id_conta: id_tiktok,
+      valor: valorFinal,
+      rede_social: "TikTok",
+      url: url_dir,            // ✔ CORRIGIDO
       id_action,
-      id_pedido: id_action,
-      user: usuario._id,
-      acao_validada: "pendente",
-      valor_confirmacao: valorFinal,
+      status: "pendente",
       data: new Date(),
     });
 
     const saved = await newAction.save();
+
     usuario.historico_acoes.push(saved._id);
     await usuario.save();
 
-    // ✅ Exibição: apenas 0.003 vira 0.004 no retorno
-    const valorExibicao = valorFinal === 0.003 ? 0.004 : valorFinal;
-
     return res.status(200).json({
-      status: "sucess",
-      message: "ação confirmada com sucesso",
-      valor: valorExibicao,
+      status: "success",
+      message: "Ação confirmada com sucesso.",
+      valor: valorFinal,
     });
+
   } catch (error) {
     console.error("💥 Erro ao processar requisição:", error.message);
     return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
-}
+});
 
-// Rota: /api/pular_acao
-if (url.startsWith("/api/pular_acao") && method === "POST") {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
+// Rota: /api/instagram/get_user
+router.get("/instagram/get_user", async (req, res) => {
+  await connectDB();
+  let { token, nome_usuario } = req.query;
+
+  if (!token || !nome_usuario) {
+    return res.status(400).json({ error: "Os parâmetros 'token' e 'nome_usuario' são obrigatórios." });
   }
 
-  const {
-    token,
-    id_pedido,
-    id_conta,
-    nome_usuario,
-    url_dir,
-    quantidade_pontos,
-    tipo_acao,
-    tipo
-  } = req.body;
+  nome_usuario = nome_usuario.trim().toLowerCase();
 
-  if (!token || !id_pedido || !id_conta || !nome_usuario || !url_dir || !quantidade_pontos || !tipo_acao || !tipo) {
-    return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+  try {
+    // Verifica usuário pelo token
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
+    }
+
+    // Verifica se essa conta já está vinculada a outro usuário
+    const contaJaRegistrada = await User.findOne({
+      "contas.nome_usuario": nome_usuario,
+      token: { $ne: token }
+    });
+
+    if (contaJaRegistrada) {
+      return res.status(200).json({
+        status: "fail",
+        message: "Essa conta Instagram já está vinculada a outro usuário."
+      });
+    }
+
+    // PROCURAR conta IGUAL pelo nome_usuario E PELA REDE "Instagram"
+    const contaIndex = usuario.contas.findIndex(
+      c => c.nome_usuario === nome_usuario && c.rede === "Instagram"
+    );
+
+    if (contaIndex !== -1) {
+      // Conta IG existente → reativar
+      usuario.contas[contaIndex].status = "ativa";
+    } else {
+      // Criar NOVO documento mesmo se nome_usuario for igual ao de outra rede
+      usuario.contas.push({
+        nome_usuario,
+        status: "ativa",
+        rede: "Instagram"
+      });
+    }
+
+    await usuario.save();
+
+    return res.status(200).json({
+      status: "success",
+      nome_usuario
+    });
+
+  } catch (error) {
+    console.error("Erro ao processar requisição:", error);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
+});
+
+// Rota: /api/instagram/get_action (GET) — VERSÃO CORRIGIDA
+router.get("/instagram/get_action", async (req, res) => {
+  const { nome_usuario, token, tipo, debug } = req.query;
+
+  if (!nome_usuario || !token) {
+    return res.status(400).json({ error: "Parâmetros 'nome_usuario' e 'token' são obrigatórios" });
+  }
+
+  // normaliza nome_usuario para comparação consistente
+  const nomeUsuarioRequest = String(nome_usuario).trim().toLowerCase();
 
   try {
     await connectDB();
 
-    const user = await User.findOne({ token });
-    if (!user) {
-      return res.status(401).json({ error: 'Token inválido' });
+    console.log("[GET_ACTION][IG] Requisição:", {
+      nome_usuario: nomeUsuarioRequest,
+      token: token ? "***" + token.slice(-6) : null,
+      tipo,
+      debug: !!debug
+    });
+
+    // valida token (acha o usuário dono do token)
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      console.log("[GET_ACTION][IG] Token inválido");
+      return res.status(401).json({ error: "Token inválido" });
     }
 
-const existente = await ActionHistory.findOne({
-  id_pedido,
-  id_conta,
-  acao_validada: 'pulada',
+    // garante que o token corresponde à conta nome_usuario enviada
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => String(c.nome_usuario).trim().toLowerCase() === nomeUsuarioRequest);
+
+    if (!contaVinculada) {
+      console.log("[GET_ACTION][IG] Token não pertence à conta solicitada:", nomeUsuarioRequest);
+      return res.status(401).json({ error: "Token não pertence à conta solicitada" });
+    }
+
+    // normalizar tipo (entrada)
+    const tipoNormalized = typeof tipo === 'string' ? String(tipo).trim().toLowerCase() : null;
+    let tipoBanco;
+    if (tipo === "2" || tipoNormalized === "2" || tipoNormalized === "curtir") tipoBanco = "curtir";
+    else if (tipo === "3" || tipoNormalized === "3" || tipoNormalized === "seguir_curtir")
+      tipoBanco = { $in: ["seguir", "curtir"] };
+    else tipoBanco = "seguir";
+
+    // query base — instagram, status e quantidade disponível (mesma lógica do /tiktok/get_action)
+    const query = {
+      quantidade: { $gt: 0 },
+      status: { $in: ["pendente", "reservada"] },
+      rede: { $regex: new RegExp(`^instagram$`, "i") }
+    };
+    if (typeof tipoBanco === "string") query.tipo = tipoBanco;
+    else query.tipo = tipoBanco;
+
+    const totalMatching = await Pedido.countDocuments(query);
+    console.log(`[GET_ACTION][IG] Pedidos que batem com query inicial: ${totalMatching}`);
+
+    const pedidos = await Pedido.find(query).sort({ dataCriacao: -1 }).lean();
+    console.log(`[GET_ACTION][IG] ${pedidos.length} pedidos encontrados (após find)`);
+
+    if (debug === "1") {
+      return res.status(200).json({ debug: true, totalMatching, sampleQuery: query, pedidosSample: pedidos.slice(0, 6) });
+    }
+
+    for (const pedido of pedidos) {
+      const id_pedido = pedido._id;               // pode ser número ou ObjectId
+      const idPedidoStr = String(id_pedido);     // comparação com strings armazenadas em id_action
+
+      console.log("[GET_ACTION][IG] Verificando pedido:", {
+        id_pedido,
+        tipo: pedido.tipo,
+        quantidade: pedido.quantidade,
+        link: pedido.link
+      });
+
+      // garantir que quantidade é número válido
+      const quantidadePedido = Number(pedido.quantidade || 0);
+      if (isNaN(quantidadePedido) || quantidadePedido <= 0) {
+        console.log(`[GET_ACTION][IG] Ignorando pedido ${id_pedido} por quantidade inválida:`, pedido.quantidade);
+        continue;
+      }
+
+      // === Contagens (sem filtrar por "tipo" para evitar mismatch com campo tipo_acao) ===
+      // validadas: status validadas (considera ambos campos possíveis)
+      const validadas = await ActionHistory.countDocuments({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          { $or: [{ status: "valida" }, { acao_validada: "valida" }] }
+        ]
+      });
+      if (validadas >= quantidadePedido) {
+        console.log(`[GET_ACTION][IG] Pedido ${id_pedido} fechado — já tem ${validadas} validações.`);
+        continue;
+      }
+
+      // feitas: pendente + valida (também considerando ambos os campos)
+      const feitas = await ActionHistory.countDocuments({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          { $or: [{ status: { $in: ["pendente", "valida"] } }, { acao_validada: { $in: ["pendente", "valida"] } }] }
+        ]
+      });
+      console.log(`[GET_ACTION][IG] Ação ${id_pedido} (tipo ${pedido.tipo}): feitas=${feitas}, limite=${quantidadePedido}`);
+      if (feitas >= quantidadePedido) {
+        console.log(`[GET_ACTION][IG] Pedido ${id_pedido} atingiu limite — pulando`);
+        continue;
+      }
+
+      // Verificar se ESTE NOME_DE_CONTA pulou => bloqueia só esta conta
+      const pulada = await ActionHistory.findOne({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          { nome_usuario: nomeUsuarioRequest },
+          { $or: [{ status: "pulada" }, { acao_validada: "pulada" }] }
+        ]
+      });
+      if (pulada) {
+        console.log(`[GET_ACTION][IG] Usuário ${nomeUsuarioRequest} pulou o pedido ${id_pedido} — pulando`);
+        continue;
+      }
+
+      // Verificar se ESTE NOME_DE_CONTA já possui pendente/valida => bloqueia só esta conta
+      const jaFez = await ActionHistory.findOne({
+        $and: [
+          { $or: [{ id_pedido }, { id_action: idPedidoStr }] },
+          { nome_usuario: nomeUsuarioRequest },
+          { $or: [{ status: { $in: ["pendente", "valida"] } }, { acao_validada: { $in: ["pendente", "valida"] } }] }
+        ]
+      });
+      if (jaFez) {
+        console.log(`[GET_ACTION][IG] Usuário ${nomeUsuarioRequest} já possui ação pendente/validada para pedido ${id_pedido} — pulando`);
+        continue;
+      }
+
+      // Se chegou aqui: feitas < quantidade AND este nome_usuario ainda NÃO fez (para este pedido) => pode pegar
+      // extrair alvo do link (Instagram tolerant)
+      let nomeUsuarioAlvo = "";
+      if (typeof pedido.link === "string") {
+        const link = pedido.link.trim();
+
+        // post (curtir): /p/POST_ID/
+        const postMatch = link.match(/instagram\.com\/p\/([^\/?#&]+)/i);
+        if (postMatch && postMatch[1]) {
+          nomeUsuarioAlvo = postMatch[1]; // devolve o id do post
+        } else {
+          // perfil: /username/
+          const m = link.match(/instagram\.com\/@?([^\/?#&\/]+)/i);
+          if (m && m[1]) {
+            nomeUsuarioAlvo = m[1].replace(/\/$/, "");
+          } else {
+            nomeUsuarioAlvo = pedido.nome || "";
+          }
+        }
+      }
+
+      console.log(`[GET_ACTION][IG] Ação disponível para ${nomeUsuarioRequest}: ${nomeUsuarioAlvo || '<sem-usuario>'} (pedido ${id_pedido}) — feitas=${feitas}/${quantidadePedido}`);
+
+const valorFinal = getValorAcao(pedido, "Instagram");
+
+      // retorno diferenciado para seguir x curtir
+      if (pedido.tipo === "seguir") {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          usuario: nomeUsuarioAlvo,
+          tipo_acao: pedido.tipo,
+          valor: valorFinal
+        });
+      } else {
+        return res.status(200).json({
+          status: "success",
+          id_action: idPedidoStr,
+          url: pedido.link,
+          tipo_acao: pedido.tipo,
+          valor: valorFinal
+        });
+      }
+    }
+
+    console.log("[GET_ACTION][IG] Nenhuma ação disponível");
+    return res.status(200).json({ status: "fail", message: "nenhuma ação disponível no momento" });
+
+  } catch (err) {
+    console.error("[GET_ACTION][IG] Erro ao buscar ação:", err);
+    return res.status(500).json({ error: "Erro interno ao buscar ação" });
+  }
 });
 
-if (existente) {
-  return res.status(200).json({ status: 'JA_PULADA' });
-}
+// ROTA: /api/instagram/confirm_action (POST)
+router.post("/instagram/confirm_action", async (req, res) => {
+  await connectDB();
 
-const novaAcao = new ActionHistory({
-  user: user._id,
-  token,
-  nome_usuario,
-  id_action: crypto.randomUUID(),
-  id_pedido,
-  id_conta,
-  url_dir,
-  quantidade_pontos,
-  tipo_acao,
-  tipo,
-  acao_validada: 'pulada',
-  rede_social: 'TikTok',
-  createdAt: new Date()
+  let { token, id_action, nome_usuario } = req.body;
+
+  if (!token || !id_action || !nome_usuario) {
+    return res.status(400).json({
+      error: "Parâmetros 'token', 'id_action' e 'nome_usuario' são obrigatórios."
+    });
+  }
+
+  // Normaliza o nome de usuário recebido para comparações
+  nome_usuario = String(nome_usuario).trim().toLowerCase();
+
+  try {
+    // 🔐 Validar token (acha o usuário dono do token)
+    const usuario = await User.findOne({ token });
+    if (!usuario) {
+      return res.status(403).json({ error: "Acesso negado. Token inválido." });
+    }
+
+    // Garantir que o token pertence à conta informada (evita token de A agir por B)
+    const contaVinculada = Array.isArray(usuario.contas) &&
+      usuario.contas.some(c => String(c.nome_usuario).trim().toLowerCase() === nome_usuario);
+    if (!contaVinculada) {
+      console.log("[CONFIRM_ACTION][IG] Token não pertence à conta:", nome_usuario);
+      return res.status(403).json({ error: "Token não pertence à conta informada." });
+    }
+
+    console.log("🧩 id_action recebido:", id_action);
+
+    // Normalizar tipo (mapa robusto)
+    function normalizarTipo(tipo) {
+      const mapa = {
+        seguir: "seguir",
+        seguiram: "seguir",
+        Seguir: "seguir",
+        curtidas: "curtir",
+        curtir: "curtir",
+        Curtir: "curtir",
+      };
+      return mapa[String(tipo || "").toLowerCase()] || "seguir";
+    }
+
+    // 🔍 Buscar pedido local (pelo id numérico)
+    const pedidoLocal = await Pedido.findById(id_action);
+
+    if (!pedidoLocal) {
+      console.log("[CONFIRM_ACTION][IG] Pedido local não encontrado:", id_action);
+      return res.status(404).json({ error: "Ação não encontrada." });
+    }
+
+    console.log("📦 Confirmando ação local (IG):", id_action);
+
+    // Definir tipo da ação (pode vir de pedidoLocal.tipo_acao ou pedidoLocal.tipo)
+    const tipo_acao = normalizarTipo(pedidoLocal.tipo_acao || pedidoLocal.tipo);
+
+// Valor da ação (agora usando função global)
+const valorFinal = getValorAcao({
+  tipo: tipo_acao,
+  valor: pedidoLocal.valor
 });
 
-    await novaAcao.save();
+    // URL do alvo
+    const url_dir = pedidoLocal.link;
 
-    return res.status(200).json({ status: 'PULADA_REGISTRADA' });
+    // Extrair alvo do link (perfil ou post)
+    let nomeDoPerfil = "";
+    if (typeof url_dir === "string" && url_dir.length) {
+      const link = url_dir.trim();
+
+      // tentativa 1: post (/p/ID/)
+      const postMatch = link.match(/instagram\.com\/p\/([^\/?#&]+)/i);
+      if (postMatch && postMatch[1]) {
+        nomeDoPerfil = postMatch[1];
+      } else {
+        // tentativa 2: perfil (/username/)
+        const profileMatch = link.match(/instagram\.com\/@?([^\/?#&\/]+)/i);
+        if (profileMatch && profileMatch[1]) {
+          nomeDoPerfil = profileMatch[1].replace(/\/$/, "");
+        } else {
+          // fallback para usar campo nome do pedido
+          nomeDoPerfil = pedidoLocal.nome || "";
+        }
+      }
+    }
+
+    // Criar registro no histórico
+    const newAction = new ActionHistory({
+      user: usuario._id,
+      token,
+      nome_usuario,
+      tipo_acao,
+      tipo: tipo_acao,
+      valor: valorFinal,
+      rede_social: "Instagram",
+      url: url_dir,
+      id_action: String(pedidoLocal._id),
+      status: "pendente",
+      data: new Date(),
+    });
+
+    const saved = await newAction.save();
+
+    // vincular histórico ao usuário e salvar
+    usuario.historico_acoes.push(saved._id);
+    await usuario.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Ação confirmada com sucesso.",
+      valor: valorFinal,
+    });
+
   } catch (error) {
-    console.error('Erro ao registrar ação pulada:', error);
-    return res.status(500).json({ error: 'Erro interno' });
+    console.error("💥 [CONFIRM_ACTION][IG] Erro ao processar requisição:", error);
+    return res.status(500).json({ error: "Erro interno ao processar requisição." });
   }
-};
+});
 
-// Rota: /api/proxy_bind_tk
-if (url.startsWith("/api/proxy_bind_tk") && method === "GET") {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método não permitido' });
+// ROTA: /api/pular_acao
+router.post("/pular_acao", async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
   }
 
-  const { nome_usuario } = req.query;
-  if (!nome_usuario) {
-    return res.status(400).json({ error: 'Parâmetro nome_usuario é obrigatório' });
+  await connectDB();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não fornecido." });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+
+  const {
+    id_pedido,
+    nome_usuario,
+    url,
+    tipo_acao,
+    valor
+  } = req.body;
+
+  // ===== VALIDAÇÃO DE CAMPOS =====
+if (!id_pedido || !nome_usuario || !url || !tipo_acao || !valor) {
+    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+  }
+
+  // ===== VALIDAR TOKEN =====
+  const usuario = await User.findOne({ token });
+  if (!usuario) {
+    return res.status(401).json({ error: "Token inválido." });
   }
 
   try {
-    const url = `http://api.ganharnoinsta.com/bind_tk.php?token=944c736c-6408-465d-9129-0b2f11ce0971&sha1=e5990261605cd152f26c7919192d4cd6f6e22227&nome_usuario=${encodeURIComponent(nome_usuario)}`;
+    // ===== DETECTAR REDE SOCIAL =====
+    let redeFinal = "TikTok";
+    if (url.includes("instagram.com")) redeFinal = "Instagram";
 
-    const response = await fetch(url);
-    const data = await response.text(); // texto cru vindo da API externa
-    const txt = String(data || "").trim();
-
-    // Normaliza: se o texto contém NOT_FOUND devolvemos status fail/message
-    if (txt.toUpperCase().includes("NOT_FOUND")) {
-      return res.status(200).json({ status: 'fail', message: 'NOT_FOUND', resposta: txt });
+    // ===== DETECTAR TIPO DE AÇÃO =====
+    let tipoAcaoFinal = "seguir";
+    if (url.includes("/video/") || url.includes("/p/") || url.includes("/reel/") || url.includes("watch?v=")) {
+      tipoAcaoFinal = "curtir";
     }
 
-    // outros casos de erro detectáveis pela string (opcional)
-    if (/ERROR|FAIL|INVALID/i.test(txt)) {
-      return res.status(200).json({ status: 'fail', message: txt, resposta: txt });
+    // ===== IMPEDIR DUPLICAÇÃO DO PULO =====
+    const existente = await ActionHistory.findOne({
+      id_action: String(id_pedido),
+      acao_validada: "pulada",
+    });
+
+    if (existente) {
+      return res.status(200).json({ status: "JA_PULADA" });
     }
 
-    // sucesso (ou resposta que não indica erro)
-    return res.status(200).json({ status: 'SUCESSO', resposta: txt });
+    // ===== REGISTRAR AÇÃO PULADA =====
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token,
+      nome_usuario,
+      id_action: String(id_pedido),
+      url,
+      tipo_acao: tipo_acao.toLowerCase(),
+      tipo: tipoAcaoFinal,
+      rede_social: redeFinal,
+      acao_validada: "pulada",
+      status: "pulada",
+      valor,
+      data: new Date()
+    });
+
+    await novaAcao.save();
+
+    return res.status(200).json({ status: "PULADA_REGISTRADA" });
+
   } catch (error) {
-    console.error('Erro ao consultar API externa:', error);
-    return res.status(500).json({ error: 'Erro ao consultar API externa' });
+    console.error("Erro ao registrar ação pulada:", error);
+    return res.status(500).json({ error: "Erro interno." });
   }
-};
+});
 
 // 🔹 Rota: /api/afiliados
-if (url.startsWith("/api/afiliados") && method === "POST") {
+router.post("/afiliados", async (req, res) => {
   // não destrua `token` do body com o mesmo nome do header
   const { token: bodyToken } = req.body || {};
 
@@ -1651,10 +2405,10 @@ if (url.startsWith("/api/afiliados") && method === "POST") {
     console.error("Erro ao carregar dados de afiliados:", error);
     return res.status(500).json({ error: "Erro interno ao buscar dados de afiliados." });
   }
-}
+});
 
-// Rota: /api/registrar_acao_pendente
-if (url.startsWith("/api/registrar_acao_pendente")) {
+// Rota: /api/confirmar_acao
+router.post("/confirmar_acao", async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido." });
   }
@@ -1672,62 +2426,57 @@ if (url.startsWith("/api/registrar_acao_pendente")) {
     return res.status(401).json({ error: "Token inválido." });
   }
 
-  const {
-    id_conta,
-    id_pedido,
-    nome_usuario,
-    url_dir,
-    tipo_acao,
-    quantidade_pontos,
-    unique_id
-  } = req.body;
+  const { nome_usuario, url, tipo_acao, id_pedido } = req.body;
 
-  if (!id_pedido || !id_conta || !nome_usuario || !tipo_acao || quantidade_pontos == null) {
+  if (!nome_usuario || !tipo_acao || !id_pedido) {
     return res.status(400).json({ error: "Campos obrigatórios ausentes." });
   }
 
- try {
-  const idPedidoStr = id_pedido.toString();
-  const tipoAcaoFinal = url_dir.includes("/video/") ? "curtir" : "seguir";
+  try {
+    // === Detectar Rede Social ===
+    let redeFinal = "TikTok";
+    if (url?.includes("instagram.com") || tipo_acao?.toLowerCase().includes("instagram")) {
+      redeFinal = "Instagram";
+    }
 
-  const pontos = parseFloat(quantidade_pontos);
-  const valorBruto = pontos / 1000;
-  const valorDescontado = (valorBruto > 0.003) ? valorBruto - 0.001 : valorBruto;
-  const valorFinalCalculado = Math.min(Math.max(valorDescontado, 0.003), 0.006).toFixed(3);
-  const valorConfirmacaoFinal = (tipoAcaoFinal === "curtir") ? "0.001" : valorFinalCalculado;
+    // === Detectar Tipo de Ação ===
+    let tipoAcaoFinal = "seguir";
+    if (url.includes("/video/") || url.includes("/p/") || url.includes("/reel/")) {
+      tipoAcaoFinal = "curtir";
+    }
 
-  const novaAcao = new ActionHistory({
-    user: usuario._id,
-    token: usuario.token,
-    nome_usuario,
-    id_pedido: idPedidoStr,
-    id_action: idPedidoStr,
-    id_conta,
-    url_dir,
-    unique_id,
-    tipo_acao,
-    quantidade_pontos,
-    tipo: tipoAcaoFinal,
-    rede_social: "TikTok",
-    valor_confirmacao: valorConfirmacaoFinal,
-    acao_validada: "pendente",
-    data: new Date()
-  });
+    // === VALOR FINAL VIA VARIAVEL DE AMBIENTE ===
+    const valorConfirmacaoFinal = getValorAcao(tipoAcaoFinal, redeFinal);
 
-  // 🔁 Salva com controle de limite por usuário
-  await salvarAcaoComLimitePorUsuario(novaAcao);
+    // === Criar Ação ===
+    const novaAcao = new ActionHistory({
+      user: usuario._id,
+      token: usuario.token,
+      nome_usuario,
+      id_action: String(id_pedido),
+      url,
+      tipo_acao,
+      valor: valorConfirmacaoFinal, // <-- AGORA CORRETO!
+      tipo: tipoAcaoFinal,
+      rede_social: redeFinal,
+      status: "pendente",
+      acao_validada: false,
+      data: new Date()
+    });
 
-  return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+    await salvarAcaoComLimitePorUsuario(novaAcao);
 
-} catch (error) {
-  console.error("Erro ao registrar ação pendente:", error);
-  return res.status(500).json({ error: "Erro ao registrar ação." });
-}
-}
+    return res.status(200).json({ status: "pendente", message: "Ação registrada com sucesso." });
+
+  } catch (error) {
+    console.error("Erro ao registrar ação pendente:", error);
+    return res.status(500).json({ error: "Erro ao registrar ação." });
+  }
+});
 
 // Rota: /api/test/ranking_diario (POST)
-if (url.startsWith("/api/ranking_diario") && method === "POST") {
-  const rankingQuery = query || {};
+router.post("/ranking_diario", async (req, res) => {
+  const rankingQuery = req.query || {};
   const { token: bodyToken } = req.body || {};
 
   try {
@@ -1752,10 +2501,10 @@ if (url.startsWith("/api/ranking_diario") && method === "POST") {
 
     // ---- lista de nomes fornecida (para preencher dailyrankings quando faltar) ----
     const fillerNames = [
-      "Allef 🔥","🤪","-","noname","⚡","💪","-","KingdosMTD🥱🥱","kaduzinho",
+      "-","🤪","-","noname","⚡","💪","-","-","kaduzinho",
       "Rei do ttk 👑","Deus🔥","Mago ✟","-","ldzz tiktok uva🍇","unknown",
-      "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","Luiza","-","xxxxxxxxxx",
-      "Bruno TK","-","[GODZ] MK ☠️","[GODZ] Leozin ☠️","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
+      "vitor das continhas","-","@_01.kaio0","Lipe Rodagem Interna 😄","-","dequelbest 🧙","-","-","xxxxxxxxxx",
+      "Bruno TK","-","[GODZ] MK ☠️","-","Junior","Metheus Rangel","Hackerzin☯","VIP++++","sagaz🐼","-"
     ];
 
     // função utilitária: normaliza username/token/userId para comparações
@@ -2380,276 +3129,6 @@ if (listaComProjetado.length < 10) {
     console.error("❌ Erro ao buscar ranking:", error);
     return res.status(500).json({ error: "Erro interno ao buscar ranking" });
   }
-} // fim if /api/ranking_diario
+});
 
-  if (!url.startsWith("/api/gerenciar_acoes")) {
-    console.log("❌ Rota não corresponde:", url);
-    return res.status(404).json({ error: "Rota não encontrada." });
-  }
-
-  console.log("👉 [ROTA] /api/test/gerenciar_acoes acessada.");
-  console.log("🔹 Método:", method);
-
-  try {
-    console.log("🟧 Conectando ao banco...");
-    await connectDB();
-    console.log("🟩 Banco conectado.");
-
-    // ========================
-    // 1️⃣ Autenticação (verifica token apenas para permitir acesso)
-    // ========================
-    console.log("🔍 Verificando header Authorization...");
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      console.log("❌ Token não enviado.");
-      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-    }
-
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : authHeader;
-
-    console.log("🔍 Token recebido:", token);
-
-    const user = await User.findOne({ token });
-    console.log("🔍 Usuário encontrado:", user ? user._id : "NÃO ENCONTRADO");
-
-    if (!user) {
-      console.log("❌ Usuário não encontrado, token inválido.");
-      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-    }
-
-    // ========================
-    // 2️⃣ Somente POST
-    // ========================
-    console.log("🔸 Verificando método POST...");
-    if (method !== "POST") {
-      console.log("❌ Método inválido:", method);
-      return res.status(405).json({ error: "Use POST." });
-    }
-
-    console.log("📥 Body recebido:", req.body);
-    const { modo, periodo, status, tipo, pagina = 1 } = req.body;
-
-    // Helper: calcula data inicial com base no 'periodo' que o frontend envia
-    function calcularInicioPorPeriodo(p) {
-      if (!p || p === "all" || p === "todos") return null;
-      const agora = Date.now();
-
-      switch (String(p)) {
-        case "24h":
-        case "24horas":
-          return new Date(agora - 24 * 60 * 60 * 1000);
-        case "7d":
-        case "7dias":
-          return new Date(agora - 7 * 24 * 60 * 60 * 1000);
-        case "30d":
-        case "30dias":
-          return new Date(agora - 30 * 24 * 60 * 60 * 1000);
-        case "90d":
-        case "90dias":
-          return new Date(agora - 90 * 24 * 60 * 60 * 1000);
-        case "365d":
-        case "365dias":
-          return new Date(agora - 365 * 24 * 60 * 60 * 1000);
-        case "hoje":
-          const inicioHoje = new Date();
-          inicioHoje.setHours(0, 0, 0, 0);
-          return inicioHoje;
-        default:
-          return null;
-      }
-    }
-
-    // =====================================================================================
-    // 3️⃣ MODO RESUMO (agrega TODAS as ações do sistema)
-    // =====================================================================================
-// === INÍCIO: bloco modo === "resumo" ajustado para respeitar filtros ===
-if (modo === "resumo") {
-    console.log("📌 MODO RESUMO ativado (com filtros).");
-    // monta filtros a partir do que veio no body
-    const filtrosResum = {};
-
-    // STATUS
-    if (status && status !== "todos" && status !== "all") {
-        const mapStatus = { pending: "pendente", valid: "valida", invalid: "invalida" };
-        filtrosResum.acao_validada = mapStatus[status] || status;
-        console.log("🔍 Resumo -> filtro status:", filtrosResum.acao_validada);
-    }
-
-    // TIPO
-    if (tipo && tipo !== "todos" && tipo !== "all") {
-        filtrosResum.tipo = tipo;
-        console.log("🔍 Resumo -> filtro tipo:", filtrosResum.tipo);
-    }
-
-    // PERÍODO (usa a mesma função/calculo do modo lista)
-    function calcularInicioPorPeriodo(p) {
-        if (!p || p === "all" || p === "todos") return null;
-        const agora = Date.now();
-        switch (String(p)) {
-            case "24h": return new Date(agora - 24 * 60 * 60 * 1000);
-            case "7d": return new Date(agora - 7 * 24 * 60 * 60 * 1000);
-            case "30d": return new Date(agora - 30 * 24 * 60 * 60 * 1000);
-            case "90d": return new Date(agora - 90 * 24 * 60 * 60 * 1000);
-            case "365d": return new Date(agora - 365 * 24 * 60 * 60 * 1000);
-            case "hoje":
-                const inicioHoje = new Date(); inicioHoje.setHours(0,0,0,0); return inicioHoje;
-            default: return null;
-        }
-    }
-
-    if (periodo && periodo !== "todos" && periodo !== "all") {
-        const inicio = calcularInicioPorPeriodo(periodo);
-        if (inicio) {
-            // sua collection tem createdAt, então filtramos por createdAt
-            filtrosResum.createdAt = { $gte: inicio };
-            console.log("🔍 Resumo -> filtro período desde:", inicio.toISOString());
-        } else {
-            console.log("🔍 Resumo -> período não mapeado:", periodo);
-        }
-    }
-
-    // Agora usamos filtrosResum para contar (cada contagem pode adicionar/alterar acao_validada)
-    console.log("🔍 Resumo -> filtro final:", filtrosResum);
-
-    console.log("🔄 Contando ações pendentes (com filtros)...");
-    console.time("⏱ pendentes");
-    const pendentes = await ActionHistory.countDocuments({
-        ...filtrosResum,
-        acao_validada: "pendente"
-    });
-    console.timeEnd("⏱ pendentes");
-    console.log("📌 Pendentes (filtrados):", pendentes);
-
-    console.log("🔄 Contando ações válidas (com filtros)...");
-    console.time("⏱ validas");
-    const validas = await ActionHistory.countDocuments({
-        ...filtrosResum,
-        acao_validada: "valida"
-    });
-    console.timeEnd("⏱ validas");
-    console.log("📌 Válidas (filtradas):", validas);
-
-    console.log("🔄 Contando ações inválidas (com filtros)...");
-    console.time("⏱ invalidas");
-    const invalidas = await ActionHistory.countDocuments({
-        ...filtrosResum,
-        acao_validada: "invalida"
-    });
-    console.timeEnd("⏱ invalidas");
-    console.log("📌 Inválidas (filtradas):", invalidas);
-
-    // Para o total somamos apenas as válidas, mas respeitando outros filtros (tipo/periodo)
-    console.log("🔄 Calculando total ganho (válidas + filtros)...");
-    console.time("⏱ total");
-    const ganhosMatch = { ...filtrosResum, acao_validada: "valida" };
-    const totalGanhoArr = await ActionHistory.aggregate([
-        { $match: ganhosMatch },
-        { $group: { _id: null, soma: { $sum: "$valor" } } }
-    ]);
-    console.timeEnd("⏱ total");
-    console.log("📌 Aggregation total ganho (filtrado):", totalGanhoArr);
-
-    const total = totalGanhoArr[0]?.soma || 0;
-    console.log("💰 Total ganho calculado (filtrado):", total);
-
-    return res.status(200).json({
-        pendentes,
-        validas,
-        invalidas,
-        total
-    });
-}
-// === FIM: bloco modo === "resumo" ajustado ===
-
-    // =====================================================================================
-    // 4️⃣ MODO LISTA (filtros, periodo, status, tipo, paginação) — lista TODAS as ações do sistema
-    // =====================================================================================
-
-    console.log("📌 MODO LISTA ativado.");
-
-    const filtros = {}; // lista ações de todo mundo
-    console.log("🔍 Filtros iniciais:", filtros);
-
-    // STATUS (aceita 'all' ou 'todos' para sem filtro)
-    if (status && status !== "todos" && status !== "all") {
-      const mapStatus = {
-        pending: "pendente",
-        valid: "valida",
-        invalid: "invalida"
-      };
-      filtros.acao_validada = mapStatus[status] || status;
-      console.log("🔍 Filtro por status:", filtros.acao_validada);
-    }
-
-    // TIPO (aceita 'all' para sem filtro)
-    if (tipo && tipo !== "todos" && tipo !== "all") {
-      filtros.tipo = tipo;
-      console.log("🔍 Filtro por tipo:", tipo);
-    }
-
-    // PERÍODO (aceita valores do frontend: 24h, 7d, 30d, 90d, 365d, all)
-    if (periodo && periodo !== "todos" && periodo !== "all") {
-      const inicio = calcularInicioPorPeriodo(periodo);
-      if (inicio) {
-        // sua collection usa createdAt (conforme exemplos), então filtramos por createdAt
-        filtros.createdAt = { $gte: inicio };
-        console.log("🔍 Filtro por período:", filtros.createdAt);
-      } else {
-        console.log("🔍 Período informado não mapeado para intervalo:", periodo);
-      }
-    }
-
-    // PAGINAÇÃO
-    const porPagina = 20;
-    const page = Number(pagina) > 0 ? Number(pagina) : 1;
-    const skip = (page - 1) * porPagina;
-
-    console.log("🔢 Paginando: página", page, "skip", skip);
-
-    console.log("🔄 Contando total de documentos com filtro...");
-    const total = await ActionHistory.countDocuments(filtros);
-    const totalPaginas = Math.ceil(total / porPagina);
-    console.log("📌 Total registros:", total, "| Total páginas:", totalPaginas);
-
-    console.log("🔄 Buscando ações...");
-    const acoes = await ActionHistory.find(filtros)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(porPagina)
-      .lean();
-
-    console.log("📌 Ações encontradas:", acoes.length);
-
-    // FORMATAÇÃO
-    const resultado = acoes.map(a => ({
-      data: a.createdAt,
-      tipo: a.tipo,
-      descricao: a.descricao || "",
-      status:
-        a.acao_validada === "valida"
-          ? "valid"
-          : a.acao_validada === "invalida"
-          ? "invalid"
-          : "pending",
-      valor: Number(a.valor || 0)
-    }));
-
-    console.log("📦 Enviando lista com", resultado.length, "registros.");
-
-    return res.status(200).json({
-      pagina_atual: page,
-      total_paginas: totalPaginas,
-      acoes: resultado
-    });
-
-  } catch (error) {
-    console.error("❌ ERRO GERAL EM /api/gerenciar_acoes:");
-    console.error("📄 Mensagem:", error.message);
-    console.error("📄 Stack:", error.stack);
-
-    return res.status(500).json({ error: "Erro interno no servidor." });
-  }
-}
+export default router;
