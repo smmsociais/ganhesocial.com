@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="claro">
 
 <head>
     <meta charset="UTF-8">
@@ -7,25 +7,113 @@
     <title>Adicionar Conta - GanheSocial</title>
     <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HEAD: aplica tema do localStorage imediatamente (evita flash e melhora sensação de velocidade) -->
+    <script>
+        (function () {
+            try {
+                var temaLocal = localStorage.getItem('tema');
+                if (temaLocal) {
+                    document.documentElement.setAttribute('data-tema', temaLocal);
+                }
+            } catch (e) {
+                console.warn("Erro ao aplicar tema do localStorage:", e);
+            }
+        })();
+    </script>
     <style>
         :root {
+            /* Tema claro - padrão */
+            --bg-light: #f8f9fa;
+            --text-light: #000000;
+            --container-light: #ffffff;
+            --button-light: #1a73e8;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #e0e0e0;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --logo-light: url('https://i.imgur.com/dioL5B7.png');
+            --logo-mobile-light: url('https://i.imgur.com/dioL5B7.png');
+            
+            /* Logos das redes sociais - tema claro */
+            --instagram-logo-light: url('https://i.imgur.com/iJLCWuJ.png');
+            --tiktok-logo-light: url('https://i.imgur.com/eOQsV5U.png');
+
+            /* Tema escuro */
             --bg-dark: #121212;
             --text-dark: #e0e0e0;
             --container-dark: #1e1e1e;
-            --button-dark: #1a73e8;
+            --button-dark: #ebebeb;
             --success-dark: #34a853;
             --pending-dark: #f9ab00;
             --failed-dark: #ea4335;
             --border-dark: #333333;
             --hover-dark: #2d2d2d;
             --shadow-dark: rgba(0, 0, 0, 0.3);
+            --logo-dark: url('https://i.imgur.com/h5jHD2L.png');
+            --logo-mobile-dark: url('https://i.imgur.com/h5jHD2L.png');
+            
+            /* Logos das redes sociais - tema escuro */
+            --instagram-logo-dark: url('https://i.imgur.com/7CoB7je.png');
+            --tiktok-logo-dark: url('https://i.imgur.com/6RxMIU9.png');
+
+            --ranking-color-light: #28a745;
+            --ranking-color-dark: #34a853;
+
+            /* Variáveis comuns */
             --card-radius: 12px;
             --transition: all 0.3s ease;
+            --hover-blue: #0069d9;
+            --gray-dark: #6c757d;
+            --label-color: #6c757d;
         }
 
+        /* Variáveis dinâmicas baseadas no tema */
+        html[data-tema="claro"] {
+            --bg: var(--bg-light);
+            --text: var(--text-light);
+            --container: var(--container-light);
+            --button: var(--button-light);
+            --success: var(--success-color);
+            --pending: var(--pending-color);
+            --failed: var(--failed-color);
+            --border: var(--border-light);
+            --hover: var(--hover-light);
+            --shadow: var(--shadow-light);
+            --primary-gradient: var(--primary-gradient);
+            --ranking-color: var(--ranking-color-light);
+            --logo: var(--logo-light);
+            --logo-mobile: var(--logo-mobile-light);
+            --instagram-logo: var(--instagram-logo-light);
+            --tiktok-logo: var(--tiktok-logo-light);
+        }
+
+        html[data-tema="escuro"] {
+            --bg: var(--bg-dark);
+            --text: var(--text-dark);
+            --container: var(--container-dark);
+            --button: var(--button-dark);
+            --success: var(--success-dark);
+            --pending: var(--pending-dark);
+            --failed: var(--failed-dark);
+            --border: var(--border-dark);
+            --hover: var(--hover-dark);
+            --shadow: var(--shadow-dark);
+            --primary-gradient: var(--primary-gradient-dark);
+            --gray-dark: #8b949e;
+            --label-color: #8b949e;
+            --ranking-color: var(--ranking-color-dark);
+            --logo: var(--logo-dark);
+            --logo-mobile: var(--logo-mobile-dark);
+            --instagram-logo: var(--instagram-logo-dark);
+            --tiktok-logo: var(--tiktok-logo-dark);
+        }
+
+        /* Estilos base usando variáveis dinâmicas */
         body {
-            background-color: var(--bg-dark);
-            color: var(--text-dark);
+            background-color: var(--bg);
+            color: var(--text);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -34,11 +122,11 @@
             line-height: 1.6;
         }
 
+        /* Menu item ativo */
         .menu-item[href="adicionar_conta"] {
-            color: white;
+            color: var(--text) !important;
             font-weight: bold;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid white;
+            background-color: rgba(146, 146, 146, 0.1);
         }
 
         /* Header Styles */
@@ -47,9 +135,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 25px;
-            background: var(--primary-gradient-dark);
-            color: white;
-            box-shadow: 0 2px 10px var(--shadow-dark);
+            background: var(--primary-gradient);
+            color: white !important;
+            box-shadow: 0 2px 10px var(--shadow);
             position: relative;
             z-index: 10;
         }
@@ -69,50 +157,133 @@
         .logo {
             height: 32px;
             margin-right: 10px;
+            transition: var(--transition);
         }
 
-        /* Main Container */
+        /* Logo com imagem baseada em variável CSS */
+        .logo-desktop img {
+            content: var(--logo);
+            transition: var(--transition);
+        }
+
+        .logo-mobile img {
+            content: var(--logo-mobile);
+            transition: var(--transition);
+        }
+
+        /* Logos das redes sociais com base no tema */
+        .instagram-logo {
+            content: var(--instagram-logo);
+        }
+
+        .tiktok-logo {
+            content: var(--tiktok-logo);
+        }
+
+        /* Botão de alternar tema */
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .theme-icon-sun {
+            display: none;
+        }
+
+        .theme-icon-moon {
+            display: inline-block;
+        }
+
+        html[data-tema="escuro"] .theme-icon-sun {
+            display: inline-block;
+        }
+
+        html[data-tema="escuro"] .theme-icon-moon {
+            display: none;
+        }
+
+        /* Balance Chip */
+        .balance-chip {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+            color: white !important;
+        }
+
+        .balance-chip:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+        }
+
         .main-container {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            background: var(--container-dark);
+            background: var(--container);
             border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-dark);
+            box-shadow: 0 4px 20px var(--shadow);
             overflow: hidden;
             transition: var(--transition);
             margin-bottom: 30px;
-            border: 1px solid var(--border-dark);
+            border: 1px solid var(--border);
             text-align: center;
             padding: 30px;
+            width: 100%;
+            max-width: 900px;
         }
 
         .container-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border-dark);
-            background: var(--primary-gradient-dark);
-            color: white;
+            border-bottom: 1px solid var(--border);
+            background: var(--primary-gradient);
+            color: white !important;
         }
 
         .container-header h2 {
             margin: 0;
             font-size: 1.5rem;
             font-weight: 600;
+            color: white !important;
         }
 
         .container-title {
-            font-size: 1.0rem;
+            font-size: 1.5rem;
             margin-bottom: 10px;
-            color: var(--text-dark);
+            color: var(--text);
             font-weight: 600;
         }
 
         .container-subtitle {
             font-size: 0.9rem;
-            color: #aaa;
+            color: var(--gray-dark);
             margin-bottom: 30px;
         }
 
@@ -135,11 +306,14 @@
             cursor: pointer;
             padding: 15px;
             border-radius: var(--card-radius);
+            background: var(--container);
+            border: 1px solid var(--border);
         }
 
         .network-item:hover {
-            background-color: var(--hover-dark);
+            background-color: var(--hover);
             transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--shadow);
         }
 
         .network-logo {
@@ -153,11 +327,12 @@
         .network-name {
             font-weight: 600;
             margin-bottom: 5px;
+            color: var(--text);
         }
 
         .coming-soon {
             font-size: 0.75rem;
-            color: #777;
+            color: var(--gray-dark);
             font-style: italic;
         }
 
@@ -175,7 +350,7 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: white;
+            background-color: var(--text);
             border-radius: 3px;
             transition: var(--transition);
         }
@@ -198,14 +373,15 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background: var(--container-dark);
-            box-shadow: 2px 0 15px var(--shadow-dark);
+            background: var(--container);
+            box-shadow: 2px 0 15px var(--shadow);
             transition: var(--transition);
             padding: 20px 0;
             z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            border-right: 1px solid var(--border);
         }
 
         .menu-content.active {
@@ -219,7 +395,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-dark);
+            color: var(--text);
             font-size: 16px;
             text-decoration: none;
             transition: var(--transition);
@@ -231,22 +407,24 @@
         .menu-item i {
             width: 24px;
             text-align: center;
+            color: var(--gray-dark);
+            /* Ícones em cinza escuro */
         }
 
         .menu-item:hover {
-            background-color: var(--hover-dark);
+            background-color: var(--hover);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-dark);
+            border-top: 1px solid var(--border);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #ea4335;
+            color: var(--failed);
             font-size: 16px;
             text-decoration: none;
             display: flex;
@@ -255,76 +433,12 @@
             transition: var(--transition);
         }
 
+        .menu-logout i {
+            color: var(--failed);
+        }
+
         .menu-logout:hover {
-            background-color: rgba(234, 67, 53, 0.1);
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 992px) {
-            .main-container {
-                padding: 20px;
-            }
-
-            .social-networks {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 15px;
-            }
-
-            .container {
-                padding: 20px;
-            }
-
-            .social-networks {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1px;
-                max-width: 70%;
-            }
-        }
-
-        .network-logo {
-            width: 400px;
-            height: 60px;
-            object-fit: contain;
-            margin-bottom: 10px;
-            transition: var(--transition);
-        }
-
-        @media (max-width: 576px) {
-            .header {
-                padding: 12px 15px;
-            }
-
-            .balance-chip {
-                padding: 6px 12px;
-                font-size: 0.9rem;
-            }
-
-            .network-logo {
-                width: 50px;
-                height: 50px;
-            }
-        }
-
-        /* Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
+            background-color: rgba(220, 53, 69, 0.1);
         }
 
         /* Desktop Menu */
@@ -375,15 +489,86 @@
                 right: 15px;
                 background: none;
                 border: none;
-                color: #afaeae;
+                color: var(--gray-dark) !important;
                 font-size: 1.5rem;
                 cursor: pointer;
                 z-index: 1002;
             }
 
             .menu-close-btn:hover {
-                color: #ea4335;
+                color: var(--failed);
             }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px;
+                margin-top: 0;
+            }
+
+            .container {
+                padding: 20px;
+                width: calc(100% - 40px);
+            }
+
+            .social-networks {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                max-width: 100%;
+            }
+
+            .network-logo {
+                width: 80px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header {
+                padding: 12px 15px;
+            }
+
+            .main-container {
+                padding: 15px;
+            }
+
+            .container {
+                padding: 15px;
+                width: calc(100% - 30px);
+            }
+
+            .theme-toggle {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+
+            .network-logo {
+                width: 60px;
+                height: 40px;
+            }
+
+            .social-networks {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
         }
 
         /* Initial Load */
@@ -405,7 +590,8 @@
 
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+                <!-- A imagem será trocada via CSS baseado no tema -->
+                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;" id="logoDesktop">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -436,8 +622,16 @@
             </div>
             <!-- Logo para mobile (no header) -->
             <a href="dashboard" class="logo-mobile">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+                <!-- A imagem será trocada via CSS baseado no tema -->
+                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" id="logoMobile">
             </a>
+        </div>
+        <div class="right-header">
+            <!-- Botão de alternar tema -->
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+                <span>Escuro</span>
+            </button>
         </div>
     </div>
 
@@ -448,50 +642,173 @@
             <p class="container-subtitle">Selecione a rede social onde deseja adicionar a nova conta.</p>
 
             <div class="social-networks">
-                <div class="network-item" onclick="redirectToTikTokAccountSelection()">
-                    <img src="https://i.imgur.com/6RxMIU9.png" alt="TikTok" class="network-logo">
-                    <div class="network-name">TikTok</div>
+                <div class="network-item" onclick="redirectToInstagramAccountSelection()">
+                    <img src="https://i.imgur.com/7CoB7je.png" alt="Instagram" class="network-logo" id="instagramLogo">
+                    <div class="network-name">Instagram</div>
                 </div>
 
-                <div class="network-item">
-                    <img src="https://i.imgur.com/7CoB7je.png" alt="Instagram" class="network-logo">
-                    <div class="network-name">Instagram</div>
-                    <div class="coming-soon">Em breve</div>
+                <div class="network-item" onclick="redirectToTikTokAccountSelection()">
+                    <img src="https://i.imgur.com/6RxMIU9.png" alt="TikTok" class="network-logo" id="tiktokLogo">
+                    <div class="network-name">TikTok</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+
+        /* === FUNÇÕES DE REDIRECIONAMENTO === */
+        function redirectToInstagramAccountSelection() {
+            window.location.href = "adicionar_conta_instagram";
+        }
+
         function redirectToTikTokAccountSelection() {
             window.location.href = "adicionar_conta_tiktok";
         }
 
+        /* === LOGOUT === */
         function logout() {
             localStorage.removeItem("token");
             window.location.href = "https://ganhesocial.com";
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
+        /* === ATUALIZAR LOGOS DAS REDES SOCIAIS === */
+        function atualizarLogosRedesSociais() {
+            const tema = document.documentElement.getAttribute('data-tema');
+            const instagramLogo = document.getElementById('instagramLogo');
+            const tiktokLogo = document.getElementById('tiktokLogo');
+
+            // URLs das logos para cada rede social em ambos os temas
+            const logos = {
+                instagram: {
+                    claro: 'https://i.imgur.com/iJLCWuJ.png',
+                    escuro: 'https://i.imgur.com/7CoB7je.png'
+                },
+                tiktok: {
+                    claro: 'https://i.imgur.com/eOQsV5U.png',
+                    escuro: 'https://i.imgur.com/6RxMIU9.png'
+                }
+            };
+
+            if (instagramLogo) {
+                instagramLogo.src = tema === 'escuro' ? logos.instagram.escuro : logos.instagram.claro;
+            }
+
+            if (tiktokLogo) {
+                tiktokLogo.src = tema === 'escuro' ? logos.tiktok.escuro : logos.tiktok.claro;
+            }
+        }
+
+        /* === INICIALIZAÇÃO UNIFICADA === */
+        document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
             if (!token) {
-                setTimeout(() => {
-                    window.location.href = "https://ganhesocial.com/login";
-                },);
+                window.location.href = "https://ganhesocial.com/login";
                 return;
             }
 
-            // Controle do menu hamburguer
+            // Configura o menu
+            configurarMenu();
+
+            // Atualiza as logos baseado no tema atual
+            atualizarLogosPorTema();
+            atualizarLogosRedesSociais();
+
+            // Configurar botão de tema
+            configurarTemaToggle();
+
+            // Marca página como carregada
+            document.body.classList.add('loaded');
+
+            // Observador para mudanças de tema
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'data-tema') {
+                        atualizarLogosPorTema();
+                        atualizarLogosRedesSociais();
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+        });
+
+        /* === ATUALIZAR LOGOS POR TEMA === */
+        function atualizarLogosPorTema() {
+            const tema = document.documentElement.getAttribute('data-tema');
+            const logoDesktop = document.getElementById('logoDesktop');
+            const logoMobile = document.getElementById('logoMobile');
+            
+            // URLs das logos para cada tema
+            const logoClaro = 'https://i.imgur.com/dioL5B7.png';
+            const logoEscuro = 'https://i.imgur.com/h5jHD2L.png';
+            
+            const logoURL = tema === 'escuro' ? logoEscuro : logoClaro;
+            
+            if (logoDesktop) {
+                logoDesktop.src = logoURL;
+            }
+            
+            if (logoMobile) {
+                logoMobile.src = logoURL;
+            }
+        }
+
+        /* === CONFIGURAR TOGGLE DE TEMA === */
+        function configurarTemaToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            if (!themeToggle) return;
+
+            const temaAtual = document.documentElement.getAttribute('data-tema') || 'claro';
+            atualizarTextoBotaoTema(temaAtual);
+
+            themeToggle.addEventListener('click', function() {
+                const temaAtual = document.documentElement.getAttribute('data-tema') || 'claro';
+                const novoTema = temaAtual === 'claro' ? 'escuro' : 'claro';
+                
+                // Atualiza o atributo data-tema
+                document.documentElement.setAttribute('data-tema', novoTema);
+                
+                // Salva no localStorage
+                try {
+                    localStorage.setItem('tema', novoTema);
+                } catch (e) {
+                    console.warn("Erro ao salvar tema no localStorage:", e);
+                }
+                
+                // Atualiza o texto do botão
+                atualizarTextoBotaoTema(novoTema);
+            });
+        }
+
+        function atualizarTextoBotaoTema(tema) {
+            const themeToggle = document.getElementById('themeToggle');
+            if (!themeToggle) return;
+
+            const icon = themeToggle.querySelector('i');
+            const text = themeToggle.querySelector('span');
+            
+            if (tema === 'escuro') {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Claro';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Escuro';
+            }
+        }
+
+        /* === CONTROLE DO MENU HAMBURGUER === */
+        function configurarMenu() {
             const menuToggle = document.getElementById('menuToggle');
             const menuOverlay = document.getElementById('menuOverlay');
             const menuContent = document.getElementById('menuContent');
             const menuCloseBtn = document.getElementById('menuCloseBtn');
 
+            if (!menuToggle || !menuOverlay || !menuContent) return;
+
             function toggleMenu() {
                 menuContent.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
-
                 const spans = menuToggle.querySelectorAll('span');
                 if (menuContent.classList.contains('active')) {
                     spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
@@ -516,9 +833,7 @@
             menuToggle.addEventListener('click', toggleMenu);
             menuCloseBtn.addEventListener('click', closeMenu);
             menuOverlay.addEventListener('click', closeMenu);
-
-            document.body.classList.add('loaded');
-        });
+        }
     </script>
 </body>
 
