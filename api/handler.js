@@ -591,7 +591,7 @@ router.post("/login", async (req, res) => {
             console.log("🔍 Buscando usuário no banco de dados...");
             const usuario = await User.findOne({ email });
     
-            if (!usuario) {
+            if (!usuario.email) {
                 console.log("🔴 Usuário não encontrado!");
                 return res.status(400).json({ error: "Usuário não encontrado!" });
             }
