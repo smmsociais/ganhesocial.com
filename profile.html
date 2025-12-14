@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="claro">
 
 <head>
     <meta charset="UTF-8">
@@ -7,30 +7,105 @@
     <title>Minha Conta - GanheSocial</title>
     <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HEAD: aplica tema do localStorage imediatamente (evita flash e melhora sensação de velocidade) -->
+    <script>
+        (function () {
+            try {
+                var temaLocal = localStorage.getItem('tema');
+                if (temaLocal) {
+                    document.documentElement.setAttribute('data-tema', temaLocal);
+                }
+            } catch (e) {
+                console.warn("Erro ao aplicar tema do localStorage:", e);
+            }
+        })();
+    </script>
     <style>
         :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --container-color: #1e1e1e;
-            --button-color: #1a73e8;
-            --success-color: #34a853;
-            --pending-color: #f9ab00;
-            --failed-color: #ea4335;
-            --border-color: #333333;
-            --hover-color: #2d2d2d;
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            --label-color: #8b949e;
-            --positive-color: #27ae60;
-            --negative-color: #c0392b;
-            --neutral-color: #2980b9;
-            --error-color: #f85149;
+            /* Tema claro - padrão */
+            --bg-light: #f8f9fa;
+            --text-light: #000000;
+            --container-light: #ffffff;
+            --button-light: #1a73e8;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #e0e0e0;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --logo-light: url('https://i.imgur.com/dioL5B7.png');
+            --logo-mobile-light: url('https://i.imgur.com/dioL5B7.png');
+            --header-text-light: #495057;
+            /* Cinza escuro para tema claro */
+
+            /* Tema escuro */
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #1a73e8;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --logo-dark: url('https://i.imgur.com/h5jHD2L.png');
+            --logo-mobile-dark: url('https://i.imgur.com/h5jHD2L.png');
+            --header-text-dark: #ffffff;
+            /* Branco para tema escuro */
+
+            /* Variáveis comuns */
             --card-radius: 12px;
             --transition: all 0.3s ease;
+            --hover-blue: #0069d9;
+            --gray-dark: #6c757d;
+            --label-color: #6c757d;
+        }
+
+        /* Variáveis dinâmicas baseadas no tema */
+        html[data-tema="claro"] {
+            --bg: var(--bg-light);
+            --text: var(--text-light);
+            --container: var(--container-light);
+            --button: var(--button-light);
+            --success: var(--success-color);
+            --pending: var(--pending-color);
+            --failed: var(--failed-color);
+            --border: var(--border-light);
+            --hover: var(--hover-light);
+            --shadow: var(--shadow-light);
+            --primary-gradient: var(--primary-gradient);
+            --ranking-color: var(--ranking-color-light);
+            --logo: var(--logo-light);
+            --logo-mobile: var(--logo-mobile-light);
+            --header-text: var(--header-text-light);
+            /* Adicionado */
+        }
+
+        html[data-tema="escuro"] {
+            --bg: var(--bg-dark);
+            --text: var(--text-dark);
+            --container: var(--container-dark);
+            --button: var(--button-dark);
+            --success: var(--success-dark);
+            --pending: var(--pending-dark);
+            --failed: var(--failed-dark);
+            --border: var(--border-dark);
+            --hover: var(--hover-dark);
+            --shadow: var(--shadow-dark);
+            --primary-gradient: var(--primary-gradient-dark);
+            --gray-dark: #8b949e;
+            --label-color: #8b949e;
+            --ranking-color: var(--ranking-color-dark);
+            --logo: var(--logo-dark);
+            --logo-mobile: var(--logo-mobile-dark);
+            --header-text: var(--header-text-dark);
+            /* Adicionado */
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg);
+            color: var(--text);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -40,10 +115,9 @@
         }
 
         .menu-item[href="profile"] {
-            color: white;
+            color: var(--text) !important;
             font-weight: bold;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid white;
+            background-color: rgba(146, 146, 146, 0.1);
         }
 
         /* Header Styles */
@@ -53,8 +127,8 @@
             align-items: center;
             padding: 15px 25px;
             background: var(--primary-gradient);
-            color: white;
-            box-shadow: 0 2px 10px var(--shadow-color);
+            color: white !important;
+            box-shadow: 0 2px 10px var(--shadow);
             position: relative;
             z-index: 10;
         }
@@ -74,16 +148,48 @@
         .logo {
             height: 32px;
             margin-right: 10px;
+            transition: var(--transition);
+        }
+
+        /* Logo com imagem baseada em variável CSS */
+        .logo-desktop img {
+            content: var(--logo);
+            transition: var(--transition);
+        }
+
+        .logo-mobile img {
+            content: var(--logo-mobile);
+            transition: var(--transition);
+        }
+
+        /* Botão de alternar tema no header */
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .container {
-            background: var(--container-color);
+            background: var(--container);
             border-radius: var(--card-radius);
-            box-shadow: 0 4px 20px var(--shadow-color);
+            box-shadow: 0 4px 20px var(--shadow);
             overflow: hidden;
             transition: var(--transition);
             margin-bottom: 30px;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             width: 100%;
             max-width: 1100px;
             margin: 30px auto;
@@ -92,15 +198,16 @@
 
         .container-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             background: var(--primary-gradient);
-            color: white;
+            color: white !important;
         }
 
         .container-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 600;
+            color: white !important;
         }
 
         .container-body {
@@ -117,31 +224,36 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--gray-dark) !important;
         }
 
         .input-box {
             width: 100%;
             padding: 12px 15px;
             border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--container-color);
-            color: var(--text-color);
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
             transition: var(--transition);
             box-sizing: border-box;
             font-size: 1rem;
         }
 
         .input-box:focus {
-            border-color: var(--button-color);
+            border-color: var(--button);
             outline: none;
             box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
         }
 
         .input-box[readonly] {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
+            background-color: rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
             cursor: not-allowed;
+            color: var(--gray-dark) !important;
+        }
+
+        html[data-tema="escuro"] .input-box[readonly] {
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .token-container {
@@ -153,21 +265,21 @@
         .copy-icon {
             margin-left: 10px;
             cursor: pointer;
-            color: var(--label-color);
+            color: var(--gray-dark) !important;
             font-size: 18px;
             transition: var(--transition);
         }
 
         .copy-icon:hover {
-            color: var(--button-color);
+            color: var(--button) !important;
         }
 
         .copy-notification {
             position: absolute;
             right: 0;
             top: -30px;
-            background: var(--text-color);
-            color: var(--container-color);
+            background: var(--text);
+            color: var(--container);
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 12px;
@@ -182,17 +294,22 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            color: white;
+            color: white !important;
             font-size: 16px;
-            background: var(--success-color);
+            background: var(--success);
             transition: var(--transition);
             font-weight: 600;
         }
 
         .save-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-color);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+            background: #218838;
+        }
+
+        html[data-tema="escuro"] .save-button:hover {
             background: #2a8a42;
+            box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);
         }
 
         .message {
@@ -205,23 +322,104 @@
         }
 
         .error-message {
-            background-color: rgba(234, 67, 53, 0.1);
-            color: var(--failed-color);
-            border: 1px solid rgba(234, 67, 53, 0.2);
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failed) !important;
+            border: 1px solid rgba(220, 53, 69, 0.2);
         }
 
         .success-message {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success) !important;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        html[data-tema="escuro"] .error-message {
+            background-color: rgba(234, 67, 53, 0.1);
+        }
+
+        html[data-tema="escuro"] .success-message {
             background-color: rgba(52, 168, 83, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(52, 168, 83, 0.2);
         }
 
         .page-title {
             text-align: left;
             margin-bottom: 25px;
-            color: var(--text-color);
+            color: var(--text) !important;
             font-size: 1.0rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Container dos botões de tema (novo) */
+        .theme-buttons-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            z-index: 999;
+            padding: 8px;
+            background: var(--container);
+            border-radius: 40px;
+            box-shadow: 0 4px 20px var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        /* Botões individuais de tema */
+        .theme-button {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--container);
+            color: var(--text);
+            transition: var(--transition);
+            position: relative;
+            padding: 0;
+        }
+
+        .theme-button:hover {
+            transform: translateY(-2px);
+            background: var(--hover);
+        }
+
+        .theme-button.active {
+            background: var(--button);
+            color: white;
+        }
+
+        .theme-button.active:hover {
+            background: var(--button);
+        }
+
+        .theme-button .tooltip {
+            position: absolute;
+            right: 45px;
+            background: var(--container);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px var(--shadow);
+            pointer-events: none;
+        }
+
+        .theme-button:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
         }
 
         /* Menu Styles */
@@ -238,7 +436,7 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: white;
+            background-color: var(--text);
             border-radius: 3px;
             transition: var(--transition);
         }
@@ -261,14 +459,15 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background: var(--container-color);
-            box-shadow: 2px 0 15px var(--shadow-color);
+            background: var(--container);
+            box-shadow: 2px 0 15px var(--shadow);
             transition: var(--transition);
             padding: 20px 0;
             z-index: 1001;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            border-right: 1px solid var(--border);
         }
 
         .menu-content.active {
@@ -282,7 +481,7 @@
         .menu-item {
             padding: 15px 25px;
             cursor: pointer;
-            color: var(--text-color);
+            color: var(--text);
             font-size: 16px;
             text-decoration: none;
             transition: var(--transition);
@@ -294,22 +493,24 @@
         .menu-item i {
             width: 24px;
             text-align: center;
+            color: var(--gray-dark);
+            /* Ícones em cinza escuro */
         }
 
         .menu-item:hover {
-            background-color: var(--hover-color);
+            background-color: var(--hover);
         }
 
         .menu-footer {
             margin-top: auto;
             padding: 25px 0;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border);
         }
 
         .menu-logout {
             padding: 15px 25px;
             cursor: pointer;
-            color: #ea4335;
+            color: var(--failed);
             font-size: 16px;
             text-decoration: none;
             display: flex;
@@ -318,7 +519,15 @@
             transition: var(--transition);
         }
 
+        .menu-logout i {
+            color: var(--failed);
+        }
+
         .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        html[data-tema="escuro"] .menu-logout:hover {
             background-color: rgba(234, 67, 53, 0.1);
         }
 
@@ -359,12 +568,10 @@
                 display: block;
             }
 
-            /* Esconde o header quando o menu está aberto */
             body.menu-open .header {
                 display: none;
             }
 
-            /* Estilos para o botão de fechar no mobile */
             .menu-close-btn {
                 display: block;
                 position: absolute;
@@ -372,23 +579,24 @@
                 right: 15px;
                 background: none;
                 border: none;
-                color: #afaeae;
+                color: var(--gray-dark) !important;
                 font-size: 1.5rem;
                 cursor: pointer;
                 z-index: 1002;
             }
 
             .menu-close-btn:hover {
-                color: #ea4335;
+                color: var(--failed);
+            }
+
+            .theme-buttons-container {
+                bottom: 15px;
+                right: 15px;
             }
         }
 
         /* Responsive Styles */
         @media (max-width: 768px) {
-            .main-container {
-                padding: 20px;
-            }
-
             .container {
                 padding: 20px;
                 width: calc(100% - 40px);
@@ -397,13 +605,28 @@
             .page-title {
                 font-size: 1.0rem;
             }
+
+            .theme-buttons-container {
+                bottom: 12px;
+                right: 12px;
+                padding: 6px;
+                gap: 6px;
+            }
+
+            .theme-button {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .theme-button .tooltip {
+                right: 42px;
+                font-size: 11px;
+                padding: 5px 8px;
+            }
         }
 
         @media (max-width: 576px) {
-            .main-container {
-                padding: 15px;
-            }
-
             .container {
                 padding: 15px;
                 width: calc(100% - 30px);
@@ -415,6 +638,38 @@
 
             .input-box {
                 padding: 10px 12px;
+            }
+
+            .theme-buttons-container {
+                bottom: 10px;
+                right: 10px;
+                padding: 5px;
+                gap: 5px;
+            }
+
+            .theme-button {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+
+            .theme-button .tooltip {
+                right: 40px;
+                font-size: 10px;
+                padding: 4px 7px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .theme-buttons-container {
+                bottom: 8px;
+                right: 8px;
+            }
+
+            .theme-button {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
             }
         }
 
@@ -435,6 +690,7 @@
             animation: fadeIn 0.5s ease forwards;
         }
 
+        /* Initial Load */
         body {
             visibility: hidden;
         }
@@ -453,7 +709,9 @@
 
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+                <!-- A imagem será trocada via CSS baseado no tema -->
+                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;"
+                    id="logoDesktop">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -484,9 +742,11 @@
             </div>
             <!-- Logo para mobile (no header) -->
             <a href="dashboard" class="logo-mobile">
-                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+                <!-- A imagem será trocada via CSS baseado no tema -->
+                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" id="logoMobile">
             </a>
         </div>
+    </div>
     </div>
 
     <!-- Conteúdo Principal -->
@@ -527,11 +787,152 @@
                 <input type="password" id="confirmPassword" class="input-box">
             </div>
 
-            <button class="save-button" onclick="saveProfile()"><i class=""></i> Salvar Alterações</button>
+            <button class="save-button" onclick="saveProfile()"></i> Salvar Alterações</button>
         </div>
     </div>
 
+    <!-- Botões de Tema (Novo) -->
+    <div class="theme-buttons-container" id="themeButtonsContainer">
+        <button class="theme-button" id="themeButtonLight" onclick="setTheme('claro')">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button class="theme-button" id="themeButtonDark" onclick="setTheme('escuro')">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
     <script>
+        /* === ATUALIZAR LOGOS POR TEMA === */
+        function atualizarLogosPorTema() {
+            const tema = document.documentElement.getAttribute('data-tema');
+            const logoDesktop = document.getElementById('logoDesktop');
+            const logoMobile = document.getElementById('logoMobile');
+
+            // URLs das logos para cada tema
+            const logoClaro = 'https://i.imgur.com/dioL5B7.png';
+            const logoEscuro = 'https://i.imgur.com/h5jHD2L.png';
+
+            const logoURL = tema === 'escuro' ? logoEscuro : logoClaro;
+
+            if (logoDesktop) {
+                logoDesktop.src = logoURL;
+            }
+
+            if (logoMobile) {
+                logoMobile.src = logoURL;
+            }
+        }
+
+        /* === CONFIGURAR TOGGLE DE TEMA NO HEADER === */
+        function configurarTemaToggleHeader() {
+            const themeToggle = document.getElementById('themeToggle');
+            if (!themeToggle) return;
+
+            const temaAtual = document.documentElement.getAttribute('data-tema') || 'claro';
+            atualizarTextoBotaoTemaHeader(temaAtual);
+
+            themeToggle.addEventListener('click', function () {
+                const temaAtual = document.documentElement.getAttribute('data-tema') || 'claro';
+                const novoTema = temaAtual === 'claro' ? 'escuro' : 'claro';
+
+                setTheme(novoTema);
+            });
+        }
+
+        function atualizarTextoBotaoTemaHeader(tema) {
+            const themeToggle = document.getElementById('themeToggle');
+
+            if (themeToggle) {
+                const icon = themeToggle.querySelector('i');
+                const text = themeToggle.querySelector('span');
+
+                if (tema === 'escuro') {
+                    icon.className = 'fas fa-sun';
+                    text.textContent = 'Claro';
+                } else {
+                    icon.className = 'fas fa-moon';
+                    text.textContent = 'Escuro';
+                }
+            }
+        }
+
+        /* === FUNÇÃO PRINCIPAL PARA DEFINIR TEMA === */
+        function setTheme(tema) {
+            // Aplica o tema imediatamente
+            document.documentElement.setAttribute('data-tema', tema);
+
+            // Salva no localStorage
+            try {
+                localStorage.setItem('tema', tema);
+            } catch (e) {
+                console.warn("Erro ao salvar tema no localStorage:", e);
+            }
+
+            // Atualiza botões ativos
+            updateThemeButtons(tema);
+
+            // Atualiza texto do botão no header
+            atualizarTextoBotaoTemaHeader(tema);
+
+            // Atualiza logos
+            atualizarLogosPorTema();
+        }
+
+        /* === ATUALIZAR ESTADO DOS BOTÕES DE TEMA === */
+        function updateThemeButtons(temaAtual) {
+            const themeButtonLight = document.getElementById('themeButtonLight');
+            const themeButtonDark = document.getElementById('themeButtonDark');
+
+            if (themeButtonLight && themeButtonDark) {
+                if (temaAtual === 'claro') {
+                    themeButtonLight.classList.add('active');
+                    themeButtonDark.classList.remove('active');
+                } else {
+                    themeButtonLight.classList.remove('active');
+                    themeButtonDark.classList.add('active');
+                }
+            }
+        }
+
+        /* === CONTROLE DO MENU HAMBURGUER === */
+        function configurarMenu() {
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
+
+            if (!menuToggle || !menuOverlay || !menuContent) return;
+
+            function toggleMenu() {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            }
+
+            function closeMenu() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
+        }
+
+        /* === FUNÇÕES DO PERFIL === */
         async function loadProfile() {
             const token = localStorage.getItem("token");
 
@@ -643,7 +1044,7 @@
                     throw new Error(data.error || "Erro ao salvar perfil");
                 }
 
-                // Removida a mensagem de sucesso e adicionado refresh da página
+                // Limpa campos de senha e recarrega a página
                 document.getElementById('newPassword').value = "";
                 document.getElementById('confirmPassword').value = "";
                 window.location.reload();
@@ -658,43 +1059,32 @@
             window.location.href = "https://ganhesocial.com";
         }
 
+        /* === INICIALIZAÇÃO UNIFICADA === */
         document.addEventListener("DOMContentLoaded", async function () {
             const token = localStorage.getItem("token");
 
-            // Controle do menu hamburguer
-            const menuToggle = document.getElementById('menuToggle');
-            const menuOverlay = document.getElementById('menuOverlay');
-            const menuContent = document.getElementById('menuContent');
-            const menuCloseBtn = document.getElementById('menuCloseBtn');
-
-            function toggleMenu() {
-                menuContent.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-
-                const spans = menuToggle.querySelectorAll('span');
-                if (menuContent.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
+            if (!token) {
+                window.location.href = "https://ganhesocial.com/login";
+                return;
             }
 
-            function closeMenu() {
-                menuContent.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
-            }
+            // Configura o menu
+            configurarMenu();
 
-            menuToggle.addEventListener('click', toggleMenu);
-            menuCloseBtn.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', closeMenu);
+            // Obtém tema atual do localStorage ou usa padrão
+            const temaAtual = localStorage.getItem('tema') || 'claro';
+
+            // Aplica tema atual (já foi aplicado no head, mas garante consistência)
+            document.documentElement.setAttribute('data-tema', temaAtual);
+
+            // Atualiza as logos baseado no tema atual
+            atualizarLogosPorTema();
+
+            // Configurar botão de tema no header
+            configurarTemaToggleHeader();
+
+            // Atualiza estado dos botões de tema
+            updateThemeButtons(temaAtual);
 
             // Configura cópia do token
             const tokenInput = document.getElementById('authToken');
@@ -706,6 +1096,20 @@
             // Carrega perfil do usuário
             await loadProfile();
 
+            // Observador para mudanças de tema (mantém para atualizações de outros componentes)
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.attributeName === 'data-tema') {
+                        const novoTema = mutation.target.getAttribute('data-tema');
+                        atualizarLogosPorTema();
+                        atualizarTextoBotaoTemaHeader(novoTema);
+                        updateThemeButtons(novoTema);
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+
+            // Marca página como carregada
             document.body.classList.add('loaded');
         });
     </script>
