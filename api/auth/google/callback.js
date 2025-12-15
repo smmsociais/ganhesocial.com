@@ -22,8 +22,6 @@ async function registrarUsuarioGoogle({ email, nome, ref }) {
       email,
       nome,
       saldo: 0,
-      pix_key: null,
-      pix_key_type: null,
       contas: [],
       historico_acoes: [],
       saques: [],
