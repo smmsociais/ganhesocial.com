@@ -3,6 +3,7 @@ import axios from "axios";
 import https from 'https';
 import { v4 as uuidv4 } from 'uuid';
 import connectDB from "./db.js";
+import mongoose from "mongoose";
 import nodemailer from 'nodemailer';
 import { sendRecoveryEmail } from "./mailer.js";
 import crypto from "crypto";
@@ -133,19 +134,23 @@ export function getValorAcao(pedidoOuTipo, rede = "TikTok") {
 }
 
 // helpers (coloque no topo do arquivo ou perto do connectDB import)
-async function getUserDocByToken(token) {
-  // usa a collection raw (evita instanciação de Document que faz casting)
-  const usersColl = mongoose.connection.db.collection("users");
+export async function getUserDocByToken(token) {
+  if (!token) return null;
+
+  // garante conexão
+  const conn = await mongoose.connection.asPromise?.() ?? mongoose.connection;
+  const client = mongoose.connection.getClient();
+
+  if (!client) {
+    throw new Error("MongoDB client não inicializado");
+  }
+
+  const db = client.db(); // <-- SEMPRE existe
+  const usersColl = db.collection("users");
+
   return await usersColl.findOne({ token });
 }
 
-async function pushConta(userId, contaObj) {
-  const usersColl = mongoose.connection.db.collection("users");
-  await usersColl.updateOne(
-    { _id: userId },
-    { $push: { contas: contaObj } }
-  );
-}
 
 async function reactivateConta(userId, nomeLower, updates) {
   const usersColl = mongoose.connection.db.collection("users");
