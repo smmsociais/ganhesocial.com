@@ -38,52 +38,100 @@ const WithdrawSchema = new mongoose.Schema({
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
 
+import mongoose from "mongoose";
+
 // 🔹 Schema do Usuário
-const UserSchema = new mongoose.Schema({
-  nome: { type: String, required: false },
-  email: { type: String, required: true, unique: true },
-  // senha obrigatória apenas para cadastro tradicional
-  senha: { 
-    type: String,
-    required: function () {
-      return this.provider === "local";
-    }
-  },
-  // NÃO deixe token obrigatório no schema — o JWT não deve ser salvo no DB
-  token: { type: String, required: false },
-  // para saber como o usuário foi criado
-  provider: { 
-    type: String, 
-    enum: ["local", "google"],
-    default: "local"
-  },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-  saldo: { type: Number, default: 0 },
-  // PIX
-  pix_key: { type: String, default: null },
-  pix_key_type: { type: String, default: null },
-  // contas conectadas
-  contas: [ContaSchema],
-historico_acoes: {
-  type: [
-    { type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }
-  ],
-  default: []
-},
-  saques: [WithdrawSchema],
-  // afiliados
-  codigo_afiliado: { type: String, default: null },
-  indicado_por: { type: String, default: null },
-  status: { type: String, default: "ativo" },
-  ativo_ate: { type: Date, default: null },
-});
+const UserSchema = new mongoose.Schema(
+  {
+    nome: { type: String, required: false },
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
 
-// índice parcial — enforce uniqueness only when codigo_afiliado is a string
+    // senha obrigatória apenas para cadastro tradicional
+    senha: {
+      type: String,
+      required: function () {
+        return this.provider === "local";
+      }
+    },
+
+    token: { type: String, default: null },
+
+    // provedor de autenticação
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local"
+    },
+
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
+
+    saldo: { type: Number, default: 0 },
+
+    // PIX
+    pix_key: { type: String, default: null },
+    pix_key_type: { type: String, default: null },
+
+    // contas conectadas
+    contas: [ContaSchema],
+
+    // 🔒 BLINDADO CONTRA STRING / DADOS CORROMPIDOS
+    historico_acoes: {
+      type: [
+        { type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }
+      ],
+      default: [],
+      set: (value) => {
+        // Caso venha string ("[]", "[...]", etc)
+        if (typeof value === "string") {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+
+        // Se não for array, ignora
+        if (!Array.isArray(value)) {
+          return [];
+        }
+
+        // Remove qualquer valor que NÃO seja ObjectId
+        return value.filter(v => mongoose.Types.ObjectId.isValid(v));
+      }
+    },
+
+    saques: [WithdrawSchema],
+
+    // afiliados
+    codigo_afiliado: { type: String, default: null },
+    indicado_por: { type: String, default: null },
+
+    status: { type: String, default: "ativo" },
+    ativo_ate: { type: Date, default: null }
+  },
+  {
+    timestamps: true
+  }
+);
+
+// 🔹 Índice parcial — só força unique se for string
 UserSchema.index(
   { codigo_afiliado: 1 },
-  { unique: true, partialFilterExpression: { codigo_afiliado: { $type: "string" } }, name: "codigo_afiliado_1" }
+  {
+    unique: true,
+    partialFilterExpression: {
+      codigo_afiliado: { $type: "string" }
+    },
+    name: "codigo_afiliado_1"
+  }
 );
 
 const PedidoSchema = new mongoose.Schema({
