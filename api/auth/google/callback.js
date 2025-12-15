@@ -5,64 +5,36 @@ import connectDB from "../../db.js";
 import { User } from "../../schema.js";
 import crypto from "crypto";
 
-// 🔥 Função de registro do usuário Google
 async function registrarUsuarioGoogle({ email, nome, ref }) {
   const token = crypto.randomBytes(32).toString("hex");
   const gerarCodigo = () =>
     Math.floor(10000000 + Math.random() * 90000000).toString();
 
-  let savedUser = null;
-  let attempt = 0;
-
-  while (attempt < 5 && !savedUser) {
-    const codigo_afiliado = gerarCodigo();
-    const ativo_ate = new Date(Date.now() + 30 * 86400000);
-
-// cole no início de registrarUsuarioGoogle
-console.log("DEBUG: entrando em registrarUsuarioGoogle");
-console.log("DEBUG: mongoose model names:", mongoose.modelNames());
-console.log("DEBUG: User model exists?", !!mongoose.models.User);
-if (mongoose.models.User) {
-  console.log("DEBUG: User schema historico_acoes path:", (mongoose.models.User.schema && mongoose.models.User.schema.path('historico_acoes')) || "no-path");
-}
-console.log("DEBUG: UserSchema from import (User.schema) available?:", !!User.schema);
-console.log("DEBUG: User.schema.path('historico_acoes'):", User.schema && User.schema.path('historico_acoes'));
-
-const payload = {
-  email, nome, senha: "", token, codigo_afiliado, status: "ativo",
-  ativo_ate, indicado_por: ref || null, provider: "google", historico_acoes: []
-};
-console.log("DEBUG: payload para new User:", JSON.stringify(payload));
-
-const novo = new User({
-  email,
-  nome,
-  senha: "",
-  token,
-  codigo_afiliado,
-  status: "ativo",
-  ativo_ate,
-  indicado_por: ref || null,
-  provider: "google",
-  historico_acoes: [],
-});
-
+  for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      savedUser = await novo.save();
+      const novo = new User({
+        email,
+        nome,
+        senha: "",
+        token,
+        provider: "google",
+        codigo_afiliado: gerarCodigo(),
+        status: "ativo",
+        ativo_ate: new Date(Date.now() + 30 * 86400000),
+        indicado_por: ref || null,
+        historico_acoes: [] // agora funciona
+      });
+
+      const saved = await novo.save();
+      return { erro: false, usuario: saved };
+
     } catch (err) {
-      if (err?.code === 11000) {
-        attempt++;
-        continue;
-      }
+      if (err?.code === 11000) continue;
       throw err;
     }
   }
 
-  if (!savedUser) {
-    return { erro: true, mensagem: "Erro ao gerar código afiliado." };
-  }
-
-  return { erro: false, usuario: savedUser };
+  return { erro: true, mensagem: "Erro ao gerar código afiliado." };
 }
 
 export default async function handler(req, res) {
