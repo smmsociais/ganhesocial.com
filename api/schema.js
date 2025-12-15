@@ -72,40 +72,17 @@ const UserSchema = new mongoose.Schema(
 
     saldo: { type: Number, default: 0 },
 
-    // PIX
-    pix_key: { type: String, default: null },
-    pix_key_type: { type: String, default: null },
-
     // contas conectadas
     contas: [ContaSchema],
-
-    // 🔒 BLINDADO CONTRA STRING / DADOS CORROMPIDOS
-    historico_acoes: {
-      type: [
-        { type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }
-      ],
-      default: [],
-      set: (value) => {
-        // Caso venha string ("[]", "[...]", etc)
-        if (typeof value === "string") {
-          try {
-            const parsed = JSON.parse(value);
-            return Array.isArray(parsed) ? parsed : [];
-          } catch {
-            return [];
-          }
-        }
-
-        // Se não for array, ignora
-        if (!Array.isArray(value)) {
-          return [];
-        }
-
-        // Remove qualquer valor que NÃO seja ObjectId
-        return value.filter(v => mongoose.Types.ObjectId.isValid(v));
-      }
-    },
-
+    
+historico_acoes: {
+  type: [{ type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }],
+  default: [],
+  set: v => {
+    if (!Array.isArray(v)) return [];
+    return v.filter(id => mongoose.Types.ObjectId.isValid(id));
+  }
+},
     saques: [WithdrawSchema],
 
     // afiliados
@@ -217,4 +194,3 @@ const DailyEarning = mongoose.models.DailyEarning || mongoose.model("DailyEarnin
 const DailyRanking = mongoose.models.DailyRanking || mongoose.model("DailyRanking", DailyRankingSchema);
 
 export { User, ActionHistory, Pedido, DailyEarning, DailyRanking };
-
