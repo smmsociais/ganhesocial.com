@@ -421,8 +421,6 @@ router.route("/contas_instagram")
           $set: {
             "contas.$.status": "ativa",
             "contas.$.rede": "Instagram",
-            "contas.$.id_conta": req.body.id_conta ?? contaExistente.id_conta,
-            "contas.$.id_instagram": req.body.id_instagram ?? contaExistente.id_instagram,
             "contas.$.dataDesativacao": null,
             "contas.$.nome_usuario": nomeNormalized,
             "contas.$.nomeConta": nomeNormalized
@@ -452,8 +450,6 @@ router.route("/contas_instagram")
     const novoConta = {
       nome_usuario: nomeNormalized,
       nomeConta: nomeNormalized,
-      id_conta: req.body.id_conta ?? null,
-      id_instagram: req.body.id_instagram ?? null,
       rede: "Instagram",
       status: "ativa",
       dataCriacao: new Date()
