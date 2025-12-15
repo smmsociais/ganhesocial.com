@@ -508,38 +508,69 @@ router.route("/contas_instagram")
   }
 })
 
-// DELETE -> desativar conta Instagram (accept nome_usuario OR nomeConta)
+// DELETE -> desativar conta Instagram (RAW-safe)
 .delete(async (req, res) => {
   try {
     await connectDB();
 
     const token = getTokenFromHeader(req);
-    if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    if (!token) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    }
 
-    const user = await User.findOne({ token });
-    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    const userDoc = await getUserDocByToken(token);
+    if (!userDoc) {
+      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    }
 
-    // aceita nome_usuario (DB atual) OU nomeConta (rotas antigas)
-    const nomeRaw = req.query.nome_usuario ?? req.query.nomeConta ?? req.body?.nome_usuario ?? req.body?.nomeConta;
-    if (!nomeRaw) return res.status(400).json({ error: "Nome da conta não fornecido." });
+    const nomeRaw =
+      req.query.nome_usuario ??
+      req.query.nomeConta ??
+      req.body?.nome_usuario ??
+      req.body?.nomeConta;
+
+    if (!nomeRaw) {
+      return res.status(400).json({ error: "Nome da conta não fornecido." });
+    }
 
     const nomeLower = String(nomeRaw).trim().toLowerCase();
 
-// 🔍 Encontrar conta específica DO TIKTOK
-const contaIndex = (user.contas || []).findIndex(c =>
-  String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
-  String(c.rede ?? "").toLowerCase() === "instagram"
-);
+    // verifica existência local (sem instanciar mongoose doc)
+    const contasLocal = Array.isArray(userDoc.contas) ? userDoc.contas : [];
 
+    const conta = contasLocal.find(c =>
+      String((c?.nome_usuario ?? c?.nomeConta ?? "")).toLowerCase() === nomeLower &&
+      String((c?.rede ?? "")).toLowerCase() === "instagram"
+    );
 
-    if (contaIndex === -1) return res.status(404).json({ error: "Conta não encontrada." });
+    if (!conta) {
+      return res.status(404).json({ error: "Conta não encontrada." });
+    }
 
-    user.contas[contaIndex].status = "inativa";
-    user.contas[contaIndex].dataDesativacao = new Date();
+    // UPDATE RAW — sem validação Mongoose
+    const client = mongoose.connection.getClient();
+    const db = client.db();
+    const usersColl = db.collection("users");
 
-    await user.save();
+    await usersColl.updateOne(
+      {
+        _id: userDoc._id,
+        $or: [
+          { "contas.nome_usuario": conta.nome_usuario },
+          { "contas.nomeConta": conta.nomeConta }
+        ]
+      },
+      {
+        $set: {
+          "contas.$.status": "inativa",
+          "contas.$.dataDesativacao": new Date()
+        }
+      }
+    );
 
-    return res.status(200).json({ message: `Conta ${user.contas[contaIndex].nome_usuario || user.contas[contaIndex].nomeConta} desativada com sucesso.` });
+    return res.status(200).json({
+      message: `Conta ${conta.nome_usuario || conta.nomeConta} desativada com sucesso.`
+    });
 
   } catch (err) {
     console.error("❌ Erro em DELETE /contas_instagram:", err);
@@ -547,12 +578,7 @@ const contaIndex = (user.contas || []).findIndex(c =>
   }
 });
 
-// ===============================
 // ROTA: /api/profile
-// GET → retorna dados do usuário
-// PUT → atualiza dados do usuário
-// ===============================
-
 router.get("/profile", async (req, res) => {
   await connectDB();
 
