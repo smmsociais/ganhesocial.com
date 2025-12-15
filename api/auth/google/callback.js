@@ -6,7 +6,6 @@ import crypto from "crypto";
 
 // 🔥 Função de registro do usuário Google
 async function registrarUsuarioGoogle({ email, nome, ref }) {
-
   const token = crypto.randomBytes(32).toString("hex");
   const gerarCodigo = () =>
     Math.floor(10000000 + Math.random() * 90000000).toString();
@@ -81,6 +80,27 @@ export default async function handler(req, res) {
 
     // 3 - Localiza usuário
     let user = await User.findOne({ email });
+
+    // 4 - Se não existir → usa a nova função
+    if (!user) {
+      const resultado = await registrarUsuarioGoogle({
+        email,
+        nome: name,
+        ref
+      });
+
+      if (resultado.erro) {
+        return res.status(500).json({ error: resultado.mensagem });
+      }
+
+      user = resultado.usuario;
+    }
+
+    // 5 - Garante token caso usuário antigo não tenha
+    if (!user.token) {
+      user.token = crypto.randomBytes(32).toString("hex");
+      await user.save();
+    }
 
     // 6 - Redireciona para o frontend usando o MESMO token do banco
     const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocial.com";
