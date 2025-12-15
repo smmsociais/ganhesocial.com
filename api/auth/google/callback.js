@@ -1,5 +1,6 @@
 // api/auth/google/callback.js
 import axios from "axios";
+import mongoose from "mongoose";
 import connectDB from "../../db.js";
 import { User } from "../../schema.js";
 import crypto from "crypto";
