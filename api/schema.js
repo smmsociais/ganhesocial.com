@@ -196,7 +196,25 @@ const DailyRankingSchema = new mongoose.Schema({
 // índice único por data para garantir máximo 1 documento por dia
 DailyRankingSchema.index({ data: 1 }, { unique: true });
 
-// 🔹 Modelos
+// -- antes de definir os modelos, garanta que não haja modelos antigos residuais --
+if (mongoose.models && mongoose.models.User) {
+  // deleteModel é preferível quando disponível
+  if (typeof mongoose.deleteModel === "function") {
+    try { mongoose.deleteModel("User"); } catch (e) { /* ignore */ }
+  } else {
+    delete mongoose.models.User;
+  }
+}
+// repetir para ActionHistory (se quiser garantir)
+if (mongoose.models && mongoose.models.ActionHistory) {
+  if (typeof mongoose.deleteModel === "function") {
+    try { mongoose.deleteModel("ActionHistory"); } catch (e) { /* ignore */ }
+  } else {
+    delete mongoose.models.ActionHistory;
+  }
+}
+
+// Agora defina (ou redefina) os modelos com o schema correto
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 const ActionHistory = mongoose.models.ActionHistory || mongoose.model("ActionHistory", ActionHistorySchema);
 const Pedido = mongoose.models.Pedido || mongoose.model("Pedido", PedidoSchema);
