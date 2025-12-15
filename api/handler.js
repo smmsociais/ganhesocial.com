@@ -132,6 +132,31 @@ export function getValorAcao(pedidoOuTipo, rede = "TikTok") {
 
 }
 
+// helpers (coloque no topo do arquivo ou perto do connectDB import)
+async function getUserDocByToken(token) {
+  // usa a collection raw (evita instanciação de Document que faz casting)
+  const usersColl = mongoose.connection.db.collection("users");
+  return await usersColl.findOne({ token });
+}
+
+async function pushConta(userId, contaObj) {
+  const usersColl = mongoose.connection.db.collection("users");
+  await usersColl.updateOne(
+    { _id: userId },
+    { $push: { contas: contaObj } }
+  );
+}
+
+async function reactivateConta(userId, nomeLower, updates) {
+  const usersColl = mongoose.connection.db.collection("users");
+  // arrayFilters para atualizar o elemento correto (case-insensitive comparações feitas no app)
+  return await usersColl.updateOne(
+    { _id: userId, "contas": { $elemMatch: { $or: [{ nome_usuario: { $exists: true } }, { nomeConta: { $exists: true } }] } } },
+    { $set: updates },
+    { arrayFilters: [ { "elem.nome_usuario": { $exists: true } } ] } // not used directly but kept for template
+  );
+}
+
 // 📌 ROTA PARA CONSULTAR VALORES DAS AÇÕES
 router.get("/valor_acao", (req, res) => {
   const { tipo = "seguir", rede = "TikTok" } = req.query;
@@ -315,131 +340,102 @@ const contaIndex = (user.contas || []).findIndex(c =>
   }
 });
 
+// Rota: /api/contas_instagram (POST, GET, DELETE)
 router.route("/contas_instagram")
 
-  // POST -> adicionar / reativar conta Instagram (aceita nome_usuario ou nomeConta)
-  .post(async (req, res) => {
-    try {
-      await connectDB();
+// POST -> adicionar / reativar conta Instagram (versão segura)
+.post(async (req, res) => {
+  try {
+    await connectDB();
 
-      const token = getTokenFromHeader(req);
-      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    const token = getTokenFromHeader(req);
+    if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
 
-      const user = await User.findOne({ token });
-      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    // usa leitura RAW para evitar casting/validation
+    const userDoc = await getUserDocByToken(token);
+    if (!userDoc) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
 
-      // aceita nome_usuario (novo) ou nomeConta (frontend antigo)
-      const rawName = req.body?.nome_usuario ?? req.body?.nomeConta ?? req.body?.username;
-      if (!rawName || String(rawName).trim() === "") {
-        return res.status(400).json({ error: "Nome da conta é obrigatório." });
+    const rawName = req.body?.nome_usuario ?? req.body?.nomeConta ?? req.body?.username;
+    if (!rawName || String(rawName).trim() === "") {
+      return res.status(400).json({ error: "Nome da conta é obrigatório." });
+    }
+
+    const nomeNormalized = String(rawName).trim();
+    const nomeLower = nomeNormalized.toLowerCase();
+
+    // garante que contas exista como array no objeto em memória (não altera DB)
+    const contasLocal = Array.isArray(userDoc.contas) ? userDoc.contas : [];
+
+    // procurar conta existente no próprio documento (case-insensitive)
+    const contaExistenteIndex = contasLocal.findIndex(c =>
+      String((c?.nome_usuario ?? c?.nomeConta ?? "")).toLowerCase() === nomeLower &&
+      String((c?.rede ?? "")).toLowerCase() === "instagram"
+    );
+
+    if (contaExistenteIndex !== -1) {
+      const contaExistente = contasLocal[contaExistenteIndex];
+      if (String((contaExistente.status ?? "")).toLowerCase() === "ativa") {
+        return res.status(400).json({ error: "Esta conta já está ativa." });
       }
 
-      const nomeNormalized = String(rawName).trim();
-      const nomeLower = nomeNormalized.toLowerCase();
-
-// 🔍 Verificar se já existe conta TikTok com o mesmo nome
-const contaExistenteIndex = (user.contas || []).findIndex(
-  c =>
-    String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
-    String(c.rede ?? "").toLowerCase() === "instagram"
-);
-      if (contaExistenteIndex !== -1) {
-        const contaExistente = user.contas[contaExistenteIndex];
-
-        if (String(contaExistente.status ?? "").toLowerCase() === "ativa") {
-          return res.status(400).json({ error: "Esta conta já está ativa." });
+      // reativar via update atômico com filtro no array (usa $[elem] e arrayFilters)
+      const usersColl = mongoose.connection.db.collection("users");
+      const updateRes = await usersColl.updateOne(
+        { _id: userDoc._id, "contas.nome_usuario": contaExistente.nome_usuario },
+        {
+          $set: {
+            "contas.$.status": "ativa",
+            "contas.$.rede": "Instagram",
+            "contas.$.id_conta": req.body.id_conta ?? contaExistente.id_conta,
+            "contas.$.id_instagram": req.body.id_instagram ?? contaExistente.id_instagram,
+            "contas.$.dataDesativacao": null,
+            "contas.$.nome_usuario": nomeNormalized,
+            "contas.$.nomeConta": nomeNormalized
+          }
         }
+      );
 
-        // Reativar conta existente e garantir ambos os campos preenchidos
-        contaExistente.status = "ativa";
-        contaExistente.rede = "Instagram";
-        contaExistente.id_conta = req.body.id_conta ?? contaExistente.id_conta;
-        contaExistente.id_instagram = req.body.id_instagram ?? contaExistente.id_instagram;
-        contaExistente.dataDesativacao = undefined;
-
-        // garantir nome_usuario e nomeConta
-        contaExistente.nome_usuario = nomeNormalized;
-        contaExistente.nomeConta = nomeNormalized;
-
-        await user.save();
-        return res.status(200).json({ message: "Conta reativada com sucesso!", nomeConta: nomeNormalized });
-      }
-
-      // Verifica se outro usuário já possui essa mesma conta (case-insensitive) — checa ambos campos
-      const regex = new RegExp(`^${escapeRegExp(nomeNormalized)}$`, "i");
-      const contaDeOutroUsuario = await User.findOne({
-        _id: { $ne: user._id },
-        $or: [
-          { "contas.nome_usuario": regex },
-          { "contas.nomeConta": regex }
-        ]
-      });
-
-      if (contaDeOutroUsuario) {
-        return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
-      }
-
-      // Adicionar nova conta — preencher nome_usuario (canônico) E nomeConta (compat)
-      user.contas = user.contas || [];
-      user.contas.push({
-        nome_usuario: nomeNormalized,
-        nomeConta: nomeNormalized,
-        id_conta: req.body.id_conta,
-        id_instagram: req.body.id_instagram,
-        rede: "Instagram",
-        status: "ativa",
-        dataCriacao: new Date()
-      });
-
-      await user.save();
-
-      return res.status(201).json({
-        message: "Conta Instagram adicionada com sucesso!",
-        nomeConta: nomeNormalized
-      });
-    } catch (err) {
-      console.error("❌ Erro em POST /contas_instagram:", err);
-      return res.status(500).json({ error: "Erro interno no servidor." });
+      return res.status(200).json({ message: "Conta reativada com sucesso!", nomeConta: nomeNormalized });
     }
-  })
 
-  // GET -> listar contas Instagram ativas do usuário
-  .get(async (req, res) => {
-    try {
-      await connectDB();
+    // Verifica se outro usuário já possui essa conta — usa consulta ao driver (raw) para evitar instanciar docs corrompidos
+    const regex = new RegExp(`^${escapeRegExp(nomeNormalized)}$`, "i");
+    const usersColl = mongoose.connection.db.collection("users");
+    const contaDeOutro = await usersColl.findOne({
+      _id: { $ne: userDoc._id },
+      $or: [
+        { "contas.nome_usuario": regex },
+        { "contas.nomeConta": regex }
+      ]
+    });
 
-      const token = getTokenFromHeader(req);
-      if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
-
-      const user = await User.findOne({ token });
-      if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-
-      const contasInstagram = (user.contas || [])
-        .filter(conta => {
-          const rede = String(conta.rede ?? "").trim().toLowerCase();
-          const status = String(conta.status ?? "").trim().toLowerCase();
-          return rede === "instagram" && status === "ativa";
-        })
-        .map(conta => {
-          const contaObj = conta && typeof conta.toObject === "function"
-            ? conta.toObject()
-            : JSON.parse(JSON.stringify(conta));
-
-          return {
-            ...contaObj,
-            usuario: {
-              _id: user._id,
-              nome: user.nome || ""
-            }
-          };
-        });
-
-      return res.status(200).json(contasInstagram);
-    } catch (err) {
-      console.error("❌ Erro em GET /contas_instagram:", err);
-      return res.status(500).json({ error: "Erro interno no servidor." });
+    if (contaDeOutro) {
+      return res.status(400).json({ error: "Já existe uma conta com este nome de usuário." });
     }
-  })
+
+    // Adicionar nova conta com defaults explícitos (evita inserir undefined)
+    const novoConta = {
+      nome_usuario: nomeNormalized,
+      nomeConta: nomeNormalized,
+      id_conta: req.body.id_conta ?? null,
+      id_instagram: req.body.id_instagram ?? null,
+      rede: "Instagram",
+      status: "ativa",
+      dataCriacao: new Date()
+    };
+
+    await pushConta(userDoc._id, novoConta);
+
+    return res.status(201).json({
+      message: "Conta Instagram adicionada com sucesso!",
+      nomeConta: nomeNormalized
+    });
+
+  } catch (err) {
+    console.error("❌ Erro em POST /contas_instagram:", err);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+  }
+})
 
 // DELETE -> desativar conta Instagram (accept nome_usuario OR nomeConta)
 .delete(async (req, res) => {
@@ -637,71 +633,62 @@ router.post("/signup", async (req, res) => {
   }
 
   try {
-    // Verifica se email já existe
+    // 🔥 NOVO: Bloqueia se já existir qualquer usuário no banco
+    const totalUsuarios = await User.countDocuments();
+    if (totalUsuarios >= 1) {
+      return res.status(403).json({
+        error: "Erro."
+      });
+    }
+
+    // Verifica se email já existe (não é necessário, pois só 1 usuário pode existir,
+    // mas deixei por segurança)
     const emailExiste = await User.findOne({ email });
     if (emailExiste) return res.status(400).json({ error: "E-mail já cadastrado." });
 
-  const token = crypto.randomBytes(32).toString("hex");
-  const gerarCodigo = () =>
-    Math.floor(10000000 + Math.random() * 90000000).toString();
+    // Gera token
+    const token = crypto.randomBytes(32).toString("hex");
 
-  let savedUser = null;
-  let attempt = 0;
+    // Gera código de afiliado
+    const gerarCodigo = () =>
+      Math.floor(10000000 + Math.random() * 90000000).toString();
 
-  while (attempt < 5 && !savedUser) {
-    const codigo_afiliado = gerarCodigo();
-    const ativo_ate = new Date(Date.now() + 30 * 86400000);
+    const maxRetries = 5;
+    let attempt = 0;
+    let savedUser = null;
 
-const payload = {
-  email, nome, senha: "", token, codigo_afiliado, status: "ativo",
-  ativo_ate, indicado_por: ref || null, historico_acoes: []
-};
-console.log("DEBUG: payload para new User:", JSON.stringify(payload));
+    while (attempt < maxRetries && !savedUser) {
+      const codigo_afiliado = gerarCodigo();
 
-// dentro do seu loop de tentativa, no lugar do `new User(...).save()`
-const novoObj = {
-  email,
-  nome,
-  senha: "",
-  token,
-  codigo_afiliado,
-  status: "ativo",
-  ativo_ate,
-  indicado_por: ref || null,
-  historico_acoes: [] // força array limpa
-};
+      const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-try {
-  // tenta pelo Model (validação Mongoose)
-  savedUser = await new User(novoObj).save();
-} catch (err) {
-  // se for conflito de unique -> re-tentaremos o loop externo
-  if (err?.code === 11000) {
-    attempt++;
-    continue;
-  }
+      const novoUsuario = new User({
+        email,
+        senha,
+        token,
+        codigo_afiliado,
+        status: "ativo",
+        ativo_ate,
+        indicado_por: ref || null,
+      });
 
-  console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
+      try {
+        savedUser = await novoUsuario.save();
+      } catch (err) {
+        if (err?.code === 11000 && err.keyPattern?.codigo_afiliado) {
+          console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt + 1}). Gerando novo código.`);
+          attempt++;
+          continue;
+        }
+        throw err;
+      }
+    }
 
-  try {
-    // fallback: insere diretamente na collection (pula validação de schema)
-    const usersColl = mongoose.connection.db.collection("users");
-    const ins = await usersColl.insertOne(novoObj);
-    // recupera via Model para ter os métodos e aplicar virtuals/populates se precisar
-    savedUser = await User.findById(ins.insertedId).lean();
-    // se quiser um documento Mongoose (não-lean), use:
-    // savedUser = await User.findById(ins.insertedId);
-  } catch (insErr) {
-    console.error("❌ Erro no raw insert fallback:", insErr);
-    throw insErr; // propaga para o outer catch (ou você pode tratar)
-  }
-}
-
-  }
-
-  if (!savedUser) {
-    return { erro: true, mensagem: "Erro ao gerar código afiliado." };
-  }
+    if (!savedUser) {
+      return res.status(500).json({
+        error: "Não foi possível gerar um código de afiliado único. Tente novamente."
+      });
+    }
 
     return res.status(201).json({
       message: "Usuário registrado com sucesso!",
