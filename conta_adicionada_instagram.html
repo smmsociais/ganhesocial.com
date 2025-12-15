@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conta Adicionada Instagram - GanheSocial</title>
+    <link rel="icon" href="https://i.imgur.com/Gs4s6If.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Tema claro - padrão */
+            --bg-light: #f8f9fa;
+            --text-light: #212529;
+            --container-light: #ffffff;
+            --button-light: #1a73e8;
+            --success-color: #28a745;
+            --pending-color: #ffc107;
+            --failed-color: #dc3545;
+            --border-light: #dee2e6;
+            --hover-light: #f1f1f1;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            /* Tema escuro */
+            --bg-dark: #121212;
+            --text-dark: #e0e0e0;
+            --container-dark: #1e1e1e;
+            --button-dark: #4285f4;
+            --success-dark: #34a853;
+            --pending-dark: #f9ab00;
+            --failed-dark: #ea4335;
+            --border-dark: #333333;
+            --hover-dark: #2d2d2d;
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+            --primary-gradient-dark: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            /* Variáveis comuns */
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+            --hover-blue: #0069d9;
+            --gray-dark: #6c757d;
+            --label-color: #6c757d;
+        }
+
+        /* Variáveis dinâmicas baseadas no tema */
+        html[data-tema="claro"] {
+            --bg: var(--bg-light);
+            --text: var(--text-light);
+            --container: var(--container-light);
+            --button: var(--button-light);
+            --success: var(--success-color);
+            --pending: var(--pending-color);
+            --failed: var(--failed-color);
+            --border: var(--border-light);
+            --hover: var(--hover-light);
+            --shadow: var(--shadow-light);
+            --primary-gradient: var(--primary-gradient);
+        }
+
+        html[data-tema="escuro"] {
+            --bg: var(--bg-dark);
+            --text: var(--text-dark);
+            --container: var(--container-dark);
+            --button: var(--button-dark);
+            --success: var(--success-dark);
+            --pending: var(--pending-dark);
+            --failed: var(--failed-dark);
+            --border: var(--border-dark);
+            --hover: var(--hover-dark);
+            --shadow: var(--shadow-dark);
+            --primary-gradient: var(--primary-gradient-dark);
+            --gray-dark: #8b949e;
+            --label-color: #8b949e;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        .menu-item[href="adicionar_conta"] {
+            color: white !important;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white !important;
+            box-shadow: 0 2px 10px var(--shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .left-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .right-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        /* Main Container */
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: var(--container);
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 20px var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 300px;
+            border: 1px solid var(--border);
+        }
+
+        .container-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--primary-gradient);
+            color: white !important;
+        }
+
+        .container-header h2 {
+            margin: 0;
+            font-size: 1.0rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white !important;
+        }
+
+        .container-body {
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Success Box */
+        .success-box {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .success-box h3 {
+            margin-top: 0;
+            color: var(--success);
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .account-details {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .account-details strong {
+            display: inline-block;
+            width: 120px;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background: var(--gray-dark);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        /* Menu Styles */
+        .menu-toggle {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--container);
+            box-shadow: 2px 0 15px var(--shadow);
+            transition: var(--transition);
+            padding: 20px 0;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .menu-content.active {
+            left: 0;
+        }
+
+        .menu-overlay.active {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 16px;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item i {
+            width: 24px;
+            text-align: center;
+            color: var(--button);
+        }
+
+        .menu-item:hover {
+            background-color: var(--hover);
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding: 25px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .menu-logout {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: var(--failed);
+            font-size: 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+
+        .menu-logout i {
+            color: var(--failed);
+        }
+
+        .menu-logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px;
+            }
+
+            .container-header h2 {
+                font-size: 1.0rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .container-header {
+                padding: 15px;
+            }
+
+            .container-body {
+                padding: 15px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s ease forwards;
+        }
+
+        /* Desktop Menu */
+        @media (min-width: 992px) {
+            body {
+                padding-left: 280px;
+            }
+
+            .desktop-header {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            .menu-content {
+                left: 0;
+                box-shadow: none;
+            }
+
+            .menu-overlay {
+                display: none !important;
+            }
+
+            .logo-mobile {
+                display: none;
+            }
+
+            .menu-close-btn {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .logo-mobile {
+                display: block;
+            }
+
+            /* Esconde o header quando o menu está aberto */
+            body.menu-open .header {
+                display: none;
+            }
+
+            /* Estilos para o botão de fechar no mobile */
+            .menu-close-btn {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: var(--gray-dark) !important;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 1002;
+            }
+
+            .menu-close-btn:hover {
+                color: var(--failed);
+            }
+        }
+
+        /* Initial Load */
+        body {
+            visibility: hidden;
+        }
+
+        body.loaded {
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Aplica tema imediatamente antes do paint para evitar flash -->
+    <script>
+        (function () {
+            try {
+                var temaLocal = localStorage.getItem('tema');
+                if (temaLocal) {
+                    document.documentElement.setAttribute('data-tema', temaLocal);
+                }
+            } catch (e) {
+                console.warn("Erro ao aplicar tema do localStorage:", e);
+            }
+        })();
+    </script>
+
+    <!-- Menu Lateral para Desktop -->
+    <div class="menu-content" id="menuContent">
+        <!-- Botão de fechar (visível apenas no mobile) -->
+        <button class="menu-close-btn" id="menuCloseBtn">&times;</button>
+
+        <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
+            <a href="dashboard">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;">
+            </a>
+        </div>
+        <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
+        <a class="menu-item" href="realizar_acoes"><i class="fas fa-tasks"></i> Realizar Ações</a>
+        <a class="menu-item" href="adicionar_conta"><i class="fas fa-plus-circle"></i> Adicionar Conta</a>
+        <a class="menu-item" href="gerenciar_contas"><i class="fas fa-cog"></i> Gerenciar Contas</a>
+        <a class="menu-item" href="historico_acoes"><i class="fas fa-history"></i> Histórico de Ações</a>
+        <a class="menu-item" href="solicitar_saque"><i class="fas fa-hand-holding-usd"></i> Solicitar Saque</a>
+        <a class="menu-item" href="historico_saques"><i class="fas fa-wallet"></i> Histórico de Saques</a>
+        <a class="menu-item" href="refer"><i class="fas fa-user-friends"></i> Indicados</a>
+        <a class="menu-item" href="profile"><i class="fas fa-user-cog"></i> Minha Conta</a>
+
+        <div class="menu-footer">
+            <a class="menu-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <!-- Overlay do Menu -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Header para Mobile -->
+    <div class="header desktop-header">
+        <div class="left-header">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <!-- Logo para mobile (no header) -->
+            <a href="dashboard" class="logo-mobile">
+                <img src="https://i.imgur.com/sQeLEVh.png" alt="Logo GanheSocial" class="logo">
+            </a>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-container">
+        <div class="container fade-in">
+            <div class="container-header">
+                <h2><i class="fas fa-check-circle"></i> Conta Adicionada com Sucesso</h2>
+            </div>
+            <div class="container-body">
+                <div class="success-box bounce-in">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 id="successMessage">Sua conta do Instagram foi adicionada com sucesso!</h3>
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="window.location.href='realizar_acoes'">
+                        <i class="fas fa-tasks"></i> Realizar Ações
+                    </button>
+                    <button class="btn-secondary" onclick="window.location.href='gerenciar_contas'">
+                        <i class="fas fa-cog"></i> Gerenciar Contas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para obter parâmetros da URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Preencher dados da conta quando a página carregar
+        document.addEventListener('DOMContentLoaded', function () {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                window.location.href = "https://ganhesocial.com/login";
+                return;
+            }
+
+            const username = getUrlParameter('username');
+            if (username) {
+                // Atualiza a mensagem de sucesso com o nome de usuário
+                const successMessage = document.getElementById('successMessage');
+                successMessage.textContent = `Sua conta do Instagram (@${username}) foi adicionada com sucesso!`;
+            }
+
+            // Configura o menu
+            const menuToggle = document.getElementById('menuToggle');
+            const menuOverlay = document.getElementById('menuOverlay');
+            const menuContent = document.getElementById('menuContent');
+            const menuCloseBtn = document.getElementById('menuCloseBtn');
+
+            function toggleMenu() {
+                menuContent.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+
+                const spans = menuToggle.querySelectorAll('span');
+                if (menuContent.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+                } else {
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            }
+
+            function closeMenu() {
+                menuContent.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                const spans = menuToggle.querySelectorAll('span');
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuOverlay.addEventListener('click', closeMenu);
+
+            // Marca página como carregada
+            document.body.classList.add('loaded');
+        });
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "https://ganhesocial.com";
+        }
+    </script>
+</body>
+
+  </html>
