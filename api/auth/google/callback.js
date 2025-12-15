@@ -17,17 +17,18 @@ async function registrarUsuarioGoogle({ email, nome, ref }) {
     const codigo_afiliado = gerarCodigo();
     const ativo_ate = new Date(Date.now() + 30 * 86400000);
 
-    const novo = new User({
-      email,
-      nome,
-      senha: "",
-      token,
-      codigo_afiliado,
-      status: "ativo",
-      ativo_ate,
-      indicado_por: ref || null,
-      provider: "google",
-    });
+const novo = new User({
+  email,
+  nome,
+  senha: "",
+  token,
+  codigo_afiliado,
+  status: "ativo",
+  ativo_ate,
+  indicado_por: ref || null,
+  provider: "google",
+  historico_acoes: [],
+});
 
     try {
       savedUser = await novo.save();
