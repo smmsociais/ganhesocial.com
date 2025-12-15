@@ -82,36 +82,8 @@ export default async function handler(req, res) {
     // 3 - Localiza usuário
     let user = await User.findOne({ email });
 
-    // 4 - Se não existir → usa a nova função
-    if (!user) {
-      // 🔥 Verifica limite de usuários antes de criar
-      const totalUsuarios = await User.countDocuments();
-      if (totalUsuarios >= 1) {
-        const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocialtest.com";
-        return res.redirect(`${FRONTEND_BASE}/login?error=limite_atingido`);
-      }
-
-      const resultado = await registrarUsuarioGoogle({
-        email,
-        nome: name,
-        ref
-      });
-
-      if (resultado.erro) {
-        return res.status(500).json({ error: resultado.mensagem });
-      }
-
-      user = resultado.usuario;
-    }
-
-    // 5 - Garante token caso usuário antigo não tenha
-    if (!user.token) {
-      user.token = crypto.randomBytes(32).toString("hex");
-      await user.save();
-    }
-
     // 6 - Redireciona para o frontend usando o MESMO token do banco
-    const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocialtest.com";
+    const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocial.com";
     return res.redirect(`${FRONTEND_BASE}/login-success?token=${user.token}`);
 
   } catch (error) {
