@@ -641,49 +641,67 @@ router.post("/signup", async (req, res) => {
     const emailExiste = await User.findOne({ email });
     if (emailExiste) return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    // Gera token
-    const token = crypto.randomBytes(32).toString("hex");
+  const token = crypto.randomBytes(32).toString("hex");
+  const gerarCodigo = () =>
+    Math.floor(10000000 + Math.random() * 90000000).toString();
 
-    // Gera código de afiliado
-    const gerarCodigo = () =>
-      Math.floor(10000000 + Math.random() * 90000000).toString();
+  let savedUser = null;
+  let attempt = 0;
 
-    const maxRetries = 5;
-    let attempt = 0;
-    let savedUser = null;
+  while (attempt < 5 && !savedUser) {
+    const codigo_afiliado = gerarCodigo();
+    const ativo_ate = new Date(Date.now() + 30 * 86400000);
 
-    while (attempt < maxRetries && !savedUser) {
-      const codigo_afiliado = gerarCodigo();
+const payload = {
+  email, nome, senha: "", token, codigo_afiliado, status: "ativo",
+  ativo_ate, indicado_por: ref || null, historico_acoes: []
+};
+console.log("DEBUG: payload para new User:", JSON.stringify(payload));
 
-      const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+// dentro do seu loop de tentativa, no lugar do `new User(...).save()`
+const novoObj = {
+  email,
+  nome,
+  senha: "",
+  token,
+  codigo_afiliado,
+  status: "ativo",
+  ativo_ate,
+  indicado_por: ref || null,
+  historico_acoes: [] // força array limpa
+};
 
-      const novoUsuario = new User({
-        email,
-        senha,
-        token,
-        codigo_afiliado,
-        status: "ativo",
-        ativo_ate,
-        indicado_por: ref || null,
-      });
+try {
+  // tenta pelo Model (validação Mongoose)
+  savedUser = await new User(novoObj).save();
+} catch (err) {
+  // se for conflito de unique -> re-tentaremos o loop externo
+  if (err?.code === 11000) {
+    attempt++;
+    continue;
+  }
 
-      try {
-        savedUser = await novoUsuario.save();
-      } catch (err) {
-        if (err?.code === 11000 && err.keyPattern?.codigo_afiliado) {
-          console.warn(`[SIGNUP] Colisão codigo_afiliado (tentativa ${attempt + 1}). Gerando novo código.`);
-          attempt++;
-          continue;
-        }
-        throw err;
-      }
-    }
+  console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
 
-    if (!savedUser) {
-      return res.status(500).json({
-        error: "Não foi possível gerar um código de afiliado único. Tente novamente."
-      });
-    }
+  try {
+    // fallback: insere diretamente na collection (pula validação de schema)
+    const usersColl = mongoose.connection.db.collection("users");
+    const ins = await usersColl.insertOne(novoObj);
+    // recupera via Model para ter os métodos e aplicar virtuals/populates se precisar
+    savedUser = await User.findById(ins.insertedId).lean();
+    // se quiser um documento Mongoose (não-lean), use:
+    // savedUser = await User.findById(ins.insertedId);
+  } catch (insErr) {
+    console.error("❌ Erro no raw insert fallback:", insErr);
+    throw insErr; // propaga para o outer catch (ou você pode tratar)
+  }
+}
+
+  }
+
+  if (!savedUser) {
+    return { erro: true, mensagem: "Erro ao gerar código afiliado." };
+  }
 
     return res.status(201).json({
       message: "Usuário registrado com sucesso!",
