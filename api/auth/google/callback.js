@@ -6,11 +6,6 @@ import crypto from "crypto";
 
 // 🔥 Função de registro do usuário Google
 async function registrarUsuarioGoogle({ email, nome, ref }) {
-  // 🔥 Impede criação se já existir 1 usuário total
-  const totalUsuarios = await User.countDocuments();
-  if (totalUsuarios >= 1) {
-    return { erro: true, mensagem: "Erro." };
-  }
 
   const token = crypto.randomBytes(32).toString("hex");
   const gerarCodigo = () =>
