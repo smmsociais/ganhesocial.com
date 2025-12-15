@@ -162,6 +162,21 @@ async function reactivateConta(userId, nomeLower, updates) {
   );
 }
 
+async function pushConta(userId, conta) {
+  const client = mongoose.connection.getClient();
+  if (!client) {
+    throw new Error("MongoDB client não inicializado");
+  }
+
+  const db = client.db();
+  const usersColl = db.collection("users");
+
+  return await usersColl.updateOne(
+    { _id: userId },
+    { $push: { contas: conta } }
+  );
+}
+
 // 📌 ROTA PARA CONSULTAR VALORES DAS AÇÕES
 router.get("/valor_acao", (req, res) => {
   const { tipo = "seguir", rede = "TikTok" } = req.query;
@@ -269,7 +284,7 @@ const contaExistenteIndex = (user.contas || []).findIndex(
     }
   })
 
-  // GET -> listar contas Instagram ativas do usuário
+  // GET -> listar contas TikTok ativas do usuário
   .get(async (req, res) => {
     try {
       await connectDB();
