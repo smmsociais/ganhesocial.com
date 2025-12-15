@@ -133,7 +133,7 @@ export function getValorAcao(pedidoOuTipo, rede = "TikTok") {
 
 }
 
-// helpers (coloque no topo do arquivo ou perto do connectDB import)
+// helpers
 export async function getUserDocByToken(token) {
   if (!token) return null;
 
@@ -468,6 +468,42 @@ router.route("/contas_instagram")
 
   } catch (err) {
     console.error("❌ Erro em POST /contas_instagram:", err);
+    return res.status(500).json({ error: "Erro interno no servidor." });
+  }
+})
+
+// GET -> listar contas Instagram ativas (RAW-safe)
+.get(async (req, res) => {
+  try {
+    await connectDB();
+
+    const token = getTokenFromHeader(req);
+    if (!token) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    }
+
+    const userDoc = await getUserDocByToken(token);
+    if (!userDoc) {
+      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    }
+
+    const contasInstagram = (Array.isArray(userDoc.contas) ? userDoc.contas : [])
+      .filter(c =>
+        String(c?.rede ?? "").toLowerCase() === "instagram" &&
+        String(c?.status ?? "").toLowerCase() === "ativa"
+      )
+      .map(c => ({
+        ...c,
+        usuario: {
+          _id: userDoc._id,
+          nome: userDoc.nome || ""
+        }
+      }));
+
+    return res.status(200).json(contasInstagram);
+
+  } catch (err) {
+    console.error("❌ Erro em GET /contas_instagram:", err);
     return res.status(500).json({ error: "Erro interno no servidor." });
   }
 })
