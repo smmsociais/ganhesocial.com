@@ -1,7 +1,8 @@
 // api/auth/google/signup/callback.js
 import axios from "axios";
-import connectDB from "../../../db.js";
-import { User } from "../../../schema.js";
+import mongoose from "mongoose";
+import connectDB from "../../db.js";
+import { User } from "../../schema.js";
 import crypto from "crypto";
 
 const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocial.com";
