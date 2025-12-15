@@ -1,5 +1,4 @@
 //schema.js
-
 import mongoose from "mongoose";
 
 // 🔹 Schema para Contas Vinculadas
@@ -66,9 +65,12 @@ const UserSchema = new mongoose.Schema({
   pix_key_type: { type: String, default: null },
   // contas conectadas
   contas: [ContaSchema],
-  historico_acoes: [
+historico_acoes: {
+  type: [
     { type: mongoose.Schema.Types.ObjectId, ref: "ActionHistory" }
   ],
+  default: []
+},
   saques: [WithdrawSchema],
   // afiliados
   codigo_afiliado: { type: String, default: null },
