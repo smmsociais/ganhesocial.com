@@ -4,18 +4,13 @@ import connectDB from "../../../db.js";
 import { User } from "../../../schema.js";
 import crypto from "crypto";
 
-const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocialtest.com";
+const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocial.com";
 
 function gerarCodigoAfiliado() {
   return Math.floor(10000000 + Math.random() * 90000000).toString();
 }
 
 async function registrarUsuarioGoogle({ email, nome, ref }) {
-  // 🔥 Impede criação se já existir 1 usuário total
-  const totalUsuarios = await User.countDocuments();
-  if (totalUsuarios >= 1) {
-    return { erro: true, mensagem: "Erro." };
-  }
 
   // 🔹 Gera token padrão
   const token = crypto.randomBytes(32).toString("hex");
