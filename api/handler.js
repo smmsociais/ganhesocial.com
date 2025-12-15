@@ -637,16 +637,7 @@ router.post("/signup", async (req, res) => {
   }
 
   try {
-    // 🔥 NOVO: Bloqueia se já existir qualquer usuário no banco
-    const totalUsuarios = await User.countDocuments();
-    if (totalUsuarios >= 1) {
-      return res.status(403).json({
-        error: "Erro."
-      });
-    }
-
-    // Verifica se email já existe (não é necessário, pois só 1 usuário pode existir,
-    // mas deixei por segurança)
+    // Verifica se email já existe
     const emailExiste = await User.findOne({ email });
     if (emailExiste) return res.status(400).json({ error: "E-mail já cadastrado." });
 
