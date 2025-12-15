@@ -1,11 +1,8 @@
-// api/auth/google/callback.js
-import axios from "axios";
+// dentro do seu arquivo api/auth/google/callback.js
 import mongoose from "mongoose";
-import connectDB from "../../db.js";
-import { User } from "../../schema.js";
 import crypto from "crypto";
+import { User } from "../../schema.js";
 
-// 🔥 Função de registro do usuário Google
 async function registrarUsuarioGoogle({ email, nome, ref }) {
   const token = crypto.randomBytes(32).toString("hex");
   const gerarCodigo = () =>
@@ -18,53 +15,54 @@ async function registrarUsuarioGoogle({ email, nome, ref }) {
     const codigo_afiliado = gerarCodigo();
     const ativo_ate = new Date(Date.now() + 30 * 86400000);
 
-const payload = {
-  email, nome, saldo, senha: "", token, codigo_afiliado, status: "ativo",
-  ativo_ate, indicado_por: ref || null, provider: "google", historico_acoes: []
-};
-console.log("DEBUG: payload para new User:", JSON.stringify(payload));
+    // === explicit defaults para evitar campos faltando ===
+    const novoObj = {
+      email,
+      nome,
+      saldo: 0,
+      pix_key: null,
+      pix_key_type: null,
+      contas: [],
+      historico_acoes: [],
+      saques: [],
+      senha: "",
+      token,
+      codigo_afiliado,
+      status: "ativo",
+      ativo_ate,
+      indicado_por: ref || null,
+      provider: "google"
+    };
 
-// dentro do seu loop de tentativa, no lugar do `new User(...).save()`
-const novoObj = {
-  email,
-  nome,
-  saldo,
-  senha: "",
-  token,
-  codigo_afiliado,
-  status: "ativo",
-  ativo_ate,
-  indicado_por: ref || null,
-  provider: "google",
-  historico_acoes: [] // força array limpa
-};
+    console.log("DEBUG: payload para new User:", JSON.stringify(novoObj));
 
-try {
-  // tenta pelo Model (validação Mongoose)
-  savedUser = await new User(novoObj).save();
-} catch (err) {
-  // se for conflito de unique -> re-tentaremos o loop externo
-  if (err?.code === 11000) {
-    attempt++;
-    continue;
-  }
+    try {
+      // tenta pelo Model (aplica validações e hooks)
+      savedUser = await new User(novoObj).save();
+    } catch (err) {
+      if (err?.code === 11000) {
+        attempt++;
+        continue; // tenta outro codigo_afiliado
+      }
 
-  console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
+      console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
 
-  try {
-    // fallback: insere diretamente na collection (pula validação de schema)
-    const usersColl = mongoose.connection.db.collection("users");
-    const ins = await usersColl.insertOne(novoObj);
-    // recupera via Model para ter os métodos e aplicar virtuals/populates se precisar
-    savedUser = await User.findById(ins.insertedId).lean();
-    // se quiser um documento Mongoose (não-lean), use:
-    // savedUser = await User.findById(ins.insertedId);
-  } catch (insErr) {
-    console.error("❌ Erro no raw insert fallback:", insErr);
-    throw insErr; // propaga para o outer catch (ou você pode tratar)
-  }
-}
+      try {
+        // fallback: insere diretamente na collection (pula validação de schema),
+        // mas garantindo que o objeto contém todos os campos padrão
+        const usersColl = mongoose.connection.db.collection("users");
+        const ins = await usersColl.insertOne(novoObj);
 
+        // recuperar via Model (sem lean) para obter um documento mongoose
+        savedUser = await User.findById(ins.insertedId);
+
+        // se quiser um POJO em vez de Document, use `.toObject()`:
+        // savedUser = (await User.findById(ins.insertedId)).toObject();
+      } catch (insErr) {
+        console.error("❌ Erro no raw insert fallback:", insErr);
+        throw insErr; // propaga para o outer catch
+      }
+    }
   }
 
   if (!savedUser) {
