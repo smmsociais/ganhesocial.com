@@ -518,58 +518,52 @@ router.route("/contas_instagram")
       return res.status(401).json({ error: "Acesso negado, token não encontrado." });
     }
 
-    const userDoc = await getUserDocByToken(token);
-    if (!userDoc) {
-      return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
-    }
-
     const nomeRaw =
       req.query.nome_usuario ??
       req.query.nomeConta ??
       req.body?.nome_usuario ??
       req.body?.nomeConta;
 
-    if (!nomeRaw) {
+    if (!nomeRaw || String(nomeRaw).trim() === "") {
       return res.status(400).json({ error: "Nome da conta não fornecido." });
     }
 
-    const nomeLower = String(nomeRaw).trim().toLowerCase();
+    const nomeNormalized = String(nomeRaw).trim();
+    const nomeLower = nomeNormalized.toLowerCase();
 
-    // verifica existência local (sem instanciar mongoose doc)
-    const contasLocal = Array.isArray(userDoc.contas) ? userDoc.contas : [];
+    const usersColl = mongoose.connection.db.collection("users");
 
-    const conta = contasLocal.find(c =>
-      String((c?.nome_usuario ?? c?.nomeConta ?? "")).toLowerCase() === nomeLower &&
-      String((c?.rede ?? "")).toLowerCase() === "instagram"
-    );
-
-    if (!conta) {
-      return res.status(404).json({ error: "Conta não encontrada." });
-    }
-
-    // UPDATE RAW — sem validação Mongoose
-    const client = mongoose.connection.getClient();
-    const db = client.db();
-    const usersColl = db.collection("users");
-
-    await usersColl.updateOne(
-      {
-        _id: userDoc._id,
-        $or: [
-          { "contas.nome_usuario": conta.nome_usuario },
-          { "contas.nomeConta": conta.nomeConta }
-        ]
-      },
+    const result = await usersColl.updateOne(
+      { token },
       {
         $set: {
-          "contas.$.status": "inativa",
-          "contas.$.dataDesativacao": new Date()
+          "contas.$[c].status": "inativa",
+          "contas.$[c].dataDesativacao": new Date()
         }
+      },
+      {
+        arrayFilters: [
+          {
+            $and: [
+              { "c.rede": { $regex: /^instagram$/i } },
+              {
+                $or: [
+                  { "c.nome_usuario": { $regex: `^${escapeRegExp(nomeLower)}$`, $options: "i" } },
+                  { "c.nomeConta": { $regex: `^${escapeRegExp(nomeLower)}$`, $options: "i" } }
+                ]
+              }
+            ]
+          }
+        ]
       }
     );
 
+    if (result.matchedCount === 0 || result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Conta não encontrada ou já inativa." });
+    }
+
     return res.status(200).json({
-      message: `Conta ${conta.nome_usuario || conta.nomeConta} desativada com sucesso.`
+      message: `Conta ${nomeNormalized} desativada com sucesso.`
     });
 
   } catch (err) {
