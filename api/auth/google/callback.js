@@ -34,7 +34,8 @@ const payload = {
 };
 console.log("DEBUG: payload para new User:", JSON.stringify(payload));
 
-const novo = new User({
+// dentro do seu loop de tentativa, no lugar do `new User(...).save()`
+const novoObj = {
   email,
   nome,
   senha: "",
@@ -44,18 +45,35 @@ const novo = new User({
   ativo_ate,
   indicado_por: ref || null,
   provider: "google",
-  historico_acoes: [],
-});
+  historico_acoes: [] // força array limpa
+};
 
-    try {
-      savedUser = await novo.save();
-    } catch (err) {
-      if (err?.code === 11000) {
-        attempt++;
-        continue;
-      }
-      throw err;
-    }
+try {
+  // tenta pelo Model (validação Mongoose)
+  savedUser = await new User(novoObj).save();
+} catch (err) {
+  // se for conflito de unique -> re-tentaremos o loop externo
+  if (err?.code === 11000) {
+    attempt++;
+    continue;
+  }
+
+  console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
+
+  try {
+    // fallback: insere diretamente na collection (pula validação de schema)
+    const usersColl = mongoose.connection.db.collection("users");
+    const ins = await usersColl.insertOne(novoObj);
+    // recupera via Model para ter os métodos e aplicar virtuals/populates se precisar
+    savedUser = await User.findById(ins.insertedId).lean();
+    // se quiser um documento Mongoose (não-lean), use:
+    // savedUser = await User.findById(ins.insertedId);
+  } catch (insErr) {
+    console.error("❌ Erro no raw insert fallback:", insErr);
+    throw insErr; // propaga para o outer catch (ou você pode tratar)
+  }
+}
+
   }
 
   if (!savedUser) {
