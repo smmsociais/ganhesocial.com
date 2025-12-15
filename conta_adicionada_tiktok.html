@@ -621,7 +621,8 @@
         <div style="padding: 20px; text-align: left; margin-top: -20px;" class="logo-desktop">
             <a href="dashboard">
                 <!-- A imagem será trocada via CSS baseado no tema -->
-                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;" id="logoDesktop">
+                <img src="https://i.imgur.com/dioL5B7.png" alt="Logo GanheSocial" class="logo" style="max-width: 80%;"
+                    id="logoDesktop">
             </a>
         </div>
         <a class="menu-item" href="dashboard"><i class="fas fa-home"></i> Página Inicial</a>
@@ -673,10 +674,10 @@
                     <h3 id="successMessage">Sua conta do TikTok foi adicionada com sucesso!</h3>
                 </div>
                 <div class="button-group">
-                    <button class="btn-primary" onclick="window.location.href='realizar_acoes'">
+                    <button class="btn-primary" onclick="window.location.href='realizar_acoes_tiktok'">
                         <i class="fas fa-tasks"></i> Realizar Ações
                     </button>
-                    <button class="btn-secondary" onclick="window.location.href='gerenciar_contas'">
+                    <button class="btn-secondary" onclick="window.location.href='gerenciar_contas_tiktok'">
                         <i class="fas fa-cog"></i> Gerenciar Contas
                     </button>
                 </div>
@@ -698,17 +699,17 @@
             const tema = document.documentElement.getAttribute('data-tema');
             const logoDesktop = document.getElementById('logoDesktop');
             const logoMobile = document.getElementById('logoMobile');
-            
+
             // URLs das logos para cada tema
             const logoClaro = 'https://i.imgur.com/dioL5B7.png';
             const logoEscuro = 'https://i.imgur.com/h5jHD2L.png';
-            
+
             const logoURL = tema === 'escuro' ? logoEscuro : logoClaro;
-            
+
             if (logoDesktop) {
                 logoDesktop.src = logoURL;
             }
-            
+
             if (logoMobile) {
                 logoMobile.src = logoURL;
             }
@@ -777,8 +778,8 @@
             document.body.classList.add('loaded');
 
             // Observador para mudanças de tema
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
                     if (mutation.attributeName === 'data-tema') {
                         atualizarLogosPorTema();
                     }
