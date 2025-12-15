@@ -17,6 +17,22 @@ async function registrarUsuarioGoogle({ email, nome, ref }) {
     const codigo_afiliado = gerarCodigo();
     const ativo_ate = new Date(Date.now() + 30 * 86400000);
 
+// cole no início de registrarUsuarioGoogle
+console.log("DEBUG: entrando em registrarUsuarioGoogle");
+console.log("DEBUG: mongoose model names:", mongoose.modelNames());
+console.log("DEBUG: User model exists?", !!mongoose.models.User);
+if (mongoose.models.User) {
+  console.log("DEBUG: User schema historico_acoes path:", (mongoose.models.User.schema && mongoose.models.User.schema.path('historico_acoes')) || "no-path");
+}
+console.log("DEBUG: UserSchema from import (User.schema) available?:", !!User.schema);
+console.log("DEBUG: User.schema.path('historico_acoes'):", User.schema && User.schema.path('historico_acoes'));
+
+const payload = {
+  email, nome, senha: "", token, codigo_afiliado, status: "ativo",
+  ativo_ate, indicado_por: ref || null, provider: "google", historico_acoes: []
+};
+console.log("DEBUG: payload para new User:", JSON.stringify(payload));
+
 const novo = new User({
   email,
   nome,
