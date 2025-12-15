@@ -337,40 +337,66 @@ router.route("/contas_tiktok")
     }
   })
 
-// DELETE -> desativar conta Instagram (accept nome_usuario OR nomeConta)
+// DELETE -> desativar conta TikTok (RAW-safe)
 .delete(async (req, res) => {
   try {
     await connectDB();
 
     const token = getTokenFromHeader(req);
-    if (!token) return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    if (!token) {
+      return res.status(401).json({ error: "Acesso negado, token não encontrado." });
+    }
 
-    const user = await User.findOne({ token });
-    if (!user) return res.status(404).json({ error: "Usuário não encontrado ou token inválido." });
+    const nomeRaw =
+      req.query.nome_usuario ??
+      req.query.nomeConta ??
+      req.body?.nome_usuario ??
+      req.body?.nomeConta;
 
-    // aceita nome_usuario (DB atual) OU nomeConta (rotas antigas)
-    const nomeRaw = req.query.nome_usuario ?? req.body?.nome_usuario;
-    if (!nomeRaw) return res.status(400).json({ error: "Nome da conta não fornecido." });
+    if (!nomeRaw || String(nomeRaw).trim() === "") {
+      return res.status(400).json({ error: "Nome da conta não fornecido." });
+    }
 
-    const nomeLower = String(nomeRaw).trim().toLowerCase();
+    const nomeNormalized = String(nomeRaw).trim();
+    const nomeLower = nomeNormalized.toLowerCase();
 
-// 🔍 Encontrar conta específica DO TIKTOK
-const contaIndex = (user.contas || []).findIndex(c =>
-  String((c.nome_usuario ?? c.nomeConta ?? "")).toLowerCase() === nomeLower &&
-  String(c.rede ?? "").toLowerCase() === "tiktok"
-);
+    const usersColl = mongoose.connection.db.collection("users");
 
-    if (contaIndex === -1) return res.status(404).json({ error: "Conta não encontrada." });
+    const result = await usersColl.updateOne(
+      { token },
+      {
+        $set: {
+          "contas.$[c].status": "inativa",
+          "contas.$[c].dataDesativacao": new Date()
+        }
+      },
+      {
+        arrayFilters: [
+          {
+            $and: [
+              { "c.rede": { $regex: /^tiktok$/i } },
+              {
+                $or: [
+                  { "c.nome_usuario": { $regex: `^${escapeRegExp(nomeLower)}$`, $options: "i" } },
+                  { "c.nomeConta": { $regex: `^${escapeRegExp(nomeLower)}$`, $options: "i" } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    );
 
-    user.contas[contaIndex].status = "inativa";
-    user.contas[contaIndex].dataDesativacao = new Date();
+    if (result.matchedCount === 0 || result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Conta não encontrada ou já inativa." });
+    }
 
-    await user.save();
-
-    return res.status(200).json({ message: `Conta ${user.contas[contaIndex].nome_usuario || user.contas[contaIndex].nomeConta} desativada com sucesso.` });
+    return res.status(200).json({
+      message: `Conta ${nomeNormalized} desativada com sucesso.`
+    });
 
   } catch (err) {
-    console.error("❌ Erro em DELETE /contas_tiktok:", err);
+    console.error("❌ Erro em DELETE /contas_instagram:", err);
     return res.status(500).json({ error: "Erro interno no servidor." });
   }
 });
