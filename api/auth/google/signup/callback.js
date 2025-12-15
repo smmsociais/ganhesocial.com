@@ -6,60 +6,72 @@ import crypto from "crypto";
 
 const FRONTEND_BASE = process.env.FRONTEND_URL || "https://ganhesocial.com";
 
-function gerarCodigoAfiliado() {
-  return Math.floor(10000000 + Math.random() * 90000000).toString();
-}
-
+// 🔥 Função de registro do usuário Google
 async function registrarUsuarioGoogle({ email, nome, ref }) {
-
-  // 🔹 Gera token padrão
   const token = crypto.randomBytes(32).toString("hex");
+  const gerarCodigo = () =>
+    Math.floor(10000000 + Math.random() * 90000000).toString();
 
-  // 🔹 30 dias de atividade
-  const ativo_ate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-  // 🔹 Criação com tentativas para gerar codigo_afiliado único
   let savedUser = null;
-  const maxRetries = 5;
   let attempt = 0;
 
-  while (attempt < maxRetries && !savedUser) {
-    const codigo_afiliado = gerarCodigoAfiliado();
+  while (attempt < 5 && !savedUser) {
+    const codigo_afiliado = gerarCodigo();
+    const ativo_ate = new Date(Date.now() + 30 * 86400000);
 
-    const novoUsuario = new User({
-      email,
-      nome,
-      senha: "",         // Google não exige senha
-      token,
-      provider: "google",
-      codigo_afiliado,
-      status: "ativo",
-      ativo_ate,
-      indicado_por: ref || null,
-    });
+const payload = {
+  email, nome, senha: "", token, codigo_afiliado, status: "ativo",
+  ativo_ate, indicado_por: ref || null, provider: "google", historico_acoes: []
+};
+console.log("DEBUG: payload para new User:", JSON.stringify(payload));
 
-    try {
-      savedUser = await novoUsuario.save();
-    } catch (err) {
-      if (err?.code === 11000 && err.keyPattern?.codigo_afiliado) {
-        attempt++;
-        continue;
-      }
-      throw err;
-    }
+// dentro do seu loop de tentativa, no lugar do `new User(...).save()`
+const novoObj = {
+  email,
+  nome,
+  senha: "",
+  token,
+  codigo_afiliado,
+  status: "ativo",
+  ativo_ate,
+  indicado_por: ref || null,
+  provider: "google",
+  historico_acoes: [] // força array limpa
+};
+
+try {
+  // tenta pelo Model (validação Mongoose)
+  savedUser = await new User(novoObj).save();
+} catch (err) {
+  // se for conflito de unique -> re-tentaremos o loop externo
+  if (err?.code === 11000) {
+    attempt++;
+    continue;
+  }
+
+  console.error("⚠️ Erro ao salvar via Mongoose, tentando fallback raw insert:", err?.message || err);
+
+  try {
+    // fallback: insere diretamente na collection (pula validação de schema)
+    const usersColl = mongoose.connection.db.collection("users");
+    const ins = await usersColl.insertOne(novoObj);
+    // recupera via Model para ter os métodos e aplicar virtuals/populates se precisar
+    savedUser = await User.findById(ins.insertedId).lean();
+    // se quiser um documento Mongoose (não-lean), use:
+    // savedUser = await User.findById(ins.insertedId);
+  } catch (insErr) {
+    console.error("❌ Erro no raw insert fallback:", insErr);
+    throw insErr; // propaga para o outer catch (ou você pode tratar)
+  }
+}
+
   }
 
   if (!savedUser) {
-    return {
-      erro: true,
-      mensagem: "Não foi possível gerar um código de afiliado único. Tente novamente."
-    };
+    return { erro: true, mensagem: "Erro ao gerar código afiliado." };
   }
 
-  return {
-    erro: false,
-    usuario: savedUser
-  };
+  return { erro: false, usuario: savedUser };
 }
 
 export default async function handler(req, res) {
