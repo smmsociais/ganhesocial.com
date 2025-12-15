@@ -204,8 +204,7 @@ function escapeRegExp(string) {
 
 router.route("/contas_tiktok")
 
-  // POST -> adicionar / reativar conta TikTok (aceita nome_usuario ou nomeConta)
-// POST -> adicionar / reativar conta Instagram (versão segura)
+// POST -> adicionar / reativar conta TikTok (aceita nome_usuario ou nomeConta)
 .post(async (req, res) => {
   try {
     await connectDB();
@@ -248,8 +247,6 @@ router.route("/contas_tiktok")
           $set: {
             "contas.$.status": "ativa",
             "contas.$.rede": "TikTok",
-            "contas.$.id_conta": req.body.id_conta ?? contaExistente.id_conta,
-            "contas.$.id_tiktok": req.body.id_tiktok ?? contaExistente.id_tiktok,
             "contas.$.dataDesativacao": null,
             "contas.$.nome_usuario": nomeNormalized,
             "contas.$.nomeConta": nomeNormalized
@@ -279,8 +276,6 @@ router.route("/contas_tiktok")
     const novoConta = {
       nome_usuario: nomeNormalized,
       nomeConta: nomeNormalized,
-      id_conta: req.body.id_conta ?? null,
-      id_instagram: req.body.id_tiktok ?? null,
       rede: "TikTok",
       status: "ativa",
       dataCriacao: new Date()
