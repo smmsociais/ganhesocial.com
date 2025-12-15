@@ -38,8 +38,6 @@ const WithdrawSchema = new mongoose.Schema({
   timestamps: { createdAt: "data", updatedAt: "updatedAt" }
 });
 
-import mongoose from "mongoose";
-
 // 🔹 Schema do Usuário
 const UserSchema = new mongoose.Schema(
   {
