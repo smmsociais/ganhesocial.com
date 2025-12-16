@@ -8,14 +8,14 @@ const { MongoClient, ObjectId } = pkg;
 
 /* ---------- CONFIG ---------- */
 const PORT = process.env.PORT || 3002;
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.RAPIDAPI || "f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319";
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://renisson:renisson@cluster0.zbsseoh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+const MONGODB_URI = process.env.MONGODB_URI;
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || "15000", 10);
 const MAX_BATCH = parseInt(process.env.MAX_BATCH || "200", 10);
 const AXIOS_TIMEOUT = parseInt(process.env.AXIOS_TIMEOUT || "20000", 10);
 const MAX_FETCH_RETRIES = parseInt(process.env.MAX_FETCH_RETRIES || "2", 10);
 const MAX_VERIFY_ATTEMPTS = parseInt(process.env.MAX_VERIFY_ATTEMPTS || "2", 10);
-const SMM_API_KEY = process.env.SMM_API_KEY || "123456";
+const SMM_API_KEY = process.env.SMM_API_KEY;
 
 /* ---------- caches & tuning ---------- */
 const secUidCache = new Map(); // actorUsername -> sec_uid (compat)
@@ -391,15 +391,10 @@ async function processBatch() {
     }
 
     const followingSet = await getFollowingsSetForSecUid(actorSecUid);
-
+    
     for (const action of actions) {
-      let lock = null;
+  
       try {
-        lock = await acquireLock(colecao, action._id);
-        if (!lock) {
-          console.log(`— Pulando ${action._id} (já em processamento ou lock recente).`);
-          continue;
-        }
 
         const targetUsername = extractUsernameFromUrl(action.url_dir || action.url || "");
         if (!targetUsername) {
@@ -489,13 +484,11 @@ async function processLikesBatch() {
   const usuarios = db.collection("users");
   const dailyearnings = db.collection("dailyearnings");
 
-  const query = {
-    $and: [
-      { $or: [{ status: "pendente" }, { status: "pendente" }] },
-      { $or: [{ tipo_acao: "curtir" }, { tipo: "curtir" }] },
-      { $or: [{ rede_social: "Instagram" }, { rede_social: "instagram" }, { rede_social: "IG" }] }
-    ]
-  };
+const query = {
+  status: "pendente",
+  tipo_acao: { $in: ["curtir"] },
+  rede_social: { $in: ["Instagram"] }
+};
 
   const acoes = await colecao.find(query).sort({ data: 1 }).limit(MAX_BATCH).toArray();
 
@@ -533,13 +526,8 @@ async function processLikesBatch() {
     const likesSet = await getLikesSetForPost(postCode);
 
     for (const action of actions) {
-      let lock = null;
+  
       try {
-        lock = await acquireLock(colecao, action._id);
-        if (!lock) {
-          console.log(`— Pulando ${action._id} (já em processamento ou lock recente).`);
-          continue;
-        }
 
         let actor = String(action.nome_usuario || action.id_conta || action.user || "").trim();
         if (actor.startsWith("local_")) actor = actor.slice(6);
