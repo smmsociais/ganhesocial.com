@@ -40,11 +40,6 @@ pages.forEach(page => {
   });
 });
 
-// Docs
-app.get("/docs/api/tiktok", (req, res) => {
-  res.sendFile(path.join(__dirname, "docs/api/tiktok.html"));
-});
-
 // Iniciar servidor
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log("Servidor rodando na porta " + PORT));
