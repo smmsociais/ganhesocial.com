@@ -8,14 +8,14 @@ const { MongoClient, ObjectId } = pkg;
 
 /* ---------- CONFIG ---------- */
 const PORT = process.env.PORT || 3002;
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.RAPIDAPI || "f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319";
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://renisson:renisson@cluster0.1iy44.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.RAPIDAPI;
+const MONGODB_URI = process.env.MONGODB_URI;
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || "15000", 10);
 const MAX_BATCH = parseInt(process.env.MAX_BATCH || "200", 10);
 const AXIOS_TIMEOUT = parseInt(process.env.AXIOS_TIMEOUT || "20000", 10);
 const MAX_FETCH_RETRIES = parseInt(process.env.MAX_FETCH_RETRIES || "2", 10);
 const MAX_VERIFY_ATTEMPTS = parseInt(process.env.MAX_VERIFY_ATTEMPTS || "2", 10);
-const SMM_API_KEY = process.env.SMM_API_KEY || "123456";
+const SMM_API_KEY = process.env.SMM_API_KEY;
 
 /* ---------- caches & tuning ---------- */
 const secUidCache = new Map(); // actorUsername -> sec_uid
