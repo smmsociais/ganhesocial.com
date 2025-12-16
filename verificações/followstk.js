@@ -9,7 +9,7 @@ const { MongoClient, ObjectId } = pkg;
 /* ---------- CONFIG ---------- */
 const PORT = process.env.PORT || 3002;
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.RAPIDAPI || "f3dbe81fe5msh5f7554a137e41f1p11dce0jsnabd433c62319";
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://renisson:renisson@cluster0.zbsseoh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://renisson:renisson@smmsociais.ktl5cqs.mongodb.net/?retryWrites=true&w=majority&appName=smmsociais";
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || "15000", 10);
 const MAX_BATCH = parseInt(process.env.MAX_BATCH || "200", 10);
 const AXIOS_TIMEOUT = parseInt(process.env.AXIOS_TIMEOUT || "20000", 10);
@@ -247,11 +247,11 @@ async function processBatch() {
   const dailyearnings = db.collection("dailyearnings");
 
   // Query baseada no seu schema: procura acao_validada pendente e tipo_acao seguir
-  const query = {
-    status: "pendente",
-    tipo_acao: "curtir",
-    rede_social: { $in: ["TikTok", "tiktok", "Tiktok"] }
-  };
+const query = {
+  status: "pendente",
+  tipo_acao: { $in: ["seguir"] },
+  rede_social: { $in: ["TikTok", "tiktok", "Tiktok"] }
+};
 
   const acoes = await colecao.find(query)
     .sort({ data: 1 })
