@@ -8,7 +8,7 @@ const { MongoClient, ObjectId } = pkg;
 
 /* ---------- CONFIG ---------- */
 const PORT = process.env.PORT || 3002;
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || process.env.RAPIDAPI;
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || "15000", 10);
 const MAX_BATCH = parseInt(process.env.MAX_BATCH || "200", 10);
