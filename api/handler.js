@@ -953,7 +953,7 @@ router.post("/recover-password", async (req, res) => {
     user.resetPasswordExpires = new Date(expires);
     await user.save();
 
-    const link = `https://ganhesocialtest.com/reset-password?token=${token}`;
+    const link = `https://ganhesocial.com/reset-password?token=${token}`;
     await sendRecoveryEmail(email, link);
 
     return res.status(200).json({ message: "Link enviado com sucesso" });
